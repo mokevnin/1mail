@@ -10,14 +10,14 @@ import (
 
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/testhelper/metricstest"
 )
 
 // Queue depth counts the jobs ready to run per queue; a job scheduled for later
 // is not ready, so its queue reports no sample.
 func TestQueueMetricsReportDepthAndOldestAge(t *testing.T) {
 	e := newRiverEnv(t)
-	testhelper.StartMetrics(t)
+	metricstest.StartMetrics(t)
 	unregister, err := jobs.RegisterQueueMetrics(e.pool)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = unregister() })
@@ -28,7 +28,7 @@ func TestQueueMetricsReportDepthAndOldestAge(t *testing.T) {
 	later := time.Now().Add(time.Hour)
 	require.NoError(t, e.client.EnqueueBroadcast(ctx, fixtures.BroadcastDraftID, &later))
 
-	scrape := testhelper.ScrapeMetrics(t)
+	scrape := metricstest.ScrapeMetrics(t)
 	queue := map[string]string{"queue": river.QueueDefault}
 	assert.InDelta(t, 2, scrape.Value(t, "river_queue_depth", queue), 0)
 	assert.GreaterOrEqual(t, scrape.Value(t, "river_queue_oldest_available_age_seconds", queue), 0.0)

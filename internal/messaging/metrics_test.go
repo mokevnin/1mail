@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/testhelper/metricstest"
 )
 
 type outcomeSender struct{ err error }
@@ -23,7 +23,7 @@ func (outcomeSender) DefaultFrom() (string, string) { return "from@example.com",
 // Senders built through the catalog count accepted and error per provider, with
 // no other label.
 func TestCatalogSenderCountsSendOutcomes(t *testing.T) {
-	testhelper.StartMetrics(t)
+	metricstest.StartMetrics(t)
 	failing := errors.New("provider down")
 	catalog := messaging.NewCatalog(
 		messaging.ProviderDescriptor{
@@ -49,7 +49,7 @@ func TestCatalogSenderCountsSendOutcomes(t *testing.T) {
 	_, err = ses.Send(ctx, messaging.EmailMessage{})
 	require.ErrorIs(t, err, failing)
 
-	scrape := testhelper.ScrapeMetrics(t)
+	scrape := metricstest.ScrapeMetrics(t)
 	assert.InDelta(t, 2, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "smtp", "status": "accepted"}), 0)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "error"}), 0)
 
@@ -62,11 +62,11 @@ func TestCatalogSenderCountsSendOutcomes(t *testing.T) {
 
 // SES bounce and complaint notifications count under provider "ses".
 func TestRecordSendOutcomeBounceAndComplaint(t *testing.T) {
-	testhelper.StartMetrics(t)
+	metricstest.StartMetrics(t)
 	messaging.RecordSendOutcome(t.Context(), messaging.ProviderSES, messaging.SendBounce)
 	messaging.RecordSendOutcome(t.Context(), messaging.ProviderSES, messaging.SendComplaint)
 
-	scrape := testhelper.ScrapeMetrics(t)
+	scrape := metricstest.ScrapeMetrics(t)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "bounce"}), 0)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "complaint"}), 0)
 }

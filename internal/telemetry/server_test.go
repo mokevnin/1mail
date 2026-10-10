@@ -2,10 +2,8 @@ package telemetry
 
 import (
 	"context"
-	"io"
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -13,49 +11,31 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-func get(t *testing.T, url string) (int, string) {
-	t.Helper()
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	defer func() { _ = resp.Body.Close() }()
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	return resp.StatusCode, string(body)
-}
-
 func TestMetricsServerServesExpositionOnItsOwnListener(t *testing.T) {
-	isolate(t)
-	stop, err := Setup(context.Background(), &config.Config{OtelServiceName: "1mail-test"}, "test", BuildInfo{})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = stop(context.Background()) })
+	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
+		return Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", BuildInfo{})
+	})
 
 	srv := NewMetricsServer("127.0.0.1:0")
 	require.NoError(t, srv.Listen())
 	go func() { _ = srv.Serve() }()
 	t.Cleanup(func() { _ = srv.Shutdown(context.Background()) })
-	base := "http://" + srv.Addr().String()
+	base := "http://" + srv.Addr()
 
-	code, body := get(t, base+"/metrics")
+	code, body := testhelper.HTTPGet(t, base+"/metrics")
 	assert.Equal(t, http.StatusOK, code)
 	assert.Contains(t, body, "go_goroutine_count")
 
-	// Metric labels are bounded technical dimensions: no tenant or personal identifiers.
-	for _, forbidden := range []string{"workspace", "slug", "contact", "email", "recipient"} {
-		for line := range strings.SplitSeq(body, "\n") {
-			if strings.HasPrefix(line, "#") {
-				continue
-			}
-			assert.NotContains(t, strings.ToLower(line), forbidden+"=", "forbidden label in %q", line)
-			assert.NotContains(t, strings.ToLower(line), forbidden+"_id=", "forbidden label in %q", line)
-		}
-	}
-
-	code, _ = get(t, base+"/healthz")
+	// Tenant-label policy: see TestMetricsExpositionCarriesNoTenantLabels.
+	code, _ = testhelper.HTTPGet(t, base+"/healthz")
 	assert.Equal(t, http.StatusNotFound, code, "only /metrics is served")
+}
+
+func TestMetricsServerAddrIsEmptyBeforeListen(t *testing.T) {
+	assert.Empty(t, NewMetricsServer("127.0.0.1:0").Addr())
 }
 
 func TestMetricsServerListenFailsOnOccupiedAddress(t *testing.T) {

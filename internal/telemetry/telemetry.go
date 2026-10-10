@@ -51,7 +51,9 @@ type BuildInfo struct {
 // metricsHandler is the handler mounted at /metrics. It defaults to a 503 stub
 // so server.New can mount it unconditionally even when Setup was never called
 // (e.g. the test harness); Setup replaces it with the real Prometheus handler.
-var metricsHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+var metricsHandler http.Handler = stubMetricsHandler
+
+var stubMetricsHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "telemetry not configured", http.StatusServiceUnavailable)
 })
 
@@ -127,6 +129,7 @@ func Setup(ctx context.Context, cfg *config.Config, env string, build BuildInfo)
 	metricsHandler = promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 
 	return func(ctx context.Context) error {
+		metricsHandler = stubMetricsHandler
 		return shutdown(ctx, tp, mp)
 	}, nil
 }

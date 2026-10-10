@@ -11,12 +11,13 @@ import (
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/testhelper/metricstest"
 )
 
 // SES bounce and complaint notifications are counted by provider and status.
 func TestSESHookCountsBounceAndComplaintOutcomes(t *testing.T) {
 	env := testhelper.Setup(t)
-	testhelper.StartMetrics(t)
+	metricstest.StartMetrics(t)
 	h := server.NewSESHooks(env.DB, env.Bus, acceptAll, noConfirm)
 
 	bounce := `{"notificationType":"Bounce","mail":{"source":"hello@codebasics.dev"},
@@ -27,7 +28,7 @@ func TestSESHookCountsBounceAndComplaintOutcomes(t *testing.T) {
 
 	persistOutbox(t, env)
 
-	scrape := testhelper.ScrapeMetrics(t)
+	scrape := metricstest.ScrapeMetrics(t)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "bounce"}), 0)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "complaint"}), 0)
 }
@@ -36,7 +37,7 @@ func TestSESHookCountsBounceAndComplaintOutcomes(t *testing.T) {
 // but persisted once, and counted once.
 func TestSESHookRedeliveryCountsOutcomeOnce(t *testing.T) {
 	env := testhelper.Setup(t)
-	testhelper.StartMetrics(t)
+	metricstest.StartMetrics(t)
 	h := server.NewSESHooks(env.DB, env.Bus, acceptAll, noConfirm)
 
 	bounce := `{"notificationType":"Bounce","mail":{"source":"hello@codebasics.dev"},
@@ -46,7 +47,7 @@ func TestSESHookRedeliveryCountsOutcomeOnce(t *testing.T) {
 	require.Equal(t, 200, postSES(t, h, fixtures.AcmeIngestKey, body).Code)
 	persistOutbox(t, env)
 
-	scrape := testhelper.ScrapeMetrics(t)
+	scrape := metricstest.ScrapeMetrics(t)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "bounce"}), 0)
 }
 

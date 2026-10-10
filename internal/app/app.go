@@ -221,23 +221,16 @@ func New(env string) (*App, error) {
 // BindMetrics binds the metrics listener when one is configured. Call it before
 // Serve (ideally before anything else starts) so a bind failure is fatal and
 // synchronous rather than a silently unmonitored instance.
-func (a *App) BindMetrics() error {
-	if a.Metrics == nil {
-		return nil
-	}
-	return a.Metrics.Listen()
-}
+func (a *App) BindMetrics() error { return a.Metrics.Listen() }
 
 // Serve serves the metrics listener (bound by BindMetrics) and the public server.
 // It blocks until the public server stops; Stop shuts both down.
 func (a *App) Serve() error {
-	if a.Metrics != nil {
-		go func() {
-			if err := a.Metrics.Serve(); err != nil {
-				slog.Error("metrics server stopped", "err", err)
-			}
-		}()
-	}
+	go func() {
+		if err := a.Metrics.Serve(); err != nil {
+			slog.Error("metrics server stopped", "err", err)
+		}
+	}()
 	if err := a.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
@@ -246,11 +239,7 @@ func (a *App) Serve() error {
 
 // Stop gracefully stops the HTTP servers (public and metrics), under one context.
 func (a *App) Stop(ctx context.Context) error {
-	err := a.Server.Shutdown(ctx)
-	if a.Metrics != nil {
-		err = errors.Join(err, a.Metrics.Shutdown(ctx))
-	}
-	return err
+	return errors.Join(a.Server.Shutdown(ctx), a.Metrics.Shutdown(ctx))
 }
 
 // NewOperator builds the minimal app the operator commands need (config, database,

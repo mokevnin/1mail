@@ -191,7 +191,8 @@ _Avoid_: Send log, delivery row, email record
 Either **per-recipient** and final for that destination — _Sent_, _Skipped_ (Suppression,
 Unsubscribe, or missing Confirmation), or a permanent failure of that one message — or
 **per-source** and reversible: a **Hold** (Workspace suspension, Billing hold, an unverified
-Sending domain, or no Integration), after which the same messages may still be sent.
+Sending domain, or no Integration) or a **Deferral** (the Integration's Send rate limit is spent),
+after which the same messages may still be sent.
 _Avoid_: Status, result (unqualified)
 
 **Send rate limit**:
@@ -411,13 +412,13 @@ _Avoid_: Enforced 2FA, mandatory MFA
 
 **Second factor reset**:
 An Owner or Admin removing another User's Second factor so they can re-enroll after losing both
-authenticator and Recovery codes. Recorded in the audit trail.
+authenticator and Recovery codes. Recorded as an Audit entry.
 _Avoid_: Unlock, disable 2FA
 
 **Login throttle**:
-The temporary refusal of login attempts after repeated failures, counted per (email, IP) and per
-IP across password, Second factor and Recovery code attempts, with the delay growing. It never
-permanently locks a User, and answers identically for unknown emails.
+The growing delay applied to an account's login after repeated failures (password, Second factor
+or Recovery code), during which even correct credentials are refused. It is never a permanent
+lock, and unknown emails are throttled and answered identically.
 _Avoid_: Lockout, ban, account lock (a hard lock would let an attacker deny a victim access)
 
 **Membership**:

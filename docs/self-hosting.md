@@ -110,7 +110,8 @@ else. There is no token and no allowlist: the network boundary is the control (A
 
 - Single host: `METRICS_ADDR=127.0.0.1:9090` so only local scrapers can reach it.
 - Container: `METRICS_ADDR=0.0.0.0:9090`, and publish that port only to your Prometheus
-  (a network policy or an internal network), never through the public ingress.
+  (a network policy or an internal network), never through the public ingress. An empty host (`:9090`) binds every interface, like
+  the container form.
 
 A `METRICS_ADDR` using the same port as `PORT`, or a malformed value, fails startup, as does
 a metrics address that is already in use. The Dockerfiles need no change (`EXPOSE 3000` and
