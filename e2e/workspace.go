@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -19,9 +18,6 @@ import (
 	"github.com/mokevnin/1mail/internal/apitokens"
 	"github.com/mokevnin/1mail/internal/events"
 )
-
-// EmailTimeout bounds every wait for an email; asynchronous steps are polled, never slept.
-const EmailTimeout = 60 * time.Second
 
 // tokenScopes are everything the scenario steps need; a test's token carries them all.
 var tokenScopes = []string{
@@ -35,7 +31,7 @@ var tokenScopes = []string{
 
 // Workspace is one test's own tenant: a fresh User, Workspace and API token made with
 // the product's own domain functions, a unique Sending domain and a client for the
-// external API. Nothing is cleaned up; everything is Workspace-scoped, so tests are
+// external API. Everything is Workspace-scoped, so tests are
 // independent and may run in parallel.
 type Workspace struct {
 	t   testing.TB
@@ -50,7 +46,8 @@ type Workspace struct {
 	// FromName is the sender display name configured on the Integration.
 	FromName string
 
-	msgIDs []string
+	// Inbox is the only way a scenario observes mail.
+	Inbox *Inbox
 
 	scoped *ent.Scoped
 }
@@ -70,7 +67,7 @@ func (b bearer) BearerAuth(context.Context, externalapi.OperationName) (external
 
 // NewWorkspace is the arrange step: a User, a Workspace and its first API token, made
 // with internal/accounts and internal/apitokens (the bootstrap token is not used, it
-// only addresses the oldest Workspace). It registers cleanup of the test's own mail.
+// only addresses the oldest Workspace). Its Inbox deletes the test's own mail on cleanup.
 func (e *Env) NewWorkspace(t testing.TB) *Workspace {
 	t.Helper()
 	ctx := t.Context()
@@ -95,10 +92,7 @@ func (e *Env) NewWorkspace(t testing.TB) *Workspace {
 		FromName:  "E2E News",
 		scoped:    scoped,
 	}
-	t.Cleanup(func() {
-		// Delete only this test's messages: other tests share the inbox.
-		_ = e.Mailpit.Delete(context.WithoutCancel(ctx), w.msgIDs...)
-	})
+	w.Inbox = newInbox(t, e.mailpit)
 	return w
 }
 
@@ -124,112 +118,6 @@ func ok[T any](t testing.TB, step string, res any, err error) *T {
 	v, isT := res.(*T)
 	require.True(t, isT, "%s: unexpected response %T: %+v", step, res, res)
 	return v
-}
-
-// CreateMailpitIntegration creates the default SMTP Integration pointing at the
-// suite's Mailpit, sending as FromName <FromEmail>.
-func (w *Workspace) CreateMailpitIntegration() {
-	w.t.Helper()
-	cfg := externalapi.SmtpConfigInput{
-		Kind:     externalapi.SmtpConfigInputKindSMTP,
-		Host:     w.env.Mailpit.SMTPHost,
-		Port:     int32(w.env.Mailpit.SMTPPort),
-		From:     externalapi.EmailAddress(w.FromEmail),
-		FromName: externalapi.NewOptNilString(w.FromName),
-	}
-	res, err := w.api.IntegrationsCreate(w.t.Context(), &externalapi.CreateIntegrationInput{
-		Name:      "mailpit",
-		IsDefault: externalapi.NewOptBool(true),
-		Config:    externalapi.IntegrationConfigInput{OneOf: externalapi.NewSmtpConfigInputIntegrationConfigInputSum(cfg)},
-	})
-	ok[externalapi.IntegrationResource](w.t, "create integration", res, err)
-}
-
-// AddVerifiedSendingDomain creates the unique Sending domain, triggers verification
-// (an asynchronous job) and polls until it reads as verified.
-func (w *Workspace) AddVerifiedSendingDomain() {
-	w.t.Helper()
-	ctx := w.t.Context()
-	res, err := w.api.SendingDomainsCreate(ctx, &externalapi.CreateSendingDomainInput{Domain: w.Domain})
-	sd := ok[externalapi.SendingDomainResource](w.t, "create sending domain", res, err)
-
-	_, err = w.api.SendingDomainsVerify(ctx, externalapi.SendingDomainsVerifyParams{ID: sd.ID})
-	require.NoError(w.t, err, "verify sending domain") // 202: the check is a job; the poll below is the assertion
-
-	require.Eventually(w.t, func() bool {
-		got, err := w.api.SendingDomainsGet(ctx, externalapi.SendingDomainsGetParams{ID: sd.ID})
-		if err != nil {
-			return false
-		}
-		d, isD := got.(*externalapi.SendingDomainResource)
-		return isD && d.Verified
-	}, EmailTimeout, 100*time.Millisecond, "Sending domain %s never became verified", w.Domain)
-}
-
-// ImportContacts upserts a Contact per email through the batch endpoint.
-func (w *Workspace) ImportContacts(emails ...string) {
-	w.t.Helper()
-	items := make([]externalapi.UpsertContactInput, len(emails))
-	for i, e := range emails {
-		items[i] = externalapi.UpsertContactInput{Email: externalapi.NewOptNilEmailAddress(externalapi.EmailAddress(e))}
-	}
-	res, err := w.api.ContactsBatchUpsert(w.t.Context(), &externalapi.UpsertContactsInput{Contacts: items})
-	out := ok[externalapi.UpsertContactsResult](w.t, "import contacts", res, err)
-	for _, r := range out.Results {
-		require.NotEqual(w.t, externalapi.ContactBatchStatusFailed, r.Status, "import contact #%d: %s", r.Index, r.Error.Value)
-	}
-}
-
-// Broadcast is what a scenario chooses about a Broadcast; the rest defaults.
-type Broadcast struct {
-	Name    string
-	Subject string
-	// Body is MJML (the product's one body format).
-	Body string
-}
-
-// SendBroadcast creates a Broadcast from the Workspace's FromEmail/FromName, sets its
-// audience to all active Contacts and schedules it for now. The send itself is an
-// asynchronous job: observe it with WaitForEmail.
-func (w *Workspace) SendBroadcast(b Broadcast) {
-	w.t.Helper()
-	ctx := w.t.Context()
-	if b.Name == "" {
-		b.Name = "e2e broadcast " + uniq()
-	}
-	res, err := w.api.BroadcastsCreate(ctx, &externalapi.CreateBroadcastInput{
-		Name:      b.Name,
-		Subject:   externalapi.NewOptString(b.Subject),
-		Body:      externalapi.NewOptString(b.Body),
-		FromName:  externalapi.NewOptString(w.FromName),
-		FromEmail: externalapi.NewOptEmailAddress(externalapi.EmailAddress(w.FromEmail)),
-	})
-	created := ok[externalapi.BroadcastResource](w.t, "create broadcast", res, err)
-
-	aud, err := w.api.BroadcastsSetAudience(ctx, &externalapi.SetBroadcastAudienceInput{SegmentId: externalapi.NilEntityId{Null: true}},
-		externalapi.BroadcastsSetAudienceParams{ID: created.ID})
-	ok[externalapi.BroadcastResource](w.t, "set audience", aud, err)
-
-	sched, err := w.api.BroadcastsSchedule(ctx, &externalapi.ScheduleBroadcastInput{ScheduledAt: externalapi.Timestamp(time.Now())},
-		externalapi.BroadcastsScheduleParams{ID: created.ID})
-	ok[externalapi.BroadcastResource](w.t, "schedule broadcast", sched, err)
-}
-
-// WaitForEmail waits (bounded by EmailTimeout) for a message addressed to recipient and
-// returns it with its headers. The failure message lists what the inbox held.
-func (w *Workspace) WaitForEmail(recipient string) Message {
-	w.t.Helper()
-	return w.waitForEmail(recipient, "")
-}
-
-// waitForEmail is the shared wait behind WaitForEmail and WaitForEmailWithSubject
-// (subject "" matches any); it remembers the message for cleanup.
-func (w *Workspace) waitForEmail(recipient, subject string) Message {
-	w.t.Helper()
-	msg, err := w.env.Mailpit.WaitForMessage(w.t.Context(), recipient, subject, EmailTimeout)
-	require.NoError(w.t, err)
-	w.msgIDs = append(w.msgIDs, msg.ID)
-	return msg
 }
 
 // String names the Workspace in failures.
@@ -263,14 +151,45 @@ func (w *Workspace) OwnerMembershipIDs() []int64 {
 // and returns the error of each attempt.
 func (w *Workspace) DemoteConcurrently(ids ...int64) []error {
 	w.t.Helper()
-	errs := make([]error, len(ids))
+	return w.concurrently(len(ids), func(i int) error {
+		_, err := w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
+			membership.RoleOwner, ids[i], membership.RoleMember)
+		return err
+	})
+}
+
+// RemoveConcurrently removes each Membership, all at once, as an owner would, and returns
+// the error of each attempt.
+func (w *Workspace) RemoveConcurrently(ids ...int64) []error {
+	w.t.Helper()
+	return w.concurrently(len(ids), func(i int) error {
+		return w.env.accounts.RemoveMembership(w.t.Context(), w.scoped, membership.RoleOwner, ids[i])
+	})
+}
+
+// DemoteAndRemoveConcurrently demotes the first Membership and removes the second at the
+// same moment, and returns the error of each attempt.
+func (w *Workspace) DemoteAndRemoveConcurrently(demote, remove int64) []error {
+	w.t.Helper()
+	return w.concurrently(2, func(i int) error {
+		if i == 0 {
+			_, err := w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
+				membership.RoleOwner, demote, membership.RoleMember)
+			return err
+		}
+		return w.env.accounts.RemoveMembership(w.t.Context(), w.scoped, membership.RoleOwner, remove)
+	})
+}
+
+// concurrently releases n attempts at the same moment and returns each one's error.
+func (w *Workspace) concurrently(n int, attempt func(i int) error) []error {
+	errs := make([]error, n)
 	start := make(chan struct{})
 	var wg sync.WaitGroup
-	for i, id := range ids {
+	for i := range n {
 		wg.Go(func() {
 			<-start
-			_, errs[i] = w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
-				membership.RoleOwner, id, membership.RoleMember)
+			errs[i] = attempt(i)
 		})
 	}
 	close(start)

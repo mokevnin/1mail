@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/events"
@@ -82,6 +83,33 @@ func TestChangeMembershipRoleInvariants(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, ent.IsNotFound(err))
 	})
+}
+
+// membershipUpdateEntries hands the outbox to the audit subscriber and counts the stored
+// `membership.update` entries.
+func membershipUpdateEntries(t *testing.T, env *testhelper.TestEnv) int {
+	t.Helper()
+	env.DeliverToEE(t)
+	return env.DB.AuditEntry.Query().Where(auditentry.Action(events.ActionMembershipUpdate)).CountX(t.Context())
+}
+
+func TestChangeMembershipRoleAuditsInTheSameTransaction(t *testing.T) {
+	env := testhelper.Setup(t)
+	acc := accounts.New(env.DB, env.Bus)
+	ctx := context.Background()
+	s := env.DB.Scoped(fixtures.InitechID)
+	actor := events.Actor{Kind: events.ActorUser}
+	updates := func() int { return membershipUpdateEntries(t, env) }
+
+	before := updates()
+	_, err := acc.ChangeMembershipRole(ctx, s, actor, membership.RoleOwner, fixtures.InitechCoOwnerMembershipID, membership.RoleAdmin)
+	require.NoError(t, err)
+	assert.Equal(t, before+1, updates(), "a committed change leaves its entry")
+
+	// Olga is now the last owner: the refused change rolls back and records nothing.
+	_, err = acc.ChangeMembershipRole(ctx, s, actor, membership.RoleOwner, fixtures.InitechOwnerMembershipID, membership.RoleAdmin)
+	require.ErrorIs(t, err, accounts.ErrLastOwner)
+	assert.Equal(t, before+1, updates(), "a refused change leaves no entry")
 }
 
 func TestRemoveMembershipInvariants(t *testing.T) {

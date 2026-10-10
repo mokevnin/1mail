@@ -7,8 +7,8 @@ sending domains and consent rules.
 
 Templates are written in [MJML](https://mjml.io/), so responsive email works across clients, and
 are compiled when the message is sent. Subjects and bodies support [Liquid](https://shopify.github.io/liquid/)
-(conditionals and filters). Merge tags come from the contact: `{{ email }}`, `{{ first_name }}`,
-`{{ last_name }}` and any of its custom fields; transactional calls can add their own variables.
+(conditionals and filters). Merge tags come from the contact: <code v-pre>{{ email }}</code>, <code v-pre>{{ first_name }}</code>,
+<code v-pre>{{ last_name }}</code> and any of its custom fields; transactional calls can add their own variables.
 Tracking (an open pixel, click rewriting and the unsubscribe footer) is layered on after
 rendering, and a plain-text part is generated for you.
 

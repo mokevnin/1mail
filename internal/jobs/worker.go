@@ -185,6 +185,10 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river
 // Start begins processing jobs (run in a goroutine; returns once started).
 func (c *Client) Start(ctx context.Context) error { return c.river.Start(ctx) }
 
+// Stopped is closed once the workers have stopped (after Stop, or when the context
+// given to Start is cancelled).
+func (c *Client) Stopped() <-chan struct{} { return c.river.Stopped() }
+
 // Stop drains and stops the workers.
 func (c *Client) Stop(ctx context.Context) error { return c.river.Stop(ctx) }
 

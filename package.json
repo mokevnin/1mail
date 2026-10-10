@@ -79,7 +79,7 @@
     "size-limit": "^14.2.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vitepress": "^1.6.4",
+    "vitepress": "^2.0.0-alpha.20",
     "vitepress-openapi": "^0.2.5",
     "vitest": "^5.0.3",
     "vitest-browser-react": "^2.3.0"

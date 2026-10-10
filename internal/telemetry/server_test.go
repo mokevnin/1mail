@@ -20,7 +20,7 @@ func TestMetricsServerServesExpositionOnItsOwnListener(t *testing.T) {
 	})
 
 	srv := NewMetricsServer("127.0.0.1:0")
-	require.NoError(t, srv.Listen())
+	require.NoError(t, srv.Listen(t.Context()))
 	go func() { _ = srv.Serve() }()
 	t.Cleanup(func() { _ = srv.Shutdown(context.Background()) })
 	base := "http://" + srv.Addr()
@@ -44,12 +44,12 @@ func TestMetricsServerListenFailsOnOccupiedAddress(t *testing.T) {
 	t.Cleanup(func() { _ = occupied.Close() })
 
 	srv := NewMetricsServer(occupied.Addr().String())
-	require.Error(t, srv.Listen())
+	require.Error(t, srv.Listen(t.Context()))
 }
 
 func TestMetricsServerShutdownStopsServing(t *testing.T) {
 	srv := NewMetricsServer("127.0.0.1:0")
-	require.NoError(t, srv.Listen())
+	require.NoError(t, srv.Listen(t.Context()))
 	done := make(chan error, 1)
 	go func() { done <- srv.Serve() }()
 
