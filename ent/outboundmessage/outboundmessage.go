@@ -55,6 +55,8 @@ const (
 	FieldAutomationRunID = "automation_run_id"
 	// FieldAutomationStep holds the string denoting the automation_step field in the database.
 	FieldAutomationStep = "automation_step"
+	// FieldIntegrationID holds the string denoting the integration_id field in the database.
+	FieldIntegrationID = "integration_id"
 	// FieldTemplateID holds the string denoting the template_id field in the database.
 	FieldTemplateID = "template_id"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
@@ -93,6 +95,7 @@ var Columns = []string{
 	FieldAutomationID,
 	FieldAutomationRunID,
 	FieldAutomationStep,
+	FieldIntegrationID,
 	FieldTemplateID,
 }
 
@@ -304,6 +307,11 @@ func ByAutomationRunID(opts ...sql.OrderTermOption) OrderOption {
 // ByAutomationStep orders the results by the automation_step field.
 func ByAutomationStep(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAutomationStep, opts...).ToFunc()
+}
+
+// ByIntegrationID orders the results by the integration_id field.
+func ByIntegrationID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIntegrationID, opts...).ToFunc()
 }
 
 // ByTemplateID orders the results by the template_id field.

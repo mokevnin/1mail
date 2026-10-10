@@ -26,6 +26,7 @@ var grantableScopes = []string{
 	"webhooks:write",
 	"custom_fields:read",
 	"sending_domains:read",
+	"integrations:read",
 }
 
 // sendScopes are the send-class scopes (ADR 0016, "Send is a second lock"). The

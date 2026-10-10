@@ -99,6 +99,11 @@ func (OutboundMessage) Fields() []ent.Field {
 		field.Int64("automation_run_id").Optional().Nillable().
 			Annotations(ScopedRef{Entity: "AutomationRun"}),
 		field.Int("automation_step").Optional().Nillable(),
+		// The Integration the message went out through (ADR 0023), a plain id snapshot
+		// like the other provenance ids: its sent count over 24 hours is the
+		// Integration's usage. Nil when the sender had no Integration row.
+		field.Int64("integration_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "Integration"}),
 		// The Template a transactional send referenced (ADR 0005).
 		field.Int64("template_id").Optional().Nillable().
 			Annotations(ScopedRef{Entity: "EmailTemplate"}),
@@ -112,6 +117,8 @@ func (OutboundMessage) Indexes() []ent.Index {
 			StorageKey("outbound_messages_workspace_id_idempotency_key"),
 		// Send-history listing, newest first, per surface.
 		index.Fields("workspace_id", "kind", "created_at"),
+		// Usage of an Integration over a trailing window (ADR 0023).
+		index.Fields("workspace_id", "integration_id", "sent_at"),
 		// Deliverability windows per Sending domain (ADR 0011).
 		index.Fields("workspace_id", "sending_domain", "created_at"),
 	}

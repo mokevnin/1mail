@@ -67,7 +67,7 @@ var (
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"events_record", "events_actions_list", "whoami",
-		"custom_fields_list", "sending_domains_list", "sending_domains_rates",
+		"custom_fields_list", "sending_domains_list", "sending_domains_rates", "integrations_list",
 		"suppressions_create", "unsubscribes_create",
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
 		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",
@@ -207,6 +207,35 @@ func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	require.False(t, res.IsError, text(t, res))
 	res = call(t, s, "contacts_delete", map[string]any{"id": created["id"]})
 	require.False(t, res.IsError, text(t, res))
+}
+
+// An agent reads the Send rate limit and 24-hour usage of the Integrations over MCP,
+// with the same scope the /api read needs.
+func TestMCPIntegrationsListReadsSendLimitAndUsage(t *testing.T) {
+	env := testhelper.Setup(t)
+	env.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(14).ExecX(context.Background())
+
+	denied := call(t, env.MCPClient(t, env.ScopedBearer(t, "contacts:read")), "integrations_list", nil)
+	assert.True(t, denied.IsError, "integrations:read is required")
+
+	res := call(t, env.MCPClient(t, env.ScopedBearer(t, "integrations:read")), "integrations_list", nil)
+	require.False(t, res.IsError, text(t, res))
+	var page struct {
+		Items []struct {
+			SendLimit struct {
+				PerSecond struct {
+					Limit  int    `json:"limit"`
+					Source string `json:"source"`
+				} `json:"perSecond"`
+				SentLast24h int `json:"sentLast24h"`
+			} `json:"sendLimit"`
+		} `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(text(t, res)), &page))
+	require.NotEmpty(t, page.Items)
+	assert.Equal(t, 14, page.Items[0].SendLimit.PerSecond.Limit)
+	assert.Equal(t, "manual", page.Items[0].SendLimit.PerSecond.Source)
+	assert.Equal(t, 2, page.Items[0].SendLimit.SentLast24h)
 }
 
 // Tags are tools: a name with a slash travels as a path parameter, and the contact id

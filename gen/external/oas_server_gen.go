@@ -204,6 +204,12 @@ type Handler interface {
 	//
 	// POST /events
 	EventsCreate(ctx context.Context, req *RecordEventsInput) (EventsCreateRes, error)
+	// IntegrationsList implements Integrations_list operation.
+	//
+	// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+	//
+	// GET /integrations
+	IntegrationsList(ctx context.Context, params IntegrationsListParams) (IntegrationsListRes, error)
 	// SegmentsCreate implements Segments_create operation.
 	//
 	// Create a resource.

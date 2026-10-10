@@ -6034,15 +6034,23 @@
           },
           "maxPerSecond": {
             "type": "integer",
-            "format": "int32",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerSecond"
+              }
+            ],
             "nullable": true,
-            "description": "Most messages per second (positive); omit or null for no limit"
+            "description": "Most messages per second (1 to 10 000); omit or null for no limit"
           },
           "maxPerDay": {
             "type": "integer",
-            "format": "int32",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerDay"
+              }
+            ],
             "nullable": true,
-            "description": "Most messages per rolling 24 hours (positive); omit or null for no limit"
+            "description": "Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit"
           },
           "config": {
             "$ref": "#/components/schemas/SiteIntegrationConfigInput"
@@ -6502,6 +6510,7 @@
           "isDefault",
           "maxPerSecond",
           "maxPerDay",
+          "sendLimit",
           "config",
           "createdAt",
           "updatedAt"
@@ -6554,6 +6563,14 @@
             "format": "int32",
             "nullable": true,
             "description": "Send rate limit: most messages per rolling 24 hours; null means no daily limit"
+          },
+          "sendLimit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitStatus"
+              }
+            ],
+            "description": "The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage"
           },
           "config": {
             "allOf": [
@@ -6661,6 +6678,20 @@
           }
         },
         "description": "A pending invitation of an email address to join the workspace"
+      },
+      "SiteMaxPerDay": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "maximum": 100000000,
+        "description": "A rolling 24-hour Send rate limit the operator may set"
+      },
+      "SiteMaxPerSecond": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "maximum": 10000,
+        "description": "A per-second Send rate limit the operator may set"
       },
       "SiteMembershipResource": {
         "type": "object",
@@ -6916,6 +6947,73 @@
           }
         },
         "description": "Segment resource used by the site UI"
+      },
+      "SiteSendLimitSource": {
+        "type": "string",
+        "enum": ["manual", "provider"],
+        "description": "Where an effective Send rate limit comes from"
+      },
+      "SiteSendLimitStatus": {
+        "type": "object",
+        "required": ["perSecond", "perDay", "sentLast24h", "warnings"],
+        "properties": {
+          "perSecond": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitValue"
+              }
+            ],
+            "description": "Most messages per second"
+          },
+          "perDay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitValue"
+              }
+            ],
+            "description": "Most messages per rolling 24 hours"
+          },
+          "sentLast24h": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages the provider accepted from this Integration in the last 24 hours"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteSendLimitWarning"
+            },
+            "description": "Reasons to review the limit; empty when there is nothing to flag"
+          }
+        },
+        "description": "The Send rate limit as enforced, with the last 24 hours of usage"
+      },
+      "SiteSendLimitValue": {
+        "type": "object",
+        "required": ["limit", "source"],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "The ceiling in messages; null means this window is not limited"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitSource"
+              }
+            ],
+            "nullable": true,
+            "description": "Where the ceiling comes from; null when there is none"
+          }
+        },
+        "description": "One effective ceiling: the lowest of the manual and provider values, manual on a tie"
+      },
+      "SiteSendLimitWarning": {
+        "type": "string",
+        "enum": ["unlimited"],
+        "description": "A reason to look at an Integration's Send rate limit"
       },
       "SiteSendingDomainResource": {
         "type": "object",
@@ -7470,15 +7568,23 @@
           },
           "maxPerSecond": {
             "type": "integer",
-            "format": "int32",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerSecond"
+              }
+            ],
             "nullable": true,
-            "description": "Most messages per second (positive); null clears the limit, omit to keep"
+            "description": "Most messages per second (1 to 10 000); null clears the limit, omit to keep"
           },
           "maxPerDay": {
             "type": "integer",
-            "format": "int32",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerDay"
+              }
+            ],
             "nullable": true,
-            "description": "Most messages per rolling 24 hours (positive); null clears the limit, omit to keep"
+            "description": "Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep"
           },
           "config": {
             "allOf": [

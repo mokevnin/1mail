@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/sendlimit"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -200,4 +201,24 @@ func TestChangedLimitTakesEffectImmediatelyAndProportionally(t *testing.T) {
 	res := send(t, m, env, "bc:2") // 0.9 of one token: not enough yet
 	assert.Equal(t, outbound.Deferral, res.Outcome)
 	assert.Equal(t, 100*time.Millisecond, res.Wait)
+}
+
+func TestSentMessageIsStampedWithItsIntegrationAndCountsAsUsage(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := newModule(env)
+
+	before, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
+	require.NoError(t, err)
+
+	res := send(t, m, env, "bc:usage")
+	require.Equal(t, outbound.Sent, res.Outcome)
+
+	msg, err := acme(env).OutboundMessage().Get(context.Background(), res.MessageID)
+	require.NoError(t, err)
+	require.NotNil(t, msg.IntegrationID, "the message records the Integration it went through")
+	assert.Equal(t, int64(fixtures.IntegrationAcmeDefaultID), *msg.IntegrationID)
+
+	after, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, before[fixtures.IntegrationAcmeDefaultID]+1, after[fixtures.IntegrationAcmeDefaultID])
 }

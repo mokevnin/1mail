@@ -609,13 +609,13 @@ export type SiteCreateIntegrationInput = {
   enabled?: boolean;
   isDefault?: boolean;
   /**
-   * Most messages per second (positive); omit or null for no limit
+   * Most messages per second (1 to 10 000); omit or null for no limit
    */
-  maxPerSecond?: number | null;
+  maxPerSecond?: SiteMaxPerSecond | null;
   /**
-   * Most messages per rolling 24 hours (positive); omit or null for no limit
+   * Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit
    */
-  maxPerDay?: number | null;
+  maxPerDay?: SiteMaxPerDay | null;
   config: SiteIntegrationConfigInput;
 };
 
@@ -960,6 +960,10 @@ export type SiteIntegrationResource = {
    */
   maxPerDay: number | null;
   /**
+   * The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage
+   */
+  sendLimit: SiteSendLimitStatus;
+  /**
    * Provider config (secrets redacted)
    */
   config: SiteIntegrationConfig;
@@ -1030,6 +1034,16 @@ export type SiteInvitationResource = {
    */
   createdAt: Timestamp;
 };
+
+/**
+ * A rolling 24-hour Send rate limit the operator may set
+ */
+export type SiteMaxPerDay = number;
+
+/**
+ * A per-second Send rate limit the operator may set
+ */
+export type SiteMaxPerSecond = number;
 
 /**
  * A Membership — the join granting a User access to the workspace with a Role
@@ -1213,6 +1227,62 @@ export type SiteSegmentResource = {
    */
   updatedAt: Timestamp;
 };
+
+/**
+ * Where an effective Send rate limit comes from
+ */
+export const SiteSendLimitSource = { MANUAL: 'manual', PROVIDER: 'provider' } as const;
+
+/**
+ * Where an effective Send rate limit comes from
+ */
+export type SiteSendLimitSource = typeof SiteSendLimitSource[keyof typeof SiteSendLimitSource];
+
+/**
+ * The Send rate limit as enforced, with the last 24 hours of usage
+ */
+export type SiteSendLimitStatus = {
+  /**
+   * Most messages per second
+   */
+  perSecond: SiteSendLimitValue;
+  /**
+   * Most messages per rolling 24 hours
+   */
+  perDay: SiteSendLimitValue;
+  /**
+   * Messages the provider accepted from this Integration in the last 24 hours
+   */
+  sentLast24h: number;
+  /**
+   * Reasons to review the limit; empty when there is nothing to flag
+   */
+  warnings: Array<SiteSendLimitWarning>;
+};
+
+/**
+ * One effective ceiling: the lowest of the manual and provider values, manual on a tie
+ */
+export type SiteSendLimitValue = {
+  /**
+   * The ceiling in messages; null means this window is not limited
+   */
+  limit: number | null;
+  /**
+   * Where the ceiling comes from; null when there is none
+   */
+  source: SiteSendLimitSource | null;
+};
+
+/**
+ * A reason to look at an Integration's Send rate limit
+ */
+export const SiteSendLimitWarning = { UNLIMITED: 'unlimited' } as const;
+
+/**
+ * A reason to look at an Integration's Send rate limit
+ */
+export type SiteSendLimitWarning = typeof SiteSendLimitWarning[keyof typeof SiteSendLimitWarning];
 
 /**
  * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
@@ -1569,13 +1639,13 @@ export type SiteUpdateIntegrationInput = {
   enabled?: boolean;
   isDefault?: boolean;
   /**
-   * Most messages per second (positive); null clears the limit, omit to keep
+   * Most messages per second (1 to 10 000); null clears the limit, omit to keep
    */
-  maxPerSecond?: number | null;
+  maxPerSecond?: SiteMaxPerSecond | null;
   /**
-   * Most messages per rolling 24 hours (positive); null clears the limit, omit to keep
+   * Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep
    */
-  maxPerDay?: number | null;
+  maxPerDay?: SiteMaxPerDay | null;
   config?: SiteIntegrationConfigInput | null;
 };
 

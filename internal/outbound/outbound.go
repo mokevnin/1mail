@@ -269,7 +269,7 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 
 	// Send rate limit: the last gate before the provider, so a message that was
 	// Skipped, Held or failed to render never spends capacity.
-	if wait, err := m.reserve(ctx, s, req); err != nil {
+	if wait, err := m.reserve(ctx, s, req, g.integration); err != nil {
 		m.release(ctx, s, msg)
 		return Result{}, err
 	} else if wait > 0 {
@@ -338,11 +338,14 @@ func (m *Module) workspace(ctx context.Context, s *ent.Scoped) (*ent.Workspace, 
 
 // gateResult is the outcome of the source-level checks plus what they resolved.
 type gateResult struct {
-	hold     string
-	sender   messaging.EmailSender
-	from     string
-	fromName string
-	domain   string
+	hold string
+	// integration is the default Integration the message goes through; nil when the
+	// sender has no Integration row (a test double).
+	integration *ent.Integration
+	sender      messaging.EmailSender
+	from        string
+	fromName    string
+	domain      string
 }
 
 // gate runs the source-level checks, in order: Workspace freeze, an Integration to
@@ -384,7 +387,11 @@ func (m *Module) gate(ctx context.Context, s *ent.Scoped, ws *ent.Workspace, fro
 	if !verified {
 		return gateResult{hold: HoldUnverifiedDomain}, nil
 	}
-	return gateResult{sender: sender, from: from, fromName: name, domain: messaging.DomainOf(from)}, nil
+	integ, err := messaging.DefaultEmailIntegration(ctx, s)
+	if err != nil && !errors.Is(err, messaging.ErrNoProvider) {
+		return gateResult{}, fmt.Errorf("outbound: load integration: %w", err)
+	}
+	return gateResult{sender: sender, integration: integ, from: from, fromName: name, domain: messaging.DomainOf(from)}, nil
 }
 
 func replayResult(msg *ent.OutboundMessage) Result {
@@ -496,6 +503,9 @@ func (m *Module) recordSent(ctx context.Context, s *ent.Scoped, req Request, msg
 			Where(holds(msg)...).
 			SetStatus(outboundmessage.StatusSent).
 			SetSentAt(now)
+		if g.integration != nil {
+			upd.SetIntegrationID(g.integration.ID)
+		}
 		if receipt.MessageID != "" {
 			upd.SetProviderMessageID(receipt.MessageID)
 		}

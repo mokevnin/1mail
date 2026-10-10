@@ -58,6 +58,8 @@ type OutboundMessage struct {
 	AutomationRunID *int64 `json:"automation_run_id,omitempty"`
 	// AutomationStep holds the value of the "automation_step" field.
 	AutomationStep *int `json:"automation_step,omitempty"`
+	// IntegrationID holds the value of the "integration_id" field.
+	IntegrationID *int64 `json:"integration_id,omitempty"`
 	// TemplateID holds the value of the "template_id" field.
 	TemplateID *int64 `json:"template_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -91,7 +93,7 @@ func (*OutboundMessage) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case outboundmessage.FieldID, outboundmessage.FieldWorkspaceID, outboundmessage.FieldContactID, outboundmessage.FieldBroadcastID, outboundmessage.FieldBroadcastRecipientID, outboundmessage.FieldAutomationID, outboundmessage.FieldAutomationRunID, outboundmessage.FieldAutomationStep, outboundmessage.FieldTemplateID:
+		case outboundmessage.FieldID, outboundmessage.FieldWorkspaceID, outboundmessage.FieldContactID, outboundmessage.FieldBroadcastID, outboundmessage.FieldBroadcastRecipientID, outboundmessage.FieldAutomationID, outboundmessage.FieldAutomationRunID, outboundmessage.FieldAutomationStep, outboundmessage.FieldIntegrationID, outboundmessage.FieldTemplateID:
 			values[i] = new(sql.NullInt64)
 		case outboundmessage.FieldKind, outboundmessage.FieldIdempotencyKey, outboundmessage.FieldChannel, outboundmessage.FieldDestination, outboundmessage.FieldSendingSource, outboundmessage.FieldSendingDomain, outboundmessage.FieldProviderMessageID, outboundmessage.FieldStatus, outboundmessage.FieldReason:
 			values[i] = new(sql.NullString)
@@ -249,6 +251,13 @@ func (_m *OutboundMessage) assignValues(columns []string, values []any) error {
 				_m.AutomationStep = new(int)
 				*_m.AutomationStep = int(value.Int64)
 			}
+		case outboundmessage.FieldIntegrationID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field integration_id", values[i])
+			} else if value.Valid {
+				_m.IntegrationID = new(int64)
+				*_m.IntegrationID = value.Int64
+			}
 		case outboundmessage.FieldTemplateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field template_id", values[i])
@@ -376,6 +385,11 @@ func (_m *OutboundMessage) String() string {
 	builder.WriteString(", ")
 	if v := _m.AutomationStep; v != nil {
 		builder.WriteString("automation_step=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.IntegrationID; v != nil {
+		builder.WriteString("integration_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
