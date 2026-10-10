@@ -51,7 +51,7 @@ func TestListFiltersByContactID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, p.Items)
 	for _, e := range p.Items {
-		assert.Equal(t, cid, e.ContactID)
+		assert.Equal(t, &cid, e.ContactID)
 	}
 }
 
@@ -63,7 +63,8 @@ func TestListFiltersByEmailCaseInsensitively(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, p.Items)
 	for _, e := range p.Items {
-		assert.Equal(t, fixtures.ContactAliceEmail, e.Email)
+		require.NotNil(t, e.Email)
+		assert.Equal(t, fixtures.ContactAliceEmail, *e.Email)
 	}
 }
 
