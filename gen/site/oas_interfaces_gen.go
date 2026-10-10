@@ -97,6 +97,10 @@ type SiteContactsDeleteRes interface {
 	siteContactsDeleteRes()
 }
 
+type SiteContactsExportRes interface {
+	siteContactsExportRes()
+}
+
 type SiteContactsGetRes interface {
 	siteContactsGetRes()
 }

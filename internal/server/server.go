@@ -64,7 +64,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client, site.Attempts))
 	authHandler, avatarHandler := authSvc.Handlers()
 	limiter := ratelimit.New(cfg.RateLimits)
-	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0024) on both of its
+	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0025) on both of its
 	// paths: the provider's own and the SPA's /site alias. The longer pattern
 	// outranks the /auth/ subtree.
 	throttledLogin := loginThrottle(authHandler, site.Attempts, limiter.LoginIP())
@@ -137,7 +137,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		return nil, err
 	}
 
-	// Order (ADR 0024): recoverer, requestID, CORS, client address, rate limit,
+	// Order (ADR 0025): recoverer, requestID, CORS, client address, rate limit,
 	// timeout. CORS precedes the limiter so a 429 still reaches the browser; guard
 	// sits inside CORS so preflights are answered before the check.
 	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, limiter.Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), collectEventLimit(cfg.BodyLimits.CollectEvent), guard), nil

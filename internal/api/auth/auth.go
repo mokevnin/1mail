@@ -76,7 +76,7 @@ func NewExternalSecurityHandler(client *ent.Client) *ExternalSecurityHandler {
 var _ externalapi.SecurityHandler = (*ExternalSecurityHandler)(nil)
 
 // HandleBearerAuth authenticates the Bearer token and applies the rate limits that
-// need it (ADR 0024): a client address that spent its failed-authentication budget
+// need it (ADR 0025): a client address that spent its failed-authentication budget
 // is refused before the token is looked at, a failure counts against it, and a
 // success charges the Workspace's shared /api and /mcp budget. Rejections surface
 // as *ratelimit.LimitedError.
@@ -92,7 +92,7 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, op exter
 	return authed, nil
 }
 
-// guardedAuth is the sequence both token surfaces share (ADR 0024): a client address
+// guardedAuth is the sequence both token surfaces share (ADR 0025): a client address
 // that spent its failed-authentication budget is refused before the credential is
 // looked at, an ErrUnauthorized counts against that budget, and a success is charged
 // by charge (the Workspace's budget of the surface).
@@ -197,7 +197,7 @@ func NewCollectSecurityHandler(client *ent.Client) *CollectSecurityHandler {
 var _ collectapi.SecurityHandler = (*CollectSecurityHandler)(nil)
 
 // HandleApiKeyAuth authenticates the collect key and applies the rate limits that
-// need it (ADR 0024): a client address that spent its failed-authentication budget
+// need it (ADR 0025): a client address that spent its failed-authentication budget
 // is refused before the key is looked at, a wrong key counts against it, and a
 // success charges the Workspace's /collect budget. Rejections surface as
 // *ratelimit.LimitedError.
@@ -281,7 +281,7 @@ func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.Op
 
 // CredChecker verifies user credentials for go-pkgz/auth direct provider.
 //
-// It also feeds the per-account login throttle (ADR 0024): every failure is counted,
+// It also feeds the per-account login throttle (ADR 0025): every failure is counted,
 // for unknown emails too, and a success resets the counter. It never answers 429
 // itself, because go-pkgz/auth turns a checker error into a 500; the login route's
 // HTTP wrapper in internal/server consults the same counters before the provider runs.

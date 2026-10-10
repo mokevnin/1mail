@@ -22,7 +22,7 @@ import (
 const humanLimit = 3
 
 // humanEndpoints are the public, human-driven site endpoints the "human" policy
-// covers (ADR 0024). Each one is its own bucket per IP.
+// covers (ADR 0025). Each one is its own bucket per IP.
 var humanEndpoints = map[string]string{
 	"signup":          "/site/auth/register",
 	"invitation":      "/site/invitations/some-token/accept",

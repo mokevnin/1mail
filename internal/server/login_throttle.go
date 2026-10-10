@@ -16,7 +16,7 @@ import (
 	"github.com/mokevnin/1mail/internal/ratelimit"
 )
 
-// loginThrottle wraps the go-pkgz/auth login route (ADR 0024). The provider maps a
+// loginThrottle wraps the go-pkgz/auth login route (ADR 0025). The provider maps a
 // credential-checker error to 500 and a wrong password to a fixed 403, so it cannot
 // answer 429 itself; this wrapper does, before the provider runs: first the per-IP
 // cap, then the per-account delay, which applies to a correct password too (else the

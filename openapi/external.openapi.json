@@ -82,7 +82,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -178,7 +178,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -272,7 +272,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -377,7 +377,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -496,7 +496,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -631,7 +631,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -713,7 +713,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -821,7 +821,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -927,7 +927,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1036,7 +1036,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1144,7 +1144,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1245,7 +1245,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1377,7 +1377,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1459,7 +1459,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1567,7 +1567,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1673,7 +1673,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1782,7 +1782,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1890,7 +1890,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -1998,7 +1998,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2106,7 +2106,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2220,7 +2220,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2338,7 +2338,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2473,7 +2473,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2565,7 +2565,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2659,7 +2659,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2717,6 +2717,150 @@
         "x-mcp": {
           "name": "contacts_upsert_batch"
         }
+      }
+    },
+    "/contacts/erase": {
+      "delete": {
+        "operationId": "Contacts_eraseBy",
+        "description": "Erase by an identifier other than the contact id (GDPR Art. 17): by `email`\n(also anonymizes delivery records to an address that never had a contact) or\nby `visitorId` (an anonymous visitor and its events). Exactly one of the two.\nThe same rules as deleting by id apply. Requires the contacts:erase scope.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "The email address to erase",
+            "schema": {
+              "$ref": "#/components/schemas/EmailAddress"
+            },
+            "explode": false
+          },
+          {
+            "name": "visitorId",
+            "in": "query",
+            "required": false,
+            "description": "The anonymous visitor id to erase",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"]
+      }
+    },
+    "/contacts/export": {
+      "post": {
+        "operationId": "Contacts_export",
+        "description": "Export everything held about one contact as a streamed JSON download: the\ncontact, its custom fields, tags, visitors, all events, its opt-outs\n(unsubscribes, suppressions, confirmations) and delivery metadata. Rendered\nmessage bodies are not included. Identify the contact by exactly one of\n`id` or `email`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "The contact's id",
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            },
+            "explode": false
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "The contact's email address",
+            "schema": {
+              "$ref": "#/components/schemas/EmailAddress"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)",
+            "headers": {
+              "Content-Disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"]
       }
     },
     "/contacts/{contactId}/tags": {
@@ -2822,7 +2966,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -2933,7 +3077,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3047,7 +3191,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3145,7 +3289,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3261,7 +3405,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3319,7 +3463,7 @@
       },
       "delete": {
         "operationId": "Contacts_delete",
-        "description": "Delete a resource",
+        "description": "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Requires the contacts:erase scope.",
         "parameters": [
           {
             "$ref": "#/components/parameters/ContactResourceKey"
@@ -3370,7 +3514,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3475,7 +3619,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3592,7 +3736,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3682,7 +3826,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3827,7 +3971,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -3914,7 +4058,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4059,7 +4203,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4141,7 +4285,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4245,7 +4389,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4353,7 +4497,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4459,7 +4603,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4568,7 +4712,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4690,7 +4834,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4821,7 +4965,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -4908,7 +5052,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5050,7 +5194,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5182,7 +5326,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5264,7 +5408,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5372,7 +5516,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5478,7 +5622,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5587,7 +5731,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5671,7 +5815,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5813,7 +5957,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -5895,7 +6039,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -6003,7 +6147,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -6109,7 +6253,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -6218,7 +6362,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -6421,6 +6565,7 @@
         "enum": [
           "contacts:read",
           "contacts:write",
+          "contacts:erase",
           "segments:read",
           "segments:write",
           "events:read",

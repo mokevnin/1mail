@@ -23,7 +23,7 @@ type BodyLimits struct {
 	CollectEvent int64
 }
 
-// RateLimits are the per-policy request budgets per minute (ADR 0024). Every limit
+// RateLimits are the per-policy request budgets per minute (ADR 0025). Every limit
 // has a default and 0 disables it. They are core, never gated by the EE licence.
 type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
@@ -118,7 +118,7 @@ type Config struct {
 
 	// MetricsAddr (host:port) is where the opt-in Prometheus listener binds. Empty
 	// (the default) means no listener; the public port never serves /metrics
-	// (ADR 0024).
+	// (ADR 0025).
 	MetricsAddr string
 
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a

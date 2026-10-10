@@ -339,3 +339,144 @@
   workspace_id: 2
   occurred_at: '2026-01-01 00:00:00'
   created_at: '2026-01-01 00:00:00'
+
+# --- Initech (workspace 3): ContactErasable's Events, one of every kind the Erasure
+# matrix distinguishes, plus ContactBystander's. ---
+- id: 950 # fixture: EventErasableCustom
+  contact_id: 300
+  subject_id: user-erin-300
+  email: erin@initech.test
+  action: plan_upgraded
+  properties: '{"plan":"gold"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
+- id: 951 # fixture: EventErasableAnonymous
+  visitor_id: vis-erasable-laptop
+  action: pricing_viewed
+  properties: '{"path":"/pricing"}'
+  workspace_id: 3
+  occurred_at: '2026-01-01 12:00:00'
+  created_at: '2026-01-01 12:00:00'
+- id: 952 # fixture: EventErasableSent
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.sent
+  properties: '{"sendingDomain":"mail.initech.test","surface":"broadcast","outboundMessageId":300,"providerMessageId":"<erin-300@initech.test>"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
+- id: 953 # fixture: EventErasableOpened
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.opened
+  properties: '{"broadcastId":300}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 01:00:00'
+  created_at: '2026-01-02 01:00:00'
+- id: 954 # fixture: EventErasableClicked
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.clicked
+  properties: '{"broadcastId":300,"url":"https://initech.test/offer?e=erin"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 02:00:00'
+  created_at: '2026-01-02 02:00:00'
+- id: 955 # fixture: EventErasableBounced
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.bounced
+  properties: '{"sendingDomain":"mail.initech.test","bounceKind":"permanent","provider":"ses"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 03:00:00'
+  created_at: '2026-01-02 03:00:00'
+- id: 956 # fixture: EventErasableComplained
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.complained
+  properties: '{"sendingDomain":"mail.initech.test","provider":"ses"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 04:00:00'
+  created_at: '2026-01-02 04:00:00'
+- id: 957 # fixture: EventErasableUnsubscribed
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: email.unsubscribed
+  properties: '{"broadcastId":300}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 05:00:00'
+  created_at: '2026-01-02 05:00:00'
+- id: 958 # fixture: EventErasableCreated
+  contact_id: 300
+  subject_id: user-erin-300
+  email: erin@initech.test
+  phone: '+15550100300'
+  action: contact.created
+  properties: '{"email":"erin@initech.test"}'
+  workspace_id: 3
+  occurred_at: '2026-01-01 00:00:00'
+  created_at: '2026-01-01 00:00:00'
+- id: 959 # fixture: EventErasableConfirmed
+  contact_id: 300
+  subject_id: erin@initech.test
+  email: erin@initech.test
+  action: marketing.confirmed
+  properties: '{"provenance":"double_opt_in","ip":"203.0.113.7"}'
+  workspace_id: 3
+  occurred_at: '2026-01-01 06:00:00'
+  created_at: '2026-01-01 06:00:00'
+- id: 970 # fixture: EventBystanderCustom
+  contact_id: 301
+  email: ben@initech.test
+  action: plan_upgraded
+  properties: '{"plan":"silver"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
+- id: 971 # fixture: EventBystanderSent
+  contact_id: 301
+  email: ben@initech.test
+  action: email.sent
+  properties: '{"sendingDomain":"mail.initech.test","surface":"broadcast"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
+- id: 980 # fixture: EventAnonymousVisitor
+  visitor_id: vis-anonymous-301
+  action: pricing_viewed
+  properties: '{"path":"/pricing"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
+# --- Export subject (contact 800) ---
+- id: 800 # fixture: EventExportCustom
+  contact_id: 800
+  visitor_id: vis-export-laptop
+  subject_id: user:export-subject
+  email: export.subject@example.com
+  action: export_subject_custom
+  properties: '{"plan":"pro"}'
+  workspace_id: 1
+  occurred_at: '2026-02-02 10:00:00'
+  created_at: '2026-02-02 10:00:00'
+- id: 801
+  contact_id: 800
+  email: export.subject@example.com
+  action: email.sent
+  workspace_id: 1
+  occurred_at: '2026-02-02 11:00:00'
+  created_at: '2026-02-02 11:00:00'
+- id: 802
+  contact_id: 800
+  email: export.subject@example.com
+  action: marketing.confirmed
+  properties: '{"ip":"203.0.113.9"}'
+  workspace_id: 1
+  occurred_at: '2026-02-01 09:00:00'
+  created_at: '2026-02-01 09:00:00'

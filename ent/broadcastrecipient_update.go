@@ -86,6 +86,12 @@ func (_u *BroadcastRecipientUpdate) AddContactID(v int64) *BroadcastRecipientUpd
 	return _u
 }
 
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *BroadcastRecipientUpdate) ClearContactID() *BroadcastRecipientUpdate {
+	_u.mutation.ClearContactID()
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *BroadcastRecipientUpdate) SetStatus(v broadcastrecipient.Status) *BroadcastRecipientUpdate {
 	_u.mutation.SetStatus(v)
@@ -313,6 +319,9 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 	if value, ok := _u.mutation.AddedContactID(); ok {
 		_spec.AddField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
 	}
+	if _u.mutation.ContactIDCleared() {
+		_spec.ClearField(broadcastrecipient.FieldContactID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(broadcastrecipient.FieldStatus, field.TypeEnum, value)
 	}
@@ -481,6 +490,12 @@ func (_u *BroadcastRecipientUpdateOne) SetNillableContactID(v *int64) *Broadcast
 // AddContactID adds value to the "contact_id" field.
 func (_u *BroadcastRecipientUpdateOne) AddContactID(v int64) *BroadcastRecipientUpdateOne {
 	_u.mutation.AddContactID(v)
+	return _u
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *BroadcastRecipientUpdateOne) ClearContactID() *BroadcastRecipientUpdateOne {
+	_u.mutation.ClearContactID()
 	return _u
 }
 
@@ -740,6 +755,9 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 	}
 	if value, ok := _u.mutation.AddedContactID(); ok {
 		_spec.AddField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
+	}
+	if _u.mutation.ContactIDCleared() {
+		_spec.ClearField(broadcastrecipient.FieldContactID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(broadcastrecipient.FieldStatus, field.TypeEnum, value)

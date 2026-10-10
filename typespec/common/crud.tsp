@@ -22,7 +22,8 @@ interface WorkspaceCrud<
   Resource extends {},
   CreateInput,
   UpdateInput,
-  WriteConflict = never
+  WriteConflict = never,
+  DeleteDenied = never
 > {
   /** List resources for the site UI */
   @listsResource(Resource)
@@ -74,12 +75,27 @@ interface WorkspaceCrud<
   delete(...ResourceParameters<Resource>):
     | NoContentResponse
     | BadRequestProblem
-    | NotFoundProblem;
+    | NotFoundProblem
+    | DeleteDenied;
 }
 
-/** Workspace-scoped CRUD for a resource with a unique key (adds 409 on writes). */
-interface WorkspaceCrudUnique<Resource extends {}, CreateInput, UpdateInput>
-  extends WorkspaceCrud<Resource, CreateInput, UpdateInput, ConflictProblem> {}
+/**
+ * Workspace-scoped CRUD for a resource with a unique key (adds 409 on writes).
+ * `DeleteDenied` is the extra error a delete may raise (e.g. 403 for a role gate).
+ */
+interface WorkspaceCrudUnique<
+  Resource extends {},
+  CreateInput,
+  UpdateInput,
+  DeleteDenied = never
+>
+  extends WorkspaceCrud<
+      Resource,
+      CreateInput,
+      UpdateInput,
+      ConflictProblem,
+      DeleteDenied
+    > {}
 
 /**
  * Flat, token-scoped CRUD for the external (public) API. No parent nesting —

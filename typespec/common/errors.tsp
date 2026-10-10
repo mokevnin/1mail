@@ -77,7 +77,7 @@ model ForbiddenProblem is Response<403> {
   @body body: ProblemDetails;
 }
 
-/** RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024) */
+/** RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025) */
 @error
 model TooManyRequestsProblem is Response<429> {
   @header contentType: "application/problem+json";

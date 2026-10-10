@@ -1444,6 +1444,20 @@ export const zSiteContactsCreatePath = z.object({
  */
 export const zSiteContactsCreateResponse = zSiteContactResource;
 
+export const zSiteContactsExportPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteContactsExportQuery = z.object({
+  id: z.exactOptional(zEntityId),
+  email: z.exactOptional(zEmailAddress)
+});
+
+/**
+ * Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)
+ */
+export const zSiteContactsExportResponse = z.string();
+
 export const zSiteTagsListForContactPath = z.object({
   slug: z.string(),
   contactId: zEntityId

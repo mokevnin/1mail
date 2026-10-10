@@ -115,3 +115,93 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+
+# Initech (workspace 3): two sends to ContactErasable (a broadcast and a transactional)
+# and one to ContactBystander.
+- id: 300 # fixture: OutboundMessageErasableBroadcast
+  kind: broadcast
+  idempotency_key: 'broadcast:3000'
+  channel: email
+  destination: erin@initech.test
+  contact_id: 300
+  broadcast_id: 300
+  broadcast_recipient_id: 3000
+  status: sent
+  sending_domain: mail.initech.test
+  sent_at: '2026-01-02 00:00:00'
+  claimed_at: '2026-01-02 00:00:00'
+  workspace_id: 3
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
+- id: 301 # fixture: OutboundMessageErasableTransactional
+  kind: transactional
+  idempotency_key: 'transactional:txn-erasable-301'
+  channel: email
+  destination: erin@initech.test
+  contact_id: 300
+  status: sent
+  sending_domain: mail.initech.test
+  sent_at: '2026-01-02 00:00:00'
+  claimed_at: '2026-01-02 00:00:00'
+  workspace_id: 3
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
+- id: 302 # fixture: OutboundMessageBystander
+  kind: broadcast
+  idempotency_key: 'broadcast:3001'
+  channel: email
+  destination: ben@initech.test
+  contact_id: 301
+  broadcast_id: 300
+  broadcast_recipient_id: 3001
+  status: sent
+  sending_domain: mail.initech.test
+  sent_at: '2026-01-02 00:00:00'
+  claimed_at: '2026-01-02 00:00:00'
+  workspace_id: 3
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
+# Initech: a transactional send to an address that never had a Contact.
+- id: 303 # fixture: OutboundMessageStranger
+  kind: transactional
+  idempotency_key: 'transactional:txn-stranger-303'
+  channel: email
+  destination: stranger@initech.test
+  status: sent
+  sending_domain: mail.initech.test
+  sent_at: '2026-01-02 00:00:00'
+  claimed_at: '2026-01-02 00:00:00'
+  workspace_id: 3
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
+# Export subject: one send linked to contact 800, one transactional send to the
+# same destination with no Contact.
+- id: 800
+  kind: transactional
+  idempotency_key: 'transactional:export-subject-800'
+  channel: email
+  destination: export.subject@example.com
+  contact_id: 800
+  template_id: 1
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-800@codebasics.dev>'
+  sent_at: '2026-02-02 11:00:00'
+  claimed_at: '2026-02-02 11:00:00'
+  workspace_id: 1
+  created_at: '2026-02-02 11:00:00'
+  updated_at: '2026-02-02 11:00:00'
+- id: 801
+  kind: transactional
+  idempotency_key: 'transactional:export-subject-801'
+  channel: email
+  destination: export.subject@example.com
+  template_id: 1
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-801@codebasics.dev>'
+  sent_at: '2026-02-03 11:00:00'
+  claimed_at: '2026-02-03 11:00:00'
+  workspace_id: 1
+  created_at: '2026-02-03 11:00:00'
+  updated_at: '2026-02-03 11:00:00'

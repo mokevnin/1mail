@@ -1,5 +1,7 @@
-import { Card, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { Button, Card, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,11 +10,19 @@ import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { EventRowDetails } from '../../components/EventRowDetails.tsx'
 import { ButtonLink } from '../../components/RouterLink.tsx'
 import {
+  siteContactsDeleteMutation,
   siteContactsGetOptions,
+  siteContactsListQueryKey,
   siteEventsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { siteContactsExport } from '../../generated/site/sdk.gen.ts'
+import { useCurrentRole } from '../../hooks/useCurrentRole.ts'
+import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsDetailRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { formatDateTime } from '../../utils/datetime.ts'
+import { dispositionFilename, saveBlob } from '../../utils/download.ts'
 
 const EVENTS_PAGE_SIZE = 10
 
@@ -38,6 +48,12 @@ function formatCustomValue(value: unknown): string {
 export function ContactDetailPage() {
   const { t } = useTranslation()
   const { slug, contactId } = contactsDetailRoute.useParams()
+  const navigate = useNavigate()
+  const confirm = useDeleteConfirmation()
+  const role = useCurrentRole(slug)
+  // Erasure is irreversible, so it is offered to owners and admins only (the API
+  // refuses everyone else with 403).
+  const canErase = role === 'owner' || role === 'admin'
   const [page, setPage] = useState(1)
 
   // The component instance is reused across contactId changes, so reset the
@@ -62,6 +78,32 @@ export function ContactDetailPage() {
       query: { page, pageSize: EVENTS_PAGE_SIZE, contactId },
     }),
   )
+
+  const eraseMutation = useResourceMutation({
+    mutation: siteContactsDeleteMutation(),
+    invalidate: [siteContactsListQueryKey({ path: { slug } })],
+    successMessage: t(($) => $.notifications.contactErased),
+    errorTitle: t(($) => $.alerts.eraseErrorTitle),
+    forbiddenMessage: t(($) => $.contacts.eraseForbidden),
+    onDone: () => navigate({ to: contactsRoute.to, params: { slug } }),
+  })
+
+  const exportMutation = useMutation({
+    // The generated mutation helper drops the response; the filename is the server's
+    // (Content-Disposition), so call the generated SDK function and keep both.
+    mutationFn: () =>
+      siteContactsExport({ path: { slug }, query: { id: contactId }, throwOnError: true }),
+    onSuccess: ({ data, response }) => saveBlob(data, dispositionFilename(response)),
+    onError: (error) =>
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.exportErrorTitle),
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.notifications.errorMessage),
+        ),
+      }),
+  })
 
   if (contactQuery.isLoading) return <Loader />
 
@@ -91,6 +133,29 @@ export function ContactDetailPage() {
           <ButtonLink variant="default" to={contactsEditRoute.to} params={{ slug, contactId }}>
             {t(($) => $.actions.edit)}
           </ButtonLink>
+          <Button
+            variant="default"
+            loading={exportMutation.isPending}
+            onClick={() => exportMutation.mutate()}
+          >
+            {t(($) => $.contacts.export)}
+          </Button>
+          {canErase ? (
+            <Button
+              color="red"
+              variant="light"
+              onClick={() =>
+                confirm({
+                  title: t(($) => $.contacts.eraseConfirmTitle),
+                  description: t(($) => $.contacts.eraseConfirmDescription),
+                  confirmLabel: t(($) => $.contacts.erase),
+                  onConfirm: () => eraseMutation.mutate({ path: { slug, id: contactId } }),
+                })
+              }
+            >
+              {t(($) => $.contacts.erase)}
+            </Button>
+          ) : null}
           <ButtonLink variant="subtle" to={contactsRoute.to} params={{ slug }}>
             {t(($) => $.actions.back)}
           </ButtonLink>

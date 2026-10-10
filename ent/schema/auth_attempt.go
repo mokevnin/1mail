@@ -9,7 +9,7 @@ import (
 )
 
 // AuthAttempt is the failed-attempt counter of one normalized email for one action
-// kind (ADR 0024). It follows the account, not the source IP, so a distributed
+// kind (ADR 0025). It follows the account, not the source IP, so a distributed
 // guessing attack on one account hits one counter, and it lives in Postgres so the
 // count is exact across replicas. It has no Workspace (a User is not Workspace-owned)
 // and no edge to User: rows are written for unknown emails too, so the table cannot

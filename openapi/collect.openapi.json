@@ -29,7 +29,7 @@
             }
           },
           "413": {
-            "description": "RFC 7807 payload too large response: the body exceeds the size cap (ADR 0024)",
+            "description": "RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -49,7 +49,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,
@@ -132,7 +132,7 @@
             }
           },
           "413": {
-            "description": "RFC 7807 payload too large response: the body exceeds the size cap (ADR 0024)",
+            "description": "RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -152,7 +152,7 @@
             }
           },
           "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)",
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
               "Retry-After": {
                 "required": true,

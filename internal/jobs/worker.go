@@ -125,7 +125,7 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
-			// Drop failed-attempt rows past their window (ADR 0024).
+			// Drop failed-attempt rows past their window (ADR 0025).
 			river.NewPeriodicJob(
 				river.PeriodicInterval(time.Hour),
 				func() (river.JobArgs, *river.InsertOpts) {

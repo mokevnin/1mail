@@ -265,6 +265,16 @@ func ContactIDLTE(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldLTE(FieldContactID, v))
 }
 
+// ContactIDIsNil applies the IsNil predicate on the "contact_id" field.
+func ContactIDIsNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIsNull(FieldContactID))
+}
+
+// ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
+func ContactIDNotNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotNull(FieldContactID))
+}
+
 // StatusEQ applies the EQ predicate on the "status" field.
 func StatusEQ(v Status) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldStatus, v))

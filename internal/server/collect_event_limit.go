@@ -9,7 +9,7 @@ import (
 )
 
 // collectEventLimit enforces the per-event cap inside a /collect/events batch
-// before the ogen decoder runs (ADR 0024): each element of "events" may be at most
+// before the ogen decoder runs (ADR 0025): each element of "events" may be at most
 // limit bytes as sent. The body is already capped as a whole by bodyLimit, so it is
 // read once here and handed back to ogen. Size is the element's exact serialized
 // length. A body that does not parse is passed through untouched: ogen answers the

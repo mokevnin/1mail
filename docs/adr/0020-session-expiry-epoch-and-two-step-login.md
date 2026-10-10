@@ -17,7 +17,7 @@ so a thin handler replaces it, checks the password, answers with a short-lived s
 challenge, and `/site/auth/second-factor` verifies a TOTP (`pquerna/otp`) or Recovery code before
 issuing the cookie through `TokenService().Set`. `/auth/` is no longer mounted, so no second path
 mints a session around the Second factor. Failed password, Second factor and Recovery code
-attempts all feed the existing per-account counter of ADR 0024 (rate limiting): the Login throttle
+attempts all feed the existing per-account counter of ADR 0025 (rate limiting): the Login throttle
 (GLOSSARY) is that mechanism, not a new one.
 
 ## Considered options

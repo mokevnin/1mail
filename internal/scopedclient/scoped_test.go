@@ -151,10 +151,12 @@ func TestScopedConditionalBulkDelete(t *testing.T) {
 	require.NoError(t, err)
 	assert.Positive(t, n)
 
-	left, err := env.DB.Tag.Query().All(ctx)
+	mine, err := env.DB.Tag.Query().Where(tag.WorkspaceID(acme)).Count(ctx)
 	require.NoError(t, err)
-	require.Len(t, left, 1, "only the foreign tag is left")
-	assert.Equal(t, globex, left[0].WorkspaceID)
+	assert.Zero(t, mine, "every Acme tag is deleted")
+	foreign, err := env.DB.Tag.Query().Where(tag.WorkspaceID(globex)).Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, foreign, "the foreign tag is left")
 }
 
 func TestScopedUpsert(t *testing.T) {

@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The tracking guard only decides whether an engagement is recorded (ADR 0024):
+// The tracking guard only decides whether an engagement is recorded (ADR 0025):
 // a recipient is never refused, whatever the request rate of their IP.
 
 const clickDest = "https://dest.test/x"

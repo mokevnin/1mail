@@ -39,6 +39,7 @@ export default defineConfig({
             { text: 'API', link: '/guide/api' },
             { text: 'Webhooks', link: '/guide/webhooks' },
             { text: 'MCP for agents', link: '/guide/mcp' },
+            { text: 'Answering a GDPR request', link: '/guide/gdpr' },
             { text: 'Self-hosting', link: '/self-hosting' },
           ],
         },

@@ -147,10 +147,18 @@ type Handler interface {
 	SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput, params SiteContactsCreateParams) (SiteContactsCreateRes, error)
 	// SiteContactsDelete implements SiteContacts_delete operation.
 	//
-	// Delete a resource from the site UI.
+	// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+	// its opt-outs survive. Owner or admin only.
 	//
 	// DELETE /workspaces/{slug}/contacts/{id}
 	SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (SiteContactsDeleteRes, error)
+	// SiteContactsExport implements SiteContacts_export operation.
+	//
+	// Export everything held about one contact as a streamed JSON download. Identify the contact by
+	// exactly one of `id` or `email`. Available to any Workspace member (contact read access).
+	//
+	// POST /workspaces/{slug}/contacts/export
+	SiteContactsExport(ctx context.Context, params SiteContactsExportParams) (SiteContactsExportRes, error)
 	// SiteContactsGet implements SiteContacts_get operation.
 	//
 	// Get a resource by ID for the site UI.

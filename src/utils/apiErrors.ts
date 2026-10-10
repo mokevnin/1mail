@@ -18,7 +18,7 @@ export function isForbiddenError(error: unknown) {
 }
 
 // A 429 problem body carries `status: 429` (RFC 7807): a rate limit was hit
-// (ADR 0024). The generated client types it, so callers branch on the status, not
+// (ADR 0025). The generated client types it, so callers branch on the status, not
 // on the English detail.
 export function isRateLimitedError(error: unknown) {
   return isApiErrorLike(error) && error.status === 429

@@ -16,6 +16,7 @@ import (
 
 	"github.com/DATA-DOG/go-txdb"
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
@@ -29,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
@@ -85,6 +87,19 @@ func initBaseline() {
 		// of the ent schema, so create it here too (once per process, on the real
 		// DB) — otherwise the transactional publisher hits "relation does not exist".
 		if err := events.InitSchema(context.Background(), sqlDB); err != nil {
+			loadErr = err
+			return
+		}
+
+		// river's own tables, so Erasure can clear the jobs that name a Contact (the
+		// queue itself stays inline in tests; see JobsOf and EnqueueJob).
+		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			loadErr = err
+			return
+		}
+		defer pool.Close()
+		if err := jobs.Migrate(context.Background(), pool); err != nil {
 			loadErr = err
 			return
 		}
@@ -214,6 +229,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	eventLog := eventlog.New(bus)
 	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
+	erasureModule := erasure.New(bus)
 	tagsModule := tags.New()
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
@@ -223,7 +239,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		accounts.WithRateLimits(cfg.RateLimits))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
 		BootstrapToken: cfg.BootstrapToken,
 	})
@@ -232,7 +248,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
 		Tokens: authtoken.New(cfg.JWTSecret), Tracker: tracker, AppURL: cfg.AppURL,

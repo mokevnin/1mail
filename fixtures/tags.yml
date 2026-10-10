@@ -19,3 +19,9 @@
   name: globex-only
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
+
+# Initech (workspace 3): shared by ContactErasable and ContactBystander.
+- id: 300 # fixture: TagInitech
+  name: initech-shared
+  workspace_id: 3
+  created_at: '2026-01-01 00:00:00'

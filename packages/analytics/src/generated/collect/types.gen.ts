@@ -134,7 +134,7 @@ export type CollectEventsCreateErrors = {
    */
   401: ProblemDetails;
   /**
-   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0024)
+   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)
    */
   413: ProblemDetails;
   /**
@@ -142,7 +142,7 @@ export type CollectEventsCreateErrors = {
    */
   422: ProblemDetails;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
    */
   429: ProblemDetails;
 };
@@ -171,7 +171,7 @@ export type CollectIdentifyCreateErrors = {
    */
   401: ProblemDetails;
   /**
-   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0024)
+   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)
    */
   413: ProblemDetails;
   /**
@@ -179,7 +179,7 @@ export type CollectIdentifyCreateErrors = {
    */
   422: ProblemDetails;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
    */
   429: ProblemDetails;
 };

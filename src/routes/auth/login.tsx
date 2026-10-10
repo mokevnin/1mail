@@ -20,7 +20,7 @@ export function LoginPage() {
 
   const apiErrorMessage = useApiErrorMessage()
 
-  // How long to wait, when the throttle says so (ADR 0024).
+  // How long to wait, when the throttle says so (ADR 0025).
   const rateLimitMessage = (error: unknown) => {
     const wait = getRateLimitWait(error)
     if (!wait) return undefined

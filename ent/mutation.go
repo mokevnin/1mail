@@ -5733,10 +5733,24 @@ func (m *BroadcastRecipientMutation) AddedContactID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearContactID clears the value of the "contact_id" field.
+func (m *BroadcastRecipientMutation) ClearContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	m.clearedFields[broadcastrecipient.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *BroadcastRecipientMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[broadcastrecipient.FieldContactID]
+	return ok
+}
+
 // ResetContactID resets all changes to the "contact_id" field.
 func (m *BroadcastRecipientMutation) ResetContactID() {
 	m.contact_id = nil
 	m.addcontact_id = nil
+	delete(m.clearedFields, broadcastrecipient.FieldContactID)
 }
 
 // SetStatus sets the "status" field.
@@ -6367,6 +6381,9 @@ func (m *BroadcastRecipientMutation) AddField(name string, value ent.Value) erro
 // mutation.
 func (m *BroadcastRecipientMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(broadcastrecipient.FieldContactID) {
+		fields = append(fields, broadcastrecipient.FieldContactID)
+	}
 	if m.FieldCleared(broadcastrecipient.FieldOutboundMessageID) {
 		fields = append(fields, broadcastrecipient.FieldOutboundMessageID)
 	}
@@ -6396,6 +6413,9 @@ func (m *BroadcastRecipientMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BroadcastRecipientMutation) ClearField(name string) error {
 	switch name {
+	case broadcastrecipient.FieldContactID:
+		m.ClearContactID()
+		return nil
 	case broadcastrecipient.FieldOutboundMessageID:
 		m.ClearOutboundMessageID()
 		return nil
@@ -15374,9 +15394,22 @@ func (m *OutboundMessageMutation) OldDestination(ctx context.Context) (v string,
 	return oldValue.Destination, nil
 }
 
+// ClearDestination clears the value of the "destination" field.
+func (m *OutboundMessageMutation) ClearDestination() {
+	m.destination = nil
+	m.clearedFields[outboundmessage.FieldDestination] = struct{}{}
+}
+
+// DestinationCleared returns if the "destination" field was cleared in this mutation.
+func (m *OutboundMessageMutation) DestinationCleared() bool {
+	_, ok := m.clearedFields[outboundmessage.FieldDestination]
+	return ok
+}
+
 // ResetDestination resets all changes to the "destination" field.
 func (m *OutboundMessageMutation) ResetDestination() {
 	m.destination = nil
+	delete(m.clearedFields, outboundmessage.FieldDestination)
 }
 
 // SetContactID sets the "contact_id" field.
@@ -16685,6 +16718,9 @@ func (m *OutboundMessageMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *OutboundMessageMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(outboundmessage.FieldDestination) {
+		fields = append(fields, outboundmessage.FieldDestination)
+	}
 	if m.FieldCleared(outboundmessage.FieldContactID) {
 		fields = append(fields, outboundmessage.FieldContactID)
 	}
@@ -16735,6 +16771,9 @@ func (m *OutboundMessageMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *OutboundMessageMutation) ClearField(name string) error {
 	switch name {
+	case outboundmessage.FieldDestination:
+		m.ClearDestination()
+		return nil
 	case outboundmessage.FieldContactID:
 		m.ClearContactID()
 		return nil

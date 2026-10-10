@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -128,8 +129,15 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	return &resource, nil
 }
 
+// tokenOperator is the API token behind the request, as the operator of an Erasure.
+func tokenOperator(ctx context.Context) erasure.Operator {
+	return erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID}
+}
+
+// ContactsDelete is Erasure (ADR 0021): deleting a Contact removes its personal data.
+// It has its own scope, separate from contacts:write, because it is irreversible.
 func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.ContactsDeleteParams) (externalapi.ContactsDeleteRes, error) {
-	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:write") {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:erase") {
 		res := externalapi.ContactsDeleteUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
@@ -140,8 +148,9 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	err = auth.TokenScoped(ctx).Contact().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id),
+		tokenOperator(ctx))
+	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
 	}
@@ -149,6 +158,37 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return nil, err
 	}
 	return &externalapi.ContactsDeleteNoContent{}, nil
+}
+
+// ContactsEraseBy is Erasure by an email address or a visitor id (ADR 0021), under the
+// same scope and rules as deleting by id. Exactly one identifier is required.
+func (h *Handlers) ContactsEraseBy(ctx context.Context, params externalapi.ContactsEraseByParams) (externalapi.ContactsEraseByRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:erase") {
+		res := externalapi.ContactsEraseByUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+
+	email, hasEmail := params.Email.Get()
+	visitorID, hasVisitor := params.VisitorId.Get()
+	if hasEmail == hasVisitor || (hasVisitor && visitorID == "") {
+		res := externalapi.ContactsEraseByBadRequest(problem(http.StatusBadRequest, "pass exactly one of email or visitorId"))
+		return &res, nil
+	}
+	id := erasure.ByVisitorID(visitorID)
+	if hasEmail {
+		id = erasure.ByEmail(string(email))
+	}
+
+	err := h.erasure.Erase(ctx, auth.TokenScoped(ctx), id,
+		tokenOperator(ctx))
+	if errors.Is(err, erasure.ErrNotFound) {
+		res := externalapi.ContactsEraseByNotFound(problem(http.StatusNotFound, "nothing found for the identifier"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &externalapi.ContactsEraseByNoContent{}, nil
 }
 
 // ContactsBatchUpsert upserts each Contact independently and reports a per-item result.

@@ -4053,6 +4053,12 @@ func (x *BroadcastRecipientScopedCreate) SetContactID(v int64) *BroadcastRecipie
 	return x
 }
 
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (x *BroadcastRecipientScopedCreate) SetNillableContactID(v *int64) *BroadcastRecipientScopedCreate {
+	x.b.SetNillableContactID(v)
+	return x
+}
+
 // SetStatus sets the "status" field.
 func (x *BroadcastRecipientScopedCreate) SetStatus(v broadcastrecipient.Status) *BroadcastRecipientScopedCreate {
 	x.b.SetStatus(v)
@@ -4233,6 +4239,12 @@ func (u *BroadcastRecipientScopedUpsert) UpdateBroadcastID() *BroadcastRecipient
 // UpdateContactID sets the "contact_id" field to the value that was provided on create.
 func (u *BroadcastRecipientScopedUpsert) UpdateContactID() *BroadcastRecipientScopedUpsert {
 	u.u.SetExcluded(broadcastrecipient.FieldContactID)
+	return u
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *BroadcastRecipientScopedUpsert) ClearContactID() *BroadcastRecipientScopedUpsert {
+	u.u.SetNull(broadcastrecipient.FieldContactID)
 	return u
 }
 
@@ -4500,6 +4512,12 @@ func (x *BroadcastRecipientScopedUpdateOne) AddContactID(v int64) *BroadcastReci
 	return x
 }
 
+// ClearContactID clears the value of the "contact_id" field.
+func (x *BroadcastRecipientScopedUpdateOne) ClearContactID() *BroadcastRecipientScopedUpdateOne {
+	x.b.ClearContactID()
+	return x
+}
+
 // SetStatus sets the "status" field.
 func (x *BroadcastRecipientScopedUpdateOne) SetStatus(v broadcastrecipient.Status) *BroadcastRecipientScopedUpdateOne {
 	x.b.SetStatus(v)
@@ -4703,6 +4721,12 @@ func (x *BroadcastRecipientScopedUpdate) SetNillableContactID(v *int64) *Broadca
 // AddContactID adds value to the "contact_id" field.
 func (x *BroadcastRecipientScopedUpdate) AddContactID(v int64) *BroadcastRecipientScopedUpdate {
 	x.b.AddContactID(v)
+	return x
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (x *BroadcastRecipientScopedUpdate) ClearContactID() *BroadcastRecipientScopedUpdate {
+	x.b.ClearContactID()
 	return x
 }
 
@@ -10125,6 +10149,12 @@ func (x *OutboundMessageScopedCreate) SetDestination(v string) *OutboundMessageS
 	return x
 }
 
+// SetNillableDestination sets the "destination" field if the given value is not nil.
+func (x *OutboundMessageScopedCreate) SetNillableDestination(v *string) *OutboundMessageScopedCreate {
+	x.b.SetNillableDestination(v)
+	return x
+}
+
 // SetContactID sets the "contact_id" field.
 func (x *OutboundMessageScopedCreate) SetContactID(v int64) *OutboundMessageScopedCreate {
 	x.b.SetContactID(v)
@@ -10424,6 +10454,12 @@ func (u *OutboundMessageScopedUpsert) SetDestination(v string) *OutboundMessageS
 // UpdateDestination sets the "destination" field to the value that was provided on create.
 func (u *OutboundMessageScopedUpsert) UpdateDestination() *OutboundMessageScopedUpsert {
 	u.u.SetExcluded(outboundmessage.FieldDestination)
+	return u
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (u *OutboundMessageScopedUpsert) ClearDestination() *OutboundMessageScopedUpsert {
+	u.u.SetNull(outboundmessage.FieldDestination)
 	return u
 }
 
@@ -10796,6 +10832,12 @@ func (x *OutboundMessageScopedUpdateOne) SetDestination(v string) *OutboundMessa
 // SetNillableDestination sets the "destination" field if the given value is not nil.
 func (x *OutboundMessageScopedUpdateOne) SetNillableDestination(v *string) *OutboundMessageScopedUpdateOne {
 	x.b.SetNillableDestination(v)
+	return x
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (x *OutboundMessageScopedUpdateOne) ClearDestination() *OutboundMessageScopedUpdateOne {
+	x.b.ClearDestination()
 	return x
 }
 
@@ -11175,6 +11217,12 @@ func (x *OutboundMessageScopedUpdate) SetDestination(v string) *OutboundMessageS
 // SetNillableDestination sets the "destination" field if the given value is not nil.
 func (x *OutboundMessageScopedUpdate) SetNillableDestination(v *string) *OutboundMessageScopedUpdate {
 	x.b.SetNillableDestination(v)
+	return x
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (x *OutboundMessageScopedUpdate) ClearDestination() *OutboundMessageScopedUpdate {
+	x.b.ClearDestination()
 	return x
 }
 
