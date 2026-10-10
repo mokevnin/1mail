@@ -70,13 +70,6 @@ func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req 
 	return r, ht.ErrNotImplemented
 }
 
-// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (r SiteAuthDirectLoginRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 //
 // Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -85,6 +78,26 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 //
 // POST /auth/forgot-password
 func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (r SiteAuthForgotPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogin implements SiteAuth_login operation.
+//
+// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+// delay runs (ADR 0025).
+//
+// POST /auth/login
+func (UnimplementedHandler) SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (r SiteAuthLoginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogout implements SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (UnimplementedHandler) SiteAuthLogout(ctx context.Context) (r *SiteAuthLogoutNoContent, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

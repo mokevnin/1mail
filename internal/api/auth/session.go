@@ -3,9 +3,12 @@ package auth
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"strconv"
+	"time"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mokevnin/1mail/ent"
 	entuser "github.com/mokevnin/1mail/ent/user"
 )
@@ -18,23 +21,88 @@ const (
 	ClaimEpoch  = "epoch"
 )
 
-// SessionClaims is the go-pkgz claims updater (Opts.ClaimsUpd): at issuance it
-// resolves the login the provider put into the token's user name and writes that
-// User's id and current session epoch into the token. A login it cannot resolve
-// leaves the claims as they are, and the site security handler rejects the token.
+// SessionCookie is the name of the cookie that carries the session token; the
+// /site contract's cookie security scheme reads it.
+const SessionCookie = "JWT"
+
+// sessionIssuer is the token issuer and audience of every session.
+const sessionIssuer = "1mail"
+
+// Sessions issues and clears the site session (ADR 0020): a JWT signed with the
+// instance secret, carried in an HttpOnly, SameSite=Lax cookie that lives as long as
+// the token (SESSION_TTL, no refresh). It is the one place a session is minted; the
+// login operation, and later the Second factor step, hand its cookie to the client.
+type Sessions struct {
+	tokens *gptoken.Service
+	ttl    time.Duration
+	secure bool
+	now    func() time.Time
+}
+
+// NewSessions builds the issuer. secure sets the cookie's Secure attribute (the
+// instance is served over HTTPS); now is the clock of the token's expiry, nil
+// meaning time.Now.
+func NewSessions(jwtSecret string, ttl time.Duration, secure bool, now func() time.Time) *Sessions {
+	if now == nil {
+		now = time.Now
+	}
+	return &Sessions{
+		tokens: gptoken.NewService(gptoken.Opts{
+			SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
+			Issuer:       sessionIssuer,
+			DisableXSRF:  true,
+		}),
+		ttl:    ttl,
+		secure: secure,
+		now:    now,
+	}
+}
+
+// Issue signs a session for u, stamped with its id and current session epoch, and
+// returns the cookie that carries it.
+func (s *Sessions) Issue(u *ent.User) (*http.Cookie, error) {
+	now := s.now()
+	claims := gptoken.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    sessionIssuer,
+			Audience:  jwt.ClaimStrings{sessionIssuer},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.ttl)),
+		},
+		User: &gptoken.User{Name: u.Email, ID: "user_" + strconv.FormatInt(u.ID, 10), Email: u.Email},
+	}
+	stampUser(&claims, u)
+	tk, err := s.tokens.Token(claims)
+	if err != nil {
+		return nil, err
+	}
+	return s.cookie(tk, int(s.ttl.Seconds())), nil
+}
+
+// Cleared is the cookie that ends the session on the client: empty and expired.
+func (s *Sessions) Cleared() *http.Cookie {
+	c := s.cookie("", -1)
+	c.Expires = time.Unix(0, 0)
+	return c
+}
+
+func (s *Sessions) cookie(value string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name: SessionCookie, Value: value, Path: "/", MaxAge: maxAge,
+		HttpOnly: true, Secure: s.secure, SameSite: http.SameSiteLaxMode,
+	}
+}
+
+// SessionClaims stamps hand-built claims (the test harness mints tokens through it):
+// it resolves the login in the token's user name and writes that User's id and
+// current session epoch into the token. A login it cannot resolve leaves the claims
+// as they are, and the site security handler rejects the token.
 type SessionClaims struct {
 	ent *ent.Client
 }
 
 func NewSessionClaims(client *ent.Client) *SessionClaims {
 	return &SessionClaims{ent: client}
-}
-
-var _ gptoken.ClaimsUpdater = (*SessionClaims)(nil)
-
-// Update is the go-pkgz hook; it carries no context, so it stamps under a fresh one.
-func (s *SessionClaims) Update(claims gptoken.Claims) gptoken.Claims {
-	return s.Stamp(context.Background(), claims)
 }
 
 // Stamp writes the id and current session epoch of the User the claims' login names.
@@ -47,9 +115,14 @@ func (s *SessionClaims) Stamp(ctx context.Context, claims gptoken.Claims) gptoke
 		slog.ErrorContext(ctx, "session: user of a new token not resolved", "error", err)
 		return claims
 	}
+	stampUser(&claims, u)
+	return claims
+}
+
+// stampUser writes the User's id and session epoch into the claims' user.
+func stampUser(claims *gptoken.Claims, u *ent.User) {
 	claims.User.SetStrAttr(ClaimUserID, strconv.FormatInt(u.ID, 10))
 	claims.User.SetStrAttr(ClaimEpoch, strconv.FormatInt(u.SessionEpoch, 10))
-	return claims
 }
 
 // sessionUser reads the User id and epoch a session token carries. ok is false

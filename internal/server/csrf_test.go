@@ -17,8 +17,8 @@ import (
 // with an optional Sec-Fetch-Site (actors cannot set it or expose the cookies).
 func loginWithFetchSite(t *testing.T, env *testhelper.TestEnv, fetchSite string) *httptest.ResponseRecorder {
 	t.Helper()
-	body := `{"user":"` + fixtures.OwnerJohnEmail + `","passwd":"` + fixtures.OwnerJohnPassword + `"}`
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login?session=1", strings.NewReader(body))
+	body := `{"email":"` + fixtures.OwnerJohnEmail + `","password":"` + fixtures.OwnerJohnPassword + `"}`
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	if fetchSite != "" {
 		req.Header.Set("Sec-Fetch-Site", fetchSite)

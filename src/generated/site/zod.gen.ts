@@ -271,26 +271,6 @@ export const zSiteCustomFieldType = z.enum([
   'datetime'
 ]);
 
-export const zSiteDirectLoginError = z.object({
-  error: z.string()
-});
-
-export const zSiteDirectLoginInput = z.object({
-  user: z.string(),
-  passwd: z.string()
-});
-
-export const zSiteDirectLoginResult = z.object({
-  name: z.string(),
-  id: z.string(),
-  picture: z.exactOptional(z.string()),
-  aud: z.exactOptional(z.string()),
-  ip: z.exactOptional(z.string()),
-  email: z.exactOptional(z.string()),
-  attrs: z.exactOptional(z.record(z.string(), z.unknown())),
-  role: z.exactOptional(z.string())
-});
-
 /**
  * A DNS record the user publishes to authenticate a sending domain
  */
@@ -353,6 +333,25 @@ export const zSiteInvitationLookupResult = z.object({
   workspaceName: z.string(),
   email: zEmailAddress,
   hasAccount: z.boolean()
+});
+
+/**
+ * Sign in with an email and password. The email is a plain string: a malformed
+ * address must answer like an unknown one.
+ */
+export const zSiteLoginInput = z.object({
+  email: z.string(),
+  password: z.string()
+});
+
+/**
+ * What a login granted. `session`: the session cookie is set. A User with a
+ * Second factor will get a challenge outcome instead (ADR 0020).
+ */
+export const zSiteLoginOutcome = z.enum(['session']);
+
+export const zSiteLoginResult = z.object({
+  outcome: zSiteLoginOutcome
 });
 
 /**
@@ -1421,14 +1420,19 @@ export const zSiteWebhookEndpointResourceParentKey = z.string();
 
 export const zSiteAuthConfirmEmailChangeBody = zSiteConfirmEmailChangeInput;
 
-export const zSiteAuthDirectLoginBody = zSiteDirectLoginInput;
+export const zSiteAuthForgotPasswordBody = zSiteForgotPasswordInput;
+
+export const zSiteAuthLoginBody = zSiteLoginInput;
 
 /**
  * The request has succeeded.
  */
-export const zSiteAuthDirectLoginResponse = zSiteDirectLoginResult;
+export const zSiteAuthLoginResponse = zSiteLoginResult;
 
-export const zSiteAuthForgotPasswordBody = zSiteForgotPasswordInput;
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteAuthLogoutResponse = z.void();
 
 export const zSiteAuthRegisterBody = zSiteRegisterInput;
 

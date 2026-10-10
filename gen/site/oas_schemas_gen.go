@@ -2577,52 +2577,6 @@ func (o OptSiteAuditActorKind) Or(d SiteAuditActorKind) SiteAuditActorKind {
 	return d
 }
 
-// NewOptSiteDirectLoginResultAttrs returns new OptSiteDirectLoginResultAttrs with value set to v.
-func NewOptSiteDirectLoginResultAttrs(v SiteDirectLoginResultAttrs) OptSiteDirectLoginResultAttrs {
-	return OptSiteDirectLoginResultAttrs{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSiteDirectLoginResultAttrs is optional SiteDirectLoginResultAttrs.
-type OptSiteDirectLoginResultAttrs struct {
-	Value SiteDirectLoginResultAttrs
-	Set   bool
-}
-
-// IsSet returns true if OptSiteDirectLoginResultAttrs was set.
-func (o OptSiteDirectLoginResultAttrs) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSiteDirectLoginResultAttrs) Reset() {
-	var v SiteDirectLoginResultAttrs
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSiteDirectLoginResultAttrs) SetTo(v SiteDirectLoginResultAttrs) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSiteDirectLoginResultAttrs) Get() (v SiteDirectLoginResultAttrs, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSiteDirectLoginResultAttrs) Or(d SiteDirectLoginResultAttrs) SiteDirectLoginResultAttrs {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSiteSuppressionChannel returns new OptSiteSuppressionChannel with value set to v.
 func NewOptSiteSuppressionChannel(v SiteSuppressionChannel) OptSiteSuppressionChannel {
 	return OptSiteSuppressionChannel{
@@ -2875,7 +2829,7 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 }
 
 func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
-func (*ProblemDetails) siteAuthDirectLoginRes()           {}
+func (*ProblemDetails) siteAuthLoginRes()                 {}
 func (*ProblemDetails) siteAuthResetPasswordRes()         {}
 func (*ProblemDetails) siteAuthVerifyEmailRes()           {}
 func (*ProblemDetails) siteEventsActionsRes()             {}
@@ -2970,8 +2924,8 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 	s.Response = val
 }
 
-func (*ProblemDetailsHeaders) siteAuthDirectLoginRes()            {}
 func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
+func (*ProblemDetailsHeaders) siteAuthLoginRes()                  {}
 func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
 func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
 func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
@@ -3879,6 +3833,21 @@ func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 type SiteAuthForgotPasswordAccepted struct{}
 
 func (*SiteAuthForgotPasswordAccepted) siteAuthForgotPasswordRes() {}
+
+// SiteAuthLogoutNoContent is response for SiteAuthLogout operation.
+type SiteAuthLogoutNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteAuthLogoutNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteAuthLogoutNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
 
 type SiteAuthRegisterConflict ProblemDetails
 
@@ -6069,154 +6038,6 @@ func (s *SiteCustomFieldsListOK) SetTotalPages(val int32) {
 
 func (*SiteCustomFieldsListOK) siteCustomFieldsListRes() {}
 
-// Ref: #/components/schemas/SiteDirectLoginError
-type SiteDirectLoginError struct {
-	Error string `json:"error"`
-}
-
-// GetError returns the value of Error.
-func (s *SiteDirectLoginError) GetError() string {
-	return s.Error
-}
-
-// SetError sets the value of Error.
-func (s *SiteDirectLoginError) SetError(val string) {
-	s.Error = val
-}
-
-func (*SiteDirectLoginError) siteAuthDirectLoginRes() {}
-
-// Ref: #/components/schemas/SiteDirectLoginInput
-type SiteDirectLoginInput struct {
-	User   string `json:"user"`
-	Passwd string `json:"passwd"`
-}
-
-// GetUser returns the value of User.
-func (s *SiteDirectLoginInput) GetUser() string {
-	return s.User
-}
-
-// GetPasswd returns the value of Passwd.
-func (s *SiteDirectLoginInput) GetPasswd() string {
-	return s.Passwd
-}
-
-// SetUser sets the value of User.
-func (s *SiteDirectLoginInput) SetUser(val string) {
-	s.User = val
-}
-
-// SetPasswd sets the value of Passwd.
-func (s *SiteDirectLoginInput) SetPasswd(val string) {
-	s.Passwd = val
-}
-
-// Ref: #/components/schemas/SiteDirectLoginResult
-type SiteDirectLoginResult struct {
-	Name    string                        `json:"name"`
-	ID      string                        `json:"id"`
-	Picture OptString                     `json:"picture"`
-	Aud     OptString                     `json:"aud"`
-	IP      OptString                     `json:"ip"`
-	Email   OptString                     `json:"email"`
-	Attrs   OptSiteDirectLoginResultAttrs `json:"attrs"`
-	Role    OptString                     `json:"role"`
-}
-
-// GetName returns the value of Name.
-func (s *SiteDirectLoginResult) GetName() string {
-	return s.Name
-}
-
-// GetID returns the value of ID.
-func (s *SiteDirectLoginResult) GetID() string {
-	return s.ID
-}
-
-// GetPicture returns the value of Picture.
-func (s *SiteDirectLoginResult) GetPicture() OptString {
-	return s.Picture
-}
-
-// GetAud returns the value of Aud.
-func (s *SiteDirectLoginResult) GetAud() OptString {
-	return s.Aud
-}
-
-// GetIP returns the value of IP.
-func (s *SiteDirectLoginResult) GetIP() OptString {
-	return s.IP
-}
-
-// GetEmail returns the value of Email.
-func (s *SiteDirectLoginResult) GetEmail() OptString {
-	return s.Email
-}
-
-// GetAttrs returns the value of Attrs.
-func (s *SiteDirectLoginResult) GetAttrs() OptSiteDirectLoginResultAttrs {
-	return s.Attrs
-}
-
-// GetRole returns the value of Role.
-func (s *SiteDirectLoginResult) GetRole() OptString {
-	return s.Role
-}
-
-// SetName sets the value of Name.
-func (s *SiteDirectLoginResult) SetName(val string) {
-	s.Name = val
-}
-
-// SetID sets the value of ID.
-func (s *SiteDirectLoginResult) SetID(val string) {
-	s.ID = val
-}
-
-// SetPicture sets the value of Picture.
-func (s *SiteDirectLoginResult) SetPicture(val OptString) {
-	s.Picture = val
-}
-
-// SetAud sets the value of Aud.
-func (s *SiteDirectLoginResult) SetAud(val OptString) {
-	s.Aud = val
-}
-
-// SetIP sets the value of IP.
-func (s *SiteDirectLoginResult) SetIP(val OptString) {
-	s.IP = val
-}
-
-// SetEmail sets the value of Email.
-func (s *SiteDirectLoginResult) SetEmail(val OptString) {
-	s.Email = val
-}
-
-// SetAttrs sets the value of Attrs.
-func (s *SiteDirectLoginResult) SetAttrs(val OptSiteDirectLoginResultAttrs) {
-	s.Attrs = val
-}
-
-// SetRole sets the value of Role.
-func (s *SiteDirectLoginResult) SetRole(val OptString) {
-	s.Role = val
-}
-
-func (*SiteDirectLoginResult) siteAuthDirectLoginRes() {}
-
-type SiteDirectLoginResultAttrs map[string]jx.Raw
-
-func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
-}
-
 // A DNS record the user publishes to authenticate a sending domain.
 // Ref: #/components/schemas/SiteDnsRecord
 type SiteDnsRecord struct {
@@ -7262,6 +7083,114 @@ func (*SiteInvitationsDeleteNotFound) siteInvitationsDeleteRes() {}
 type SiteInvitationsListOKApplicationJSON []SiteInvitationResource
 
 func (*SiteInvitationsListOKApplicationJSON) siteInvitationsListRes() {}
+
+// Sign in with an email and password. The email is a plain string: a malformed address must answer
+// like an unknown one.
+// Ref: #/components/schemas/SiteLoginInput
+type SiteLoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteLoginInput) GetEmail() string {
+	return s.Email
+}
+
+// GetPassword returns the value of Password.
+func (s *SiteLoginInput) GetPassword() string {
+	return s.Password
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteLoginInput) SetEmail(val string) {
+	s.Email = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SiteLoginInput) SetPassword(val string) {
+	s.Password = val
+}
+
+// What a login granted. `session`: the session cookie is set. A User with a Second factor will get a
+// challenge outcome instead (ADR 0020).
+// Ref: #/components/schemas/SiteLoginOutcome
+type SiteLoginOutcome string
+
+const (
+	SiteLoginOutcomeSession SiteLoginOutcome = "session"
+)
+
+// AllValues returns all SiteLoginOutcome values.
+func (SiteLoginOutcome) AllValues() []SiteLoginOutcome {
+	return []SiteLoginOutcome{
+		SiteLoginOutcomeSession,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteLoginOutcome) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteLoginOutcomeSession:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteLoginOutcome) UnmarshalText(data []byte) error {
+	switch SiteLoginOutcome(data) {
+	case SiteLoginOutcomeSession:
+		*s = SiteLoginOutcomeSession
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/SiteLoginResult
+type SiteLoginResult struct {
+	Outcome SiteLoginOutcome `json:"outcome"`
+}
+
+// GetOutcome returns the value of Outcome.
+func (s *SiteLoginResult) GetOutcome() SiteLoginOutcome {
+	return s.Outcome
+}
+
+// SetOutcome sets the value of Outcome.
+func (s *SiteLoginResult) SetOutcome(val SiteLoginOutcome) {
+	s.Outcome = val
+}
+
+// SiteLoginResultHeaders wraps SiteLoginResult with response headers.
+type SiteLoginResultHeaders struct {
+	SetCookie OptString
+	Response  SiteLoginResult
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteLoginResultHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteLoginResultHeaders) GetResponse() SiteLoginResult {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteLoginResultHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteLoginResultHeaders) SetResponse(val SiteLoginResult) {
+	s.Response = val
+}
+
+func (*SiteLoginResultHeaders) siteAuthLoginRes() {}
 
 type SiteMaxPerDay int32
 

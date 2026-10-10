@@ -120,100 +120,6 @@
         "security": [{}]
       }
     },
-    "/auth/direct/login": {
-      "post": {
-        "operationId": "SiteAuth_directLogin",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "The request has succeeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SiteDirectLoginResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "RFC 7807 bad request response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access is forbidden.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SiteDirectLoginError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
-            "headers": {
-              "Retry-After": {
-                "required": true,
-                "description": "Seconds to wait before retrying",
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              },
-              "X-RateLimit-Limit": {
-                "required": true,
-                "description": "The request budget of the window that was exceeded",
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              },
-              "X-RateLimit-Remaining": {
-                "required": true,
-                "description": "Requests left in the current window",
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              },
-              "X-RateLimit-Reset": {
-                "required": true,
-                "description": "Unix time at which the window resets",
-                "schema": {
-                  "type": "integer",
-                  "format": "int64"
-                }
-              }
-            },
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Site Auth"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SiteDirectLoginInput"
-              }
-            }
-          }
-        },
-        "security": [{}]
-      }
-    },
     "/auth/forgot-password": {
       "post": {
         "operationId": "SiteAuth_forgotPassword",
@@ -279,6 +185,123 @@
             }
           }
         },
+        "security": [{}]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "SiteAuth_login",
+        "description": "Check the password and start a session (the JWT cookie). Unknown email and\nwrong password answer the same 401; failures feed the Login throttle, which\nanswers 429 even for a correct password while its delay runs (ADR 0025).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "headers": {
+              "Set-Cookie": {
+                "required": false,
+                "description": "The session cookie, set when the outcome is `session`",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteLoginResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteLoginInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "SiteAuth_logout",
+        "description": "End the session on this browser: clears the session cookie.",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful. ",
+            "headers": {
+              "Set-Cookie": {
+                "required": true,
+                "description": "The expired session cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
         "security": [{}]
       }
     },
@@ -7757,58 +7780,6 @@
         "enum": ["string", "number", "bool", "datetime"],
         "description": "A Custom field's value type"
       },
-      "SiteDirectLoginError": {
-        "type": "object",
-        "required": ["error"],
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        }
-      },
-      "SiteDirectLoginInput": {
-        "type": "object",
-        "required": ["user", "passwd"],
-        "properties": {
-          "user": {
-            "type": "string"
-          },
-          "passwd": {
-            "type": "string"
-          }
-        }
-      },
-      "SiteDirectLoginResult": {
-        "type": "object",
-        "required": ["name", "id"],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "picture": {
-            "type": "string"
-          },
-          "aud": {
-            "type": "string"
-          },
-          "ip": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "attrs": {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          "role": {
-            "type": "string"
-          }
-        }
-      },
       "SiteDnsRecord": {
         "type": "object",
         "required": ["type", "host", "value"],
@@ -8193,6 +8164,33 @@
           }
         },
         "description": "A pending invitation of an email address to join the workspace"
+      },
+      "SiteLoginInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "description": "Sign in with an email and password. The email is a plain string: a malformed\naddress must answer like an unknown one."
+      },
+      "SiteLoginOutcome": {
+        "type": "string",
+        "enum": ["session"],
+        "description": "What a login granted. `session`: the session cookie is set. A User with a\nSecond factor will get a challenge outcome instead (ADR 0020)."
+      },
+      "SiteLoginResult": {
+        "type": "object",
+        "required": ["outcome"],
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/SiteLoginOutcome"
+          }
+        }
       },
       "SiteMaxPerDay": {
         "type": "integer",

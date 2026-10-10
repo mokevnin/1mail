@@ -47,10 +47,6 @@ type Handler interface {
 	//
 	// POST /auth/confirm-email-change
 	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
-	// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-	//
-	// POST /auth/direct/login
-	SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
 	// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 	//
 	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -59,6 +55,20 @@ type Handler interface {
 	//
 	// POST /auth/forgot-password
 	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
+	// SiteAuthLogin implements SiteAuth_login operation.
+	//
+	// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+	// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+	// delay runs (ADR 0025).
+	//
+	// POST /auth/login
+	SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (SiteAuthLoginRes, error)
+	// SiteAuthLogout implements SiteAuth_logout operation.
+	//
+	// End the session on this browser: clears the session cookie.
+	//
+	// POST /auth/logout
+	SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error)
 	// SiteAuthRegister implements SiteAuth_register operation.
 	//
 	// POST /auth/register

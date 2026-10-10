@@ -12,9 +12,6 @@ import (
 	"strings"
 	"time"
 
-	goauth "github.com/go-pkgz/auth/v2"
-	"github.com/go-pkgz/auth/v2/avatar"
-	"github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
@@ -34,7 +31,7 @@ import (
 )
 
 // New builds the top-level net/http handler wiring the three ogen-generated
-// API servers (site, external, collect) plus go-pkgz/auth endpoints.
+// API servers (site, external, collect) and the public endpoints.
 // New composes the HTTP handler. client is the raw ent client: only the pieces whose
 // Workspace is not known up front take it (auth, OAuth, tracking, provider hooks);
 // the site, external and collect handlers get none (ADR 0017).
@@ -48,41 +45,16 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// local http://localhost dev, where a Secure cookie would never be sent back.
 	secureCookies := strings.HasPrefix(cfg.AppURL, "https://")
 
-	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.
-	authSvc := goauth.NewService(goauth.Opts{
-		SecretReader: token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
-		// One lifetime for token and cookie, no refresh (ADR 0020).
-		TokenDuration:  cfg.SessionTTL,
-		CookieDuration: cfg.SessionTTL,
-		// Writes the User id and session epoch into every token issued.
-		ClaimsUpd: apiauth.NewSessionClaims(client),
-		// Cross-site writes are rejected by crossOriginGuard instead (see there).
-		DisableXSRF:    true,
-		SameSiteCookie: http.SameSiteLaxMode,
-		SecureCookies:  secureCookies,
-		Issuer:         "1mail",
-		URL:            cfg.AppURL,
-		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
-	})
-	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client, site.Attempts))
-	authHandler, avatarHandler := authSvc.Handlers()
+	// Login and logout are /site operations (ADR 0020), and the login operation is
+	// the one route that mints a session, through this issuer. The library's
+	// /auth/ and /avatar/ routes are gone and must not fall through to the SPA shell.
+	site.Sessions = apiauth.NewSessions(cfg.JWTSecret, cfg.SessionTTL, secureCookies, site.Clock)
+	mux.Handle("/auth/", http.NotFoundHandler())
+	mux.Handle("/avatar/", http.NotFoundHandler())
 	limiter := ratelimit.New(cfg.RateLimits)
-	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0025) on both of its
-	// paths: the provider's own and the SPA's /site alias. The longer pattern
-	// outranks the /auth/ subtree.
-	throttledLogin := loginThrottle(authHandler, site.Attempts, limiter.LoginIP())
-	mux.Handle("/auth/direct/login", throttledLogin)
-	mux.Handle("/auth/", authHandler)
-	mux.Handle("/avatar/", avatarHandler)
-	// The SPA's generated client posts to /site/auth/direct/login (baseUrl "/site");
-	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
-	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
-	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	// Audit the login inside the throttle: a throttled attempt never reaches it.
-	mux.Handle("/site/auth/direct/login", loginThrottle(auditLogin(authHandler, site.Accounts), site.Attempts, limiter.LoginIP()))
 
-	// Site API — /site (JWT cookie via generated SecurityHandler; register and
-	// direct-login are public per the spec).
+	// Site API — /site (JWT cookie via generated SecurityHandler; register, login
+	// and logout are public per the spec).
 	siteSrv, err := siteapi.NewServer(
 		apisite.NewHandlers(site),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client, site.Clock),
@@ -284,15 +256,15 @@ func requestID(next http.Handler) http.Handler {
 }
 
 // cookiePath reports whether a path is authenticated by the JWT cookie (the SPA
-// API and go-pkgz/auth), the only surface exposed to CSRF.
+// API), the only surface exposed to CSRF.
 func cookiePath(path string) bool {
-	return strings.HasPrefix(path, "/site/") || strings.HasPrefix(path, "/auth/")
+	return strings.HasPrefix(path, "/site/")
 }
 
 // corsMiddleware applies three rs/cors policies by path:
 //   - /collect/: echoes any origin without credentials (the collect key is
 //     public, cookies are first-party on the customer's own domain);
-//   - /site/ and /auth/ (cookie auth): credentials only for the configured
+//   - /site/ (cookie auth): credentials only for the configured
 //     allowlist. The SPA is served same-origin, so with no allowlist there are no
 //     CORS headers at all;
 //   - everything else (external API, MCP, OAuth: bearer tokens): echoes any origin
@@ -344,9 +316,9 @@ func corsMiddleware(origins []string) func(http.Handler) http.Handler {
 
 // crossOriginGuard rejects cross-site unsafe requests (Sec-Fetch-Site, falling back
 // to Origin vs Host) on the cookie-authenticated paths with the stdlib's
-// http.CrossOriginProtection. This is why go-pkgz's own XSRF double-submit stays
-// disabled: it would need a token round-trip in the generated client for the same
-// protection. Bearer and secret-key surfaces (collect, API, MCP, OAuth, hooks,
+// http.CrossOriginProtection. This is why the session carries no XSRF
+// double-submit token: it would need a token round-trip in the generated client
+// for the same protection. Bearer and secret-key surfaces (collect, API, MCP, OAuth, hooks,
 // tracking) are cross-origin by design and pass through untouched.
 //
 // The app origin (APP_URL, which may carry a path or trailing slash) and the

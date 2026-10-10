@@ -81,6 +81,7 @@ type Handlers struct {
 	automations    *automations.Module
 	oauth          *oauthserver.Service
 	audit          AuditLog
+	sessions       *auth.Sessions
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -103,8 +104,7 @@ type AuditLog interface {
 type Deps struct {
 	Accounts *accounts.Accounts
 	// Attempts counts failed logins and password-reset mails per account (ADR
-	// 0025); the login route's credential checker and throttle wrapper and
-	// forgot-password share it.
+	// 0025); login and forgot-password share it.
 	Attempts       *accounts.Attempts
 	OAuth          *oauthserver.Service
 	Bus            *events.Bus
@@ -125,6 +125,9 @@ type Deps struct {
 	Tracker        *tracking.Tracker
 	AppURL         string
 	Audit          AuditLog
+	// Sessions issues the session cookie on login (ADR 0020). The composition
+	// root (server.New) builds it from the instance secret and SESSION_TTL.
+	Sessions *auth.Sessions
 	// Clock is the time the site session's expiry is checked against (ADR 0020);
 	// nil means time.Now. Tests inject one to move past a session's lifetime.
 	Clock func() time.Time
@@ -136,7 +139,7 @@ func NewHandlers(d Deps) *Handlers {
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth, audit: d.Audit,
+		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions,
 	}
 }
 

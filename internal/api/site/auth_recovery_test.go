@@ -55,7 +55,7 @@ func TestForgotPasswordFullResetFlow(t *testing.T) {
 
 	// The new password logs in; the old one no longer does.
 	assert.Equal(t, http.StatusOK, loginStatus(t, env, fixtures.OwnerJohnEmail, "brandnewpass1"))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
+	assert.Equal(t, http.StatusUnauthorized, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 
 	// The token is single-use: replaying it after the reset fails (the binding —
 	// the password hash — has changed).
@@ -188,5 +188,5 @@ func TestEmailChangeConfirmSwapsEmail(t *testing.T) {
 
 	// Login now works with the new email, not the old one.
 	assert.Equal(t, http.StatusOK, loginStatus(t, env, "moved@example.com", fixtures.OwnerJohnPassword))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
+	assert.Equal(t, http.StatusUnauthorized, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 }

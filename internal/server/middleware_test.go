@@ -111,7 +111,7 @@ func TestCORSPoliciesByPath(t *testing.T) {
 
 	// Cookie-authenticated paths allow cross-origin credentials only for an explicit
 	// allowlist: with none configured there are no CORS headers at all.
-	for _, path := range []string{"/site/workspaces", "/auth/direct/login"} {
+	for _, path := range []string{"/site/workspaces", "/site/auth/login"} {
 		none := preflight(corsMiddleware(nil)(ok), path)
 		assert.Empty(t, none.Get("Access-Control-Allow-Origin"), path)
 		assert.Empty(t, none.Get("Access-Control-Allow-Credentials"), path)
@@ -151,8 +151,7 @@ func TestCrossOriginGuardProtectsCookiePathsOnly(t *testing.T) {
 		want                     int
 	}{
 		{"cross-site site write", http.MethodPost, "/site/workspaces", "cross-site", http.StatusForbidden},
-		{"cross-site login", http.MethodPost, "/site/auth/direct/login", "cross-site", http.StatusForbidden},
-		{"cross-site auth write", http.MethodPost, "/auth/direct/login", "cross-site", http.StatusForbidden},
+		{"cross-site login", http.MethodPost, "/site/auth/login", "cross-site", http.StatusForbidden},
 		{"same-site subdomain write", http.MethodDelete, "/site/workspaces/acme", "same-site", http.StatusForbidden},
 		{"same-origin site write", http.MethodPost, "/site/workspaces", "same-origin", http.StatusNoContent},
 		{"cross-site read", http.MethodGet, "/site/workspaces", "cross-site", http.StatusNoContent},

@@ -1264,28 +1264,6 @@ export const SiteCustomFieldType = {
  */
 export type SiteCustomFieldType = typeof SiteCustomFieldType[keyof typeof SiteCustomFieldType];
 
-export type SiteDirectLoginError = {
-  error: string;
-};
-
-export type SiteDirectLoginInput = {
-  user: string;
-  passwd: string;
-};
-
-export type SiteDirectLoginResult = {
-  name: string;
-  id: string;
-  picture?: string;
-  aud?: string;
-  ip?: string;
-  email?: string;
-  attrs?: {
-    [key: string]: unknown;
-  };
-  role?: string;
-};
-
 /**
  * A DNS record the user publishes to authenticate a sending domain
  */
@@ -1547,6 +1525,31 @@ export type SiteInvitationResource = {
    * Creation timestamp
    */
   createdAt: Timestamp;
+};
+
+/**
+ * Sign in with an email and password. The email is a plain string: a malformed
+ * address must answer like an unknown one.
+ */
+export type SiteLoginInput = {
+  email: string;
+  password: string;
+};
+
+/**
+ * What a login granted. `session`: the session cookie is set. A User with a
+ * Second factor will get a challenge outcome instead (ADR 0020).
+ */
+export const SiteLoginOutcome = { SESSION: 'session' } as const;
+
+/**
+ * What a login granted. `session`: the session cookie is set. A User with a
+ * Second factor will get a challenge outcome instead (ADR 0020).
+ */
+export type SiteLoginOutcome = typeof SiteLoginOutcome[keyof typeof SiteLoginOutcome];
+
+export type SiteLoginResult = {
+  outcome: SiteLoginOutcome;
 };
 
 /**
@@ -2620,39 +2623,6 @@ export type SiteAuthConfirmEmailChangeResponses = {
   200: unknown;
 };
 
-export type SiteAuthDirectLoginData = {
-  body: SiteDirectLoginInput;
-  path?: never;
-  query?: never;
-  url: '/auth/direct/login';
-};
-
-export type SiteAuthDirectLoginErrors = {
-  /**
-   * RFC 7807 bad request response
-   */
-  400: ProblemDetails;
-  /**
-   * Access is forbidden.
-   */
-  403: SiteDirectLoginError;
-  /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
-   */
-  429: ProblemDetails;
-};
-
-export type SiteAuthDirectLoginError = SiteAuthDirectLoginErrors[keyof SiteAuthDirectLoginErrors];
-
-export type SiteAuthDirectLoginResponses = {
-  /**
-   * The request has succeeded.
-   */
-  200: SiteDirectLoginResult;
-};
-
-export type SiteAuthDirectLoginResponse = SiteAuthDirectLoginResponses[keyof SiteAuthDirectLoginResponses];
-
 export type SiteAuthForgotPasswordData = {
   body: SiteForgotPasswordInput;
   path?: never;
@@ -2675,6 +2645,51 @@ export type SiteAuthForgotPasswordResponses = {
    */
   202: unknown;
 };
+
+export type SiteAuthLoginData = {
+  body: SiteLoginInput;
+  path?: never;
+  query?: never;
+  url: '/auth/login';
+};
+
+export type SiteAuthLoginErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthLoginError = SiteAuthLoginErrors[keyof SiteAuthLoginErrors];
+
+export type SiteAuthLoginResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteLoginResult;
+};
+
+export type SiteAuthLoginResponse = SiteAuthLoginResponses[keyof SiteAuthLoginResponses];
+
+export type SiteAuthLogoutData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/logout';
+};
+
+export type SiteAuthLogoutResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteAuthLogoutResponse = SiteAuthLogoutResponses[keyof SiteAuthLogoutResponses];
 
 export type SiteAuthRegisterData = {
   body: SiteRegisterInput;

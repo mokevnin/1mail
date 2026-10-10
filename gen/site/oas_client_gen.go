@@ -68,10 +68,6 @@ type Invoker interface {
 	//
 	// POST /auth/confirm-email-change
 	SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
-	// SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
-	//
-	// POST /auth/direct/login
-	SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
 	// SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
 	//
 	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -80,6 +76,20 @@ type Invoker interface {
 	//
 	// POST /auth/forgot-password
 	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
+	// SiteAuthLogin invokes SiteAuth_login operation.
+	//
+	// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+	// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+	// delay runs (ADR 0025).
+	//
+	// POST /auth/login
+	SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error)
+	// SiteAuthLogout invokes SiteAuth_logout operation.
+	//
+	// End the session on this browser: clears the session cookie.
+	//
+	// POST /auth/logout
+	SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error)
 	// SiteAuthRegister invokes SiteAuth_register operation.
 	//
 	// POST /auth/register
@@ -1750,87 +1760,6 @@ func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *Si
 	return result, nil
 }
 
-// SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (c *Client) SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error) {
-	res, err := c.sendSiteAuthDirectLogin(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendSiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (res SiteAuthDirectLoginRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("SiteAuth_directLogin"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/auth/direct/login"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthDirectLoginOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/auth/direct/login"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeSiteAuthDirectLoginRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	body := resp.Body
-	defer func() {
-		// Drain the body to EOF before closing, so the underlying
-		// connection can be reused by the Transport regardless of the
-		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
-		_, _ = io.Copy(io.Discard, body)
-		_ = body.Close()
-	}()
-
-	stage = "DecodeResponse"
-	result, err := decodeSiteAuthDirectLoginResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
 // SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
 //
 // Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -1909,6 +1838,171 @@ func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteFo
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthForgotPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthLogin invokes SiteAuth_login operation.
+//
+// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+// delay runs (ADR 0025).
+//
+// POST /auth/login
+func (c *Client) SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error) {
+	res, err := c.sendSiteAuthLogin(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthLogin(ctx context.Context, request *SiteLoginInput) (res SiteAuthLoginRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_login"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/login"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthLoginOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/login"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthLoginRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthLoginResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthLogout invokes SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (c *Client) SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error) {
+	res, err := c.sendSiteAuthLogout(ctx)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthLogout(ctx context.Context) (res *SiteAuthLogoutNoContent, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_logout"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/logout"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthLogoutOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/logout"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthLogoutResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
