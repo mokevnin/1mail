@@ -14,7 +14,6 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.opentelemetry.io/otel/metric"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
@@ -46,6 +45,7 @@ import (
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
+	"go.opentelemetry.io/otel/metric"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
