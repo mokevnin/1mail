@@ -170,6 +170,18 @@
     "nameLabel": "Nombre",
     "noRecords": "Aún no hay campañas",
     "openedLabel": "Aperturas",
+    "progress": {
+      "almostDone": "casi listo",
+      "remainingHours": "quedan unas {{count}} horas",
+      "remainingHours_one": "queda alrededor de {{count}} hora",
+      "remainingHours_many": "quedan unas {{count}} horas",
+      "remainingHours_other": "quedan unas {{count}} horas",
+      "remainingMinutes": "quedan unos {{count}} minutos",
+      "remainingMinutes_one": "queda alrededor de {{count}} minuto",
+      "remainingMinutes_many": "quedan unos {{count}} minutos",
+      "remainingMinutes_other": "quedan unos {{count}} minutos",
+      "summary": "Enviados {{processed}} de {{total}}"
+    },
     "recipientsLabel": "Destinatarios",
     "report": "Informe",
     "schedule": "Programar",

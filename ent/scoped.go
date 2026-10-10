@@ -2676,6 +2676,18 @@ func (x *BroadcastScopedCreate) SetNillableHoldReason(v *string) *BroadcastScope
 	return x
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (x *BroadcastScopedCreate) SetLastScheduledAt(v time.Time) *BroadcastScopedCreate {
+	x.b.SetLastScheduledAt(v)
+	return x
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (x *BroadcastScopedCreate) SetNillableLastScheduledAt(v *time.Time) *BroadcastScopedCreate {
+	x.b.SetNillableLastScheduledAt(v)
+	return x
+}
+
 // AddRecipientIDs adds the "recipients" edge to the BroadcastRecipient entity by IDs.
 func (x *BroadcastScopedCreate) AddRecipientIDs(ids ...int64) *BroadcastScopedCreate {
 	x.b.AddRecipientIDs(ids...)
@@ -3078,6 +3090,24 @@ func (u *BroadcastScopedUpsert) UpdateHoldReason() *BroadcastScopedUpsert {
 // ClearHoldReason clears the value of the "hold_reason" field.
 func (u *BroadcastScopedUpsert) ClearHoldReason() *BroadcastScopedUpsert {
 	u.u.SetNull(broadcast.FieldHoldReason)
+	return u
+}
+
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (u *BroadcastScopedUpsert) SetLastScheduledAt(v time.Time) *BroadcastScopedUpsert {
+	u.u.Set(broadcast.FieldLastScheduledAt, v)
+	return u
+}
+
+// UpdateLastScheduledAt sets the "last_scheduled_at" field to the value that was provided on create.
+func (u *BroadcastScopedUpsert) UpdateLastScheduledAt() *BroadcastScopedUpsert {
+	u.u.SetExcluded(broadcast.FieldLastScheduledAt)
+	return u
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (u *BroadcastScopedUpsert) ClearLastScheduledAt() *BroadcastScopedUpsert {
+	u.u.SetNull(broadcast.FieldLastScheduledAt)
 	return u
 }
 
@@ -3543,6 +3573,24 @@ func (x *BroadcastScopedUpdateOne) ClearHoldReason() *BroadcastScopedUpdateOne {
 	return x
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (x *BroadcastScopedUpdateOne) SetLastScheduledAt(v time.Time) *BroadcastScopedUpdateOne {
+	x.b.SetLastScheduledAt(v)
+	return x
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (x *BroadcastScopedUpdateOne) SetNillableLastScheduledAt(v *time.Time) *BroadcastScopedUpdateOne {
+	x.b.SetNillableLastScheduledAt(v)
+	return x
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (x *BroadcastScopedUpdateOne) ClearLastScheduledAt() *BroadcastScopedUpdateOne {
+	x.b.ClearLastScheduledAt()
+	return x
+}
+
 // AddRecipientIDs adds the "recipients" edge to the BroadcastRecipient entity by IDs.
 func (x *BroadcastScopedUpdateOne) AddRecipientIDs(ids ...int64) *BroadcastScopedUpdateOne {
 	x.b.AddRecipientIDs(ids...)
@@ -3958,6 +4006,24 @@ func (x *BroadcastScopedUpdate) SetNillableHoldReason(v *string) *BroadcastScope
 // ClearHoldReason clears the value of the "hold_reason" field.
 func (x *BroadcastScopedUpdate) ClearHoldReason() *BroadcastScopedUpdate {
 	x.b.ClearHoldReason()
+	return x
+}
+
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (x *BroadcastScopedUpdate) SetLastScheduledAt(v time.Time) *BroadcastScopedUpdate {
+	x.b.SetLastScheduledAt(v)
+	return x
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (x *BroadcastScopedUpdate) SetNillableLastScheduledAt(v *time.Time) *BroadcastScopedUpdate {
+	x.b.SetNillableLastScheduledAt(v)
+	return x
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (x *BroadcastScopedUpdate) ClearLastScheduledAt() *BroadcastScopedUpdate {
+	x.b.ClearLastScheduledAt()
 	return x
 }
 

@@ -99,6 +99,13 @@ func (Broadcast) Fields() []ent.Field {
 		field.String("hold_reason").
 			Optional().
 			Nillable(),
+		// When the last paced recipient job is scheduled (ADR 0023): the planner spreads
+		// recipient jobs at one over the Integration's effective rate, and the ETA is
+		// derived from this and the recipients still pending. Nil when the plan was not
+		// paced (no Send rate limit).
+		field.Time("last_scheduled_at").
+			Optional().
+			Nillable(),
 	}
 }
 

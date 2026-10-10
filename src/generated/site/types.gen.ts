@@ -317,6 +317,27 @@ export const SiteAutomationStepType = {
 export type SiteAutomationStepType = typeof SiteAutomationStepType[keyof typeof SiteAutomationStepType];
 
 /**
+ * How far a sending broadcast has got. A broadcast limited by its Integration's Send
+ * rate limit is paced: recipients go out at an even interval, so the estimate is
+ * derived on the server from the last scheduled time and the recipients remaining.
+ */
+export type SiteBroadcastProgress = {
+  /**
+   * Recipients already decided: sent, skipped or failed
+   */
+  processedCount: number;
+  /**
+   * Recipients still waiting to be sent
+   */
+  remainingCount: number;
+  /**
+   * When the last remaining recipient is expected to be sent. Null when it is not
+   * knowable: the broadcast is on hold, or it is not paced by a Send rate limit.
+   */
+  estimatedCompletionAt?: Timestamp | null;
+};
+
+/**
  * Broadcast resource used by the site UI
  */
 export type SiteBroadcastResource = {
@@ -378,6 +399,10 @@ export type SiteBroadcastResource = {
    * Delivery counters
    */
   stats: SiteBroadcastStats;
+  /**
+   * Progress and ETA while the broadcast is sending; null otherwise
+   */
+  progress?: SiteBroadcastProgress | null;
   /**
    * Creation timestamp
    */

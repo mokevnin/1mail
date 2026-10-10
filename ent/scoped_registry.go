@@ -282,6 +282,9 @@ func ScopedEntities() []ScopedEntity {
 				if src.HoldReason != nil {
 					b.SetHoldReason(*src.HoldReason)
 				}
+				if src.LastScheduledAt != nil {
+					b.SetLastScheduledAt(*src.LastScheduledAt)
+				}
 				created, err := b.Save(ctx)
 				if err != nil {
 					return 0, err

@@ -55,6 +55,9 @@ type Converter interface {
 	// The flat stat counters on the broadcast are folded into the nested Stats
 	// object; map the whole source through broadcastStats.
 	// goverter:map . Stats
+	// Progress is derived from the recipients, which the mapper cannot see: the
+	// handler attaches it.
+	// goverter:ignore Progress
 	BroadcastToResource(source *ent.Broadcast) siteapi.SiteBroadcastResource
 
 	EmailTemplateToResource(source *ent.EmailTemplate) siteapi.SiteEmailTemplateResource
