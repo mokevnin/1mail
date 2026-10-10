@@ -37,7 +37,8 @@ type Invoker interface {
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
 	// SiteAuditExport invokes SiteAudit_export operation.
 	//
-	// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+	// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+	// owner and admin only).
 	//
 	// GET /workspaces/{slug}/audit-entries/export
 	SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (SiteAuditExportRes, error)
@@ -752,7 +753,8 @@ func (c *Client) sendSiteAnalyticsOverview(ctx context.Context, params SiteAnaly
 
 // SiteAuditExport invokes SiteAudit_export operation.
 //
-// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+// owner and admin only).
 //
 // GET /workspaces/{slug}/audit-entries/export
 func (c *Client) SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (SiteAuditExportRes, error) {
@@ -819,6 +821,169 @@ func (c *Client) sendSiteAuditExport(ctx context.Context, params SiteAuditExport
 	}
 	pathParts[2] = "/audit-entries/export"
 	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "from" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "from",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.From.Get(); ok {
+				if unwrapped := time.Time(val); true {
+					return e.EncodeValue(conv.DateTimeToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "to" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "to",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.To.Get(); ok {
+				if unwrapped := time.Time(val); true {
+					return e.EncodeValue(conv.DateTimeToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "actorKind" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "actorKind",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ActorKind.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "actorId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "actorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ActorId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "action" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Action.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "targetType" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "targetType",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TargetType.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "targetId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "targetId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TargetId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "ip" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "ip",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IP.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "requestId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "requestId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.RequestId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"
 	r, err := ht.NewRequest(ctx, "GET", u)
@@ -954,6 +1119,165 @@ func (c *Client) sendSiteAuditList(ctx context.Context, params SiteAuditListPara
 
 	stage = "EncodeQueryParams"
 	q := uri.NewQueryEncoder()
+	{
+		// Encode "from" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "from",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.From.Get(); ok {
+				if unwrapped := time.Time(val); true {
+					return e.EncodeValue(conv.DateTimeToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "to" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "to",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.To.Get(); ok {
+				if unwrapped := time.Time(val); true {
+					return e.EncodeValue(conv.DateTimeToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "actorKind" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "actorKind",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ActorKind.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "actorId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "actorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ActorId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "action" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Action.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "targetType" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "targetType",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TargetType.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "targetId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "targetId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TargetId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "ip" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "ip",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IP.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "requestId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "requestId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.RequestId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
 	{
 		// Encode "cursor" parameter.
 		cfg := uri.QueryParameterEncodingConfig{

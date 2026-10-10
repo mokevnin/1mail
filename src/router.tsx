@@ -33,6 +33,7 @@ import { TransactionalEmailsListPage } from './routes/transactional-emails/list.
 import { UnsubscribePage } from './routes/unsubscribe.tsx'
 import { UnsubscribedPage } from './routes/unsubscribed.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
+import { auditFilterSchema } from './routes/workspace/auditFilter.ts'
 import { OverviewPage } from './routes/workspace/overview.tsx'
 import { SettingsPage } from './routes/workspace/settings.tsx'
 
@@ -189,6 +190,8 @@ export const activityRoute = createRoute({
 export const settingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings',
+  // The Audit log filter, so a Change history link opens the log pre-filtered.
+  validateSearch: auditFilterSchema,
   component: SettingsPage,
 })
 

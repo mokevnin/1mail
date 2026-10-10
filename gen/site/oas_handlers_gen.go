@@ -226,7 +226,8 @@ func (s *Server) handleSiteAnalyticsOverviewRequest(args [1]string, argsEscaped 
 
 // handleSiteAuditExportRequest handles SiteAudit_export operation.
 //
-// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+// owner and admin only).
 //
 // GET /workspaces/{slug}/audit-entries/export
 func (s *Server) handleSiteAuditExportRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -371,6 +372,42 @@ func (s *Server) handleSiteAuditExportRequest(args [1]string, argsEscaped bool, 
 					Name: "slug",
 					In:   "path",
 				}: params.Slug,
+				{
+					Name: "from",
+					In:   "query",
+				}: params.From,
+				{
+					Name: "to",
+					In:   "query",
+				}: params.To,
+				{
+					Name: "actorKind",
+					In:   "query",
+				}: params.ActorKind,
+				{
+					Name: "actorId",
+					In:   "query",
+				}: params.ActorId,
+				{
+					Name: "action",
+					In:   "query",
+				}: params.Action,
+				{
+					Name: "targetType",
+					In:   "query",
+				}: params.TargetType,
+				{
+					Name: "targetId",
+					In:   "query",
+				}: params.TargetId,
+				{
+					Name: "ip",
+					In:   "query",
+				}: params.IP,
+				{
+					Name: "requestId",
+					In:   "query",
+				}: params.RequestId,
 			},
 			Raw: r,
 		}
@@ -558,6 +595,42 @@ func (s *Server) handleSiteAuditListRequest(args [1]string, argsEscaped bool, w 
 					Name: "slug",
 					In:   "path",
 				}: params.Slug,
+				{
+					Name: "from",
+					In:   "query",
+				}: params.From,
+				{
+					Name: "to",
+					In:   "query",
+				}: params.To,
+				{
+					Name: "actorKind",
+					In:   "query",
+				}: params.ActorKind,
+				{
+					Name: "actorId",
+					In:   "query",
+				}: params.ActorId,
+				{
+					Name: "action",
+					In:   "query",
+				}: params.Action,
+				{
+					Name: "targetType",
+					In:   "query",
+				}: params.TargetType,
+				{
+					Name: "targetId",
+					In:   "query",
+				}: params.TargetId,
+				{
+					Name: "ip",
+					In:   "query",
+				}: params.IP,
+				{
+					Name: "requestId",
+					In:   "query",
+				}: params.RequestId,
 				{
 					Name: "cursor",
 					In:   "query",

@@ -1063,6 +1063,52 @@ func (o OptSiteAnalyticsRange) Or(d SiteAnalyticsRange) SiteAnalyticsRange {
 	return d
 }
 
+// NewOptSiteAuditActorKind returns new OptSiteAuditActorKind with value set to v.
+func NewOptSiteAuditActorKind(v SiteAuditActorKind) OptSiteAuditActorKind {
+	return OptSiteAuditActorKind{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteAuditActorKind is optional SiteAuditActorKind.
+type OptSiteAuditActorKind struct {
+	Value SiteAuditActorKind
+	Set   bool
+}
+
+// IsSet returns true if OptSiteAuditActorKind was set.
+func (o OptSiteAuditActorKind) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteAuditActorKind) Reset() {
+	var v SiteAuditActorKind
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteAuditActorKind) SetTo(v SiteAuditActorKind) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteAuditActorKind) Get() (v SiteAuditActorKind, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteAuditActorKind) Or(d SiteAuditActorKind) SiteAuditActorKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSiteDirectLoginResultAttrs returns new OptSiteDirectLoginResultAttrs with value set to v.
 func NewOptSiteDirectLoginResultAttrs(v SiteDirectLoginResultAttrs) OptSiteDirectLoginResultAttrs {
 	return OptSiteDirectLoginResultAttrs{
@@ -1195,6 +1241,52 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTimestamp returns new OptTimestamp with value set to v.
+func NewOptTimestamp(v Timestamp) OptTimestamp {
+	return OptTimestamp{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTimestamp is optional Timestamp.
+type OptTimestamp struct {
+	Value Timestamp
+	Set   bool
+}
+
+// IsSet returns true if OptTimestamp was set.
+func (o OptTimestamp) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTimestamp) Reset() {
+	var v Timestamp
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTimestamp) SetTo(v Timestamp) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTimestamp) Get() (v Timestamp, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTimestamp) Or(d Timestamp) Timestamp {
 	if v, ok := o.Get(); ok {
 		return v
 	}

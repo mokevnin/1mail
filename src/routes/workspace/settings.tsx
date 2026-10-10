@@ -16,7 +16,7 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -27,8 +27,9 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
-import { activityRoute } from '../../router.tsx'
+import { activityRoute, settingsRoute } from '../../router.tsx'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
+import { type AuditFilter, auditFilterSchema } from './auditFilter.ts'
 import { AuditLogSection } from './AuditLogSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 import { MembersSection } from './MembersSection.tsx'
@@ -223,6 +224,12 @@ export function SettingsPage() {
   const { slug } = useParams({ strict: false })
   const workspacesQuery = useQuery(siteWorkspacesListOptions())
   const workspace = workspacesQuery.data?.find((w) => w.slug === slug)
+  const navigate = useNavigate()
+  // The Audit log filter rides in the route's search; strict: false keeps the page
+  // mountable outside the real route tree.
+  const auditFilter = auditFilterSchema.parse(useSearch({ strict: false }))
+  const setAuditFilter = (filter: AuditFilter) =>
+    navigate({ to: settingsRoute.to, params: { slug: slug ?? '' }, search: filter })
 
   return (
     <Stack>
@@ -240,7 +247,11 @@ export function SettingsPage() {
         <>
           <GeneralSection workspace={workspace} />
           <MembersSection slug={workspace.slug} />
-          <AuditLogSection slug={workspace.slug} />
+          <AuditLogSection
+            slug={workspace.slug}
+            filter={auditFilter}
+            onFilterChange={setAuditFilter}
+          />
           <TrackingSection collectKey={workspace.collectKey} slug={workspace.slug} />
           <TestEvent collectKey={workspace.collectKey} />
           <IntegrationsSection slug={workspace.slug} />

@@ -26,6 +26,8 @@ import {
 import type { SiteIntegrationConfigInput } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { AUDIT_TARGET_INTEGRATION } from './auditFilter.ts'
+import { ChangeHistoryLink } from './AuditLogSection.tsx'
 
 type ProviderKind = 'smtp' | 'ses'
 
@@ -263,14 +265,21 @@ export function IntegrationsSection({ slug }: { slug: string }) {
             accessor: 'actions',
             title: '',
             render: (record) => (
-              <Button
-                size="compact-sm"
-                color="red"
-                variant="light"
-                onClick={() => onDelete(record.id)}
-              >
-                {t(($) => $.settings.integrations.delete)}
-              </Button>
+              <Group gap="xs" wrap="nowrap">
+                <ChangeHistoryLink
+                  slug={slug}
+                  targetType={AUDIT_TARGET_INTEGRATION}
+                  targetId={record.id}
+                />
+                <Button
+                  size="compact-sm"
+                  color="red"
+                  variant="light"
+                  onClick={() => onDelete(record.id)}
+                >
+                  {t(($) => $.settings.integrations.delete)}
+                </Button>
+              </Group>
             ),
           },
         ]}

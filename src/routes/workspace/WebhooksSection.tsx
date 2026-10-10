@@ -25,6 +25,8 @@ import {
 import type { SiteWebhookEndpointResource } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { AUDIT_TARGET_WEBHOOK_ENDPOINT } from './auditFilter.ts'
+import { ChangeHistoryLink } from './AuditLogSection.tsx'
 
 // The domain events an endpoint can subscribe to. An empty selection means all customer
 // events; audit.entry (Enterprise) is never included and must be chosen explicitly.
@@ -168,6 +170,11 @@ export function WebhooksSection({ slug }: { slug: string }) {
             title: '',
             render: (record) => (
               <Group gap="xs" wrap="nowrap">
+                <ChangeHistoryLink
+                  slug={slug}
+                  targetType={AUDIT_TARGET_WEBHOOK_ENDPOINT}
+                  targetId={record.id}
+                />
                 <Button size="compact-sm" variant="default" onClick={() => onToggle(record)}>
                   {record.enabled
                     ? t(($) => $.settings.webhooks.disable)

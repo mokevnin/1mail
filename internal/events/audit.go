@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/clientip"
@@ -112,4 +113,19 @@ func RecordAudit(ctx context.Context, pub Publisher, entry *AuditEntry) error {
 	entry.IP = clientip.FromContext(ctx)
 	entry.UserAgent = clientip.UserAgentFromContext(ctx)
 	return pub.Publish(ctx, entry)
+}
+
+// AuditFilter narrows the Audit log. Every field is optional and they combine with AND;
+// the zero value matches every entry. The site list and the CSV export take the same
+// filter, so an export matches what the page shows.
+type AuditFilter struct {
+	// From is inclusive and To exclusive; a zero time is unbounded.
+	From, To   time.Time
+	ActorKind  string
+	ActorID    string
+	Action     string
+	TargetType string
+	TargetID   string
+	IP         string
+	RequestID  string
 }

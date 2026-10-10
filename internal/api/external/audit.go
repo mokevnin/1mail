@@ -47,7 +47,7 @@ func (h *Handlers) AuditEntriesList(ctx context.Context, params externalapi.Audi
 		limit = defaultAuditLimit
 	}
 
-	rows, next, err := h.audit.Entries(ctx, auth.TokenScoped(ctx), cursor, limit)
+	rows, next, err := h.audit.Entries(ctx, auth.TokenScoped(ctx), events.AuditFilter{}, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
