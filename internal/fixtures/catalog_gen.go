@@ -145,6 +145,10 @@ const (
 	IntegrationAcmeDefaultID = 1
 	// IntegrationAcmeDefaultName is from fixtures/integrations.
 	IntegrationAcmeDefaultName = "Mailpit (dev SMTP)"
+	// IntegrationAcmeSesID is from fixtures/integrations.
+	IntegrationAcmeSesID = 2
+	// IntegrationAcmeSesName is from fixtures/integrations.
+	IntegrationAcmeSesName = "Amazon SES (disabled)"
 	// IntegrationGlobexID is from fixtures/integrations.
 	IntegrationGlobexID = 900
 	// IntegrationGlobexName is from fixtures/integrations.

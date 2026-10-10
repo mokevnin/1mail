@@ -103,6 +103,58 @@
   created_at: '{{daysAgo 1}}'
   updated_at: '{{daysAgo 1}}'
 
+# Usage of the Integrations over the trailing 24 hours (ADR 0023): two sends inside the
+# window and one outside it through the default Integration (1), one inside through the
+# disabled SES one (2). integration_id is a plain id snapshot, not an FK.
+- id: 107
+  kind: broadcast
+  idempotency_key: 'broadcast:fixture-usage-107'
+  channel: email
+  destination: usage.one@codebasics.dev
+  status: sent
+  integration_id: 1
+  sent_at: '{{hoursAgo 2}}'
+  claimed_at: '{{hoursAgo 2}}'
+  workspace_id: 1
+  created_at: '{{hoursAgo 2}}'
+  updated_at: '{{hoursAgo 2}}'
+- id: 108
+  kind: automation
+  idempotency_key: 'automation:fixture-usage-108'
+  channel: email
+  destination: usage.two@codebasics.dev
+  status: sent
+  integration_id: 1
+  sent_at: '{{hoursAgo 20}}'
+  claimed_at: '{{hoursAgo 20}}'
+  workspace_id: 1
+  created_at: '{{hoursAgo 20}}'
+  updated_at: '{{hoursAgo 20}}'
+- id: 109
+  kind: broadcast
+  idempotency_key: 'broadcast:fixture-usage-109'
+  channel: email
+  destination: usage.old@codebasics.dev
+  status: sent
+  integration_id: 1
+  sent_at: '{{hoursAgo 30}}'
+  claimed_at: '{{hoursAgo 30}}'
+  workspace_id: 1
+  created_at: '{{hoursAgo 30}}'
+  updated_at: '{{hoursAgo 30}}'
+- id: 110
+  kind: broadcast
+  idempotency_key: 'broadcast:fixture-usage-110'
+  channel: email
+  destination: usage.ses@codebasics.dev
+  status: sent
+  integration_id: 2
+  sent_at: '{{hoursAgo 1}}'
+  claimed_at: '{{hoursAgo 1}}'
+  workspace_id: 1
+  created_at: '{{hoursAgo 1}}'
+  updated_at: '{{hoursAgo 1}}'
+
 # Globex (workspace 2).
 - id: 900 # fixture: OutboundMessageGlobex
   kind: transactional
@@ -115,3 +167,15 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+- id: 901
+  kind: broadcast
+  idempotency_key: 'broadcast:fixture-usage-901'
+  channel: email
+  destination: usage@globex.test
+  status: sent
+  integration_id: 900
+  sent_at: '{{hoursAgo 1}}'
+  claimed_at: '{{hoursAgo 1}}'
+  workspace_id: 2
+  created_at: '{{hoursAgo 1}}'
+  updated_at: '{{hoursAgo 1}}'

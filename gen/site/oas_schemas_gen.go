@@ -83,6 +83,51 @@ func (o NilInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewNilSiteSendLimitSource returns new NilSiteSendLimitSource with value set to v.
+func NewNilSiteSendLimitSource(v SiteSendLimitSource) NilSiteSendLimitSource {
+	return NilSiteSendLimitSource{
+		Value: v,
+	}
+}
+
+// NilSiteSendLimitSource is nullable SiteSendLimitSource.
+type NilSiteSendLimitSource struct {
+	Value SiteSendLimitSource
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilSiteSendLimitSource) SetTo(v SiteSendLimitSource) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilSiteSendLimitSource) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilSiteSendLimitSource) SetToNull() {
+	o.Null = true
+	var v SiteSendLimitSource
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilSiteSendLimitSource) Get() (v SiteSendLimitSource, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilSiteSendLimitSource) Or(d SiteSendLimitSource) SiteSendLimitSource {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -351,74 +396,6 @@ func (o OptNilEntityId) Get() (v EntityId, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilEntityId) Or(d EntityId) EntityId {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilInt32 returns new OptNilInt32 with value set to v.
-func NewOptNilInt32(v int32) OptNilInt32 {
-	return OptNilInt32{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilInt32 is optional nullable int32.
-type OptNilInt32 struct {
-	Value int32
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilInt32 was set.
-func (o OptNilInt32) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilInt32) Reset() {
-	var v int32
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilInt32) SetTo(v int32) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilInt32) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilInt32) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v int32
-	o.Value = v
-}
-
-// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
-func (o OptNilInt32) IsEmpty() bool {
-	return !o.Set && !o.Null
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilInt32) Get() (v int32, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilInt32) Or(d int32) int32 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -759,6 +736,142 @@ func (o OptNilSiteIntegrationConfigInput) Get() (v SiteIntegrationConfigInput, o
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilSiteIntegrationConfigInput) Or(d SiteIntegrationConfigInput) SiteIntegrationConfigInput {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilSiteMaxPerDay returns new OptNilSiteMaxPerDay with value set to v.
+func NewOptNilSiteMaxPerDay(v SiteMaxPerDay) OptNilSiteMaxPerDay {
+	return OptNilSiteMaxPerDay{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilSiteMaxPerDay is optional nullable SiteMaxPerDay.
+type OptNilSiteMaxPerDay struct {
+	Value SiteMaxPerDay
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilSiteMaxPerDay was set.
+func (o OptNilSiteMaxPerDay) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilSiteMaxPerDay) Reset() {
+	var v SiteMaxPerDay
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilSiteMaxPerDay) SetTo(v SiteMaxPerDay) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilSiteMaxPerDay) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilSiteMaxPerDay) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v SiteMaxPerDay
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilSiteMaxPerDay) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilSiteMaxPerDay) Get() (v SiteMaxPerDay, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilSiteMaxPerDay) Or(d SiteMaxPerDay) SiteMaxPerDay {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilSiteMaxPerSecond returns new OptNilSiteMaxPerSecond with value set to v.
+func NewOptNilSiteMaxPerSecond(v SiteMaxPerSecond) OptNilSiteMaxPerSecond {
+	return OptNilSiteMaxPerSecond{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilSiteMaxPerSecond is optional nullable SiteMaxPerSecond.
+type OptNilSiteMaxPerSecond struct {
+	Value SiteMaxPerSecond
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilSiteMaxPerSecond was set.
+func (o OptNilSiteMaxPerSecond) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilSiteMaxPerSecond) Reset() {
+	var v SiteMaxPerSecond
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilSiteMaxPerSecond) SetTo(v SiteMaxPerSecond) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilSiteMaxPerSecond) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilSiteMaxPerSecond) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v SiteMaxPerSecond
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilSiteMaxPerSecond) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilSiteMaxPerSecond) Get() (v SiteMaxPerSecond, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilSiteMaxPerSecond) Or(d SiteMaxPerSecond) SiteMaxPerSecond {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3549,10 +3662,10 @@ type SiteCreateIntegrationInput struct {
 	Name      string  `json:"name"`
 	Enabled   OptBool `json:"enabled"`
 	IsDefault OptBool `json:"isDefault"`
-	// Most messages per second (positive); omit or null for no limit.
-	MaxPerSecond OptNilInt32 `json:"maxPerSecond"`
-	// Most messages per rolling 24 hours (positive); omit or null for no limit.
-	MaxPerDay OptNilInt32                `json:"maxPerDay"`
+	// Most messages per second (1 to 10 000); omit or null for no limit.
+	MaxPerSecond OptNilSiteMaxPerSecond `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit.
+	MaxPerDay OptNilSiteMaxPerDay        `json:"maxPerDay"`
 	Config    SiteIntegrationConfigInput `json:"config"`
 }
 
@@ -3572,12 +3685,12 @@ func (s *SiteCreateIntegrationInput) GetIsDefault() OptBool {
 }
 
 // GetMaxPerSecond returns the value of MaxPerSecond.
-func (s *SiteCreateIntegrationInput) GetMaxPerSecond() OptNilInt32 {
+func (s *SiteCreateIntegrationInput) GetMaxPerSecond() OptNilSiteMaxPerSecond {
 	return s.MaxPerSecond
 }
 
 // GetMaxPerDay returns the value of MaxPerDay.
-func (s *SiteCreateIntegrationInput) GetMaxPerDay() OptNilInt32 {
+func (s *SiteCreateIntegrationInput) GetMaxPerDay() OptNilSiteMaxPerDay {
 	return s.MaxPerDay
 }
 
@@ -3602,12 +3715,12 @@ func (s *SiteCreateIntegrationInput) SetIsDefault(val OptBool) {
 }
 
 // SetMaxPerSecond sets the value of MaxPerSecond.
-func (s *SiteCreateIntegrationInput) SetMaxPerSecond(val OptNilInt32) {
+func (s *SiteCreateIntegrationInput) SetMaxPerSecond(val OptNilSiteMaxPerSecond) {
 	s.MaxPerSecond = val
 }
 
 // SetMaxPerDay sets the value of MaxPerDay.
-func (s *SiteCreateIntegrationInput) SetMaxPerDay(val OptNilInt32) {
+func (s *SiteCreateIntegrationInput) SetMaxPerDay(val OptNilSiteMaxPerDay) {
 	s.MaxPerDay = val
 }
 
@@ -4886,6 +4999,8 @@ type SiteIntegrationResource struct {
 	MaxPerSecond NilInt32 `json:"maxPerSecond"`
 	// Send rate limit: most messages per rolling 24 hours; null means no daily limit.
 	MaxPerDay NilInt32 `json:"maxPerDay"`
+	// The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage.
+	SendLimit SiteSendLimitStatus `json:"sendLimit"`
 	// Provider config (secrets redacted).
 	Config SiteIntegrationConfig `json:"config"`
 	// Creation timestamp.
@@ -4932,6 +5047,11 @@ func (s *SiteIntegrationResource) GetMaxPerSecond() NilInt32 {
 // GetMaxPerDay returns the value of MaxPerDay.
 func (s *SiteIntegrationResource) GetMaxPerDay() NilInt32 {
 	return s.MaxPerDay
+}
+
+// GetSendLimit returns the value of SendLimit.
+func (s *SiteIntegrationResource) GetSendLimit() SiteSendLimitStatus {
+	return s.SendLimit
 }
 
 // GetConfig returns the value of Config.
@@ -4987,6 +5107,11 @@ func (s *SiteIntegrationResource) SetMaxPerSecond(val NilInt32) {
 // SetMaxPerDay sets the value of MaxPerDay.
 func (s *SiteIntegrationResource) SetMaxPerDay(val NilInt32) {
 	s.MaxPerDay = val
+}
+
+// SetSendLimit sets the value of SendLimit.
+func (s *SiteIntegrationResource) SetSendLimit(val SiteSendLimitStatus) {
+	s.SendLimit = val
 }
 
 // SetConfig sets the value of Config.
@@ -5256,6 +5381,10 @@ func (*SiteInvitationsDeleteNotFound) siteInvitationsDeleteRes() {}
 type SiteInvitationsListOKApplicationJSON []SiteInvitationResource
 
 func (*SiteInvitationsListOKApplicationJSON) siteInvitationsListRes() {}
+
+type SiteMaxPerDay int32
+
+type SiteMaxPerSecond int32
 
 // A Membership — the join granting a User access to the workspace with a Role.
 // Ref: #/components/schemas/SiteMembershipResource
@@ -6010,6 +6139,167 @@ func (*SiteSegmentsUpdateNotFound) siteSegmentsUpdateRes() {}
 type SiteSegmentsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteSegmentsUpdateUnprocessableEntity) siteSegmentsUpdateRes() {}
+
+// Where an effective Send rate limit comes from.
+// Ref: #/components/schemas/SiteSendLimitSource
+type SiteSendLimitSource string
+
+const (
+	SiteSendLimitSourceManual   SiteSendLimitSource = "manual"
+	SiteSendLimitSourceProvider SiteSendLimitSource = "provider"
+)
+
+// AllValues returns all SiteSendLimitSource values.
+func (SiteSendLimitSource) AllValues() []SiteSendLimitSource {
+	return []SiteSendLimitSource{
+		SiteSendLimitSourceManual,
+		SiteSendLimitSourceProvider,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSendLimitSource) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSendLimitSourceManual:
+		return []byte(s), nil
+	case SiteSendLimitSourceProvider:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSendLimitSource) UnmarshalText(data []byte) error {
+	switch SiteSendLimitSource(data) {
+	case SiteSendLimitSourceManual:
+		*s = SiteSendLimitSourceManual
+		return nil
+	case SiteSendLimitSourceProvider:
+		*s = SiteSendLimitSourceProvider
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// The Send rate limit as enforced, with the last 24 hours of usage.
+// Ref: #/components/schemas/SiteSendLimitStatus
+type SiteSendLimitStatus struct {
+	// Most messages per second.
+	PerSecond SiteSendLimitValue `json:"perSecond"`
+	// Most messages per rolling 24 hours.
+	PerDay SiteSendLimitValue `json:"perDay"`
+	// Messages the provider accepted from this Integration in the last 24 hours.
+	SentLast24h int32 `json:"sentLast24h"`
+	// Reasons to review the limit; empty when there is nothing to flag.
+	Warnings []SiteSendLimitWarning `json:"warnings"`
+}
+
+// GetPerSecond returns the value of PerSecond.
+func (s *SiteSendLimitStatus) GetPerSecond() SiteSendLimitValue {
+	return s.PerSecond
+}
+
+// GetPerDay returns the value of PerDay.
+func (s *SiteSendLimitStatus) GetPerDay() SiteSendLimitValue {
+	return s.PerDay
+}
+
+// GetSentLast24h returns the value of SentLast24h.
+func (s *SiteSendLimitStatus) GetSentLast24h() int32 {
+	return s.SentLast24h
+}
+
+// GetWarnings returns the value of Warnings.
+func (s *SiteSendLimitStatus) GetWarnings() []SiteSendLimitWarning {
+	return s.Warnings
+}
+
+// SetPerSecond sets the value of PerSecond.
+func (s *SiteSendLimitStatus) SetPerSecond(val SiteSendLimitValue) {
+	s.PerSecond = val
+}
+
+// SetPerDay sets the value of PerDay.
+func (s *SiteSendLimitStatus) SetPerDay(val SiteSendLimitValue) {
+	s.PerDay = val
+}
+
+// SetSentLast24h sets the value of SentLast24h.
+func (s *SiteSendLimitStatus) SetSentLast24h(val int32) {
+	s.SentLast24h = val
+}
+
+// SetWarnings sets the value of Warnings.
+func (s *SiteSendLimitStatus) SetWarnings(val []SiteSendLimitWarning) {
+	s.Warnings = val
+}
+
+// One effective ceiling: the lowest of the manual and provider values, manual on a tie.
+// Ref: #/components/schemas/SiteSendLimitValue
+type SiteSendLimitValue struct {
+	// The ceiling in messages; null means this window is not limited.
+	Limit NilInt32 `json:"limit"`
+	// Where the ceiling comes from; null when there is none.
+	Source NilSiteSendLimitSource `json:"source"`
+}
+
+// GetLimit returns the value of Limit.
+func (s *SiteSendLimitValue) GetLimit() NilInt32 {
+	return s.Limit
+}
+
+// GetSource returns the value of Source.
+func (s *SiteSendLimitValue) GetSource() NilSiteSendLimitSource {
+	return s.Source
+}
+
+// SetLimit sets the value of Limit.
+func (s *SiteSendLimitValue) SetLimit(val NilInt32) {
+	s.Limit = val
+}
+
+// SetSource sets the value of Source.
+func (s *SiteSendLimitValue) SetSource(val NilSiteSendLimitSource) {
+	s.Source = val
+}
+
+// A reason to look at an Integration's Send rate limit.
+// Ref: #/components/schemas/SiteSendLimitWarning
+type SiteSendLimitWarning string
+
+const (
+	SiteSendLimitWarningUnlimited SiteSendLimitWarning = "unlimited"
+)
+
+// AllValues returns all SiteSendLimitWarning values.
+func (SiteSendLimitWarning) AllValues() []SiteSendLimitWarning {
+	return []SiteSendLimitWarning{
+		SiteSendLimitWarningUnlimited,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSendLimitWarning) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSendLimitWarningUnlimited:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSendLimitWarning) UnmarshalText(data []byte) error {
+	switch SiteSendLimitWarning(data) {
+	case SiteSendLimitWarningUnlimited:
+		*s = SiteSendLimitWarningUnlimited
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Sending domain resource used by the site UI (ADR 0010). 1mail generates the DKIM keypair; the user
 // publishes the DKIM TXT to authenticate the domain. The private key is never exposed. `verified` is a
@@ -7924,10 +8214,10 @@ type SiteUpdateIntegrationInput struct {
 	Name      OptString `json:"name"`
 	Enabled   OptBool   `json:"enabled"`
 	IsDefault OptBool   `json:"isDefault"`
-	// Most messages per second (positive); null clears the limit, omit to keep.
-	MaxPerSecond OptNilInt32 `json:"maxPerSecond"`
-	// Most messages per rolling 24 hours (positive); null clears the limit, omit to keep.
-	MaxPerDay OptNilInt32                      `json:"maxPerDay"`
+	// Most messages per second (1 to 10 000); null clears the limit, omit to keep.
+	MaxPerSecond OptNilSiteMaxPerSecond `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep.
+	MaxPerDay OptNilSiteMaxPerDay              `json:"maxPerDay"`
 	Config    OptNilSiteIntegrationConfigInput `json:"config"`
 }
 
@@ -7947,12 +8237,12 @@ func (s *SiteUpdateIntegrationInput) GetIsDefault() OptBool {
 }
 
 // GetMaxPerSecond returns the value of MaxPerSecond.
-func (s *SiteUpdateIntegrationInput) GetMaxPerSecond() OptNilInt32 {
+func (s *SiteUpdateIntegrationInput) GetMaxPerSecond() OptNilSiteMaxPerSecond {
 	return s.MaxPerSecond
 }
 
 // GetMaxPerDay returns the value of MaxPerDay.
-func (s *SiteUpdateIntegrationInput) GetMaxPerDay() OptNilInt32 {
+func (s *SiteUpdateIntegrationInput) GetMaxPerDay() OptNilSiteMaxPerDay {
 	return s.MaxPerDay
 }
 
@@ -7977,12 +8267,12 @@ func (s *SiteUpdateIntegrationInput) SetIsDefault(val OptBool) {
 }
 
 // SetMaxPerSecond sets the value of MaxPerSecond.
-func (s *SiteUpdateIntegrationInput) SetMaxPerSecond(val OptNilInt32) {
+func (s *SiteUpdateIntegrationInput) SetMaxPerSecond(val OptNilSiteMaxPerSecond) {
 	s.MaxPerSecond = val
 }
 
 // SetMaxPerDay sets the value of MaxPerDay.
-func (s *SiteUpdateIntegrationInput) SetMaxPerDay(val OptNilInt32) {
+func (s *SiteUpdateIntegrationInput) SetMaxPerDay(val OptNilSiteMaxPerDay) {
 	s.MaxPerDay = val
 }
 

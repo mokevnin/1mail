@@ -271,6 +271,20 @@ func (_c *OutboundMessageCreate) SetNillableAutomationStep(v *int) *OutboundMess
 	return _c
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (_c *OutboundMessageCreate) SetIntegrationID(v int64) *OutboundMessageCreate {
+	_c.mutation.SetIntegrationID(v)
+	return _c
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (_c *OutboundMessageCreate) SetNillableIntegrationID(v *int64) *OutboundMessageCreate {
+	if v != nil {
+		_c.SetIntegrationID(*v)
+	}
+	return _c
+}
+
 // SetTemplateID sets the "template_id" field.
 func (_c *OutboundMessageCreate) SetTemplateID(v int64) *OutboundMessageCreate {
 	_c.mutation.SetTemplateID(v)
@@ -518,6 +532,10 @@ func (_c *OutboundMessageCreate) createSpec() (*OutboundMessage, *sqlgraph.Creat
 	if value, ok := _c.mutation.AutomationStep(); ok {
 		_spec.SetField(outboundmessage.FieldAutomationStep, field.TypeInt, value)
 		_node.AutomationStep = &value
+	}
+	if value, ok := _c.mutation.IntegrationID(); ok {
+		_spec.SetField(outboundmessage.FieldIntegrationID, field.TypeInt64, value)
+		_node.IntegrationID = &value
 	}
 	if value, ok := _c.mutation.TemplateID(); ok {
 		_spec.SetField(outboundmessage.FieldTemplateID, field.TypeInt64, value)
@@ -895,6 +913,30 @@ func (u *OutboundMessageUpsert) AddAutomationStep(v int) *OutboundMessageUpsert 
 // ClearAutomationStep clears the value of the "automation_step" field.
 func (u *OutboundMessageUpsert) ClearAutomationStep() *OutboundMessageUpsert {
 	u.SetNull(outboundmessage.FieldAutomationStep)
+	return u
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *OutboundMessageUpsert) SetIntegrationID(v int64) *OutboundMessageUpsert {
+	u.Set(outboundmessage.FieldIntegrationID, v)
+	return u
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *OutboundMessageUpsert) UpdateIntegrationID() *OutboundMessageUpsert {
+	u.SetExcluded(outboundmessage.FieldIntegrationID)
+	return u
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *OutboundMessageUpsert) AddIntegrationID(v int64) *OutboundMessageUpsert {
+	u.Add(outboundmessage.FieldIntegrationID, v)
+	return u
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *OutboundMessageUpsert) ClearIntegrationID() *OutboundMessageUpsert {
+	u.SetNull(outboundmessage.FieldIntegrationID)
 	return u
 }
 
@@ -1333,6 +1375,34 @@ func (u *OutboundMessageUpsertOne) UpdateAutomationStep() *OutboundMessageUpsert
 func (u *OutboundMessageUpsertOne) ClearAutomationStep() *OutboundMessageUpsertOne {
 	return u.Update(func(s *OutboundMessageUpsert) {
 		s.ClearAutomationStep()
+	})
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *OutboundMessageUpsertOne) SetIntegrationID(v int64) *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.SetIntegrationID(v)
+	})
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *OutboundMessageUpsertOne) AddIntegrationID(v int64) *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.AddIntegrationID(v)
+	})
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *OutboundMessageUpsertOne) UpdateIntegrationID() *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.UpdateIntegrationID()
+	})
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *OutboundMessageUpsertOne) ClearIntegrationID() *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.ClearIntegrationID()
 	})
 }
 
@@ -1941,6 +2011,34 @@ func (u *OutboundMessageUpsertBulk) UpdateAutomationStep() *OutboundMessageUpser
 func (u *OutboundMessageUpsertBulk) ClearAutomationStep() *OutboundMessageUpsertBulk {
 	return u.Update(func(s *OutboundMessageUpsert) {
 		s.ClearAutomationStep()
+	})
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *OutboundMessageUpsertBulk) SetIntegrationID(v int64) *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.SetIntegrationID(v)
+	})
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *OutboundMessageUpsertBulk) AddIntegrationID(v int64) *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.AddIntegrationID(v)
+	})
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *OutboundMessageUpsertBulk) UpdateIntegrationID() *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.UpdateIntegrationID()
+	})
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *OutboundMessageUpsertBulk) ClearIntegrationID() *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.ClearIntegrationID()
 	})
 }
 

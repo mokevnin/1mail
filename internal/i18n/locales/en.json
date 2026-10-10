@@ -41,6 +41,5 @@
   "errors.broadcast_already_sending": "broadcast is already sending or sent",
   "errors.already_member": "already a member",
   "errors.keep_one_owner": "the workspace must keep at least one owner",
-  "errors.integration_kind_mismatch": "kind must match the integration provider",
-  "errors.integration_limit_positive": "a send rate limit must be a positive number"
+  "errors.integration_kind_mismatch": "kind must match the integration provider"
 }

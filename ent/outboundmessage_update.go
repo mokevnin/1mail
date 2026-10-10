@@ -368,6 +368,33 @@ func (_u *OutboundMessageUpdate) ClearAutomationStep() *OutboundMessageUpdate {
 	return _u
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (_u *OutboundMessageUpdate) SetIntegrationID(v int64) *OutboundMessageUpdate {
+	_u.mutation.ResetIntegrationID()
+	_u.mutation.SetIntegrationID(v)
+	return _u
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (_u *OutboundMessageUpdate) SetNillableIntegrationID(v *int64) *OutboundMessageUpdate {
+	if v != nil {
+		_u.SetIntegrationID(*v)
+	}
+	return _u
+}
+
+// AddIntegrationID adds value to the "integration_id" field.
+func (_u *OutboundMessageUpdate) AddIntegrationID(v int64) *OutboundMessageUpdate {
+	_u.mutation.AddIntegrationID(v)
+	return _u
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (_u *OutboundMessageUpdate) ClearIntegrationID() *OutboundMessageUpdate {
+	_u.mutation.ClearIntegrationID()
+	return _u
+}
+
 // SetTemplateID sets the "template_id" field.
 func (_u *OutboundMessageUpdate) SetTemplateID(v int64) *OutboundMessageUpdate {
 	_u.mutation.ResetTemplateID()
@@ -586,6 +613,15 @@ func (_u *OutboundMessageUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if _u.mutation.AutomationStepCleared() {
 		_spec.ClearField(outboundmessage.FieldAutomationStep, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IntegrationID(); ok {
+		_spec.SetField(outboundmessage.FieldIntegrationID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedIntegrationID(); ok {
+		_spec.AddField(outboundmessage.FieldIntegrationID, field.TypeInt64, value)
+	}
+	if _u.mutation.IntegrationIDCleared() {
+		_spec.ClearField(outboundmessage.FieldIntegrationID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TemplateID(); ok {
 		_spec.SetField(outboundmessage.FieldTemplateID, field.TypeInt64, value)
@@ -985,6 +1021,33 @@ func (_u *OutboundMessageUpdateOne) ClearAutomationStep() *OutboundMessageUpdate
 	return _u
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (_u *OutboundMessageUpdateOne) SetIntegrationID(v int64) *OutboundMessageUpdateOne {
+	_u.mutation.ResetIntegrationID()
+	_u.mutation.SetIntegrationID(v)
+	return _u
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (_u *OutboundMessageUpdateOne) SetNillableIntegrationID(v *int64) *OutboundMessageUpdateOne {
+	if v != nil {
+		_u.SetIntegrationID(*v)
+	}
+	return _u
+}
+
+// AddIntegrationID adds value to the "integration_id" field.
+func (_u *OutboundMessageUpdateOne) AddIntegrationID(v int64) *OutboundMessageUpdateOne {
+	_u.mutation.AddIntegrationID(v)
+	return _u
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (_u *OutboundMessageUpdateOne) ClearIntegrationID() *OutboundMessageUpdateOne {
+	_u.mutation.ClearIntegrationID()
+	return _u
+}
+
 // SetTemplateID sets the "template_id" field.
 func (_u *OutboundMessageUpdateOne) SetTemplateID(v int64) *OutboundMessageUpdateOne {
 	_u.mutation.ResetTemplateID()
@@ -1233,6 +1296,15 @@ func (_u *OutboundMessageUpdateOne) sqlSave(ctx context.Context) (_node *Outboun
 	}
 	if _u.mutation.AutomationStepCleared() {
 		_spec.ClearField(outboundmessage.FieldAutomationStep, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IntegrationID(); ok {
+		_spec.SetField(outboundmessage.FieldIntegrationID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedIntegrationID(); ok {
+		_spec.AddField(outboundmessage.FieldIntegrationID, field.TypeInt64, value)
+	}
+	if _u.mutation.IntegrationIDCleared() {
+		_spec.ClearField(outboundmessage.FieldIntegrationID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TemplateID(); ok {
 		_spec.SetField(outboundmessage.FieldTemplateID, field.TypeInt64, value)

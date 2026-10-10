@@ -140,6 +140,11 @@ func AutomationStep(v int) predicate.OutboundMessage {
 	return predicate.OutboundMessage(sql.FieldEQ(FieldAutomationStep, v))
 }
 
+// IntegrationID applies equality check predicate on the "integration_id" field. It's identical to IntegrationIDEQ.
+func IntegrationID(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldEQ(FieldIntegrationID, v))
+}
+
 // TemplateID applies equality check predicate on the "template_id" field. It's identical to TemplateIDEQ.
 func TemplateID(v int64) predicate.OutboundMessage {
 	return predicate.OutboundMessage(sql.FieldEQ(FieldTemplateID, v))
@@ -1123,6 +1128,56 @@ func AutomationStepIsNil() predicate.OutboundMessage {
 // AutomationStepNotNil applies the NotNil predicate on the "automation_step" field.
 func AutomationStepNotNil() predicate.OutboundMessage {
 	return predicate.OutboundMessage(sql.FieldNotNull(FieldAutomationStep))
+}
+
+// IntegrationIDEQ applies the EQ predicate on the "integration_id" field.
+func IntegrationIDEQ(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDNEQ applies the NEQ predicate on the "integration_id" field.
+func IntegrationIDNEQ(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldNEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDIn applies the In predicate on the "integration_id" field.
+func IntegrationIDIn(vs ...int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldIn(FieldIntegrationID, vs...))
+}
+
+// IntegrationIDNotIn applies the NotIn predicate on the "integration_id" field.
+func IntegrationIDNotIn(vs ...int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldNotIn(FieldIntegrationID, vs...))
+}
+
+// IntegrationIDGT applies the GT predicate on the "integration_id" field.
+func IntegrationIDGT(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldGT(FieldIntegrationID, v))
+}
+
+// IntegrationIDGTE applies the GTE predicate on the "integration_id" field.
+func IntegrationIDGTE(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldGTE(FieldIntegrationID, v))
+}
+
+// IntegrationIDLT applies the LT predicate on the "integration_id" field.
+func IntegrationIDLT(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldLT(FieldIntegrationID, v))
+}
+
+// IntegrationIDLTE applies the LTE predicate on the "integration_id" field.
+func IntegrationIDLTE(v int64) predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldLTE(FieldIntegrationID, v))
+}
+
+// IntegrationIDIsNil applies the IsNil predicate on the "integration_id" field.
+func IntegrationIDIsNil() predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldIsNull(FieldIntegrationID))
+}
+
+// IntegrationIDNotNil applies the NotNil predicate on the "integration_id" field.
+func IntegrationIDNotNil() predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldNotNull(FieldIntegrationID))
 }
 
 // TemplateIDEQ applies the EQ predicate on the "template_id" field.

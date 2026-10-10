@@ -308,6 +308,15 @@ func (UnimplementedHandler) EventsCreate(ctx context.Context, req *RecordEventsI
 	return r, ht.ErrNotImplemented
 }
 
+// IntegrationsList implements Integrations_list operation.
+//
+// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+//
+// GET /integrations
+func (UnimplementedHandler) IntegrationsList(ctx context.Context, params IntegrationsListParams) (r IntegrationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SegmentsCreate implements Segments_create operation.
 //
 // Create a resource.

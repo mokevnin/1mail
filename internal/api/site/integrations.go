@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -16,6 +17,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
 	"github.com/mokevnin/1mail/internal/messaging/smtp"
+	"github.com/mokevnin/1mail/internal/sendlimit"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -38,9 +40,13 @@ func (h *Handlers) SiteIntegrationsList(ctx context.Context, params siteapi.Site
 		return nil, err
 	}
 
+	usage, err := sendlimit.Usage(ctx, s, time.Now())
+	if err != nil {
+		return nil, err
+	}
 	items := make(siteapi.SiteIntegrationsListOKApplicationJSON, len(rows))
 	for i, row := range rows {
-		res, err := h.integrationToResource(row)
+		res, err := h.integrationToResource(row, usage)
 		if err != nil {
 			return nil, err
 		}
@@ -84,14 +90,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	maxPerSecond, perSecondErr := limitValue(req.MaxPerSecond)
-	maxPerDay, perDayErr := limitValue(req.MaxPerDay)
-	if limitErrs := limitProblems(perSecondErr, perDayErr); limitErrs != nil {
-		v := siteapi.SiteIntegrationsCreateUnprocessableEntity(problemWithErrors(
-			http.StatusUnprocessableEntity, i18n.T("errors.integration_limit_positive", nil), limitErrs,
-		))
-		return &v, nil
-	}
+	maxPerSecond, maxPerDay := limitValue(req.MaxPerSecond), limitValue(req.MaxPerDay)
 
 	enabled := req.Enabled.Or(true)
 	isDefault := req.IsDefault.Or(false)
@@ -108,7 +107,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	res, err := h.integrationToResource(row)
+	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +138,7 @@ func (h *Handlers) SiteIntegrationsGet(ctx context.Context, params siteapi.SiteI
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.integrationToResource(row)
+	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
 	}
@@ -197,14 +196,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if v, ok := req.Enabled.Get(); ok {
 		setEnabled = &v
 	}
-	perSecond, perSecondErr := limitValue(req.MaxPerSecond)
-	perDay, perDayErr := limitValue(req.MaxPerDay)
-	if limitErrs := limitProblems(perSecondErr, perDayErr); limitErrs != nil {
-		r := siteapi.SiteIntegrationsUpdateUnprocessableEntity(problemWithErrors(
-			http.StatusUnprocessableEntity, i18n.T("errors.integration_limit_positive", nil), limitErrs,
-		))
-		return &r, nil
-	}
+	perSecond, perDay := limitValue(req.MaxPerSecond), limitValue(req.MaxPerDay)
 
 	if cfg, ok := req.Config.Get(); ok {
 		provider, _, plaintext, verr := h.encodeConfigInput(cfg)
@@ -297,7 +289,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.integrationToResource(updated)
+	res, err := h.integrationResource(ctx, s, updated)
 	if err != nil {
 		return nil, err
 	}
@@ -347,35 +339,15 @@ type integrationDraft struct {
 	maxPerDay    *int
 }
 
-// limitValue reads one Send rate limit from its request field: a set value must be
-// positive; null (and, on create, omitted) means no limit and yields a nil pointer.
-func limitValue(in siteapi.OptNilInt32) (*int, error) {
+// limitValue reads one Send rate limit from its request field: null (and, on create,
+// omitted) means no limit and yields a nil pointer. The contract bounds a set value.
+func limitValue[T ~int32](in interface{ Get() (T, bool) }) *int {
 	v, ok := in.Get()
 	if !ok {
-		return nil, nil
-	}
-	if v < 1 {
-		return nil, errLimitNotPositive
-	}
-	n := int(v)
-	return &n, nil
-}
-
-var errLimitNotPositive = errors.New("a send rate limit must be a positive number")
-
-// limitProblems keys the invalid limits by field for a 422, nil when both are valid.
-func limitProblems(perSecond, perDay error) map[string][]string {
-	out := map[string][]string{}
-	if perSecond != nil {
-		out["maxPerSecond"] = []string{i18n.T("errors.integration_limit_positive", nil)}
-	}
-	if perDay != nil {
-		out["maxPerDay"] = []string{i18n.T("errors.integration_limit_positive", nil)}
-	}
-	if len(out) == 0 {
 		return nil
 	}
-	return out
+	n := int(v)
+	return &n
 }
 
 // createIntegration inserts a row in a tx, clearing any sibling default first
@@ -506,7 +478,7 @@ func mergeSecrets(provider integration.Provider, next, prev []byte) ([]byte, err
 
 // integrationToResource decrypts the stored config and builds the API resource
 // with all secrets redacted.
-func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteIntegrationResource, error) {
+func (h *Handlers) integrationToResource(row *ent.Integration, usage map[int64]int) (siteapi.SiteIntegrationResource, error) {
 	res := siteapi.SiteIntegrationResource{
 		ID:           siteapi.EntityId(strconv.FormatInt(row.ID, 10)),
 		Name:         row.Name,
@@ -516,6 +488,7 @@ func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteInte
 		IsDefault:    row.IsDefault,
 		MaxPerSecond: limitOpt(row.MaxPerSecond),
 		MaxPerDay:    limitOpt(row.MaxPerDay),
+		SendLimit:    sendLimitStatus(row, usage),
 		CreatedAt:    siteapi.Timestamp(row.CreatedAt),
 		UpdatedAt:    siteapi.Timestamp(row.UpdatedAt),
 	}
@@ -581,4 +554,40 @@ func optNilString(s string) siteapi.OptNilString {
 		return siteapi.OptNilString{}
 	}
 	return siteapi.NewOptNilString(s)
+}
+
+// integrationResource renders one Integration with its 24-hour usage, for the
+// single-row responses (get, create, update).
+func (h *Handlers) integrationResource(ctx context.Context, s *ent.Scoped, row *ent.Integration) (siteapi.SiteIntegrationResource, error) {
+	usage, err := sendlimit.Usage(ctx, s, time.Now())
+	if err != nil {
+		return siteapi.SiteIntegrationResource{}, err
+	}
+	return h.integrationToResource(row, usage)
+}
+
+// sendLimitStatus renders an Integration's enforced Send rate limit with its sent
+// count over the last 24 hours (from the per-Integration usage map).
+func sendLimitStatus(row *ent.Integration, usage map[int64]int) siteapi.SiteSendLimitStatus {
+	eff := sendlimit.EffectiveOf(row)
+	out := siteapi.SiteSendLimitStatus{
+		PerSecond:   sendLimitValue(eff.PerSecond),
+		PerDay:      sendLimitValue(eff.PerDay),
+		SentLast24h: int32(usage[row.ID]),
+		Warnings:    []siteapi.SiteSendLimitWarning{},
+	}
+	if eff.Unlimited() {
+		out.Warnings = append(out.Warnings, siteapi.SiteSendLimitWarningUnlimited)
+	}
+	return out
+}
+
+func sendLimitValue(v sendlimit.Value) siteapi.SiteSendLimitValue {
+	out := siteapi.SiteSendLimitValue{Limit: limitOpt(v.Limit)}
+	if v.Source == "" {
+		out.Source = siteapi.NilSiteSendLimitSource{Null: true}
+	} else {
+		out.Source = siteapi.NewNilSiteSendLimitSource(siteapi.SiteSendLimitSource(v.Source))
+	}
+	return out
 }

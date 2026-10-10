@@ -842,6 +842,9 @@ func ScopedEntities() []ScopedEntity {
 				if src.AutomationStep != nil {
 					b.SetAutomationStep(*src.AutomationStep)
 				}
+				if src.IntegrationID != nil {
+					b.SetIntegrationID(remap("Integration", *src.IntegrationID))
+				}
 				if src.TemplateID != nil {
 					b.SetTemplateID(remap("EmailTemplate", *src.TemplateID))
 				}
@@ -880,6 +883,12 @@ func ScopedEntities() []ScopedEntity {
 					Name: "automation_run_id", Target: "AutomationRun",
 					Set: func(ctx context.Context, s *Scoped, id, target int64) error {
 						return s.OutboundMessage().UpdateOneID(id).SetAutomationRunID(target).Exec(ctx)
+					},
+				},
+				{
+					Name: "integration_id", Target: "Integration",
+					Set: func(ctx context.Context, s *Scoped, id, target int64) error {
+						return s.OutboundMessage().UpdateOneID(id).SetIntegrationID(target).Exec(ctx)
 					},
 				},
 				{

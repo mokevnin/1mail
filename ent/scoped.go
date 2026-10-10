@@ -10711,6 +10711,18 @@ func (x *OutboundMessageScopedCreate) SetNillableAutomationStep(v *int) *Outboun
 	return x
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (x *OutboundMessageScopedCreate) SetIntegrationID(v int64) *OutboundMessageScopedCreate {
+	x.b.SetIntegrationID(v)
+	return x
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (x *OutboundMessageScopedCreate) SetNillableIntegrationID(v *int64) *OutboundMessageScopedCreate {
+	x.b.SetNillableIntegrationID(v)
+	return x
+}
+
 // SetTemplateID sets the "template_id" field.
 func (x *OutboundMessageScopedCreate) SetTemplateID(v int64) *OutboundMessageScopedCreate {
 	x.b.SetTemplateID(v)
@@ -10749,6 +10761,11 @@ func (x *OutboundMessageScopedCreate) check(ctx context.Context) error {
 	if v, ok := m.AutomationRunID(); ok {
 		if err := x.s.verifyAutomationRun(ctx, []int64{v}); err != nil {
 			return fmt.Errorf("automation_run_id: %w", err)
+		}
+	}
+	if v, ok := m.IntegrationID(); ok {
+		if err := x.s.verifyIntegration(ctx, []int64{v}); err != nil {
+			return fmt.Errorf("integration_id: %w", err)
 		}
 	}
 	if v, ok := m.TemplateID(); ok {
@@ -11052,6 +11069,18 @@ func (u *OutboundMessageScopedUpsert) UpdateAutomationStep() *OutboundMessageSco
 // ClearAutomationStep clears the value of the "automation_step" field.
 func (u *OutboundMessageScopedUpsert) ClearAutomationStep() *OutboundMessageScopedUpsert {
 	u.u.SetNull(outboundmessage.FieldAutomationStep)
+	return u
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *OutboundMessageScopedUpsert) UpdateIntegrationID() *OutboundMessageScopedUpsert {
+	u.u.SetExcluded(outboundmessage.FieldIntegrationID)
+	return u
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *OutboundMessageScopedUpsert) ClearIntegrationID() *OutboundMessageScopedUpsert {
+	u.u.SetNull(outboundmessage.FieldIntegrationID)
 	return u
 }
 
@@ -11487,6 +11516,30 @@ func (x *OutboundMessageScopedUpdateOne) ClearAutomationStep() *OutboundMessageS
 	return x
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (x *OutboundMessageScopedUpdateOne) SetIntegrationID(v int64) *OutboundMessageScopedUpdateOne {
+	x.b.SetIntegrationID(v)
+	return x
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (x *OutboundMessageScopedUpdateOne) SetNillableIntegrationID(v *int64) *OutboundMessageScopedUpdateOne {
+	x.b.SetNillableIntegrationID(v)
+	return x
+}
+
+// AddIntegrationID adds value to the "integration_id" field.
+func (x *OutboundMessageScopedUpdateOne) AddIntegrationID(v int64) *OutboundMessageScopedUpdateOne {
+	x.b.AddIntegrationID(v)
+	return x
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (x *OutboundMessageScopedUpdateOne) ClearIntegrationID() *OutboundMessageScopedUpdateOne {
+	x.b.ClearIntegrationID()
+	return x
+}
+
 // SetTemplateID sets the "template_id" field.
 func (x *OutboundMessageScopedUpdateOne) SetTemplateID(v int64) *OutboundMessageScopedUpdateOne {
 	x.b.SetTemplateID(v)
@@ -11537,6 +11590,11 @@ func (x *OutboundMessageScopedUpdateOne) check(ctx context.Context) error {
 	if v, ok := m.AutomationRunID(); ok {
 		if err := x.s.verifyAutomationRun(ctx, []int64{v}); err != nil {
 			return fmt.Errorf("automation_run_id: %w", err)
+		}
+	}
+	if v, ok := m.IntegrationID(); ok {
+		if err := x.s.verifyIntegration(ctx, []int64{v}); err != nil {
+			return fmt.Errorf("integration_id: %w", err)
 		}
 	}
 	if v, ok := m.TemplateID(); ok {
@@ -11874,6 +11932,30 @@ func (x *OutboundMessageScopedUpdate) ClearAutomationStep() *OutboundMessageScop
 	return x
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (x *OutboundMessageScopedUpdate) SetIntegrationID(v int64) *OutboundMessageScopedUpdate {
+	x.b.SetIntegrationID(v)
+	return x
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (x *OutboundMessageScopedUpdate) SetNillableIntegrationID(v *int64) *OutboundMessageScopedUpdate {
+	x.b.SetNillableIntegrationID(v)
+	return x
+}
+
+// AddIntegrationID adds value to the "integration_id" field.
+func (x *OutboundMessageScopedUpdate) AddIntegrationID(v int64) *OutboundMessageScopedUpdate {
+	x.b.AddIntegrationID(v)
+	return x
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (x *OutboundMessageScopedUpdate) ClearIntegrationID() *OutboundMessageScopedUpdate {
+	x.b.ClearIntegrationID()
+	return x
+}
+
 // SetTemplateID sets the "template_id" field.
 func (x *OutboundMessageScopedUpdate) SetTemplateID(v int64) *OutboundMessageScopedUpdate {
 	x.b.SetTemplateID(v)
@@ -11924,6 +12006,11 @@ func (x *OutboundMessageScopedUpdate) check(ctx context.Context) error {
 	if v, ok := m.AutomationRunID(); ok {
 		if err := x.s.verifyAutomationRun(ctx, []int64{v}); err != nil {
 			return fmt.Errorf("automation_run_id: %w", err)
+		}
+	}
+	if v, ok := m.IntegrationID(); ok {
+		if err := x.s.verifyIntegration(ctx, []int64{v}); err != nil {
+			return fmt.Errorf("integration_id: %w", err)
 		}
 	}
 	if v, ok := m.TemplateID(); ok {

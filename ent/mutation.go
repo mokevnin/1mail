@@ -14724,6 +14724,8 @@ type OutboundMessageMutation struct {
 	addautomation_run_id      *int64
 	automation_step           *int
 	addautomation_step        *int
+	integration_id            *int64
+	addintegration_id         *int64
 	template_id               *int64
 	addtemplate_id            *int64
 	clearedFields             map[string]struct{}
@@ -15827,6 +15829,76 @@ func (m *OutboundMessageMutation) ResetAutomationStep() {
 	delete(m.clearedFields, outboundmessage.FieldAutomationStep)
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (m *OutboundMessageMutation) SetIntegrationID(i int64) {
+	m.integration_id = &i
+	m.addintegration_id = nil
+}
+
+// IntegrationID returns the value of the "integration_id" field in the mutation.
+func (m *OutboundMessageMutation) IntegrationID() (r int64, exists bool) {
+	v := m.integration_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIntegrationID returns the old "integration_id" field's value of the OutboundMessage entity.
+// If the OutboundMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OutboundMessageMutation) OldIntegrationID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIntegrationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIntegrationID: %w", err)
+	}
+	return oldValue.IntegrationID, nil
+}
+
+// AddIntegrationID adds i to the "integration_id" field.
+func (m *OutboundMessageMutation) AddIntegrationID(i int64) {
+	if m.addintegration_id != nil {
+		*m.addintegration_id += i
+	} else {
+		m.addintegration_id = &i
+	}
+}
+
+// AddedIntegrationID returns the value that was added to the "integration_id" field in this mutation.
+func (m *OutboundMessageMutation) AddedIntegrationID() (r int64, exists bool) {
+	v := m.addintegration_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (m *OutboundMessageMutation) ClearIntegrationID() {
+	m.integration_id = nil
+	m.addintegration_id = nil
+	m.clearedFields[outboundmessage.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationIDCleared returns if the "integration_id" field was cleared in this mutation.
+func (m *OutboundMessageMutation) IntegrationIDCleared() bool {
+	_, ok := m.clearedFields[outboundmessage.FieldIntegrationID]
+	return ok
+}
+
+// ResetIntegrationID resets all changes to the "integration_id" field.
+func (m *OutboundMessageMutation) ResetIntegrationID() {
+	m.integration_id = nil
+	m.addintegration_id = nil
+	delete(m.clearedFields, outboundmessage.FieldIntegrationID)
+}
+
 // SetTemplateID sets the "template_id" field.
 func (m *OutboundMessageMutation) SetTemplateID(i int64) {
 	m.template_id = &i
@@ -15958,7 +16030,7 @@ func (m *OutboundMessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OutboundMessageMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, outboundmessage.FieldCreatedAt)
 	}
@@ -16019,6 +16091,9 @@ func (m *OutboundMessageMutation) Fields() []string {
 	if m.automation_step != nil {
 		fields = append(fields, outboundmessage.FieldAutomationStep)
 	}
+	if m.integration_id != nil {
+		fields = append(fields, outboundmessage.FieldIntegrationID)
+	}
 	if m.template_id != nil {
 		fields = append(fields, outboundmessage.FieldTemplateID)
 	}
@@ -16070,6 +16145,8 @@ func (m *OutboundMessageMutation) Field(name string) (ent.Value, bool) {
 		return m.AutomationRunID()
 	case outboundmessage.FieldAutomationStep:
 		return m.AutomationStep()
+	case outboundmessage.FieldIntegrationID:
+		return m.IntegrationID()
 	case outboundmessage.FieldTemplateID:
 		return m.TemplateID()
 	}
@@ -16121,6 +16198,8 @@ func (m *OutboundMessageMutation) OldField(ctx context.Context, name string) (en
 		return m.OldAutomationRunID(ctx)
 	case outboundmessage.FieldAutomationStep:
 		return m.OldAutomationStep(ctx)
+	case outboundmessage.FieldIntegrationID:
+		return m.OldIntegrationID(ctx)
 	case outboundmessage.FieldTemplateID:
 		return m.OldTemplateID(ctx)
 	}
@@ -16272,6 +16351,13 @@ func (m *OutboundMessageMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAutomationStep(v)
 		return nil
+	case outboundmessage.FieldIntegrationID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIntegrationID(v)
+		return nil
 	case outboundmessage.FieldTemplateID:
 		v, ok := value.(int64)
 		if !ok {
@@ -16305,6 +16391,9 @@ func (m *OutboundMessageMutation) AddedFields() []string {
 	if m.addautomation_step != nil {
 		fields = append(fields, outboundmessage.FieldAutomationStep)
 	}
+	if m.addintegration_id != nil {
+		fields = append(fields, outboundmessage.FieldIntegrationID)
+	}
 	if m.addtemplate_id != nil {
 		fields = append(fields, outboundmessage.FieldTemplateID)
 	}
@@ -16328,6 +16417,8 @@ func (m *OutboundMessageMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedAutomationRunID()
 	case outboundmessage.FieldAutomationStep:
 		return m.AddedAutomationStep()
+	case outboundmessage.FieldIntegrationID:
+		return m.AddedIntegrationID()
 	case outboundmessage.FieldTemplateID:
 		return m.AddedTemplateID()
 	}
@@ -16381,6 +16472,13 @@ func (m *OutboundMessageMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddAutomationStep(v)
 		return nil
+	case outboundmessage.FieldIntegrationID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddIntegrationID(v)
+		return nil
 	case outboundmessage.FieldTemplateID:
 		v, ok := value.(int64)
 		if !ok {
@@ -16428,6 +16526,9 @@ func (m *OutboundMessageMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(outboundmessage.FieldAutomationStep) {
 		fields = append(fields, outboundmessage.FieldAutomationStep)
+	}
+	if m.FieldCleared(outboundmessage.FieldIntegrationID) {
+		fields = append(fields, outboundmessage.FieldIntegrationID)
 	}
 	if m.FieldCleared(outboundmessage.FieldTemplateID) {
 		fields = append(fields, outboundmessage.FieldTemplateID)
@@ -16478,6 +16579,9 @@ func (m *OutboundMessageMutation) ClearField(name string) error {
 		return nil
 	case outboundmessage.FieldAutomationStep:
 		m.ClearAutomationStep()
+		return nil
+	case outboundmessage.FieldIntegrationID:
+		m.ClearIntegrationID()
 		return nil
 	case outboundmessage.FieldTemplateID:
 		m.ClearTemplateID()
@@ -16549,6 +16653,9 @@ func (m *OutboundMessageMutation) ResetField(name string) error {
 		return nil
 	case outboundmessage.FieldAutomationStep:
 		m.ResetAutomationStep()
+		return nil
+	case outboundmessage.FieldIntegrationID:
+		m.ResetIntegrationID()
 		return nil
 	case outboundmessage.FieldTemplateID:
 		m.ResetTemplateID()

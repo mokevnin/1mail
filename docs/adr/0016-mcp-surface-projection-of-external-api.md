@@ -60,7 +60,7 @@ Decisions taken while building it, so the contract and code are not the only rec
 - **Scopes.** The `ApiTokenScope` enum is the complete vocabulary and a test keeps it so (every
   scope an `/api` handler checks must be grantable): `contacts`, `events`, `segments`,
   `broadcasts`, `automations`, `templates`, `webhooks` each as `:read` / `:write`;
-  `custom_fields:read`, `sending_domains:read`; the send class `emails:send`, `broadcasts:send`,
+  `custom_fields:read`, `sending_domains:read`, `integrations:read`; the send class `emails:send`, `broadcasts:send`,
   `automations:activate`, `mcp:send`; and `tokens:read` / `tokens:write` for `/api` token
   management, which is hidden from MCP.
 - **`x-mcp`.** Declared in `typespec/external/mcp.tsp` with three keys: `name` (override of the
