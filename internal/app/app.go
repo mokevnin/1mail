@@ -511,6 +511,20 @@ func register(injector do.Injector, env string) {
 		return accounts.New(client.Client, bus.Bus), nil
 	})
 
+	// Attempts counts failed logins per account (ADR 0018) over the raw client.
+	do.Provide(injector, func(i do.Injector) (*accounts.Attempts, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return accounts.NewAttempts(client.Client,
+			accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures))), nil
+	})
+
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the
 	// surfaces cannot diverge on how a module is constructed.
 	do.Provide(injector, func(do.Injector) (*segments.Module, error) {
@@ -754,8 +768,12 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	attempts, err := do.Invoke[*accounts.Attempts](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
-		Accounts: acc, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,

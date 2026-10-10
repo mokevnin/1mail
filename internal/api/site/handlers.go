@@ -83,7 +83,10 @@ type Handlers struct {
 // the shared singletons the composition root registers once, so /site and /api
 // cannot diverge on how a module is constructed.
 type Deps struct {
-	Accounts     *accounts.Accounts
+	Accounts *accounts.Accounts
+	// Attempts counts failed logins per account (ADR 0018); the login route's
+	// credential checker and throttle wrapper share it.
+	Attempts     *accounts.Attempts
 	OAuth        *oauthserver.Service
 	Bus          *events.Bus
 	Cipher       *secrets.Cipher

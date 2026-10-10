@@ -12,7 +12,9 @@ package ratelimit
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +33,10 @@ const (
 	PolicyHuman = "human"
 	// PolicyTracking is the recording guard of opens and clicks. It never refuses.
 	PolicyTracking = "tracking"
+	// PolicyLoginAccount is the per-account login delay, PolicyLoginIP the per-IP cap
+	// on login requests.
+	PolicyLoginAccount = "login-account"
+	PolicyLoginIP      = "login-ip"
 )
 
 const window = time.Minute
@@ -95,21 +101,42 @@ func Rejected(ctx context.Context, policy string) {
 }
 
 // WriteProblem renders the RFC 7807 429 body. Headers already on w (Retry-After,
-// X-RateLimit-*, CORS) are kept.
+// X-RateLimit-*, CORS) are kept; the Retry-After seconds are repeated in the body
+// as retryAfter, so a client that only sees the body can show the wait.
 func WriteProblem(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(http.StatusTooManyRequests)
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	body := map[string]any{
 		"status": http.StatusTooManyRequests,
 		"title":  http.StatusText(http.StatusTooManyRequests),
 		"detail": "rate limit exceeded, retry later",
-	})
+	}
+	if secs, err := strconv.Atoi(w.Header().Get("Retry-After")); err == nil {
+		body["retryAfter"] = secs
+	}
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+// Wait answers 429 for a limit that is a delay rather than a window budget (the
+// per-account login delay): the caller must wait `wait` from now. limit is the
+// budget reported in X-RateLimit-Limit; Remaining is always 0. It counts and logs the
+// rejection under policy.
+func Wait(w http.ResponseWriter, r *http.Request, policy string, limit int, wait time.Duration, now time.Time) {
+	secs := int(math.Ceil(wait.Seconds()))
+	h := w.Header()
+	h.Set("Retry-After", strconv.Itoa(secs))
+	h.Set("X-RateLimit-Limit", strconv.Itoa(limit))
+	h.Set("X-RateLimit-Remaining", "0")
+	h.Set("X-RateLimit-Reset", strconv.FormatInt(now.Add(wait).Unix(), 10))
+	Rejected(r.Context(), policy)
+	WriteProblem(w)
 }
 
 // Limiter holds every policy built from the configured limits.
 type Limiter struct {
 	human    *Policy
 	tracking *Policy
+	loginIP  *Policy
 }
 
 // New builds the policies from limits.
@@ -117,6 +144,7 @@ func New(limits config.RateLimits) *Limiter {
 	return &Limiter{
 		human:    NewPolicy(PolicyHuman, limits.Human, window),
 		tracking: NewPolicy(PolicyTracking, limits.Tracking, window),
+		loginIP:  NewPolicy(PolicyLoginIP, limits.LoginIP, window),
 	}
 }
 
@@ -126,6 +154,10 @@ func New(limits config.RateLimits) *Limiter {
 func (l *Limiter) RecordsTracking(r *http.Request) bool {
 	return !l.tracking.Exceeded(r, httprate.CanonicalizeIP(clientip.FromContext(r.Context())))
 }
+
+// LoginIP is the per-IP login limiter (nil when disabled). The login route's wrapper
+// applies it, because that wrapper owns the route.
+func (l *Limiter) LoginIP() *Policy { return l.loginIP }
 
 // Middleware applies the policy of the request's route. It sits after the client
 // address middleware (the key is clientip, never a raw header) and before timeout.

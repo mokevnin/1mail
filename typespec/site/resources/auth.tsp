@@ -86,7 +86,8 @@ namespace SiteAuth {
         @body body: SiteDirectLoginResult;
       }
     | SiteDirectLoginForbidden
-    | BadRequestProblem;
+    | BadRequestProblem
+    | TooManyRequestsProblem;
 
   /** Request a password-reset link. Always returns 202 regardless of whether
    * the email matches an account, to avoid leaking which addresses exist. */

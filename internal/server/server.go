@@ -61,15 +61,21 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		URL:            cfg.AppURL,
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
 	})
-	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client))
+	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client, site.Attempts))
 	authHandler, avatarHandler := authSvc.Handlers()
+	limiter := ratelimit.New(cfg.RateLimits)
+	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0018) on both of its
+	// paths: the provider's own and the SPA's /site alias. The longer pattern
+	// outranks the /auth/ subtree.
+	throttledLogin := loginThrottle(authHandler, site.Attempts, limiter.LoginIP())
+	mux.Handle("/auth/direct/login", throttledLogin)
 	mux.Handle("/auth/", authHandler)
 	mux.Handle("/avatar/", avatarHandler)
 	// The SPA's generated client posts to /site/auth/direct/login (baseUrl "/site");
 	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
 	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	mux.Handle("/site/auth/direct/login", authHandler)
+	mux.Handle("/site/auth/direct/login", throttledLogin)
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
@@ -116,7 +122,6 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	mux.Handle("/t.js", trackerHandler())
 
 	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
-	limiter := ratelimit.New(cfg.RateLimits)
 	mux.Handle("/e/", trackingHandler(client, bus, site.Tracker, limiter))
 
 	// Inbound provider webhooks (SES bounce/complaint via SNS), routed by the

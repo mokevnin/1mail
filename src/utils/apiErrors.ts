@@ -4,6 +4,7 @@ export type ApiErrorLike = {
   title?: string | null
   error?: string | null
   status?: number | null
+  retryAfter?: number | null
 }
 
 function isApiErrorLike(error: unknown): error is ApiErrorLike {
@@ -21,6 +22,14 @@ export function isForbiddenError(error: unknown) {
 // on the English detail.
 export function isRateLimitedError(error: unknown) {
   return isApiErrorLike(error) && error.status === 429
+}
+
+// The seconds a 429 problem asks the caller to wait (`retryAfter`, the body twin of
+// the Retry-After header), or undefined when the error carries none.
+export function getRetryAfterSeconds(error: unknown) {
+  if (!isApiErrorLike(error)) return undefined
+  const { retryAfter } = error
+  return typeof retryAfter === 'number' && retryAfter > 0 ? retryAfter : undefined
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string) {
