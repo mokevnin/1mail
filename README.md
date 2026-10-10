@@ -200,3 +200,7 @@ health checks), see [`docs/self-hosting.md`](docs/self-hosting.md).
 ([`LICENSE`](LICENSE)); the Enterprise features under [`ee/`](ee/) are commercial and
 source-available ([`ee/LICENSE`](ee/LICENSE)). See [`LICENSING.md`](LICENSING.md) for the
 boundary.
+
+## Security
+
+To report a vulnerability, see [`SECURITY.md`](SECURITY.md).
