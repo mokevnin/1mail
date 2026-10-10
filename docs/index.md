@@ -9,6 +9,9 @@ hero:
       text: Self-host it
       link: /self-hosting
     - theme: alt
+      text: Operate it
+      link: /operations/
+    - theme: alt
       text: How it is designed
       link: /adr/0001-send-eligibility-model
     - theme: alt
