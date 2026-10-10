@@ -166,3 +166,16 @@ func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publis
 	}
 	return s.Contact().DeleteOneID(t.ContactID).Exec(ctx)
 }
+
+// publishErased emits the PII-free contact.erased Event in the erasure's transaction,
+// once per Erasure. The subject id travels in the message for the webhook delivery
+// and is not stored on the Event (events.ContactErased.Project).
+func publishErased(ctx context.Context, s *ent.Scoped, t *Target, pub events.Publisher) error {
+	return pub.Publish(ctx, &events.ContactErased{
+		WorkspaceID:    s.WorkspaceID(),
+		SubjectID:      t.SubjectID,
+		IdentifierKind: t.IdentifierKind,
+		OperatorKind:   t.Operator.Kind,
+		OperatorID:     t.Operator.ID,
+	})
+}

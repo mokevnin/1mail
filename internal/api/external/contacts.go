@@ -143,7 +143,8 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id))
+	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id),
+		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
 	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -173,7 +174,8 @@ func (h *Handlers) ContactsEraseBy(ctx context.Context, params externalapi.Conta
 		id = erasure.ByEmail(string(email))
 	}
 
-	err := h.erasure.Erase(ctx, auth.TokenScoped(ctx), id)
+	err := h.erasure.Erase(ctx, auth.TokenScoped(ctx), id,
+		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
 	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsEraseByNotFound(problem(http.StatusNotFound, "nothing found for the identifier"))
 		return &res, nil

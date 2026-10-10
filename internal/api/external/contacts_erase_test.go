@@ -2,6 +2,7 @@ package external_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/visitor"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -285,4 +287,69 @@ func TestExternalContactsEraseDoesNotBlockReappearance(t *testing.T) {
 	n, err := env.DB.Unsubscribe.Query().Where(unsubscribe.DestinationEQ(fixtures.ContactErasableEmail), unsubscribe.WorkspaceID(fixtures.InitechID)).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, n, "the opt-out outlives the gap")
+}
+
+// Erasure leaves one PII-free contact.erased Event (ADR 0021): the outbox message that
+// projects it names the Workspace, the operator and the identifier kind, and the
+// customer's subject_id rides only in that message, which the webhook delivers.
+func TestExternalContactsEraseEmitsContactErasedOnce(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	eraseErasable(t, env)
+
+	envelopes := env.OutboxEnvelopes(t, events.NameContactErased)
+	require.Len(t, envelopes, 1, "once per Erasure")
+	assert.EqualValues(t, fixtures.InitechID, envelopes[0].WorkspaceID)
+
+	var data map[string]any
+	require.NoError(t, json.Unmarshal(envelopes[0].Data, &data))
+	assert.Equal(t, "user-erin-300", data["subjectId"], "the customer's own id, for their downstream erasure")
+	assert.Equal(t, "contact_id", data["identifierKind"])
+	assert.Equal(t, "api_token", data["operatorKind"])
+	assert.NotZero(t, data["operatorId"])
+	assert.NotContains(t, data, "email")
+	assert.NotContains(t, data, "contactId")
+
+	// The stored Event holds no PII and no Contact reference.
+	require.NoError(t, events.Persist(ctx, env.DB, envelopes[0]))
+	stored, err := env.DB.Event.Query().Where(event.Action(events.NameContactErased)).Only(ctx)
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.InitechID, stored.WorkspaceID)
+	assert.Nil(t, stored.ContactID)
+	assert.Nil(t, stored.VisitorID)
+	assert.Nil(t, stored.Email)
+	assert.Nil(t, stored.Phone)
+	assert.Empty(t, stored.SubjectID)
+	assert.NotNil(t, stored.OccurredAt)
+	assert.NotContains(t, stored.Properties, "subjectId")
+	assert.Equal(t, "contact_id", stored.Properties["identifierKind"])
+	assert.Equal(t, "api_token", stored.Properties["operatorKind"])
+}
+
+// A Contact with no subject_id is identified downstream by its 1mail id.
+func TestExternalContactsEraseFallsBackToTheContactID(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	res, err := initechClient(t, env, "contacts:erase").ContactsDelete(context.Background(),
+		externalapi.ContactsDeleteParams{ID: entityIDString(fixtures.ContactBystanderID)})
+	require.NoError(t, err)
+	require.IsType(t, &externalapi.ContactsDeleteNoContent{}, res)
+
+	envelopes := env.OutboxEnvelopes(t, events.NameContactErased)
+	require.Len(t, envelopes, 1)
+	var data map[string]any
+	require.NoError(t, json.Unmarshal(envelopes[0].Data, &data))
+	assert.Equal(t, string(entityIDString(fixtures.ContactBystanderID)), data["subjectId"])
+}
+
+// A refused Erasure emits nothing.
+func TestExternalContactsEraseRefusedEmitsNoContactErased(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	res, err := env.ExternalScoped(t, "contacts:erase").ContactsDelete(context.Background(),
+		externalapi.ContactsDeleteParams{ID: entityIDString(fixtures.ContactErasableID)})
+	require.NoError(t, err)
+	require.IsType(t, &externalapi.ContactsDeleteNotFound{}, res)
+	assert.Empty(t, env.OutboxEnvelopes(t, events.NameContactErased))
 }
