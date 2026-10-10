@@ -32,6 +32,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -42,6 +43,7 @@ import (
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sending"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tags"
@@ -61,6 +63,7 @@ type App struct {
 	Metrics *telemetry.MetricsServer
 
 	injector       *do.RootScope
+	listener       net.Listener // caller-provided; nil means listen on Config.Port
 	events         *eventsRuntime
 	jobs           *jobsClient
 	shutdownOnce   sync.Once
@@ -147,9 +150,43 @@ func (j *jobsClient) Shutdown() error {
 	return j.Stop(ctx)
 }
 
-func New(env string) (*App, error) {
+// Option customises how New builds the App.
+type Option func(*options)
+
+type options struct {
+	listener      net.Listener
+	e2eDKIMLookup bool
+}
+
+// ErrE2EOnly: an end-to-end-only option was passed to an app that is not the e2e profile.
+var ErrE2EOnly = errors.New("app: option is only valid in the " + config.EnvE2E + " environment")
+
+// WithE2EDKIMLookup swaps the DKIM DNS lookup for the development one, which echoes a
+// Sending domain's own stored key, so the end-to-end suite verifies domains without
+// real DNS while the development flag stays off. New refuses it outside the e2e
+// profile, so it cannot be wired into a production configuration.
+func WithE2EDKIMLookup() Option {
+	return func(o *options) { o.e2eDKIMLookup = true }
+}
+
+// WithListener makes the App serve on a listener the caller already opened (a free
+// port, say). The configured public URL (APP_URL, the base of unsubscribe, confirm
+// and tracking links) and PORT are derived from the listener's address, so the order
+// is: open the listener, then New, then Serve. Stop closes the listener.
+func WithListener(ln net.Listener) Option {
+	return func(o *options) { o.listener = ln }
+}
+
+func New(env string, opts ...Option) (*App, error) {
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
+	if o.e2eDKIMLookup && env != config.EnvE2E {
+		return nil, ErrE2EOnly
+	}
 	injector := do.New()
-	register(injector, env)
+	register(injector, env, o)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -205,11 +242,17 @@ func New(env string) (*App, error) {
 		metrics = telemetry.NewMetricsServer(cfg.MetricsAddr)
 	}
 
+	addr := ":" + cfg.Port
+	if o.listener != nil {
+		addr = o.listener.Addr().String()
+	}
+
 	return &App{
-		Config:  cfg,
-		Metrics: metrics,
+		Config:   cfg,
+		Metrics:  metrics,
+		listener: o.listener,
 		Server: &http.Server{
-			Addr:              ":" + cfg.Port,
+			Addr:              addr,
 			Handler:           handler,
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       30 * time.Second,
@@ -234,7 +277,13 @@ func (a *App) Serve() error {
 			slog.Error("metrics server stopped", "err", err)
 		}
 	}()
-	if err := a.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	var err error
+	if a.listener != nil {
+		err = a.Server.Serve(a.listener)
+	} else {
+		err = a.Server.ListenAndServe()
+	}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
@@ -251,7 +300,7 @@ func (a *App) Stop(ctx context.Context) error {
 // that keeps `1mail workspace …` quick to start and to shut down.
 func NewOperator(env string) (*App, error) {
 	injector := do.New()
-	register(injector, env)
+	register(injector, env, options{})
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -322,6 +371,13 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	return service.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
 }
 
+// Accounts is the product's Accounts module from the DI container, for harnesses that
+// arrange users and Workspaces through the same instance the HTTP surface runs on
+// (the end-to-end suite), so they open no second connection pool.
+func (a *App) Accounts() (*accounts.Accounts, error) {
+	return do.Invoke[*accounts.Accounts](a.injector)
+}
+
 func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	a.shutdownOnce.Do(func() {
 		a.shutdownReport = a.injector.ShutdownWithContext(ctx)
@@ -329,9 +385,16 @@ func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	return a.shutdownReport
 }
 
-func register(injector do.Injector, env string) {
+func register(injector do.Injector, env string, o options) {
 	do.Provide(injector, func(do.Injector) (*config.Config, error) {
-		return config.Load(env)
+		cfg, err := config.Load(env)
+		if err != nil {
+			return nil, err
+		}
+		if o.listener != nil {
+			cfg.UseListener(o.listener.Addr())
+		}
+		return cfg, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*sqlDB, error) {
@@ -410,7 +473,7 @@ func register(injector do.Injector, env string) {
 		}
 		// Dev trusts seeded domains so the local send gate isn't blocked by real
 		// DNS; prod verifies against published DKIM TXT records (ADR 0010).
-		if cfg.IsDev {
+		if cfg.IsDev || o.e2eDKIMLookup {
 			client, err := do.Invoke[*entClient](i)
 			if err != nil {
 				return nil, err
@@ -627,6 +690,42 @@ func register(injector do.Injector, env string) {
 		return erasure.New(bus.Bus), nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*integrations.Module, error) {
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return integrations.New(bus.Bus, cipher, catalog, jc.Client), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*sendingdomains.Module, error) {
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return sendingdomains.New(bus.Bus, cipher, jc.Client), nil
+	})
+
 	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
 		return tags.New(), nil
 	})
@@ -788,6 +887,14 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	integ, err := do.Invoke[*integrations.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	sd, err := do.Invoke[*sendingdomains.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	edition, err := do.Invoke[*ee.Edition](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
@@ -795,7 +902,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
+		Broadcasts: bc, Reputation: rep, Integrations: integ, SendingDomains: sd, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
 	}, nil
 }
 
@@ -818,10 +925,6 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	cipher, err := do.Invoke[*secrets.Cipher](i)
-	if err != nil {
-		return apisite.Deps{}, err
-	}
-	catalog, err := do.Invoke[*messaging.Catalog](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -880,10 +983,18 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	integ, err := do.Invoke[*integrations.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	sd, err := do.Invoke[*sendingdomains.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
-		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, QuotaRefresh: jc.Client,
+		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit,
 	}, nil
 }

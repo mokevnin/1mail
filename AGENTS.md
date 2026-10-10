@@ -80,6 +80,11 @@ Run a single Go test (arguments after `--` go to `go test`; the default is `./..
 mise run test -- ./internal/api/site -run TestSiteContactsRequireAuth
 ```
 
+End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
+`mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
+app in-process. Scenarios are domain steps on `e2e.Workspace` (`env.NewWorkspace(t).Ready()`,
+`ImportContacts`, `SendBroadcast`, `WaitForEmail`).
+
 Frontend tests: `mise run test:watch`.
 
 ## Database & migrations

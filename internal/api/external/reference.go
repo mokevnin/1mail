@@ -3,15 +3,13 @@ package external
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/customfield"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/reputation"
 )
 
@@ -45,38 +43,6 @@ func (h *Handlers) CustomFieldsList(ctx context.Context) (externalapi.CustomFiel
 	}, nil
 }
 
-func (h *Handlers) SendingDomainsList(ctx context.Context, params externalapi.SendingDomainsListParams) (externalapi.SendingDomainsListRes, error) {
-	if !auth.HasScope(auth.GetTokenAuth(ctx), "sending_domains:read") {
-		res := externalapi.SendingDomainsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
-		return &res, nil
-	}
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	q := auth.TokenScoped(ctx).SendingDomain().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items, err := q.Order(ent.Asc(sendingdomain.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	resources := make([]externalapi.SendingDomainResource, len(items))
-	for i, d := range items {
-		resources[i] = mapper.SendingDomainToResource(d)
-	}
-	return &externalapi.SendingDomainsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
-	}, nil
-}
-
 // SendingDomainRatesList returns the (numerator, denominator, rate) triples of ADR 0011
 // for every Sending domain, over the trailing window.
 func (h *Handlers) SendingDomainRatesList(ctx context.Context, params externalapi.SendingDomainRatesListParams) (externalapi.SendingDomainRatesListRes, error) {
@@ -97,7 +63,7 @@ func (h *Handlers) SendingDomainRatesList(ctx context.Context, params externalap
 	items := make([]externalapi.SendingDomainRatesResource, len(rates))
 	for i, r := range rates {
 		items[i] = externalapi.SendingDomainRatesResource{
-			SendingDomainId: externalapi.EntityId(mapper.SendingDomainToResource(r.Domain).ID),
+			SendingDomainId: externalapi.EntityId(strconv.FormatInt(r.Domain.ID, 10)),
 			Domain:          r.Domain.Domain,
 			WindowDays:      days,
 			ComplaintRate:   rateTriple(r.Complaint),

@@ -229,12 +229,36 @@ type Handler interface {
 	//
 	// POST /events
 	EventsCreate(ctx context.Context, req *RecordEventsInput) (EventsCreateRes, error)
+	// IntegrationsCreate implements Integrations_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /integrations
+	IntegrationsCreate(ctx context.Context, req *CreateIntegrationInput) (IntegrationsCreateRes, error)
+	// IntegrationsDelete implements Integrations_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /integrations/{id}
+	IntegrationsDelete(ctx context.Context, params IntegrationsDeleteParams) (IntegrationsDeleteRes, error)
+	// IntegrationsGet implements Integrations_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /integrations/{id}
+	IntegrationsGet(ctx context.Context, params IntegrationsGetParams) (IntegrationsGetRes, error)
 	// IntegrationsList implements Integrations_list operation.
 	//
-	// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+	// List resources with pagination.
 	//
 	// GET /integrations
 	IntegrationsList(ctx context.Context, params IntegrationsListParams) (IntegrationsListRes, error)
+	// IntegrationsUpdate implements Integrations_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /integrations/{id}
+	IntegrationsUpdate(ctx context.Context, req *UpdateIntegrationInput, params IntegrationsUpdateParams) (IntegrationsUpdateRes, error)
 	// SegmentsCreate implements Segments_create operation.
 	//
 	// Create a resource.
@@ -277,12 +301,44 @@ type Handler interface {
 	//
 	// GET /sending-domains/rates
 	SendingDomainRatesList(ctx context.Context, params SendingDomainRatesListParams) (SendingDomainRatesListRes, error)
+	// SendingDomainsCreate implements SendingDomains_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /sending-domains
+	SendingDomainsCreate(ctx context.Context, req *CreateSendingDomainInput) (SendingDomainsCreateRes, error)
+	// SendingDomainsDelete implements SendingDomains_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /sending-domains/{id}
+	SendingDomainsDelete(ctx context.Context, params SendingDomainsDeleteParams) (SendingDomainsDeleteRes, error)
+	// SendingDomainsGet implements SendingDomains_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /sending-domains/{id}
+	SendingDomainsGet(ctx context.Context, params SendingDomainsGetParams) (SendingDomainsGetRes, error)
 	// SendingDomainsList implements SendingDomains_list operation.
 	//
-	// List the workspace's sending domains.
+	// List resources with pagination.
 	//
 	// GET /sending-domains
 	SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (SendingDomainsListRes, error)
+	// SendingDomainsUpdate implements SendingDomains_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /sending-domains/{id}
+	SendingDomainsUpdate(ctx context.Context, req *UpdateSendingDomainInput, params SendingDomainsUpdateParams) (SendingDomainsUpdateRes, error)
+	// SendingDomainsVerify implements SendingDomains_verify operation.
+	//
+	// Trigger a live DKIM DNS check. The check runs in the background: the response is the domain as it
+	// stands now, 202 Accepted; read it again for the outcome (`verified`, `lastCheckedAt`). Verification
+	// is never set by the caller.
+	//
+	// POST /sending-domains/{id}/verify
+	SendingDomainsVerify(ctx context.Context, params SendingDomainsVerifyParams) (SendingDomainsVerifyRes, error)
 	// SuppressionsCreate implements Suppressions_create operation.
 	//
 	// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an

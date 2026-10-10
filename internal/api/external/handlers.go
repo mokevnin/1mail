@@ -15,10 +15,12 @@ import (
 	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/reputation"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/tags"
 )
 
@@ -33,6 +35,8 @@ type Handlers struct {
 	outbound       *outbound.Module
 	segments       *segments.Module
 	cipher         *secrets.Cipher
+	integrations   *integrations.Module
+	sendingDomains *sendingdomains.Module
 	broadcasts     *broadcasts.Module
 	reputation     *reputation.Module
 	contacts       *contacts.Module
@@ -60,6 +64,8 @@ type Deps struct {
 	Accounts       *accounts.Accounts
 	Bus            *events.Bus
 	Cipher         *secrets.Cipher
+	Integrations   *integrations.Module
+	SendingDomains *sendingdomains.Module
 	Outbound       *outbound.Module
 	Segments       *segments.Module
 	EventLog       *eventlog.Module
@@ -75,7 +81,7 @@ type Deps struct {
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
+		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, integrations: d.Integrations, sendingDomains: d.SendingDomains, outbound: d.Outbound, segments: d.Segments,
 		eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags, automations: d.Automations,
 		broadcasts: d.Broadcasts, reputation: d.Reputation, bootstrapToken: d.BootstrapToken,
 		audit: d.Audit,

@@ -342,12 +342,48 @@ func (UnimplementedHandler) EventsCreate(ctx context.Context, req *RecordEventsI
 	return r, ht.ErrNotImplemented
 }
 
+// IntegrationsCreate implements Integrations_create operation.
+//
+// Create a resource.
+//
+// POST /integrations
+func (UnimplementedHandler) IntegrationsCreate(ctx context.Context, req *CreateIntegrationInput) (r IntegrationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsDelete implements Integrations_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /integrations/{id}
+func (UnimplementedHandler) IntegrationsDelete(ctx context.Context, params IntegrationsDeleteParams) (r IntegrationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsGet implements Integrations_get operation.
+//
+// Get a resource by ID.
+//
+// GET /integrations/{id}
+func (UnimplementedHandler) IntegrationsGet(ctx context.Context, params IntegrationsGetParams) (r IntegrationsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // IntegrationsList implements Integrations_list operation.
 //
-// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+// List resources with pagination.
 //
 // GET /integrations
 func (UnimplementedHandler) IntegrationsList(ctx context.Context, params IntegrationsListParams) (r IntegrationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsUpdate implements Integrations_update operation.
+//
+// Update a resource.
+//
+// PUT /integrations/{id}
+func (UnimplementedHandler) IntegrationsUpdate(ctx context.Context, req *UpdateIntegrationInput, params IntegrationsUpdateParams) (r IntegrationsUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -414,12 +450,59 @@ func (UnimplementedHandler) SendingDomainRatesList(ctx context.Context, params S
 	return r, ht.ErrNotImplemented
 }
 
+// SendingDomainsCreate implements SendingDomains_create operation.
+//
+// Create a resource.
+//
+// POST /sending-domains
+func (UnimplementedHandler) SendingDomainsCreate(ctx context.Context, req *CreateSendingDomainInput) (r SendingDomainsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsDelete implements SendingDomains_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsDelete(ctx context.Context, params SendingDomainsDeleteParams) (r SendingDomainsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsGet implements SendingDomains_get operation.
+//
+// Get a resource by ID.
+//
+// GET /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsGet(ctx context.Context, params SendingDomainsGetParams) (r SendingDomainsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SendingDomainsList implements SendingDomains_list operation.
 //
-// List the workspace's sending domains.
+// List resources with pagination.
 //
 // GET /sending-domains
 func (UnimplementedHandler) SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (r SendingDomainsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsUpdate implements SendingDomains_update operation.
+//
+// Update a resource.
+//
+// PUT /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsUpdate(ctx context.Context, req *UpdateSendingDomainInput, params SendingDomainsUpdateParams) (r SendingDomainsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsVerify implements SendingDomains_verify operation.
+//
+// Trigger a live DKIM DNS check. The check runs in the background: the response is the domain as it
+// stands now, 202 Accepted; read it again for the outcome (`verified`, `lastCheckedAt`). Verification
+// is never set by the caller.
+//
+// POST /sending-domains/{id}/verify
+func (UnimplementedHandler) SendingDomainsVerify(ctx context.Context, params SendingDomainsVerifyParams) (r SendingDomainsVerifyRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

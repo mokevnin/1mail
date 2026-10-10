@@ -220,6 +220,34 @@ func encodeEventsCreateRequest(
 	return nil
 }
 
+func encodeIntegrationsCreateRequest(
+	req *CreateIntegrationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeIntegrationsUpdateRequest(
+	req *UpdateIntegrationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSegmentsCreateRequest(
 	req *CreateSegmentInput,
 	r *http.Request,
@@ -250,6 +278,34 @@ func encodeSegmentsPreviewRequest(
 
 func encodeSegmentsUpdateRequest(
 	req *UpdateSegmentInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSendingDomainsCreateRequest(
+	req *CreateSendingDomainInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSendingDomainsUpdateRequest(
+	req *UpdateSendingDomainInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

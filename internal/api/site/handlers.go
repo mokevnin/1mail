@@ -18,11 +18,12 @@ import (
 	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
@@ -57,43 +58,28 @@ type SystemMailEnqueuer interface {
 	EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error
 }
 
-// SendingDomainVerifyEnqueuer schedules an immediate DKIM re-check of one
-// Sending domain (the "Verify" button). Same jobs enqueue seam (river prod,
-// inline tests).
-type SendingDomainVerifyEnqueuer interface {
-	EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error
-}
-
-// IntegrationQuotaEnqueuer schedules a read of one Integration's provider send quota
-// (SES GetSendQuota) when it is saved. Same jobs enqueue seam (river prod, inline
-// tests); a failed read is recorded on the Integration, never returned to the save.
-type IntegrationQuotaEnqueuer interface {
-	EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error
-}
-
 type Handlers struct {
-	accounts     *accounts.Accounts
-	attempts     *accounts.Attempts
-	bus          *events.Bus
-	cipher       *secrets.Cipher
-	catalog      *messaging.Catalog
-	broadcasts   *broadcasts.Module
-	welcome      WelcomeEnqueuer
-	sysmail      SystemMailEnqueuer
-	domainVerify SendingDomainVerifyEnqueuer
-	quotaRefresh IntegrationQuotaEnqueuer
-	tokens       *authtoken.Signer
-	tracker      *tracking.Tracker
-	appURL       string
-	outbound     *outbound.Module
-	segments     *segments.Module
-	eventlog     *eventlog.Module
-	contacts     *contacts.Module
-	erasure      *erasure.Module
-	tags         *tags.Module
-	automations  *automations.Module
-	oauth        *oauthserver.Service
-	audit        AuditLog
+	accounts       *accounts.Accounts
+	attempts       *accounts.Attempts
+	bus            *events.Bus
+	cipher         *secrets.Cipher
+	broadcasts     *broadcasts.Module
+	welcome        WelcomeEnqueuer
+	sysmail        SystemMailEnqueuer
+	sendingDomains *sendingdomains.Module
+	integrations   *integrations.Module
+	tokens         *authtoken.Signer
+	tracker        *tracking.Tracker
+	appURL         string
+	outbound       *outbound.Module
+	segments       *segments.Module
+	eventlog       *eventlog.Module
+	contacts       *contacts.Module
+	erasure        *erasure.Module
+	tags           *tags.Module
+	automations    *automations.Module
+	oauth          *oauthserver.Service
+	audit          AuditLog
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -118,35 +104,34 @@ type Deps struct {
 	// Attempts counts failed logins and password-reset mails per account (ADR
 	// 0025); the login route's credential checker and throttle wrapper and
 	// forgot-password share it.
-	Attempts     *accounts.Attempts
-	OAuth        *oauthserver.Service
-	Bus          *events.Bus
-	Cipher       *secrets.Cipher
-	Catalog      *messaging.Catalog
-	Outbound     *outbound.Module
-	Segments     *segments.Module
-	EventLog     *eventlog.Module
-	Contacts     *contacts.Module
-	Erasure      *erasure.Module
-	Tags         *tags.Module
-	Automations  *automations.Module
-	Broadcasts   *broadcasts.Module
-	Welcome      WelcomeEnqueuer
-	SysMail      SystemMailEnqueuer
-	DomainVerify SendingDomainVerifyEnqueuer
-	QuotaRefresh IntegrationQuotaEnqueuer
-	Tokens       *authtoken.Signer
-	Tracker      *tracking.Tracker
-	AppURL       string
-	Audit        AuditLog
+	Attempts       *accounts.Attempts
+	OAuth          *oauthserver.Service
+	Bus            *events.Bus
+	Cipher         *secrets.Cipher
+	Outbound       *outbound.Module
+	Segments       *segments.Module
+	EventLog       *eventlog.Module
+	Contacts       *contacts.Module
+	Erasure        *erasure.Module
+	Tags           *tags.Module
+	Automations    *automations.Module
+	Broadcasts     *broadcasts.Module
+	Welcome        WelcomeEnqueuer
+	SysMail        SystemMailEnqueuer
+	SendingDomains *sendingdomains.Module
+	Integrations   *integrations.Module
+	Tokens         *authtoken.Signer
+	Tracker        *tracking.Tracker
+	AppURL         string
+	Audit          AuditLog
 }
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
+		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
-		sysmail: d.SysMail, domainVerify: d.DomainVerify, quotaRefresh: d.QuotaRefresh, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
+		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth, audit: d.Audit,
 	}
 }

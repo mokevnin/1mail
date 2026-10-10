@@ -201,3 +201,55 @@ func TestConfigLoadMetricsAddr(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigLoadE2EProfileDisablesRateLimits(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("e2e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RateLimits != (RateLimits{}) {
+		t.Fatalf("e2e rate limits = %+v, want all disabled", cfg.RateLimits)
+	}
+	if cfg.IsDev {
+		t.Fatal("e2e must not enable the dev flag (dev DKIM lookup); the harness injects its own")
+	}
+	prod, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prod.RateLimits != DefaultRateLimits {
+		t.Fatalf("test profile must keep default limits, got %+v", prod.RateLimits)
+	}
+}
+
+func TestConfigLoadE2EProfileHonoursExplicitRateLimit(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("RATE_LIMIT_API_PER_MINUTE", "5")
+	cfg, err := Load("e2e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RateLimits.APIPerMinute != 5 {
+		t.Fatalf("APIPerMinute = %d, want explicit 5", cfg.RateLimits.APIPerMinute)
+	}
+}
+
+func TestConfigLoadE2EProfileIgnoresMetricsAddr(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("METRICS_ADDR", "127.0.0.1:9090")
+	cfg, err := Load("e2e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MetricsAddr != "" {
+		t.Fatalf("e2e MetricsAddr = %q, want empty so runs never collide on a port", cfg.MetricsAddr)
+	}
+	dev, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dev.MetricsAddr != "127.0.0.1:9090" {
+		t.Fatalf("test profile MetricsAddr = %q, want the configured one", dev.MetricsAddr)
+	}
+}

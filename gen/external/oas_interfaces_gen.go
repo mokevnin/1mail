@@ -145,8 +145,24 @@ type EventsCreateRes interface {
 	eventsCreateRes()
 }
 
+type IntegrationsCreateRes interface {
+	integrationsCreateRes()
+}
+
+type IntegrationsDeleteRes interface {
+	integrationsDeleteRes()
+}
+
+type IntegrationsGetRes interface {
+	integrationsGetRes()
+}
+
 type IntegrationsListRes interface {
 	integrationsListRes()
+}
+
+type IntegrationsUpdateRes interface {
+	integrationsUpdateRes()
 }
 
 type SegmentsCreateRes interface {
@@ -177,8 +193,28 @@ type SendingDomainRatesListRes interface {
 	sendingDomainRatesListRes()
 }
 
+type SendingDomainsCreateRes interface {
+	sendingDomainsCreateRes()
+}
+
+type SendingDomainsDeleteRes interface {
+	sendingDomainsDeleteRes()
+}
+
+type SendingDomainsGetRes interface {
+	sendingDomainsGetRes()
+}
+
 type SendingDomainsListRes interface {
 	sendingDomainsListRes()
+}
+
+type SendingDomainsUpdateRes interface {
+	sendingDomainsUpdateRes()
+}
+
+type SendingDomainsVerifyRes interface {
+	sendingDomainsVerifyRes()
 }
 
 type SuppressionsCreateRes interface {

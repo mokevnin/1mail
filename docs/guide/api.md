@@ -25,6 +25,8 @@ integration only what it needs, for example:
 - `automations:write`, and `automations:activate` to turn one on
 - `emails:send` for transactional mail
 - `webhooks:read`, `webhooks:write`
+- `integrations:read`, `integrations:write` for sending providers (credentials are write-only: no response ever contains a password or secret key)
+- `sending_domains:read`, `sending_domains:write` for sending domains: create one, publish the returned DKIM record, then `POST /sending-domains/{id}/verify` and read the domain to see whether it verified (the DKIM private key is never returned)
 
 Sending, activating and erasing have their own scopes, so a token that can edit drafts cannot send mail and a token that can write contacts cannot erase them.
 

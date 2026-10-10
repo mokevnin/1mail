@@ -35,24 +35,6 @@ model CustomFieldResource {
   updatedAt: Timestamp;
 }
 
-/** Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed */
-model SendingDomainResource {
-  /** Unique identifier */
-  id: EntityId;
-
-  /** The authenticated domain, e.g. "mail.acme.com" */
-  domain: string;
-
-  /** Whether the DKIM DNS is currently published and matches our key */
-  verified: boolean;
-
-  /** When the domain most recently became verified (null = never) */
-  verifiedAt?: Timestamp | null;
-
-  /** Creation timestamp */
-  createdAt: Timestamp;
-}
-
 /** Delivery channel an integration belongs to */
 enum IntegrationChannel {
   email,
@@ -107,34 +89,6 @@ model SendLimitStatus {
   warnings: SendLimitWarning[];
 }
 
-/** A sending-provider Integration, read-only: no credentials or provider config are exposed */
-model IntegrationResource {
-  /** Unique identifier */
-  id: EntityId;
-
-  /** Human-readable label */
-  @extension("x-untrusted", true)
-  name: string;
-
-  /** Delivery channel */
-  channel: IntegrationChannel;
-
-  /** Concrete provider */
-  provider: IntegrationProvider;
-
-  /** Whether this integration may be used for sending */
-  enabled: boolean;
-
-  /** Whether this is the default provider for its channel */
-  isDefault: boolean;
-
-  /** The Send rate limit as enforced and 24-hour usage */
-  sendLimit: SendLimitStatus;
-
-  /** Creation timestamp */
-  createdAt: Timestamp;
-}
-
 /**
  * A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is
  * null when the denominator is zero: an undefined rate is never reported as 0.
@@ -182,18 +136,6 @@ namespace CustomFields {
     | TooManyRequestsProblem;
 }
 
-@route("/sending-domains")
-@tag("Sending domains")
-namespace SendingDomains {
-  /** List the workspace's sending domains */
-  @get
-  op list(...PageQuery):
-    | Page<SendingDomainResource>
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | TooManyRequestsProblem;
-}
-
 @route("/sending-domains/rates")
 @tag("Sending domains")
 namespace SendingDomainRates {
@@ -207,15 +149,4 @@ namespace SendingDomainRates {
     | BadRequestProblem
     | UnauthorizedProblem
     | TooManyRequestsProblem;
-}
-
-@route("/integrations")
-@tag("Integrations")
-namespace Integrations {
-  /** List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage */
-  @get
-  op list(...PageQuery):
-    | Page<IntegrationResource>
-    | BadRequestProblem
-    | UnauthorizedProblem;
 }

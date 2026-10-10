@@ -37,6 +37,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -45,6 +46,7 @@ import (
 	"github.com/mokevnin/1mail/internal/reputation"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -259,6 +261,8 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	contactsModule := contacts.New(bus)
 	erasureModule := erasure.New(bus)
 	tagsModule := tags.New()
+	integrationsModule := integrations.New(bus, cipher, catalog, inline)
+	sendingDomainsModule := sendingdomains.New(bus, cipher, inline)
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
@@ -275,17 +279,17 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
-		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
+		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule, SendingDomains: sendingDomainsModule,
 		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
 	require.NoError(t, err, "build external API")
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
-		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
-		Welcome: inline, SysMail: inline, DomainVerify: inline, QuotaRefresh: inline,
+		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
 		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
