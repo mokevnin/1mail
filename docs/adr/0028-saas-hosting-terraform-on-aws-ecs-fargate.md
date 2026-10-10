@@ -4,13 +4,14 @@ status: accepted
 
 # The SaaS runs on AWS (ECS Fargate, RDS, SES), provisioned only through Terraform
 
-Supersedes [ADR 0028](0028-saas-hosting-terraform-on-digitalocean-app-platform.md): the hosting
-moves from DigitalOcean to AWS entirely. The application decisions of 0028 stay: one service
-(HTTP, river and watermill in one process, no worker), migrations applied once before new
-instances start with `AUTO_MIGRATE` unset, no transaction-mode pooler (river uses LISTEN/NOTIFY),
-`ENCRYPTION_KEY` generated once outside Terraform and never rotated, secrets never in plain text in
-a task definition, a plan or a log. One root module under `infra/`, one environment (production:
-a test deployment destroyed and recreated freely, so no deletion protection and no standby).
+The hosted offering (Sphericon, `getsphericon.com`) is described entirely in Terraform under
+`infra/`: nothing is created by hand in the console or through an MCP server. The application
+shape: one service (HTTP, river and watermill in one process, no worker), migrations applied once
+before new instances start with `AUTO_MIGRATE` unset, no transaction-mode pooler (river uses
+LISTEN/NOTIFY), `ENCRYPTION_KEY` generated once outside Terraform and never rotated, secrets never
+in plain text in a task definition, a plan or a log. One root module, one environment
+(production: a test deployment destroyed and recreated freely, so no deletion protection and no
+standby).
 
 ## Decisions
 
@@ -73,15 +74,13 @@ a test deployment destroyed and recreated freely, so no deletion protection and 
 - **RDS-managed master password.** Rejected: the app needs a `DATABASE_URL`, which would still
   have to be composed from it; the Terraform-generated password gives the same state exposure
   without a second source.
-- **Staying on DigitalOcean.** Superseded by the owner's decision to run everything in one AWS
-  account (SES and DNS already lived there in part).
 
 ## Consequences
 
-- **Cost** is about $55-60 a month, roughly $15-20 above the DigitalOcean setup: the ALB (about
+- **Cost** is about $55-60 a month: the ALB (about
   $18), Fargate ARM (about $14), RDS with storage (about $14), public IPv4 addresses for the ALB
   and the task (about $11), plus Route 53, Secrets Manager and logs (a few dollars). The ALB is
-  the item a smaller platform would not charge for.
+  the largest fixed item.
 - **Connections.** `db.t4g.micro` allows `LEAST(DBInstanceClassMemory/9531392, 5000)`, about 85-110
   (read the real value with `SHOW max_connections`). Each process opens two pools; they are set to
   10 + 10, so old plus new task during a rolling deploy is 40 and the migrate task adds about 4.
@@ -91,6 +90,6 @@ a test deployment destroyed and recreated freely, so no deletion protection and 
   them private.
 - **`terraform_data` with `local-exec`** couples apply to the AWS CLI and live credentials; a
   failed migration fails the apply instead of leaving a half-rolled deploy.
-- **Open risk: customer CNAME tracking domains** (unchanged from 0028). Per-tenant domains and
+- **Open risk: customer CNAME tracking domains**. Per-tenant domains and
   certificates need a different edge (an ALB holds up to 25 certificates; CloudFront or Caddy
   with on-demand TLS beyond that). A separate decision.

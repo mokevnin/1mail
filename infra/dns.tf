@@ -1,4 +1,4 @@
-# The Route 53 zone is the root of every hostname and mail record (ADR 0029). Until the registrar's
+# The Route 53 zone is the root of every hostname and mail record (ADR 0028). Until the registrar's
 # nameservers point at it (a one-time manual step, see README.md) nothing here resolves and the
 # certificate is not validated.
 locals {

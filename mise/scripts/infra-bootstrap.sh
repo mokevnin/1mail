@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time, idempotent bootstrap of the hosted deployment (ADR 0029). Creates, only when missing:
+# One-time, idempotent bootstrap of the hosted deployment (ADR 0028). Creates, only when missing:
 #  - the private S3 state bucket (versioned, encrypted, public access blocked, TLS only), and
 #  - the Secrets Manager secret `sphericon/app` with JWT_SECRET, ENCRYPTION_KEY, BOOTSTRAP_TOKEN
 #    and an empty LICENSE_KEY. An existing secret is never changed, so ENCRYPTION_KEY is never

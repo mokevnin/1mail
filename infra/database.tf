@@ -36,7 +36,7 @@ resource "aws_db_instance" "pg" {
   auto_minor_version_upgrade = true
   apply_immediately          = true
 
-  # A test deployment destroyed and recreated freely (ADR 0029): no protection, no final snapshot.
+  # A test deployment destroyed and recreated freely (ADR 0028): no protection, no final snapshot.
   deletion_protection = false
   skip_final_snapshot = true
 }

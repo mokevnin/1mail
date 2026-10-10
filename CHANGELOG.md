@@ -71,7 +71,7 @@
 * **frontend:** migrate Templates to the resource form module ([55906e1](https://github.com/mokevnin/sphericon/commit/55906e1b1aaf1c372f56502bc9046bc95cf6a654))
 * **frontend:** resource form lifecycle module, proven on Contacts ([1335b6c](https://github.com/mokevnin/sphericon/commit/1335b6c663c6085e409ec7e7a1f1a9041d3c3380))
 * **i18n:** instance-level ru/en/es localization ([4ca2d88](https://github.com/mokevnin/sphericon/commit/4ca2d889777df1d7f2b9c0d63a281d697777a132))
-* **infra:** SaaS infra in Terraform on DigitalOcean App Platform ([#214](https://github.com/mokevnin/sphericon/issues/214)) ([27691b2](https://github.com/mokevnin/sphericon/commit/27691b21d2d3c8ee040fa7bdad7ac3b6b31e7d2b))
+* **infra:** SaaS infra in Terraform ([#214](https://github.com/mokevnin/sphericon/issues/214)) ([27691b2](https://github.com/mokevnin/sphericon/commit/27691b21d2d3c8ee040fa7bdad7ac3b6b31e7d2b))
 * **mcp:** add oauth 2.1 for claude.ai connectors ([b9fe50a](https://github.com/mokevnin/sphericon/commit/b9fe50af82496b4781fd2f5de48a347290ad4c4e))
 * **mcp:** mark contact-supplied fields as untrusted in tool results ([87bf6e1](https://github.com/mokevnin/sphericon/commit/87bf6e179652f88fe042e815999cc12ea66612e7))
 * **mcp:** serve shipped playbooks as MCP prompts and grant authoring scopes to OAuth connectors ([5c9f116](https://github.com/mokevnin/sphericon/commit/5c9f116341efdf3a7d11ee289213f3428879a35b))

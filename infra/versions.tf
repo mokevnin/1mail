@@ -13,7 +13,7 @@ terraform {
   }
 
   # State lives in a private, versioned, encrypted S3 bucket with native locking (a lock file next
-  # to the state object: no DynamoDB table, ADR 0029). The bucket is created once by
+  # to the state object: no DynamoDB table, ADR 0028). The bucket is created once by
   # `mise run infra:bootstrap`; its name (sphericon-tfstate-<account id>) is passed by
   # `mise run infra` as a non-secret -backend-config, so nothing account specific is committed.
   # Credentials come from the environment (the wrapper exports them from the `aws login` session).

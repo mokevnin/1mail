@@ -415,7 +415,7 @@ run = [
 description = "shellcheck the scripts under mise/scripts/"
 run = "shellcheck -x --source-path=SCRIPTDIR mise/scripts/*.sh"
 
-# --- hosted deployment (infra/, ADR 0029) ----------------------------------------
+# --- hosted deployment (infra/, ADR 0028) ----------------------------------------
 
 [infra]
 description = "Terraform for the hosted deployment with credentials from the `aws login` session: mise run infra -- init|plan|apply|destroy|output ..."

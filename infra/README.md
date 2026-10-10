@@ -2,7 +2,7 @@
 
 The hosted Sphericon deployment (AWS: ECS Fargate behind an ALB, RDS PostgreSQL, Route 53, SES,
 Secrets Manager; region `us-east-2`, one account) is described only by the Terraform in this
-directory. Why and what: [ADR 0029](../docs/adr/0029-saas-hosting-terraform-on-aws-ecs-fargate.md).
+directory. Why and what: [ADR 0028](../docs/adr/0028-saas-hosting-terraform-on-aws-ecs-fargate.md).
 Follow the sections in order: prerequisites, manual steps, bootstrap, plan, apply, registrar,
 smoke test; destroy and recreate and troubleshooting come after.
 
