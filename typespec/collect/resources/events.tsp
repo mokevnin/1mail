@@ -20,5 +20,7 @@ namespace CollectEvents {
   op create(@body body: CollectEventsInput):
     | NoContentResponse
     | UnauthorizedProblem
+    | PayloadTooLargeProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }

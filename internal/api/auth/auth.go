@@ -179,18 +179,41 @@ func NewCollectSecurityHandler(client *ent.Client) *CollectSecurityHandler {
 
 var _ collectapi.SecurityHandler = (*CollectSecurityHandler)(nil)
 
+// HandleApiKeyAuth authenticates the collect key and applies the rate limits that
+// need it (ADR 0018): a client address that spent its failed-authentication budget
+// is refused before the key is looked at, a wrong key counts against it, and a
+// success charges the Workspace's /collect budget. Rejections surface as
+// *ratelimit.LimitedError.
 func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collectapi.OperationName, t collectapi.ApiKeyAuth) (context.Context, error) {
-	if t.APIKey == "" {
-		return ctx, ErrUnauthorized
+	limits := ratelimit.FromContext(ctx)
+	if err := limits.AuthBlocked(); err != nil {
+		return ctx, err
 	}
-	ws, err := h.ent.Workspace.Query().Where(workspace.CollectKey(t.APIKey)).Only(ctx)
-	if ent.IsNotFound(err) {
-		return ctx, ErrUnauthorized
+	ws, err := h.workspaceByKey(ctx, t.APIKey)
+	if errors.Is(err, ErrUnauthorized) {
+		if limited := limits.AuthFailed(); limited != nil {
+			return ctx, limited
+		}
+		return ctx, err
 	}
 	if err != nil {
 		return ctx, err
 	}
+	if err := limits.ChargeCollect(ws.ID); err != nil {
+		return ctx, err
+	}
 	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil
+}
+
+func (h *CollectSecurityHandler) workspaceByKey(ctx context.Context, key string) (*ent.Workspace, error) {
+	if key == "" {
+		return nil, ErrUnauthorized
+	}
+	ws, err := h.ent.Workspace.Query().Where(workspace.CollectKey(key)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return nil, ErrUnauthorized
+	}
+	return ws, err
 }
 
 // SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.

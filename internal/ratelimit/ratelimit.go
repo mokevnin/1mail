@@ -45,6 +45,10 @@ const (
 	// on login requests.
 	PolicyLoginAccount = "login-account"
 	PolicyLoginIP      = "login-ip"
+	// PolicyCollect is the /collect budget per Workspace, PolicyCollectIP the one per
+	// client IP.
+	PolicyCollect   = "collect"
+	PolicyCollectIP = "collect-ip"
 )
 
 const (
@@ -189,6 +193,8 @@ type Limiter struct {
 	failedAuth *Policy
 	tracking   *Policy
 	loginIP    *Policy
+	collect    *Policy
+	collectIP  *Policy
 }
 
 // New builds the policies from limits.
@@ -200,6 +206,8 @@ func New(limits config.RateLimits) *Limiter {
 		failedAuth: NewPolicy(PolicyFailedAuth, limits.FailedAuth, window),
 		tracking:   NewPolicy(PolicyTracking, limits.Tracking, window),
 		loginIP:    NewPolicy(PolicyLoginIP, limits.LoginIP, window),
+		collect:    NewPolicy(PolicyCollect, limits.Collect, window),
+		collectIP:  NewPolicy(PolicyCollectIP, limits.CollectIP, window),
 	}
 }
 
@@ -237,6 +245,16 @@ func (e *Exchange) ChargeWorkspace(workspaceID int64) error {
 		return err
 	}
 	return e.limiter.api.Reject(e.w, e.r, key)
+}
+
+// ChargeCollect counts the request against the Workspace's /collect budget, a
+// budget of its own apart from /api and /mcp. Like ChargeWorkspace it charges at
+// most once per HTTP request.
+func (e *Exchange) ChargeCollect(workspaceID int64) error {
+	if e == nil || !e.charged.CompareAndSwap(false, true) {
+		return nil
+	}
+	return e.limiter.collect.Reject(e.w, e.r, strconv.FormatInt(workspaceID, 10))
 }
 
 // AuthBlocked refuses before a credential is even checked when the client address
@@ -281,6 +299,13 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), exchangeKey{}, &Exchange{w: w, r: r, limiter: l})
 		r = r.WithContext(ctx)
 		if !exempt(r.URL.Path) {
+			// The per-IP /collect budget needs no credential, so it is applied up front
+			// (CORS has already answered preflights); the Workspace budget follows the
+			// collect key in the security handler.
+			if strings.HasPrefix(r.URL.Path, "/collect/") &&
+				!l.collectIP.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
+				return
+			}
 			if route := humanRoute(r); route != "" &&
 				!l.human.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))+"|"+route) {
 				return
