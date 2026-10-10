@@ -187,6 +187,281 @@ func (b *ApiTokenCreateBulk) auditRebind(c *Client) {
 	}
 }
 
+// AutomationAuditSensitive lists the Automation fields whose values never reach the Audit log.
+var AutomationAuditSensitive = map[string]bool{}
+
+// auditFields maps every audited field of the Automation to its value.
+func (e *Automation) auditFields() map[string]any {
+	return map[string]any{
+		"name":          e.Name,
+		"status":        e.Status,
+		"trigger_event": e.TriggerEvent,
+		"definition":    e.Definition,
+	}
+}
+
+// auditChangeAutomation describes a Automation create (before is nil), update or delete
+// (after is nil).
+func auditChangeAutomation(verb string, before, after *Automation) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "automation." + verb,
+		TargetType: "automation",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, AutomationAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *AutomationCreate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *AutomationUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *AutomationUpdate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *AutomationDelete) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *AutomationCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// BroadcastAuditSensitive lists the Broadcast fields whose values never reach the Audit log.
+var BroadcastAuditSensitive = map[string]bool{}
+
+// auditFields maps every audited field of the Broadcast to its value.
+func (e *Broadcast) auditFields() map[string]any {
+	return map[string]any{
+		"name":               e.Name,
+		"subject":            e.Subject,
+		"from_name":          derefAudit(e.FromName),
+		"from_email":         derefAudit(e.FromEmail),
+		"body":               e.Body,
+		"body_text":          e.BodyText,
+		"segment_id":         derefAudit(e.SegmentID),
+		"integration_id":     derefAudit(e.IntegrationID),
+		"status":             e.Status,
+		"scheduled_at":       derefAudit(e.ScheduledAt),
+		"sent_at":            derefAudit(e.SentAt),
+		"recipients_total":   e.RecipientsTotal,
+		"sent_count":         e.SentCount,
+		"opened_count":       e.OpenedCount,
+		"clicked_count":      e.ClickedCount,
+		"unsubscribed_count": e.UnsubscribedCount,
+		"failed_count":       e.FailedCount,
+		"skipped_count":      e.SkippedCount,
+		"hold_reason":        derefAudit(e.HoldReason),
+	}
+}
+
+// auditChangeBroadcast describes a Broadcast create (before is nil), update or delete
+// (after is nil).
+func auditChangeBroadcast(verb string, before, after *Broadcast) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "broadcast." + verb,
+		TargetType: "broadcast",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, BroadcastAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *BroadcastCreate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *BroadcastUpdateOne) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *BroadcastUpdate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *BroadcastDelete) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *BroadcastCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// ContactAuditSensitive lists the Contact fields whose values never reach the Audit log (all of them: names only).
+var ContactAuditSensitive = map[string]bool{
+	"subject_id":    true,
+	"email":         true,
+	"phone":         true,
+	"first_name":    true,
+	"last_name":     true,
+	"time_zone":     true,
+	"custom_fields": true,
+}
+
+// auditFields maps every audited field of the Contact to its value.
+func (e *Contact) auditFields() map[string]any {
+	return map[string]any{
+		"subject_id":    derefAudit(e.SubjectID),
+		"email":         derefAudit(e.Email),
+		"phone":         derefAudit(e.Phone),
+		"first_name":    derefAudit(e.FirstName),
+		"last_name":     derefAudit(e.LastName),
+		"time_zone":     derefAudit(e.TimeZone),
+		"custom_fields": e.CustomFields,
+	}
+}
+
+// auditChangeContact describes a Contact create (before is nil), update or delete
+// (after is nil).
+func auditChangeContact(verb string, before, after *Contact) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "contact." + verb,
+		TargetType: "contact",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, ContactAuditSensitive),
+	}
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *ContactCreate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ContactUpdateOne) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *ContactUpdate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ContactDelete) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ContactCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// CustomFieldAuditSensitive lists the CustomField fields whose values never reach the Audit log.
+var CustomFieldAuditSensitive = map[string]bool{}
+
+// auditFields maps every audited field of the CustomField to its value.
+func (e *CustomField) auditFields() map[string]any {
+	return map[string]any{
+		"key":  e.Key,
+		"name": e.Name,
+		"type": e.Type,
+	}
+}
+
+// auditChangeCustomField describes a CustomField create (before is nil), update or delete
+// (after is nil).
+func auditChangeCustomField(verb string, before, after *CustomField) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "custom_field." + verb,
+		TargetType: "custom_field",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, CustomFieldAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *CustomFieldCreate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *CustomFieldUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *CustomFieldUpdate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *CustomFieldDelete) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *CustomFieldCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// EmailTemplateAuditSensitive lists the EmailTemplate fields whose values never reach the Audit log.
+var EmailTemplateAuditSensitive = map[string]bool{}
+
+// auditFields maps every audited field of the EmailTemplate to its value.
+func (e *EmailTemplate) auditFields() map[string]any {
+	return map[string]any{
+		"name":    e.Name,
+		"subject": e.Subject,
+		"body":    e.Body,
+	}
+}
+
+// auditChangeEmailTemplate describes a EmailTemplate create (before is nil), update or delete
+// (after is nil).
+func auditChangeEmailTemplate(verb string, before, after *EmailTemplate) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "template." + verb,
+		TargetType: "template",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, EmailTemplateAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *EmailTemplateCreate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *EmailTemplateUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *EmailTemplateUpdate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *EmailTemplateDelete) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *EmailTemplateCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
 // IntegrationAuditSensitive lists the Integration fields whose values never reach the Audit log.
 var IntegrationAuditSensitive = map[string]bool{
 	"config_encrypted": true,
@@ -235,6 +510,52 @@ func (b *IntegrationUpdateOne) auditRebind(c *Client) {
 func (b *IntegrationUpdate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
 func (b *IntegrationDelete) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
 func (b *IntegrationCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// SegmentAuditSensitive lists the Segment fields whose values never reach the Audit log.
+var SegmentAuditSensitive = map[string]bool{}
+
+// auditFields maps every audited field of the Segment to its value.
+func (e *Segment) auditFields() map[string]any {
+	return map[string]any{
+		"name":       e.Name,
+		"definition": derefAudit(e.Definition),
+	}
+}
+
+// auditChangeSegment describes a Segment create (before is nil), update or delete
+// (after is nil).
+func auditChangeSegment(verb string, before, after *Segment) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "segment." + verb,
+		TargetType: "segment",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, SegmentAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *SegmentCreate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *SegmentUpdateOne) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *SegmentUpdate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *SegmentDelete) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *SegmentCreateBulk) auditRebind(c *Client) {
 	b.config = c.config
 	for _, x := range b.builders {
 		x.auditRebind(c)

@@ -147,10 +147,10 @@ func auditID(id int64) string { return strconv.FormatInt(id, 10) }
 {{- if $A }}
 {{ $N := $n.Name }}
 
-// {{ $N }}AuditSensitive lists the {{ $N }} fields whose values never reach the Audit log.
+// {{ $N }}AuditSensitive lists the {{ $N }} fields whose values never reach the Audit log{{ if $A.NamesOnly }} (all of them: names only){{ end }}.
 var {{ $N }}AuditSensitive = map[string]bool{
 	{{- range $f := auditFields $n }}
-	{{- if auditSensitive $f }}
+	{{- if or $A.NamesOnly (auditSensitive $f) }}
 	"{{ $f.Name }}": true,
 	{{- end }}
 	{{- end }}

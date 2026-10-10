@@ -33,6 +33,12 @@ func (b *Bus) Act(s *ent.Scoped, actor Actor) *ent.Scoped { return s.As(actor, b
 // signed link, bootstrap token): its writes are never audited.
 func Ingest(s *ent.Scoped) *ent.Scoped { return s.As(Actor{Kind: ActorIngest}, nil) }
 
+// Unaudited returns the scope with its writes left out of the Audit log, for a write that
+// is not a configuration change by the actor: a bulk import records one entry for the
+// whole import (contacts.RecordImport), and applying a Tag to a Contact is a data-plane
+// edge, not a field of the Contact.
+func Unaudited(s *ent.Scoped) *ent.Scoped { return s.As(Actor{Kind: ActorIngest}, nil) }
+
 // auditPublisher publishes the scoped client's audit changes through the seam, in the
 // transaction of the underlying Publisher.
 type auditPublisher struct{ pub Publisher }

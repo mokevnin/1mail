@@ -988,6 +988,51 @@ export const zSiteApiTokenResourceKeySlug = z.string();
 export const zSiteApiTokenResourceParentKey = z.string();
 
 /**
+ * Only entries with exactly this action, e.g. membership.update
+ */
+export const zSiteAuditFilterAction = z.string();
+
+/**
+ * Only entries by the actor with this id (a User id or an API token id)
+ */
+export const zSiteAuditFilterActorId = z.string();
+
+/**
+ * Only entries by this kind of actor
+ */
+export const zSiteAuditFilterActorKind = zSiteAuditActorKind;
+
+/**
+ * Only entries at or after this time
+ */
+export const zSiteAuditFilterFrom = zTimestamp;
+
+/**
+ * Only entries from this client address
+ */
+export const zSiteAuditFilterIp = z.string();
+
+/**
+ * Only entries made under this request id
+ */
+export const zSiteAuditFilterRequestId = z.string();
+
+/**
+ * Only entries about the target with this id
+ */
+export const zSiteAuditFilterTargetId = z.string();
+
+/**
+ * Only entries about this target type, e.g. integration
+ */
+export const zSiteAuditFilterTargetType = z.string();
+
+/**
+ * Only entries strictly before this time
+ */
+export const zSiteAuditFilterTo = zTimestamp;
+
+/**
  * Unique identifier
  */
 export const zSiteAutomationResourceKeyId = zEntityId;
@@ -1288,6 +1333,15 @@ export const zSiteAuditListPath = z.object({
 });
 
 export const zSiteAuditListQuery = z.object({
+  from: z.exactOptional(zTimestamp),
+  to: z.exactOptional(zTimestamp),
+  actorKind: z.exactOptional(zSiteAuditActorKind),
+  actorId: z.exactOptional(z.string()),
+  action: z.exactOptional(z.string()),
+  targetType: z.exactOptional(z.string()),
+  targetId: z.exactOptional(z.string()),
+  ip: z.exactOptional(z.string()),
+  requestId: z.exactOptional(z.string()),
   cursor: z.exactOptional(z.string()),
   limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
@@ -1299,6 +1353,18 @@ export const zSiteAuditListResponse = zSiteAuditEntryList;
 
 export const zSiteAuditExportPath = z.object({
   slug: z.string()
+});
+
+export const zSiteAuditExportQuery = z.object({
+  from: z.exactOptional(zTimestamp),
+  to: z.exactOptional(zTimestamp),
+  actorKind: z.exactOptional(zSiteAuditActorKind),
+  actorId: z.exactOptional(z.string()),
+  action: z.exactOptional(z.string()),
+  targetType: z.exactOptional(z.string()),
+  targetId: z.exactOptional(z.string()),
+  ip: z.exactOptional(z.string()),
+  requestId: z.exactOptional(z.string())
 });
 
 /**

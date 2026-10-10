@@ -147,6 +147,33 @@ func (_u *WorkspaceUpdate) ClearPostalAddress() *WorkspaceUpdate {
 	return _u
 }
 
+// SetRetentionDays sets the "retention_days" field.
+func (_u *WorkspaceUpdate) SetRetentionDays(v int) *WorkspaceUpdate {
+	_u.mutation.ResetRetentionDays()
+	_u.mutation.SetRetentionDays(v)
+	return _u
+}
+
+// SetNillableRetentionDays sets the "retention_days" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableRetentionDays(v *int) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetRetentionDays(*v)
+	}
+	return _u
+}
+
+// AddRetentionDays adds value to the "retention_days" field.
+func (_u *WorkspaceUpdate) AddRetentionDays(v int) *WorkspaceUpdate {
+	_u.mutation.AddRetentionDays(v)
+	return _u
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (_u *WorkspaceUpdate) ClearRetentionDays() *WorkspaceUpdate {
+	_u.mutation.ClearRetentionDays()
+	return _u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_u *WorkspaceUpdate) SetSuspendedAt(v time.Time) *WorkspaceUpdate {
 	_u.mutation.SetSuspendedAt(v)
@@ -1062,6 +1089,11 @@ func (_u *WorkspaceUpdate) check() error {
 			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RetentionDays(); ok {
+		if err := workspace.RetentionDaysValidator(v); err != nil {
+			return &ValidationError{Name: "retention_days", err: fmt.Errorf(`ent: validator failed for field "Workspace.retention_days": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -1106,6 +1138,15 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.RetentionDays(); ok {
+		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRetentionDays(); ok {
+		_spec.AddField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if _u.mutation.RetentionDaysCleared() {
+		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
@@ -2233,6 +2274,33 @@ func (_u *WorkspaceUpdateOne) ClearPostalAddress() *WorkspaceUpdateOne {
 	return _u
 }
 
+// SetRetentionDays sets the "retention_days" field.
+func (_u *WorkspaceUpdateOne) SetRetentionDays(v int) *WorkspaceUpdateOne {
+	_u.mutation.ResetRetentionDays()
+	_u.mutation.SetRetentionDays(v)
+	return _u
+}
+
+// SetNillableRetentionDays sets the "retention_days" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableRetentionDays(v *int) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetRetentionDays(*v)
+	}
+	return _u
+}
+
+// AddRetentionDays adds value to the "retention_days" field.
+func (_u *WorkspaceUpdateOne) AddRetentionDays(v int) *WorkspaceUpdateOne {
+	_u.mutation.AddRetentionDays(v)
+	return _u
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (_u *WorkspaceUpdateOne) ClearRetentionDays() *WorkspaceUpdateOne {
+	_u.mutation.ClearRetentionDays()
+	return _u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_u *WorkspaceUpdateOne) SetSuspendedAt(v time.Time) *WorkspaceUpdateOne {
 	_u.mutation.SetSuspendedAt(v)
@@ -3161,6 +3229,11 @@ func (_u *WorkspaceUpdateOne) check() error {
 			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RetentionDays(); ok {
+		if err := workspace.RetentionDaysValidator(v); err != nil {
+			return &ValidationError{Name: "retention_days", err: fmt.Errorf(`ent: validator failed for field "Workspace.retention_days": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -3222,6 +3295,15 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.RetentionDays(); ok {
+		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRetentionDays(); ok {
+		_spec.AddField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if _u.mutation.RetentionDaysCleared() {
+		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)

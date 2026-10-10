@@ -124,6 +124,20 @@ func (_c *WorkspaceCreate) SetNillablePostalAddress(v *string) *WorkspaceCreate 
 	return _c
 }
 
+// SetRetentionDays sets the "retention_days" field.
+func (_c *WorkspaceCreate) SetRetentionDays(v int) *WorkspaceCreate {
+	_c.mutation.SetRetentionDays(v)
+	return _c
+}
+
+// SetNillableRetentionDays sets the "retention_days" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableRetentionDays(v *int) *WorkspaceCreate {
+	if v != nil {
+		_c.SetRetentionDays(*v)
+	}
+	return _c
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_c *WorkspaceCreate) SetSuspendedAt(v time.Time) *WorkspaceCreate {
 	_c.mutation.SetSuspendedAt(v)
@@ -598,6 +612,11 @@ func (_c *WorkspaceCreate) check() error {
 	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
 		return &ValidationError{Name: "require_confirmed_opt_in", err: errors.New(`ent: missing required field "Workspace.require_confirmed_opt_in"`)}
 	}
+	if v, ok := _c.mutation.RetentionDays(); ok {
+		if err := workspace.RetentionDaysValidator(v); err != nil {
+			return &ValidationError{Name: "retention_days", err: fmt.Errorf(`ent: validator failed for field "Workspace.retention_days": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -662,6 +681,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PostalAddress(); ok {
 		_spec.SetField(workspace.FieldPostalAddress, field.TypeString, value)
 		_node.PostalAddress = value
+	}
+	if value, ok := _c.mutation.RetentionDays(); ok {
+		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
+		_node.RetentionDays = &value
 	}
 	if value, ok := _c.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
@@ -1169,6 +1192,30 @@ func (u *WorkspaceUpsert) ClearPostalAddress() *WorkspaceUpsert {
 	return u
 }
 
+// SetRetentionDays sets the "retention_days" field.
+func (u *WorkspaceUpsert) SetRetentionDays(v int) *WorkspaceUpsert {
+	u.Set(workspace.FieldRetentionDays, v)
+	return u
+}
+
+// UpdateRetentionDays sets the "retention_days" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateRetentionDays() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldRetentionDays)
+	return u
+}
+
+// AddRetentionDays adds v to the "retention_days" field.
+func (u *WorkspaceUpsert) AddRetentionDays(v int) *WorkspaceUpsert {
+	u.Add(workspace.FieldRetentionDays, v)
+	return u
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (u *WorkspaceUpsert) ClearRetentionDays() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldRetentionDays)
+	return u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (u *WorkspaceUpsert) SetSuspendedAt(v time.Time) *WorkspaceUpsert {
 	u.Set(workspace.FieldSuspendedAt, v)
@@ -1376,6 +1423,34 @@ func (u *WorkspaceUpsertOne) UpdatePostalAddress() *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) ClearPostalAddress() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearPostalAddress()
+	})
+}
+
+// SetRetentionDays sets the "retention_days" field.
+func (u *WorkspaceUpsertOne) SetRetentionDays(v int) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetRetentionDays(v)
+	})
+}
+
+// AddRetentionDays adds v to the "retention_days" field.
+func (u *WorkspaceUpsertOne) AddRetentionDays(v int) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.AddRetentionDays(v)
+	})
+}
+
+// UpdateRetentionDays sets the "retention_days" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateRetentionDays() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateRetentionDays()
+	})
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (u *WorkspaceUpsertOne) ClearRetentionDays() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearRetentionDays()
 	})
 }
 
@@ -1761,6 +1836,34 @@ func (u *WorkspaceUpsertBulk) UpdatePostalAddress() *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) ClearPostalAddress() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearPostalAddress()
+	})
+}
+
+// SetRetentionDays sets the "retention_days" field.
+func (u *WorkspaceUpsertBulk) SetRetentionDays(v int) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetRetentionDays(v)
+	})
+}
+
+// AddRetentionDays adds v to the "retention_days" field.
+func (u *WorkspaceUpsertBulk) AddRetentionDays(v int) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.AddRetentionDays(v)
+	})
+}
+
+// UpdateRetentionDays sets the "retention_days" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateRetentionDays() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateRetentionDays()
+	})
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (u *WorkspaceUpsertBulk) ClearRetentionDays() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearRetentionDays()
 	})
 }
 

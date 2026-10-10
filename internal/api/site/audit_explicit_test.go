@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
@@ -228,6 +229,10 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops") // workspace.unsuspend
 	require.NoError(t, err)
 
+	_, err = env.ExternalAnchor(t).ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{ // contact.import
+		Contacts: []externalapi.UpsertContactInput{{Email: externalapi.NewOptNilEmailAddress("explicit.import@example.org")}}})
+	require.NoError(t, err)
+
 	var seen []string
 	for _, ev := range env.OutboxEvents(t, events.NameAuditEntry) {
 		seen = append(seen, ev.(*events.AuditEntry).Action)
@@ -238,7 +243,7 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	slices.Sort(want)
 	assert.Equal(t, want, seen)
 
-	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/events/audit.go", "internal/service/suspension.go"},
+	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/contacts/contacts.go", "internal/events/audit.go", "internal/service/suspension.go"},
 		recordAuditCallSites(t), "a new explicit RecordAudit call site: list its actions and drive them above")
 }
 

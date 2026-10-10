@@ -16,7 +16,8 @@ type Handler interface {
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
 	// SiteAuditExport implements SiteAudit_export operation.
 	//
-	// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+	// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+	// owner and admin only).
 	//
 	// GET /workspaces/{slug}/audit-entries/export
 	SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (SiteAuditExportRes, error)

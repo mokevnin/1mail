@@ -146,6 +146,7 @@ func checkScopedRefs(g *gen.Graph) {
 type audit struct {
 	Action    string
 	NameField *gen.Field
+	NamesOnly bool
 }
 
 func auditOf(n *gen.Type) *audit {
@@ -155,6 +156,7 @@ func auditOf(n *gen.Type) *audit {
 	}
 	a := &audit{}
 	a.Action, _ = ann["Action"].(string)
+	a.NamesOnly, _ = ann["NamesOnly"].(bool)
 	if a.Action == "" {
 		log.Fatalf("%s: schema.Audited needs an Action", n.Name)
 	}

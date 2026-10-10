@@ -449,7 +449,7 @@ export const siteAuditListInfiniteOptions = (options: Options<SiteAuditListData>
 export const siteAuditExportQueryKey = (options: Options<SiteAuditExportData>) => createQueryKey('siteAuditExport', options);
 
 /**
- * Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only)
+ * Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise; owner and admin only)
  */
 export const siteAuditExportOptions = (options: Options<SiteAuditExportData>) => queryOptions<SiteAuditExportResponse, SiteAuditExportError, SiteAuditExportResponse, ReturnType<typeof siteAuditExportQueryKey>>({
   queryFn: async ({ queryKey, signal }) => {

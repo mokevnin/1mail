@@ -704,4 +704,8 @@ func init() {
 	workspaceDescPostalAddress := workspaceFields[6].Descriptor()
 	// workspace.DefaultPostalAddress holds the default value on creation for the postal_address field.
 	workspace.DefaultPostalAddress = workspaceDescPostalAddress.Default.(string)
+	// workspaceDescRetentionDays is the schema descriptor for retention_days field.
+	workspaceDescRetentionDays := workspaceFields[7].Descriptor()
+	// workspace.RetentionDaysValidator is a validator for the "retention_days" field. It is called by the builders before save.
+	workspace.RetentionDaysValidator = workspaceDescRetentionDays.Validators[0].(func(int) error)
 }

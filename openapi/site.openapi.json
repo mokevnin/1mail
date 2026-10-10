@@ -886,6 +886,33 @@
             }
           },
           {
+            "$ref": "#/components/parameters/SiteAuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.requestId"
+          },
+          {
             "name": "cursor",
             "in": "query",
             "required": false,
@@ -966,7 +993,7 @@
     "/workspaces/{slug}/audit-entries/export": {
       "get": {
         "operationId": "SiteAudit_export",
-        "description": "Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only)",
+        "description": "Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise; owner and admin only)",
         "parameters": [
           {
             "name": "slug",
@@ -975,6 +1002,33 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.requestId"
           }
         ],
         "responses": {
@@ -5022,6 +5076,96 @@
         "schema": {
           "type": "string"
         }
+      },
+      "SiteAuditFilter.action": {
+        "name": "action",
+        "in": "query",
+        "required": false,
+        "description": "Only entries with exactly this action, e.g. membership.update",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.actorId": {
+        "name": "actorId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by the actor with this id (a User id or an API token id)",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.actorKind": {
+        "name": "actorKind",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by this kind of actor",
+        "schema": {
+          "$ref": "#/components/schemas/SiteAuditActorKind"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.from": {
+        "name": "from",
+        "in": "query",
+        "required": false,
+        "description": "Only entries at or after this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.ip": {
+        "name": "ip",
+        "in": "query",
+        "required": false,
+        "description": "Only entries from this client address",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.requestId": {
+        "name": "requestId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries made under this request id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.targetId": {
+        "name": "targetId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about the target with this id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.targetType": {
+        "name": "targetType",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about this target type, e.g. integration",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.to": {
+        "name": "to",
+        "in": "query",
+        "required": false,
+        "description": "Only entries strictly before this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
       },
       "SiteAutomationResourceKey.id": {
         "name": "id",

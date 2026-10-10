@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/clientip"
@@ -46,6 +47,7 @@ const (
 	ActionWorkspaceUpdate    = "workspace.update"
 	ActionWorkspaceSuspend   = "workspace.suspend"
 	ActionWorkspaceUnsuspend = "workspace.unsuspend"
+	ActionContactImport      = "contact.import"
 )
 
 // ExplicitAuditActions lists every action emitted by an explicit RecordAudit call.
@@ -60,6 +62,7 @@ var ExplicitAuditActions = []string{
 	ActionWorkspaceUpdate,
 	ActionWorkspaceSuspend,
 	ActionWorkspaceUnsuspend,
+	ActionContactImport,
 }
 
 // Unprojected is an optional DomainEvent capability: an event that is not a
@@ -114,4 +117,19 @@ func RecordAudit(ctx context.Context, pub Publisher, entry *AuditEntry) error {
 	entry.IP = clientip.FromContext(ctx)
 	entry.UserAgent = clientip.UserAgentFromContext(ctx)
 	return pub.Publish(ctx, entry)
+}
+
+// AuditFilter narrows the Audit log. Every field is optional and they combine with AND;
+// the zero value matches every entry. The site list and the CSV export take the same
+// filter, so an export matches what the page shows.
+type AuditFilter struct {
+	// From is inclusive and To exclusive; a zero time is unbounded.
+	From, To   time.Time
+	ActorKind  string
+	ActorID    string
+	Action     string
+	TargetType string
+	TargetID   string
+	IP         string
+	RequestID  string
 }

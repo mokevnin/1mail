@@ -159,7 +159,7 @@ var testLicense = sync.OnceValues(func() (*licensekey.License, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := licensekey.Issue(priv, nil, licensekey.FeatureAudit)
+	key, err := licensekey.Issue(priv, nil, licensekey.FeatureAudit, licensekey.FeatureRetention)
 	if err != nil {
 		return nil, err
 	}

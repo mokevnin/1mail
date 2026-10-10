@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
@@ -38,6 +39,9 @@ func (h *Handlers) SiteAuditList(ctx context.Context, params siteapi.SiteAuditLi
 		return &v, nil
 	}
 
+	filter := auditFilter(params.From, params.To, params.ActorKind, params.ActorId, params.Action,
+		params.TargetType, params.TargetId, params.IP, params.RequestId)
+
 	var cursor int64
 	if c, ok := params.Cursor.Get(); ok && c != "" {
 		if cursor, err = strconv.ParseInt(c, 10, 64); err != nil || cursor < 1 {
@@ -50,7 +54,7 @@ func (h *Handlers) SiteAuditList(ctx context.Context, params siteapi.SiteAuditLi
 		limit = defaultAuditLimit
 	}
 
-	rows, next, err := h.audit.Entries(ctx, s, cursor, limit)
+	rows, next, err := h.audit.Entries(ctx, s, filter, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +69,8 @@ func (h *Handlers) SiteAuditList(ctx context.Context, params siteapi.SiteAuditLi
 }
 
 // SiteAuditExport downloads the whole Audit log as CSV, newest first. Same access as
-// the list: owner and admin only, 402 without an Enterprise license. The export has
-// no filter yet; when the log gains filters (ticket #141) it takes the same filter
-// as SiteAuditList and passes it through ee/audit.
+// the list: owner and admin only, 402 without an Enterprise license. It takes the
+// same filter as SiteAuditList, so an export matches what the page shows.
 func (h *Handlers) SiteAuditExport(ctx context.Context, params siteapi.SiteAuditExportParams) (siteapi.SiteAuditExportRes, error) {
 	s, role, err := h.scopedWithRoleFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
@@ -86,18 +89,38 @@ func (h *Handlers) SiteAuditExport(ctx context.Context, params siteapi.SiteAudit
 		return &v, nil
 	}
 
+	filter := auditFilter(params.From, params.To, params.ActorKind, params.ActorId, params.Action,
+		params.TargetType, params.TargetId, params.IP, params.RequestId)
+
 	// Stream through a pipe so a long log never sits in memory. If the response ends
 	// early the context is cancelled, which closes the pipe and stops the writer.
 	pr, pw := io.Pipe()
 	stop := context.AfterFunc(ctx, func() { _ = pw.CloseWithError(ctx.Err()) })
 	go func() {
 		defer stop()
-		_ = pw.CloseWithError(h.audit.ExportCSV(ctx, s, pw))
+		_ = pw.CloseWithError(h.audit.ExportCSV(ctx, s, filter, pw))
 	}()
 	return &siteapi.SiteAuditExportOKHeaders{
 		ContentDisposition: `attachment; filename="audit-log-` + params.Slug + `.csv"`,
 		Response:           siteapi.SiteAuditExportOK{Data: pr},
 	}, nil
+}
+
+func auditFilter(
+	from, to siteapi.OptTimestamp, kind siteapi.OptSiteAuditActorKind,
+	actorID, action, targetType, targetID, ip, requestID siteapi.OptString,
+) events.AuditFilter {
+	return events.AuditFilter{
+		From:       time.Time(from.Or(siteapi.Timestamp{})),
+		To:         time.Time(to.Or(siteapi.Timestamp{})),
+		ActorKind:  string(kind.Or("")),
+		ActorID:    actorID.Or(""),
+		Action:     action.Or(""),
+		TargetType: targetType.Or(""),
+		TargetID:   targetID.Or(""),
+		IP:         ip.Or(""),
+		RequestID:  requestID.Or(""),
+	}
 }
 
 func auditEntryResource(e *ent.AuditEntry) siteapi.SiteAuditEntryResource {

@@ -72,6 +72,36 @@ model SiteAuditEntryList {
   nextCursor?: string | null;
 }
 
+/** Filters shared by the Audit log list and its CSV export; every one is optional and they combine with AND */
+model SiteAuditFilter {
+  /** Only entries at or after this time */
+  @query from?: Timestamp;
+
+  /** Only entries strictly before this time */
+  @query to?: Timestamp;
+
+  /** Only entries by this kind of actor */
+  @query actorKind?: SiteAuditActorKind;
+
+  /** Only entries by the actor with this id (a User id or an API token id) */
+  @query actorId?: string;
+
+  /** Only entries with exactly this action, e.g. membership.update */
+  @query action?: string;
+
+  /** Only entries about this target type, e.g. integration */
+  @query targetType?: string;
+
+  /** Only entries about the target with this id */
+  @query targetId?: string;
+
+  /** Only entries from this client address */
+  @query ip?: string;
+
+  /** Only entries made under this request id */
+  @query requestId?: string;
+}
+
 @route("/workspaces/{slug}/audit-entries")
 @tag("Site Audit")
 namespace SiteAudit {
@@ -79,6 +109,7 @@ namespace SiteAudit {
   @get
   op list(
     @path slug: string,
+    ...SiteAuditFilter,
 
     /** Cursor from a previous page */
     @query cursor?: string,
@@ -92,10 +123,10 @@ namespace SiteAudit {
     | ForbiddenProblem
     | NotFoundProblem;
 
-  /** Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only) */
+  /** Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise; owner and admin only) */
   @get
   @route("/export")
-  op export(@path slug: string):
+  op export(@path slug: string, ...SiteAuditFilter):
     | {
         @header contentType: "text/csv";
         @header contentDisposition: string;

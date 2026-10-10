@@ -496,7 +496,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
+		edition, err := do.Invoke[*ee.Edition](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL, edition.Jobs())
 		if err != nil {
 			return nil, err
 		}

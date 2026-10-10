@@ -22,18 +22,18 @@ var exportHeader = []string{
 	"target_type", "target_id", "target_name", "diff", "request_id", "ip", "user_agent",
 }
 
-// ExportCSV streams the scoped Workspace's Audit log, newest first, to w as CSV: a
+// ExportCSV streams the scoped Workspace's Audit log entries matching the filter, newest first, to w as CSV: a
 // header row, then one row per entry. It pages through Entries, so a long log never
 // sits in memory, and it shows an Operator as "1mail staff" like every read surface.
 // The caller has already checked Licensed and the reader's role.
-func (l *Log) ExportCSV(ctx context.Context, s *ent.Scoped, w io.Writer) error {
+func (l *Log) ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter, w io.Writer) error {
 	cw := csv.NewWriter(w)
 	if err := cw.Write(exportHeader); err != nil {
 		return err
 	}
 	var cursor int64
 	for {
-		rows, next, err := l.Entries(ctx, s, cursor, exportPageSize)
+		rows, next, err := l.Entries(ctx, s, f, cursor, exportPageSize)
 		if err != nil {
 			return err
 		}

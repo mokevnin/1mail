@@ -25,6 +25,9 @@ type Feature string
 const (
 	// FeatureAudit unlocks the Audit log (ADR 0022).
 	FeatureAudit Feature = "audit"
+	// FeatureRetention unlocks the advanced-retention control (ADR 0014): a per-Workspace
+	// window after which Enterprise records, today the Audit log, are pruned.
+	FeatureRetention Feature = "retention"
 )
 
 // ProductionKey is the Ed25519 public key production licenses are verified against.

@@ -13,7 +13,7 @@ import (
 // only the ee/audit reader reads it. ent keeps one schema package per graph, so the
 // table is declared here next to the others and migrated by the same Atlas flow; the
 // license gate lives in ee/, not in the schema. No code path updates or deletes a row
-// (retention, ADR 0014, is the only future remover).
+// (the ee/retention prune job, ADR 0014, is the only remover).
 type AuditEntry struct {
 	ent.Schema
 }

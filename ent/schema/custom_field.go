@@ -21,6 +21,7 @@ type CustomField struct {
 func (CustomField) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "custom_fields"},
+		Audited{Action: "custom_field", NameField: "name"},
 	}
 }
 
