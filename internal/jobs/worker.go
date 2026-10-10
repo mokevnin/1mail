@@ -45,11 +45,18 @@ type Client struct {
 	ent   *ent.Client
 }
 
+// Extension plugs extra workers and periodic jobs into the client without core
+// importing them: the composition root hands in the Enterprise Edition's (ADR 0014).
+type Extension struct {
+	Workers      func(*river.Workers)
+	PeriodicJobs []*river.PeriodicJob
+}
+
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, ext ...Extension) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -68,6 +75,24 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 
+	// Re-validate every Sending domain's DKIM DNS periodically so a record
+	// that disappears flips the domain back to unverified (ADR 0010).
+	periodic := []*river.PeriodicJob{
+		river.NewPeriodicJob(
+			river.PeriodicInterval(15*time.Minute),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return RecheckSendingDomainsArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true},
+		),
+	}
+	for _, e := range ext {
+		if e.Workers != nil {
+			e.Workers(workers)
+		}
+		periodic = append(periodic, e.PeriodicJobs...)
+	}
+
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -81,17 +106,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 		// OTel spans + metrics per job insert/work, via the global providers set
 		// by telemetry.Setup (a no-op when telemetry is disabled, e.g. tests).
 		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
-		// Re-validate every Sending domain's DKIM DNS periodically so a record
-		// that disappears flips the domain back to unverified (ADR 0010).
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(15*time.Minute),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return RecheckSendingDomainsArgs{}, nil
-				},
-				&river.PeriodicJobOpts{RunOnStart: true},
-			),
-		},
+		PeriodicJobs: periodic,
 	})
 	if err != nil {
 		return nil, err
