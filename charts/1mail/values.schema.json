@@ -31,6 +31,14 @@
             "interval": { "type": "string" },
             "labels": { "type": "object" }
           }
+        },
+        "prometheusRule": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "labels": { "type": "object" },
+            "runbookUrl": { "type": "string", "minLength": 1 }
+          }
         }
       }
     },

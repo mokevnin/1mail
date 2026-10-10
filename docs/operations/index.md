@@ -2,12 +2,14 @@
 
 This section is for the person who keeps a self-hosted 1mail instance running. Start with
 [Self-hosting](../self-hosting) to install and configure it; the pages here cover what comes
-after: sizing, backups and upgrades.
+after: sizing, backups, upgrades and monitoring.
 
 | Page                             | Read it when                                                       |
 | -------------------------------- | ------------------------------------------------------------------ |
 | [Backup and restore](./backup)   | You are setting up backups or rehearsing a disaster recovery.      |
 | [Upgrading](./upgrading)         | You are moving to a new release or a new PostgreSQL major version. |
+| [Monitoring](./monitoring)       | You are wiring probes, metrics, SLOs and Prometheus alerts.        |
+| [Runbook](./runbook)             | An alert fired and you need to know what to check.                 |
 | [Scaling and tuning](./scaling)  | You are sizing replicas and connections or tuning retention.       |
 | [Security hardening](./security) | You are preparing for production or rotating secrets.              |
 | [Self-hosting](../self-hosting)  | You are installing, configuring or wiring health checks.           |
@@ -53,3 +55,6 @@ Treat these as a way of reasoning, not as benchmarks. Measure on your own traffi
 
 `/healthz` (liveness) and `/readyz` (readiness, pings the database) are documented in
 [Self-hosting](../self-hosting#health-checks). Use `/readyz` to gate traffic during a rollout.
+
+Metrics, proposed SLOs and example alerting rules are in [Monitoring](./monitoring); each alert
+has a section in the [Runbook](./runbook).
