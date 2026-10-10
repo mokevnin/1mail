@@ -11,6 +11,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -82,6 +83,22 @@ func (s *Scoped) verifyApiToken(ctx context.Context, ids []int64) error {
 	}
 	if n != len(ids) {
 		return fmt.Errorf("ApiToken: %w", ErrNotInWorkspace)
+	}
+	return nil
+}
+
+// verifyAuditEntry fails with ErrNotInWorkspace unless every id is a AuditEntry of the Workspace.
+func (s *Scoped) verifyAuditEntry(ctx context.Context, ids []int64) error {
+	ids = uniqueIDs(ids)
+	if len(ids) == 0 {
+		return nil
+	}
+	n, err := s.c.AuditEntry.Query().Where(auditentry.IDIn(ids...), auditentry.WorkspaceID(s.ws)).Count(ctx)
+	if err != nil {
+		return err
+	}
+	if n != len(ids) {
+		return fmt.Errorf("AuditEntry: %w", ErrNotInWorkspace)
 	}
 	return nil
 }
@@ -1077,6 +1094,471 @@ func (x *ApiTokenScopedUpdate) Save(ctx context.Context) (int, error) {
 
 // Exec is like Save, discarding the count.
 func (x *ApiTokenScopedUpdate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// AuditEntryScoped reaches AuditEntry entities of one Workspace.
+type AuditEntryScoped struct{ s *Scoped }
+
+// AuditEntry returns the AuditEntry entities of the Workspace.
+func (s *Scoped) AuditEntry() *AuditEntryScoped { return &AuditEntryScoped{s: s} }
+
+// Query returns a AuditEntry query already confined to the Workspace.
+func (t *AuditEntryScoped) Query() *AuditEntryQuery {
+	return t.s.c.AuditEntry.Query().Where(auditentry.WorkspaceID(t.s.ws))
+}
+
+// Get returns the AuditEntry with the id; a row of another Workspace is not found.
+func (t *AuditEntryScoped) Get(ctx context.Context, id int64) (*AuditEntry, error) {
+	return t.Query().Where(auditentry.ID(id)).Only(ctx)
+}
+
+// DeleteOneID deletes the AuditEntry with the id; a row of another Workspace is not found.
+func (t *AuditEntryScoped) DeleteOneID(id int64) *AuditEntryDeleteOne {
+	return t.s.c.AuditEntry.DeleteOneID(id).Where(auditentry.WorkspaceID(t.s.ws))
+}
+
+// Delete deletes the AuditEntry entities of the Workspace that match the predicates.
+func (t *AuditEntryScoped) Delete() *AuditEntryDelete {
+	return t.s.c.AuditEntry.Delete().Where(auditentry.WorkspaceID(t.s.ws))
+}
+
+// ---------------------------------------------------------------- create
+
+// AuditEntryScopedCreate wraps AuditEntryCreate. It has no way to name a Workspace.
+type AuditEntryScopedCreate struct {
+	s *Scoped
+	b *AuditEntryCreate
+}
+
+// Create starts a AuditEntry in the Workspace.
+func (t *AuditEntryScoped) Create() *AuditEntryScopedCreate {
+	return &AuditEntryScopedCreate{s: t.s, b: t.s.c.AuditEntry.Create().SetWorkspaceID(t.s.ws)}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (x *AuditEntryScopedCreate) SetCreatedAt(v time.Time) *AuditEntryScopedCreate {
+	x.b.SetCreatedAt(v)
+	return x
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableCreatedAt(v *time.Time) *AuditEntryScopedCreate {
+	x.b.SetNillableCreatedAt(v)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *AuditEntryScopedCreate) SetUpdatedAt(v time.Time) *AuditEntryScopedCreate {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableUpdatedAt(v *time.Time) *AuditEntryScopedCreate {
+	x.b.SetNillableUpdatedAt(v)
+	return x
+}
+
+// SetEntryKey sets the "entry_key" field.
+func (x *AuditEntryScopedCreate) SetEntryKey(v string) *AuditEntryScopedCreate {
+	x.b.SetEntryKey(v)
+	return x
+}
+
+// SetOccurredAt sets the "occurred_at" field.
+func (x *AuditEntryScopedCreate) SetOccurredAt(v time.Time) *AuditEntryScopedCreate {
+	x.b.SetOccurredAt(v)
+	return x
+}
+
+// SetActorKind sets the "actor_kind" field.
+func (x *AuditEntryScopedCreate) SetActorKind(v string) *AuditEntryScopedCreate {
+	x.b.SetActorKind(v)
+	return x
+}
+
+// SetActorID sets the "actor_id" field.
+func (x *AuditEntryScopedCreate) SetActorID(v string) *AuditEntryScopedCreate {
+	x.b.SetActorID(v)
+	return x
+}
+
+// SetNillableActorID sets the "actor_id" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableActorID(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableActorID(v)
+	return x
+}
+
+// SetActorName sets the "actor_name" field.
+func (x *AuditEntryScopedCreate) SetActorName(v string) *AuditEntryScopedCreate {
+	x.b.SetActorName(v)
+	return x
+}
+
+// SetNillableActorName sets the "actor_name" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableActorName(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableActorName(v)
+	return x
+}
+
+// SetAction sets the "action" field.
+func (x *AuditEntryScopedCreate) SetAction(v string) *AuditEntryScopedCreate {
+	x.b.SetAction(v)
+	return x
+}
+
+// SetTargetType sets the "target_type" field.
+func (x *AuditEntryScopedCreate) SetTargetType(v string) *AuditEntryScopedCreate {
+	x.b.SetTargetType(v)
+	return x
+}
+
+// SetTargetID sets the "target_id" field.
+func (x *AuditEntryScopedCreate) SetTargetID(v string) *AuditEntryScopedCreate {
+	x.b.SetTargetID(v)
+	return x
+}
+
+// SetNillableTargetID sets the "target_id" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableTargetID(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableTargetID(v)
+	return x
+}
+
+// SetTargetName sets the "target_name" field.
+func (x *AuditEntryScopedCreate) SetTargetName(v string) *AuditEntryScopedCreate {
+	x.b.SetTargetName(v)
+	return x
+}
+
+// SetNillableTargetName sets the "target_name" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableTargetName(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableTargetName(v)
+	return x
+}
+
+// SetDiff sets the "diff" field.
+func (x *AuditEntryScopedCreate) SetDiff(v map[string]interface{}) *AuditEntryScopedCreate {
+	x.b.SetDiff(v)
+	return x
+}
+
+// SetRequestID sets the "request_id" field.
+func (x *AuditEntryScopedCreate) SetRequestID(v string) *AuditEntryScopedCreate {
+	x.b.SetRequestID(v)
+	return x
+}
+
+// SetNillableRequestID sets the "request_id" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableRequestID(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableRequestID(v)
+	return x
+}
+
+// SetIP sets the "ip" field.
+func (x *AuditEntryScopedCreate) SetIP(v string) *AuditEntryScopedCreate {
+	x.b.SetIP(v)
+	return x
+}
+
+// SetNillableIP sets the "ip" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableIP(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableIP(v)
+	return x
+}
+
+// SetUserAgent sets the "user_agent" field.
+func (x *AuditEntryScopedCreate) SetUserAgent(v string) *AuditEntryScopedCreate {
+	x.b.SetUserAgent(v)
+	return x
+}
+
+// SetNillableUserAgent sets the "user_agent" field if the given value is not nil.
+func (x *AuditEntryScopedCreate) SetNillableUserAgent(v *string) *AuditEntryScopedCreate {
+	x.b.SetNillableUserAgent(v)
+	return x
+}
+
+func (x *AuditEntryScopedCreate) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	return nil
+}
+
+// Save verifies the references against the Workspace, then creates the AuditEntry.
+func (x *AuditEntryScopedCreate) Save(ctx context.Context) (*AuditEntry, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *AuditEntryScopedCreate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- create bulk
+
+// AuditEntryScopedCreateBulk creates several AuditEntry entities of one Workspace at once.
+type AuditEntryScopedCreateBulk struct {
+	s  *Scoped
+	xs []*AuditEntryScopedCreate
+}
+
+// CreateBulk batches creates started on this Workspace.
+func (t *AuditEntryScoped) CreateBulk(xs ...*AuditEntryScopedCreate) *AuditEntryScopedCreateBulk {
+	return &AuditEntryScopedCreateBulk{s: t.s, xs: xs}
+}
+
+func (b *AuditEntryScopedCreateBulk) raw(ctx context.Context) (*AuditEntryCreateBulk, error) {
+	builders := make([]*AuditEntryCreate, len(b.xs))
+	for i, x := range b.xs {
+		if x.s.ws != b.s.ws {
+			return nil, fmt.Errorf("AuditEntry: builder of another scope: %w", ErrNotInWorkspace)
+		}
+		if err := x.check(ctx); err != nil {
+			return nil, err
+		}
+		builders[i] = x.b
+	}
+	return b.s.c.AuditEntry.CreateBulk(builders...), nil
+}
+
+// Save verifies every builder's references, then creates the AuditEntry entities.
+func (b *AuditEntryScopedCreateBulk) Save(ctx context.Context) ([]*AuditEntry, error) {
+	raw, err := b.raw(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return raw.Save(ctx)
+}
+
+// Exec is like Save, discarding the entities.
+func (b *AuditEntryScopedCreateBulk) Exec(ctx context.Context) error {
+	_, err := b.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- upsert
+
+// AuditEntryScopedUpsert is the "ON CONFLICT ... DO UPDATE" setter. It cannot move a row to
+// another Workspace or point a reference at a value that was not verified on create.
+type AuditEntryScopedUpsert struct{ u *sql.UpdateSet }
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AuditEntryScopedUpsert) SetUpdatedAt(v time.Time) *AuditEntryScopedUpsert {
+	u.u.Set(auditentry.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AuditEntryScopedUpsert) UpdateUpdatedAt() *AuditEntryScopedUpsert {
+	u.u.SetExcluded(auditentry.FieldUpdatedAt)
+	return u
+}
+
+// conflictOptions confines the DO UPDATE part to rows of the Workspace.
+func (t *AuditEntryScoped) conflictOptions(columns []string) []sql.ConflictOption {
+	return []sql.ConflictOption{
+		sql.ConflictColumns(columns...),
+		sql.UpdateWhere(sql.EQ(auditentry.FieldWorkspaceID, t.s.ws)),
+	}
+}
+
+// AuditEntryScopedUpsertOne is the "upsert" of one AuditEntry.
+type AuditEntryScopedUpsertOne struct {
+	x *AuditEntryScopedCreate
+	u *AuditEntryUpsertOne
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (x *AuditEntryScopedCreate) OnConflictColumns(columns ...string) *AuditEntryScopedUpsertOne {
+	return &AuditEntryScopedUpsertOne{x: x, u: x.b.OnConflict((&AuditEntryScoped{s: x.s}).conflictOptions(columns)...)}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *AuditEntryScopedUpsertOne) UpdateNewValues() *AuditEntryScopedUpsertOne {
+	u.u.UpdateNewValues()
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *AuditEntryScopedUpsertOne) Ignore() *AuditEntryScopedUpsertOne {
+	u.u.Ignore()
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *AuditEntryScopedUpsertOne) DoNothing() *AuditEntryScopedUpsertOne {
+	u.u.DoNothing()
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *AuditEntryScopedUpsertOne) Update(set func(*AuditEntryScopedUpsert)) *AuditEntryScopedUpsertOne {
+	u.u.Update(func(s *AuditEntryUpsert) { set(&AuditEntryScopedUpsert{u: s.UpdateSet}) })
+	return u
+}
+
+// Exec verifies the references, then executes the upsert.
+func (u *AuditEntryScopedUpsertOne) Exec(ctx context.Context) error {
+	if err := u.x.check(ctx); err != nil {
+		return err
+	}
+	return u.u.Exec(ctx)
+}
+
+// ID is like Exec, returning the inserted or updated id.
+func (u *AuditEntryScopedUpsertOne) ID(ctx context.Context) (int64, error) {
+	if err := u.x.check(ctx); err != nil {
+		return 0, err
+	}
+	return u.u.ID(ctx)
+}
+
+// AuditEntryScopedUpsertBulk is the "upsert" of several AuditEntry entities.
+type AuditEntryScopedUpsertBulk struct {
+	b       *AuditEntryScopedCreateBulk
+	t       *AuditEntryScoped
+	columns []string
+	opts    []func(*AuditEntryUpsertBulk)
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (b *AuditEntryScopedCreateBulk) OnConflictColumns(columns ...string) *AuditEntryScopedUpsertBulk {
+	return &AuditEntryScopedUpsertBulk{b: b, t: &AuditEntryScoped{s: b.s}, columns: columns}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *AuditEntryScopedUpsertBulk) UpdateNewValues() *AuditEntryScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *AuditEntryUpsertBulk) { r.UpdateNewValues() })
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *AuditEntryScopedUpsertBulk) Ignore() *AuditEntryScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *AuditEntryUpsertBulk) { r.Ignore() })
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *AuditEntryScopedUpsertBulk) DoNothing() *AuditEntryScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *AuditEntryUpsertBulk) { r.DoNothing() })
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *AuditEntryScopedUpsertBulk) Update(set func(*AuditEntryScopedUpsert)) *AuditEntryScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *AuditEntryUpsertBulk) {
+		r.Update(func(s *AuditEntryUpsert) { set(&AuditEntryScopedUpsert{u: s.UpdateSet}) })
+	})
+	return u
+}
+
+// Exec verifies every builder's references, then executes the upsert.
+func (u *AuditEntryScopedUpsertBulk) Exec(ctx context.Context) error {
+	raw, err := u.b.raw(ctx)
+	if err != nil {
+		return err
+	}
+	r := raw.OnConflict(u.t.conflictOptions(u.columns)...)
+	for _, o := range u.opts {
+		o(r)
+	}
+	return r.Exec(ctx)
+}
+
+// ---------------------------------------------------------------- update
+
+// AuditEntryScopedUpdateOne wraps AuditEntryUpdateOne. It has no way to move the row to another Workspace.
+type AuditEntryScopedUpdateOne struct {
+	s *Scoped
+	b *AuditEntryUpdateOne
+}
+
+// UpdateOneID updates the AuditEntry with the id; a row of another Workspace is not found.
+func (t *AuditEntryScoped) UpdateOneID(id int64) *AuditEntryScopedUpdateOne {
+	return &AuditEntryScopedUpdateOne{s: t.s, b: t.s.c.AuditEntry.UpdateOneID(id).Where(auditentry.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *AuditEntryScopedUpdateOne) Where(ps ...predicate.AuditEntry) *AuditEntryScopedUpdateOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *AuditEntryScopedUpdateOne) SetUpdatedAt(v time.Time) *AuditEntryScopedUpdateOne {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+func (x *AuditEntryScopedUpdateOne) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	return nil
+}
+
+// Save verifies the references against the Workspace, then updates the AuditEntry.
+func (x *AuditEntryScopedUpdateOne) Save(ctx context.Context) (*AuditEntry, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *AuditEntryScopedUpdateOne) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// AuditEntryScopedUpdate wraps AuditEntryUpdate: a conditional bulk update of one Workspace.
+type AuditEntryScopedUpdate struct {
+	s *Scoped
+	b *AuditEntryUpdate
+}
+
+// Update updates the AuditEntry entities of the Workspace that match the predicates.
+func (t *AuditEntryScoped) Update() *AuditEntryScopedUpdate {
+	return &AuditEntryScopedUpdate{s: t.s, b: t.s.c.AuditEntry.Update().Where(auditentry.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *AuditEntryScopedUpdate) Where(ps ...predicate.AuditEntry) *AuditEntryScopedUpdate {
+	x.b.Where(ps...)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *AuditEntryScopedUpdate) SetUpdatedAt(v time.Time) *AuditEntryScopedUpdate {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+func (x *AuditEntryScopedUpdate) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	return nil
+}
+
+// Save verifies the references against the Workspace, then updates the rows and
+// returns how many changed.
+func (x *AuditEntryScopedUpdate) Save(ctx context.Context) (int, error) {
+	if err := x.check(ctx); err != nil {
+		return 0, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the count.
+func (x *AuditEntryScopedUpdate) Exec(ctx context.Context) error {
 	_, err := x.Save(ctx)
 	return err
 }

@@ -37,6 +37,52 @@ var (
 			},
 		},
 	}
+	// AuditEntriesColumns holds the columns for the "audit_entries" table.
+	AuditEntriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "entry_key", Type: field.TypeString},
+		{Name: "occurred_at", Type: field.TypeTime},
+		{Name: "actor_kind", Type: field.TypeString},
+		{Name: "actor_id", Type: field.TypeString, Nullable: true},
+		{Name: "actor_name", Type: field.TypeString, Nullable: true},
+		{Name: "action", Type: field.TypeString},
+		{Name: "target_type", Type: field.TypeString},
+		{Name: "target_id", Type: field.TypeString, Nullable: true},
+		{Name: "target_name", Type: field.TypeString, Nullable: true},
+		{Name: "diff", Type: field.TypeJSON, Nullable: true},
+		{Name: "request_id", Type: field.TypeString, Nullable: true},
+		{Name: "ip", Type: field.TypeString, Nullable: true},
+		{Name: "user_agent", Type: field.TypeString, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// AuditEntriesTable holds the schema information for the "audit_entries" table.
+	AuditEntriesTable = &schema.Table{
+		Name:       "audit_entries",
+		Columns:    AuditEntriesColumns,
+		PrimaryKey: []*schema.Column{AuditEntriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "audit_entries_workspaces_audit_entries",
+				Columns:    []*schema.Column{AuditEntriesColumns[16]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "audit_entries_workspace_id_entry_key",
+				Unique:  true,
+				Columns: []*schema.Column{AuditEntriesColumns[16], AuditEntriesColumns[3]},
+			},
+			{
+				Name:    "auditentry_workspace_id_id",
+				Unique:  false,
+				Columns: []*schema.Column{AuditEntriesColumns[16], AuditEntriesColumns[0]},
+			},
+		},
+	}
 	// AutomationsColumns holds the columns for the "automations" table.
 	AutomationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -905,6 +951,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
+		AuditEntriesTable,
 		AutomationsTable,
 		AutomationRunsTable,
 		BroadcastsTable,
@@ -937,6 +984,10 @@ func init() {
 	APITokensTable.ForeignKeys[0].RefTable = WorkspacesTable
 	APITokensTable.Annotation = &entsql.Annotation{
 		Table: "api_tokens",
+	}
+	AuditEntriesTable.ForeignKeys[0].RefTable = WorkspacesTable
+	AuditEntriesTable.Annotation = &entsql.Annotation{
+		Table: "audit_entries",
 	}
 	AutomationsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	AutomationsTable.Annotation = &entsql.Annotation{

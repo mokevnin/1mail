@@ -384,6 +384,19 @@
   },
   "settings": {
     "apiKeysTitle": "Claves API",
+    "auditLog": {
+      "action": "Acción",
+      "actor": "Autor",
+      "actorSystem": "Sistema",
+      "actorToken": "Token de API n.º {{id}}",
+      "changes": "Cambios",
+      "empty": "Aún no hay cambios auditados",
+      "loadError": "No se pudo cargar el registro de auditoría",
+      "loadMore": "Cargar más",
+      "target": "Objeto",
+      "time": "Hora",
+      "title": "Registro de auditoría"
+    },
     "copied": "Copiado",
     "copy": "Copiar",
     "errorTitle": "Error al actualizar el espacio de trabajo",

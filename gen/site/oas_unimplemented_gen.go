@@ -22,6 +22,15 @@ func (UnimplementedHandler) SiteAnalyticsOverview(ctx context.Context, params Si
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuditList implements SiteAudit_list operation.
+//
+// List the workspace's Audit log, newest first (Enterprise; owner and admin only).
+//
+// GET /workspaces/{slug}/audit-entries
+func (UnimplementedHandler) SiteAuditList(ctx context.Context, params SiteAuditListParams) (r SiteAuditListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 //
 // Confirm an email change from the token sent to the new address. Public: the link is opened from the

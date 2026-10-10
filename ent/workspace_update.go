@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -521,6 +522,21 @@ func (_u *WorkspaceUpdate) AddInvitations(v ...*Invitation) *WorkspaceUpdate {
 	return _u.AddInvitationIDs(ids...)
 }
 
+// AddAuditEntryIDs adds the "audit_entries" edge to the AuditEntry entity by IDs.
+func (_u *WorkspaceUpdate) AddAuditEntryIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddAuditEntryIDs(ids...)
+	return _u
+}
+
+// AddAuditEntries adds the "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdate) AddAuditEntries(v ...*AuditEntry) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuditEntryIDs(ids...)
+}
+
 // Mutation returns the WorkspaceMutation object of the builder.
 func (_u *WorkspaceUpdate) Mutation() *WorkspaceMutation {
 	return _u.mutation
@@ -965,6 +981,27 @@ func (_u *WorkspaceUpdate) RemoveInvitations(v ...*Invitation) *WorkspaceUpdate 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveInvitationIDs(ids...)
+}
+
+// ClearAuditEntries clears all "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdate) ClearAuditEntries() *WorkspaceUpdate {
+	_u.mutation.ClearAuditEntries()
+	return _u
+}
+
+// RemoveAuditEntryIDs removes the "audit_entries" edge to AuditEntry entities by IDs.
+func (_u *WorkspaceUpdate) RemoveAuditEntryIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveAuditEntryIDs(ids...)
+	return _u
+}
+
+// RemoveAuditEntries removes "audit_entries" edges to AuditEntry entities.
+func (_u *WorkspaceUpdate) RemoveAuditEntries(v ...*AuditEntry) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuditEntryIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2033,6 +2070,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuditEntriesIDs(); len(nodes) > 0 && !_u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuditEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -2526,6 +2608,21 @@ func (_u *WorkspaceUpdateOne) AddInvitations(v ...*Invitation) *WorkspaceUpdateO
 	return _u.AddInvitationIDs(ids...)
 }
 
+// AddAuditEntryIDs adds the "audit_entries" edge to the AuditEntry entity by IDs.
+func (_u *WorkspaceUpdateOne) AddAuditEntryIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddAuditEntryIDs(ids...)
+	return _u
+}
+
+// AddAuditEntries adds the "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdateOne) AddAuditEntries(v ...*AuditEntry) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuditEntryIDs(ids...)
+}
+
 // Mutation returns the WorkspaceMutation object of the builder.
 func (_u *WorkspaceUpdateOne) Mutation() *WorkspaceMutation {
 	return _u.mutation
@@ -2970,6 +3067,27 @@ func (_u *WorkspaceUpdateOne) RemoveInvitations(v ...*Invitation) *WorkspaceUpda
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveInvitationIDs(ids...)
+}
+
+// ClearAuditEntries clears all "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdateOne) ClearAuditEntries() *WorkspaceUpdateOne {
+	_u.mutation.ClearAuditEntries()
+	return _u
+}
+
+// RemoveAuditEntryIDs removes the "audit_entries" edge to AuditEntry entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveAuditEntryIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveAuditEntryIDs(ids...)
+	return _u
+}
+
+// RemoveAuditEntries removes "audit_entries" edges to AuditEntry entities.
+func (_u *WorkspaceUpdateOne) RemoveAuditEntries(v ...*AuditEntry) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuditEntryIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkspaceUpdate builder.
@@ -4061,6 +4179,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuditEntriesIDs(); len(nodes) > 0 && !_u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuditEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

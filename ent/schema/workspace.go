@@ -101,5 +101,6 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("outbound_messages", OutboundMessage.Type),
 		edge.To("memberships", Membership.Type),
 		edge.To("invitations", Invitation.Type),
+		edge.To("audit_entries", AuditEntry.Type),
 	}
 }

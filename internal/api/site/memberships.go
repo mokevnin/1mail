@@ -120,7 +120,7 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 		}
 	}
 
-	updated, err := s.Membership().UpdateOneID(target.ID).SetRole(desired).Save(ctx)
+	updated, err := h.accounts.ChangeMembershipRole(ctx, s, h.actor(ctx), target, target.Edges.User.Name, desired)
 	if err != nil {
 		return nil, err
 	}

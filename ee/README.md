@@ -20,5 +20,5 @@ features stay locked until a valid **license key** is present at runtime — so 
 distribute one artifact to everyone and unlock Enterprise functionality per
 subscription (the Cal.com / GitLab model). There is no separate "enterprise build".
 
-> No Enterprise feature is implemented yet — this directory and license establish
-> the boundary so closed features can land without restructuring the repo later.
+Implemented so far: the **Audit log** (`ee/audit`, ADR 0022), unlocked by the `audit`
+feature of the license key (`ee/licensekey`, set through `LICENSE_KEY`).

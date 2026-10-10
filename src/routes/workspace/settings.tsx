@@ -29,6 +29,7 @@ import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { activityRoute } from '../../router.tsx'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
+import { AuditLogSection } from './AuditLogSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 import { MembersSection } from './MembersSection.tsx'
 import { SendingDomainsSection } from './SendingDomainsSection.tsx'
@@ -239,6 +240,7 @@ export function SettingsPage() {
         <>
           <GeneralSection workspace={workspace} />
           <MembersSection slug={workspace.slug} />
+          <AuditLogSection slug={workspace.slug} />
           <TrackingSection collectKey={workspace.collectKey} slug={workspace.slug} />
           <TestEvent collectKey={workspace.collectKey} />
           <IntegrationsSection slug={workspace.slug} />

@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// ApiToken is the client for interacting with the ApiToken builders.
 	ApiToken *ApiTokenClient
+	// AuditEntry is the client for interacting with the AuditEntry builders.
+	AuditEntry *AuditEntryClient
 	// Automation is the client for interacting with the Automation builders.
 	Automation *AutomationClient
 	// AutomationRun is the client for interacting with the AutomationRun builders.
@@ -194,6 +196,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.ApiToken = NewApiTokenClient(tx.config)
+	tx.AuditEntry = NewAuditEntryClient(tx.config)
 	tx.Automation = NewAutomationClient(tx.config)
 	tx.AutomationRun = NewAutomationRunClient(tx.config)
 	tx.Broadcast = NewBroadcastClient(tx.config)

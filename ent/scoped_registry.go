@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -108,6 +109,71 @@ func ScopedEntities() []ScopedEntity {
 				}
 				if src.LastUsedAt != nil {
 					b.SetLastUsedAt(*src.LastUsedAt)
+				}
+				created, err := b.Save(ctx)
+				if err != nil {
+					return 0, err
+				}
+				return created.WorkspaceID, nil
+			},
+			Refs: []ScopedRef{},
+		},
+		{
+			Name: "AuditEntry",
+			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
+				return c.AuditEntry.Query().Where(auditentry.WorkspaceID(ws)).Order(Asc(auditentry.FieldID)).IDs(ctx)
+			},
+			Get: func(ctx context.Context, s *Scoped, id int64) error {
+				_, err := s.AuditEntry().Get(ctx, id)
+				return err
+			},
+			Touch: func(ctx context.Context, s *Scoped, id int64) error {
+				return s.AuditEntry().UpdateOneID(id).Exec(ctx)
+			},
+			BulkTouch: func(ctx context.Context, s *Scoped, id int64) (int, error) {
+				return s.AuditEntry().Update().Where(auditentry.ID(id)).Save(ctx)
+			},
+			Delete: func(ctx context.Context, s *Scoped, id int64) error {
+				return s.AuditEntry().DeleteOneID(id).Exec(ctx)
+			},
+			BulkDelete: func(ctx context.Context, s *Scoped, id int64) (int, error) {
+				return s.AuditEntry().Delete().Where(auditentry.ID(id)).Exec(ctx)
+			},
+			Replant: func(ctx context.Context, s *Scoped, id int64, remap func(string, int64) int64) (int64, error) {
+				src, err := s.c.AuditEntry.Get(ctx, id)
+				if err != nil {
+					return 0, err
+				}
+				_ = remap
+				b := s.AuditEntry().Create()
+				b.SetEntryKey(src.EntryKey)
+				b.SetOccurredAt(src.OccurredAt)
+				b.SetActorKind(src.ActorKind)
+				if src.ActorID != nil {
+					b.SetActorID(*src.ActorID)
+				}
+				if src.ActorName != nil {
+					b.SetActorName(*src.ActorName)
+				}
+				b.SetAction(src.Action)
+				b.SetTargetType(src.TargetType)
+				if src.TargetID != nil {
+					b.SetTargetID(*src.TargetID)
+				}
+				if src.TargetName != nil {
+					b.SetTargetName(*src.TargetName)
+				}
+				if !reflect.ValueOf(src.Diff).IsZero() {
+					b.SetDiff(src.Diff)
+				}
+				if src.RequestID != nil {
+					b.SetRequestID(*src.RequestID)
+				}
+				if src.IP != nil {
+					b.SetIP(*src.IP)
+				}
+				if src.UserAgent != nil {
+					b.SetUserAgent(*src.UserAgent)
 				}
 				created, err := b.Save(ctx)
 				if err != nil {

@@ -49,7 +49,10 @@ func NewRouter() (*message.Router, error) {
 // router. Each consumer gets its OWN subscriber with a distinct consumer group,
 // so every subscriber receives every event (fan-out) rather than competing for
 // messages. Add new subscribers here without touching producers.
-func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
+//
+// extra are consumers owned outside core (the Enterprise audit subscriber, ee/): each
+// gets its own consumer group like the built-in ones.
+func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher, extra ...Consumer) error {
 	persistSub, err := NewSubscriber(db, "persist")
 	if err != nil {
 		return fmt.Errorf("persist subscriber: %w", err)
@@ -73,7 +76,33 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 		return fmt.Errorf("suppression subscriber: %w", err)
 	}
 	router.AddConsumerHandler("update_suppression", TopicDomainEvents, suppressionSub, suppressionConsumer(client))
+
+	for _, c := range extra {
+		sub, err := NewSubscriber(db, c.Name)
+		if err != nil {
+			return fmt.Errorf("%s subscriber: %w", c.Name, err)
+		}
+		router.AddConsumerHandler(c.Name, TopicDomainEvents, sub, c.Handler())
+	}
 	return nil
+}
+
+// Consumer is a bus subscriber registered from outside the events package. Name is
+// both its router handler name and its consumer group.
+type Consumer struct {
+	Name   string
+	Handle func(ctx context.Context, env Envelope) error
+}
+
+// Handler adapts the consumer to a watermill handler that decodes the envelope.
+func (c Consumer) Handler() message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		var env Envelope
+		if err := json.Unmarshal(msg.Payload, &env); err != nil {
+			return fmt.Errorf("unmarshal envelope: %w", err)
+		}
+		return c.Handle(msg.Context(), env)
+	}
 }
 
 // suppressionReason maps a projected event to the suppression reason it implies,
@@ -168,6 +197,9 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 		if err != nil {
 			return err
 		}
+		if _, skip := ev.(Unprojected); skip {
+			return nil // administrative history is never fanned out as an Event (ADR 0022)
+		}
 		p := ev.Project()
 		body, err := json.Marshal(webhookPayload{
 			ID:          env.ID,
@@ -197,6 +229,9 @@ func automationsConsumer(enroller Enroller) message.NoPublishHandlerFunc {
 		ev, err := Decode(env)
 		if err != nil {
 			return err
+		}
+		if _, skip := ev.(Unprojected); skip {
+			return nil // an administrative action is never an automation trigger
 		}
 		p := ev.Project()
 		if p.ContactID == 0 {
@@ -241,6 +276,9 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 	ev, err := Decode(env)
 	if err != nil {
 		return err
+	}
+	if _, skip := ev.(Unprojected); skip {
+		return nil // not an Event: no row, so no segment or trigger can see it
 	}
 	p := ev.Project()
 

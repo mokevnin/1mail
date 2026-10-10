@@ -9,6 +9,9 @@ import (
 // ApiToken is the predicate function for apitoken builders.
 type ApiToken func(*sql.Selector)
 
+// AuditEntry is the predicate function for auditentry builders.
+type AuditEntry func(*sql.Selector)
+
 // Automation is the predicate function for automation builders.
 type Automation func(*sql.Selector)
 

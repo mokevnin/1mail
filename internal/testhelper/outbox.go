@@ -26,6 +26,18 @@ func (env *TestEnv) OutboxEnvelopes(t *testing.T, names ...string) []events.Enve
 	return envelopes
 }
 
+// DeliverToEE hands every envelope on this test's outbox to the Enterprise
+// subscribers, as the router would (no router runs under txdb). Each call redelivers
+// the whole outbox, so calling it twice exercises at-least-once redelivery.
+func (env *TestEnv) DeliverToEE(t *testing.T) {
+	t.Helper()
+	for _, e := range env.OutboxEnvelopes(t) {
+		for _, c := range env.edition.Consumers {
+			require.NoError(t, c.Handle(t.Context(), e), c.Name)
+		}
+	}
+}
+
 // OutboxEvents is OutboxEnvelopes decoded into their typed events.
 func (env *TestEnv) OutboxEvents(t *testing.T, names ...string) []events.DomainEvent {
 	t.Helper()

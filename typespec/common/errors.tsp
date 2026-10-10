@@ -67,6 +67,13 @@ model NotFoundProblem is Response<404> {
   @body body: ProblemDetails;
 }
 
+/** RFC 7807 payment required response: the feature needs an Enterprise license */
+@error
+model PaymentRequiredProblem is Response<402> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
 /** RFC 7807 forbidden response */
 @error
 model ForbiddenProblem is Response<403> {

@@ -231,6 +231,112 @@ export type SiteApplyTagInput = {
 };
 
 /**
+ * The actor of an Audit entry
+ */
+export type SiteAuditActor = {
+  /**
+   * The kind of actor; an operator is shown to the customer as "1mail staff"
+   */
+  kind: SiteAuditActorKind;
+  /**
+   * The actor's id (a User id or an API token id); absent for the system
+   */
+  id?: string | null;
+  /**
+   * Display name snapshot taken when the entry was written
+   */
+  name?: string | null;
+};
+
+/**
+ * Who performed an audited change
+ */
+export const SiteAuditActorKind = {
+  USER: 'user',
+  API_TOKEN: 'api_token',
+  OPERATOR: 'operator',
+  SYSTEM: 'system'
+} as const;
+
+/**
+ * Who performed an audited change
+ */
+export type SiteAuditActorKind = typeof SiteAuditActorKind[keyof typeof SiteAuditActorKind];
+
+/**
+ * A page of Audit entries, newest first
+ */
+export type SiteAuditEntryList = {
+  items: Array<SiteAuditEntryResource>;
+  /**
+   * Pass as `cursor` for the next page; absent on the last page
+   */
+  nextCursor?: string | null;
+};
+
+/**
+ * One immutable Audit entry (Enterprise)
+ */
+export type SiteAuditEntryResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  /**
+   * When the change happened
+   */
+  occurredAt: Timestamp;
+  /**
+   * Who did it
+   */
+  actor: SiteAuditActor;
+  /**
+   * What was done, as `<entity>.<verb>`
+   */
+  action: string;
+  /**
+   * What it was done to
+   */
+  target: SiteAuditTarget;
+  /**
+   * Before/after of the changed fields; secrets appear as changed only
+   */
+  diff?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Request id of the change
+   */
+  requestId?: string | null;
+  /**
+   * Client address of the change
+   */
+  ip?: string | null;
+  /**
+   * Client user agent of the change
+   */
+  userAgent?: string | null;
+};
+
+/**
+ * What an audited change was done to
+ */
+export type SiteAuditTarget = {
+  /**
+   * Entity type, e.g. membership
+   */
+  type: string;
+  /**
+   * The target's id
+   */
+  id?: string | null;
+  /**
+   * Name snapshot taken when the entry was written; absent for a Contact
+   */
+  name?: string | null;
+};
+
+/**
  * Automation resource used by the site UI
  */
 export type SiteAutomationResource = {
@@ -2433,6 +2539,54 @@ export type SiteAnalyticsOverviewResponses = {
 };
 
 export type SiteAnalyticsOverviewResponse = SiteAnalyticsOverviewResponses[keyof SiteAnalyticsOverviewResponses];
+
+export type SiteAuditListData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: {
+    /**
+     * Cursor from a previous page
+     */
+    cursor?: string;
+    /**
+     * Page size
+     */
+    limit?: number;
+  };
+  url: '/workspaces/{slug}/audit-entries';
+};
+
+export type SiteAuditListErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditListError = SiteAuditListErrors[keyof SiteAuditListErrors];
+
+export type SiteAuditListResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditEntryList;
+};
+
+export type SiteAuditListResponse = SiteAuditListResponses[keyof SiteAuditListResponses];
 
 export type SiteAutomationsListData = {
   body?: never;

@@ -246,6 +246,16 @@
         },
         "description": "RFC 7807 not found response"
       },
+      "PaymentRequiredProblem": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 payment required response: the feature needs an Enterprise license"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {

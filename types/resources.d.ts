@@ -383,6 +383,19 @@ export default interface Resources {
     },
     "settings": {
       "apiKeysTitle": "API keys",
+      "auditLog": {
+        "action": "Action",
+        "actor": "Actor",
+        "actorSystem": "System",
+        "actorToken": "API token #{{id}}",
+        "changes": "Changes",
+        "empty": "No audited changes yet",
+        "loadError": "Failed to load the audit log",
+        "loadMore": "Load more",
+        "target": "Target",
+        "time": "Time",
+        "title": "Audit log"
+      },
       "copied": "Copied",
       "copy": "Copy",
       "errorTitle": "Failed to update workspace",

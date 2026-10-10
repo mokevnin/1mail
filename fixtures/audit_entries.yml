@@ -1,0 +1,31 @@
+# Audit log (Enterprise). Each tenant has one older entry, so tenant-isolation tests can
+# show that Acme's owner never sees Globex's. Tests create further entries through real
+# mutations; their ids come after the fixture ids, so they list first (newest first).
+- id: 2 # fixture: AcmeAuditEntry
+  workspace_id: 1
+  entry_key: fixture-acme-entry
+  occurred_at: '2026-01-01 00:00:00'
+  actor_kind: user
+  actor_id: '1'
+  actor_name: John
+  action: membership.update
+  target_type: membership
+  target_id: '3'
+  target_name: Mary
+  diff: '{"role":{"from":"admin","to":"member"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 1 # fixture: GlobexAuditEntry
+  workspace_id: 2
+  entry_key: fixture-globex-entry
+  occurred_at: '2026-01-02 00:00:00'
+  actor_kind: user
+  actor_id: '2'
+  actor_name: Jane
+  action: membership.update
+  target_type: membership
+  target_id: '2'
+  target_name: Jane
+  diff: '{"role":{"from":"admin","to":"owner"}}'
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'

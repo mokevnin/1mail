@@ -5,6 +5,10 @@ package fixtures
 // Fixture catalog: named anchor rows. Annotate a row with `# fixture: Name` on its
 // first line in fixtures/*.yml and run `mise run generate`.
 const (
+	// AcmeAuditEntryAction is from fixtures/audit_entries.
+	AcmeAuditEntryAction = "membership.update"
+	// AcmeAuditEntryID is from fixtures/audit_entries.
+	AcmeAuditEntryID = 2
 	// AcmeCollectKey is from fixtures/workspaces.
 	AcmeCollectKey = "omck_test_acme_collect_key"
 	// AcmeID is from fixtures/workspaces.
@@ -125,6 +129,10 @@ const (
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.
 	EventGlobexID = 900
+	// GlobexAuditEntryAction is from fixtures/audit_entries.
+	GlobexAuditEntryAction = "membership.update"
+	// GlobexAuditEntryID is from fixtures/audit_entries.
+	GlobexAuditEntryID = 1
 	// GlobexCollectKey is from fixtures/workspaces.
 	GlobexCollectKey = "omck_test_globex_collect_key"
 	// GlobexID is from fixtures/workspaces.

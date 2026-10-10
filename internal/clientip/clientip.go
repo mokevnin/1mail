@@ -11,7 +11,10 @@ import (
 	"github.com/realclientip/realclientip-go"
 )
 
-type ctxKey struct{}
+type (
+	ctxKey          struct{}
+	userAgentCtxKey struct{}
+)
 
 // forwardedFor reads exactly one trusted proxy hop: the binary runs behind one
 // Caddy/ingress, which appends the connecting address to X-Forwarded-For. Taking the
@@ -38,11 +41,21 @@ func FromRequest(r *http.Request) string {
 	return r.RemoteAddr
 }
 
-// Middleware stores FromRequest in the request context for FromContext.
+// Middleware stores FromRequest and the User-Agent in the request context for
+// FromContext and UserAgentFromContext.
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, FromRequest(r))))
+		ctx := context.WithValue(r.Context(), ctxKey{}, FromRequest(r))
+		ctx = context.WithValue(ctx, userAgentCtxKey{}, r.UserAgent())
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// UserAgentFromContext returns the request's User-Agent stored by Middleware, or ""
+// outside a request.
+func UserAgentFromContext(ctx context.Context) string {
+	ua, _ := ctx.Value(userAgentCtxKey{}).(string)
+	return ua
 }
 
 // FromContext returns the address stored by Middleware, or "" outside a request.

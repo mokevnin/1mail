@@ -11,106 +11,106 @@ import (
 )
 
 var (
-	rn5AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
-	}
 	rn7AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
-	}
-	rn8AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn9AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
+	rn10AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
 	rn11AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn12AllowedHeaders = map[string]string{
+	rn13AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn51AllowedHeaders = map[string]string{
+	rn14AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn80AllowedHeaders = map[string]string{
+	rn53AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
+	rn82AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn79AllowedHeaders = map[string]string{
+	rn81AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn46AllowedHeaders = map[string]string{
+	rn48AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn2AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
+	rn19AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
 	rn17AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
-	}
-	rn15AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
-	}
-	rn21AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
 	}
 	rn23AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
+	rn25AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn24AllowedHeaders = map[string]string{
+	rn26AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn28AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
-	}
-	rn29AllowedHeaders = map[string]string{
+	rn30AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn31AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
-	}
-	rn67AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn36AllowedHeaders = map[string]string{
+	rn33AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
+	rn69AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn38AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
+		"POST": "Content-Type",
 	}
 	rn40AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
-	}
-	rn44AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn54AllowedHeaders = map[string]string{
+	rn42AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn57AllowedHeaders = map[string]string{
-		"POST": "Content-Type",
+	rn46AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
 	}
 	rn56AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
+		"POST": "Content-Type",
 	}
 	rn59AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn64AllowedHeaders = map[string]string{
+	rn58AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
+	rn61AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn72AllowedHeaders = map[string]string{
+	rn66AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn74AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
-	}
-	rn75AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn83AllowedHeaders = map[string]string{
+	rn76AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
+	rn77AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn85AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
+	rn87AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 )
@@ -194,7 +194,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn5AllowedHeaders,
+								allowedHeaders: rn7AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -219,7 +219,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn7AllowedHeaders,
+								allowedHeaders: rn9AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -244,7 +244,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn8AllowedHeaders,
+								allowedHeaders: rn10AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -281,7 +281,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "POST",
-									allowedHeaders: rn9AllowedHeaders,
+									allowedHeaders: rn11AllowedHeaders,
 									acceptPost:     "application/json",
 									acceptPatch:    "",
 								})
@@ -306,7 +306,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "POST",
-									allowedHeaders: rn11AllowedHeaders,
+									allowedHeaders: rn13AllowedHeaders,
 									acceptPost:     "application/json",
 									acceptPatch:    "",
 								})
@@ -333,7 +333,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn12AllowedHeaders,
+								allowedHeaders: rn14AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -433,7 +433,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn51AllowedHeaders,
+								allowedHeaders: rn53AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -461,7 +461,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,PUT",
-							allowedHeaders: rn80AllowedHeaders,
+							allowedHeaders: rn82AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -498,7 +498,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "POST",
-									allowedHeaders: rn79AllowedHeaders,
+									allowedHeaders: rn81AllowedHeaders,
 									acceptPost:     "application/json",
 									acceptPatch:    "",
 								})
@@ -554,7 +554,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,POST",
-							allowedHeaders: rn46AllowedHeaders,
+							allowedHeaders: rn48AllowedHeaders,
 							acceptPost:     "application/json",
 							acceptPatch:    "",
 						})
@@ -709,75 +709,68 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									return
 								}
 
-							case 'u': // Prefix: "utomations"
+							case 'u': // Prefix: "u"
 
-								if l := len("utomations"); len(elem) >= l && elem[0:l] == "utomations" {
+								if l := len("u"); len(elem) >= l && elem[0:l] == "u" {
 									elem = elem[l:]
 								} else {
 									break
 								}
 
 								if len(elem) == 0 {
-									switch r.Method {
-									case "GET":
-										s.handleSiteAutomationsListRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									case "POST":
-										s.handleSiteAutomationsCreateRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									default:
-										s.notAllowed(w, r, notAllowedParams{
-											allowedMethods: "GET,POST",
-											allowedHeaders: rn17AllowedHeaders,
-											acceptPost:     "application/json",
-											acceptPatch:    "",
-										})
-									}
-
-									return
+									break
 								}
 								switch elem[0] {
-								case '/': // Prefix: "/"
+								case 'd': // Prefix: "dit-entries"
 
-									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									if l := len("dit-entries"); len(elem) >= l && elem[0:l] == "dit-entries" {
 										elem = elem[l:]
 									} else {
 										break
 									}
 
-									// Param: "id"
-									// Match until "/"
-									idx := strings.IndexByte(elem, '/')
-									if idx < 0 {
-										idx = len(elem)
-									}
-									args[1] = elem[:idx]
-									elem = elem[idx:]
-
 									if len(elem) == 0 {
+										// Leaf node.
 										switch r.Method {
-										case "DELETE":
-											s.handleSiteAutomationsDeleteRequest([2]string{
-												args[0],
-												args[1],
-											}, elemIsEscaped, w, r)
 										case "GET":
-											s.handleSiteAutomationsGetRequest([2]string{
+											s.handleSiteAuditListRequest([1]string{
 												args[0],
-												args[1],
-											}, elemIsEscaped, w, r)
-										case "PUT":
-											s.handleSiteAutomationsUpdateRequest([2]string{
-												args[0],
-												args[1],
 											}, elemIsEscaped, w, r)
 										default:
 											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "DELETE,GET,PUT",
-												allowedHeaders: rn15AllowedHeaders,
+												allowedMethods: "GET",
+												allowedHeaders: nil,
 												acceptPost:     "",
+												acceptPatch:    "",
+											})
+										}
+
+										return
+									}
+
+								case 't': // Prefix: "tomations"
+
+									if l := len("tomations"); len(elem) >= l && elem[0:l] == "tomations" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										switch r.Method {
+										case "GET":
+											s.handleSiteAutomationsListRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										case "POST":
+											s.handleSiteAutomationsCreateRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, notAllowedParams{
+												allowedMethods: "GET,POST",
+												allowedHeaders: rn19AllowedHeaders,
+												acceptPost:     "application/json",
 												acceptPatch:    "",
 											})
 										}
@@ -793,64 +786,112 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											break
 										}
 
+										// Param: "id"
+										// Match until "/"
+										idx := strings.IndexByte(elem, '/')
+										if idx < 0 {
+											idx = len(elem)
+										}
+										args[1] = elem[:idx]
+										elem = elem[idx:]
+
 										if len(elem) == 0 {
-											break
+											switch r.Method {
+											case "DELETE":
+												s.handleSiteAutomationsDeleteRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											case "GET":
+												s.handleSiteAutomationsGetRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											case "PUT":
+												s.handleSiteAutomationsUpdateRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, notAllowedParams{
+													allowedMethods: "DELETE,GET,PUT",
+													allowedHeaders: rn17AllowedHeaders,
+													acceptPost:     "",
+													acceptPatch:    "",
+												})
+											}
+
+											return
 										}
 										switch elem[0] {
-										case 'a': // Prefix: "activate"
+										case '/': // Prefix: "/"
 
-											if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+											if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 												elem = elem[l:]
 											} else {
 												break
 											}
 
 											if len(elem) == 0 {
-												// Leaf node.
-												switch r.Method {
-												case "POST":
-													s.handleSiteAutomationsActivateRequest([2]string{
-														args[0],
-														args[1],
-													}, elemIsEscaped, w, r)
-												default:
-													s.notAllowed(w, r, notAllowedParams{
-														allowedMethods: "POST",
-														allowedHeaders: nil,
-														acceptPost:     "",
-														acceptPatch:    "",
-													})
-												}
-
-												return
-											}
-
-										case 'd': // Prefix: "deactivate"
-
-											if l := len("deactivate"); len(elem) >= l && elem[0:l] == "deactivate" {
-												elem = elem[l:]
-											} else {
 												break
 											}
+											switch elem[0] {
+											case 'a': // Prefix: "activate"
 
-											if len(elem) == 0 {
-												// Leaf node.
-												switch r.Method {
-												case "POST":
-													s.handleSiteAutomationsDeactivateRequest([2]string{
-														args[0],
-														args[1],
-													}, elemIsEscaped, w, r)
-												default:
-													s.notAllowed(w, r, notAllowedParams{
-														allowedMethods: "POST",
-														allowedHeaders: nil,
-														acceptPost:     "",
-														acceptPatch:    "",
-													})
+												if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+													elem = elem[l:]
+												} else {
+													break
 												}
 
-												return
+												if len(elem) == 0 {
+													// Leaf node.
+													switch r.Method {
+													case "POST":
+														s.handleSiteAutomationsActivateRequest([2]string{
+															args[0],
+															args[1],
+														}, elemIsEscaped, w, r)
+													default:
+														s.notAllowed(w, r, notAllowedParams{
+															allowedMethods: "POST",
+															allowedHeaders: nil,
+															acceptPost:     "",
+															acceptPatch:    "",
+														})
+													}
+
+													return
+												}
+
+											case 'd': // Prefix: "deactivate"
+
+												if l := len("deactivate"); len(elem) >= l && elem[0:l] == "deactivate" {
+													elem = elem[l:]
+												} else {
+													break
+												}
+
+												if len(elem) == 0 {
+													// Leaf node.
+													switch r.Method {
+													case "POST":
+														s.handleSiteAutomationsDeactivateRequest([2]string{
+															args[0],
+															args[1],
+														}, elemIsEscaped, w, r)
+													default:
+														s.notAllowed(w, r, notAllowedParams{
+															allowedMethods: "POST",
+															allowedHeaders: nil,
+															acceptPost:     "",
+															acceptPatch:    "",
+														})
+													}
+
+													return
+												}
+
 											}
 
 										}
@@ -882,7 +923,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET,POST",
-										allowedHeaders: rn21AllowedHeaders,
+										allowedHeaders: rn23AllowedHeaders,
 										acceptPost:     "application/json",
 										acceptPatch:    "",
 									})
@@ -928,7 +969,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,GET,PUT",
-											allowedHeaders: rn23AllowedHeaders,
+											allowedHeaders: rn25AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -980,7 +1021,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 												default:
 													s.notAllowed(w, r, notAllowedParams{
 														allowedMethods: "POST",
-														allowedHeaders: rn24AllowedHeaders,
+														allowedHeaders: rn26AllowedHeaders,
 														acceptPost:     "application/json",
 														acceptPatch:    "",
 													})
@@ -1038,7 +1079,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn28AllowedHeaders,
+													allowedHeaders: rn30AllowedHeaders,
 													acceptPost:     "application/json",
 													acceptPatch:    "",
 												})
@@ -1086,7 +1127,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn29AllowedHeaders,
+											allowedHeaders: rn31AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1132,7 +1173,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "DELETE,GET,PUT",
-												allowedHeaders: rn31AllowedHeaders,
+												allowedHeaders: rn33AllowedHeaders,
 												acceptPost:     "",
 												acceptPatch:    "",
 											})
@@ -1164,7 +1205,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "GET,POST",
-													allowedHeaders: rn67AllowedHeaders,
+													allowedHeaders: rn69AllowedHeaders,
 													acceptPost:     "application/json",
 													acceptPatch:    "",
 												})
@@ -1334,7 +1375,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn36AllowedHeaders,
+											allowedHeaders: rn38AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1381,7 +1422,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "DELETE,GET,PUT",
-												allowedHeaders: rn38AllowedHeaders,
+												allowedHeaders: rn40AllowedHeaders,
 												acceptPost:     "",
 												acceptPatch:    "",
 											})
@@ -1413,7 +1454,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn40AllowedHeaders,
+											allowedHeaders: rn42AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1522,7 +1563,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,PUT",
-											allowedHeaders: rn44AllowedHeaders,
+											allowedHeaders: rn46AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -1578,7 +1619,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "GET,POST",
-												allowedHeaders: rn54AllowedHeaders,
+												allowedHeaders: rn56AllowedHeaders,
 												acceptPost:     "application/json",
 												acceptPatch:    "",
 											})
@@ -1617,7 +1658,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 												default:
 													s.notAllowed(w, r, notAllowedParams{
 														allowedMethods: "POST",
-														allowedHeaders: rn57AllowedHeaders,
+														allowedHeaders: rn59AllowedHeaders,
 														acceptPost:     "application/json",
 														acceptPatch:    "",
 													})
@@ -1658,7 +1699,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "DELETE,GET,PUT",
-													allowedHeaders: rn56AllowedHeaders,
+													allowedHeaders: rn58AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1690,7 +1731,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "GET,POST",
-												allowedHeaders: rn59AllowedHeaders,
+												allowedHeaders: rn61AllowedHeaders,
 												acceptPost:     "application/json",
 												acceptPatch:    "",
 											})
@@ -1795,7 +1836,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn64AllowedHeaders,
+											allowedHeaders: rn66AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1905,7 +1946,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn72AllowedHeaders,
+											allowedHeaders: rn74AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1952,7 +1993,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "DELETE,GET,PUT",
-												allowedHeaders: rn74AllowedHeaders,
+												allowedHeaders: rn76AllowedHeaders,
 												acceptPost:     "",
 												acceptPatch:    "",
 											})
@@ -1984,7 +2025,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn75AllowedHeaders,
+											allowedHeaders: rn77AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -2082,7 +2123,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET,POST",
-										allowedHeaders: rn83AllowedHeaders,
+										allowedHeaders: rn85AllowedHeaders,
 										acceptPost:     "application/json",
 										acceptPatch:    "",
 									})
@@ -2129,7 +2170,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,GET,PUT",
-											allowedHeaders: rn85AllowedHeaders,
+											allowedHeaders: rn87AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -2791,84 +2832,70 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									}
 								}
 
-							case 'u': // Prefix: "utomations"
+							case 'u': // Prefix: "u"
 
-								if l := len("utomations"); len(elem) >= l && elem[0:l] == "utomations" {
+								if l := len("u"); len(elem) >= l && elem[0:l] == "u" {
 									elem = elem[l:]
 								} else {
 									break
 								}
 
 								if len(elem) == 0 {
-									switch method {
-									case "GET":
-										r.name = SiteAutomationsListOperation
-										r.summary = ""
-										r.operationID = "SiteAutomations_list"
-										r.operationGroup = ""
-										r.pathPattern = "/workspaces/{slug}/automations"
-										r.args = args
-										r.count = 1
-										return r, true
-									case "POST":
-										r.name = SiteAutomationsCreateOperation
-										r.summary = ""
-										r.operationID = "SiteAutomations_create"
-										r.operationGroup = ""
-										r.pathPattern = "/workspaces/{slug}/automations"
-										r.args = args
-										r.count = 1
-										return r, true
-									default:
-										return
-									}
+									break
 								}
 								switch elem[0] {
-								case '/': // Prefix: "/"
+								case 'd': // Prefix: "dit-entries"
 
-									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									if l := len("dit-entries"); len(elem) >= l && elem[0:l] == "dit-entries" {
 										elem = elem[l:]
 									} else {
 										break
 									}
 
-									// Param: "id"
-									// Match until "/"
-									idx := strings.IndexByte(elem, '/')
-									if idx < 0 {
-										idx = len(elem)
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "GET":
+											r.name = SiteAuditListOperation
+											r.summary = ""
+											r.operationID = "SiteAudit_list"
+											r.operationGroup = ""
+											r.pathPattern = "/workspaces/{slug}/audit-entries"
+											r.args = args
+											r.count = 1
+											return r, true
+										default:
+											return
+										}
 									}
-									args[1] = elem[:idx]
-									elem = elem[idx:]
+
+								case 't': // Prefix: "tomations"
+
+									if l := len("tomations"); len(elem) >= l && elem[0:l] == "tomations" {
+										elem = elem[l:]
+									} else {
+										break
+									}
 
 									if len(elem) == 0 {
 										switch method {
-										case "DELETE":
-											r.name = SiteAutomationsDeleteOperation
-											r.summary = ""
-											r.operationID = "SiteAutomations_delete"
-											r.operationGroup = ""
-											r.pathPattern = "/workspaces/{slug}/automations/{id}"
-											r.args = args
-											r.count = 2
-											return r, true
 										case "GET":
-											r.name = SiteAutomationsGetOperation
+											r.name = SiteAutomationsListOperation
 											r.summary = ""
-											r.operationID = "SiteAutomations_get"
+											r.operationID = "SiteAutomations_list"
 											r.operationGroup = ""
-											r.pathPattern = "/workspaces/{slug}/automations/{id}"
+											r.pathPattern = "/workspaces/{slug}/automations"
 											r.args = args
-											r.count = 2
+											r.count = 1
 											return r, true
-										case "PUT":
-											r.name = SiteAutomationsUpdateOperation
+										case "POST":
+											r.name = SiteAutomationsCreateOperation
 											r.summary = ""
-											r.operationID = "SiteAutomations_update"
+											r.operationID = "SiteAutomations_create"
 											r.operationGroup = ""
-											r.pathPattern = "/workspaces/{slug}/automations/{id}"
+											r.pathPattern = "/workspaces/{slug}/automations"
 											r.args = args
-											r.count = 2
+											r.count = 1
 											return r, true
 										default:
 											return
@@ -2883,58 +2910,111 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											break
 										}
 
+										// Param: "id"
+										// Match until "/"
+										idx := strings.IndexByte(elem, '/')
+										if idx < 0 {
+											idx = len(elem)
+										}
+										args[1] = elem[:idx]
+										elem = elem[idx:]
+
 										if len(elem) == 0 {
-											break
+											switch method {
+											case "DELETE":
+												r.name = SiteAutomationsDeleteOperation
+												r.summary = ""
+												r.operationID = "SiteAutomations_delete"
+												r.operationGroup = ""
+												r.pathPattern = "/workspaces/{slug}/automations/{id}"
+												r.args = args
+												r.count = 2
+												return r, true
+											case "GET":
+												r.name = SiteAutomationsGetOperation
+												r.summary = ""
+												r.operationID = "SiteAutomations_get"
+												r.operationGroup = ""
+												r.pathPattern = "/workspaces/{slug}/automations/{id}"
+												r.args = args
+												r.count = 2
+												return r, true
+											case "PUT":
+												r.name = SiteAutomationsUpdateOperation
+												r.summary = ""
+												r.operationID = "SiteAutomations_update"
+												r.operationGroup = ""
+												r.pathPattern = "/workspaces/{slug}/automations/{id}"
+												r.args = args
+												r.count = 2
+												return r, true
+											default:
+												return
+											}
 										}
 										switch elem[0] {
-										case 'a': // Prefix: "activate"
+										case '/': // Prefix: "/"
 
-											if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+											if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 												elem = elem[l:]
 											} else {
 												break
 											}
 
 											if len(elem) == 0 {
-												// Leaf node.
-												switch method {
-												case "POST":
-													r.name = SiteAutomationsActivateOperation
-													r.summary = ""
-													r.operationID = "SiteAutomations_activate"
-													r.operationGroup = ""
-													r.pathPattern = "/workspaces/{slug}/automations/{id}/activate"
-													r.args = args
-													r.count = 2
-													return r, true
-												default:
-													return
-												}
-											}
-
-										case 'd': // Prefix: "deactivate"
-
-											if l := len("deactivate"); len(elem) >= l && elem[0:l] == "deactivate" {
-												elem = elem[l:]
-											} else {
 												break
 											}
+											switch elem[0] {
+											case 'a': // Prefix: "activate"
 
-											if len(elem) == 0 {
-												// Leaf node.
-												switch method {
-												case "POST":
-													r.name = SiteAutomationsDeactivateOperation
-													r.summary = ""
-													r.operationID = "SiteAutomations_deactivate"
-													r.operationGroup = ""
-													r.pathPattern = "/workspaces/{slug}/automations/{id}/deactivate"
-													r.args = args
-													r.count = 2
-													return r, true
-												default:
-													return
+												if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+													elem = elem[l:]
+												} else {
+													break
 												}
+
+												if len(elem) == 0 {
+													// Leaf node.
+													switch method {
+													case "POST":
+														r.name = SiteAutomationsActivateOperation
+														r.summary = ""
+														r.operationID = "SiteAutomations_activate"
+														r.operationGroup = ""
+														r.pathPattern = "/workspaces/{slug}/automations/{id}/activate"
+														r.args = args
+														r.count = 2
+														return r, true
+													default:
+														return
+													}
+												}
+
+											case 'd': // Prefix: "deactivate"
+
+												if l := len("deactivate"); len(elem) >= l && elem[0:l] == "deactivate" {
+													elem = elem[l:]
+												} else {
+													break
+												}
+
+												if len(elem) == 0 {
+													// Leaf node.
+													switch method {
+													case "POST":
+														r.name = SiteAutomationsDeactivateOperation
+														r.summary = ""
+														r.operationID = "SiteAutomations_deactivate"
+														r.operationGroup = ""
+														r.pathPattern = "/workspaces/{slug}/automations/{id}/deactivate"
+														r.args = args
+														r.count = 2
+														return r, true
+													default:
+														return
+													}
+												}
+
 											}
 
 										}

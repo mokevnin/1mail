@@ -28,6 +28,7 @@ import "./resources/analytics.tsp";
 import "./resources/suppressions.tsp";
 import "./resources/transactional-emails.tsp";
 import "./resources/oauth.tsp";
+import "./resources/audit.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

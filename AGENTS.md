@@ -139,7 +139,8 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   so it works on the bus's raw transaction client and scopes from the token's Workspace),
   `internal/oauthserver`, `internal/service` (suspension, slug resolution), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
-  (tracking by recipient id, provider hooks, composition) and the composition roots
+  (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
+  subscriber: its envelope carries only a Workspace id, ADR 0022) and the composition roots
   (`internal/app`, `internal/db`, `internal/testhelper`). Needing raw access anywhere else
   means a new small package in this list, not a field on `Handlers`.
   `internal/eligibility` holds no raw client: it takes a `*ent.Scoped` and passes
@@ -151,6 +152,17 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
 - **Lint:** `forbidigo` (`.golangci.yml`) bans entity-level `entity.Update()` repo-wide,
   because a loaded entity still carries the raw client. Update by id instead:
   `s.Tag().UpdateOneID(id)`. There are no exclusions.
+- **Enterprise Edition (`ee/`)**: same binary, gated by the runtime license key (`LICENSE_KEY`,
+  verified by `ee/licensekey`; empty = plain core, a bad key fails boot). `ee.New` builds the
+  `Edition` (extra bus consumers + read seams) in `internal/app` and in `testhelper.Setup`
+  (`WithoutLicense()` for the unlicensed case); core reaches EE only through interfaces
+  (`site.AuditLog`, `events.Consumer`). The audit table's ent schema sits in `ent/schema`
+  (ent has one schema package) but is written and read only by `ee/audit`. An Audit entry is
+  an unprojected event (`events.Unprojected`): persist, automations and webhooks skip it.
+  Publish through `events.RecordAudit` inside the mutation's transaction. In tests the router
+  does not run, so call `env.DeliverToEE(t)` to hand the outbox to the EE subscribers.
+  Note `ee/licensekey`, not `ee/license`: the path is case-insensitive on macOS and would
+  collide with `ee/LICENSE`.
 - **Async**: `internal/pubsub` (watermill over Postgres) — handlers registered in
   `pubsub.RegisterHandlers`, router run in a goroutine from `cmd/server/main.go`.
   `internal/jobs` uses river (Postgres-backed queue). Email via `internal/messaging`

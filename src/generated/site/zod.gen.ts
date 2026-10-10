@@ -102,6 +102,34 @@ export const zSiteApplyTagInput = z.object({
 });
 
 /**
+ * Who performed an audited change
+ */
+export const zSiteAuditActorKind = z.enum([
+  'user',
+  'api_token',
+  'operator',
+  'system'
+]);
+
+/**
+ * The actor of an Audit entry
+ */
+export const zSiteAuditActor = z.object({
+  kind: zSiteAuditActorKind,
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * What an audited change was done to
+ */
+export const zSiteAuditTarget = z.object({
+  type: z.string(),
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
  * Automation lifecycle status
  */
 export const zSiteAutomationStatus = z.enum(['draft', 'active']);
@@ -636,6 +664,29 @@ export const zSiteApiTokenResource = z.object({
   lastUsedAt: z.exactOptional(zTimestamp.nullable()),
   expiresAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp
+});
+
+/**
+ * One immutable Audit entry (Enterprise)
+ */
+export const zSiteAuditEntryResource = z.object({
+  id: zEntityId,
+  occurredAt: zTimestamp,
+  actor: zSiteAuditActor,
+  action: z.string(),
+  target: zSiteAuditTarget,
+  diff: z.exactOptional(z.record(z.string(), z.unknown()).nullable()),
+  requestId: z.exactOptional(z.string().nullable()),
+  ip: z.exactOptional(z.string().nullable()),
+  userAgent: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * A page of Audit entries, newest first
+ */
+export const zSiteAuditEntryList = z.object({
+  items: z.array(zSiteAuditEntryResource),
+  nextCursor: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -1231,6 +1282,20 @@ export const zSiteAnalyticsOverviewQuery = z.object({
  * The request has succeeded.
  */
 export const zSiteAnalyticsOverviewResponse = zSiteAnalyticsOverview;
+
+export const zSiteAuditListPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteAuditListQuery = z.object({
+  cursor: z.exactOptional(z.string()),
+  limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditListResponse = zSiteAuditEntryList;
 
 export const zSiteAutomationsListPath = z.object({
   slug: z.string()

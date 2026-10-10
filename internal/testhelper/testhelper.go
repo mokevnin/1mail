@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"crypto/ed25519"
 	"database/sql"
 	"fmt"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+	"time"
 
 	"net/http/httptest"
 
@@ -18,6 +20,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ee"
+	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
@@ -130,6 +134,8 @@ type TestEnv struct {
 	// unsubscribe and confirmation tokens with it, never with a second one.
 	Tracker *tracking.Tracker
 
+	edition *ee.Edition // the EE parts, built like the composition root builds them
+
 	jwtSecret string // for tokens a test needs in a state the Tracker never mints
 
 	// Captured sends from the inline jobs adapter, for assertions.
@@ -137,8 +143,35 @@ type TestEnv struct {
 	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
 }
 
-func Setup(t *testing.T) *TestEnv {
+// Option tunes Setup.
+type Option func(*setupConfig)
+
+type setupConfig struct{ unlicensed bool }
+
+// WithoutLicense builds the instance with no EE license key, like a plain core
+// self-host. Setup's default is an instance licensed for every EE feature.
+func WithoutLicense() Option { return func(c *setupConfig) { c.unlicensed = true } }
+
+// testLicense mints, once per process, an EE license key signed by a throwaway key
+// pair and verified through the same Parse the production composition root uses.
+var testLicense = sync.OnceValues(func() (*licensekey.License, error) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		return nil, err
+	}
+	key, err := licensekey.Issue(priv, nil, licensekey.FeatureAudit)
+	if err != nil {
+		return nil, err
+	}
+	return licensekey.Parse(key, pub, time.Now())
+})
+
+func Setup(t *testing.T, opts ...Option) *TestEnv {
 	t.Helper()
+	var sc setupConfig
+	for _, o := range opts {
+		o(&sc)
+	}
 	initBaseline()
 	require.NoError(t, loadErr, "init test baseline")
 
@@ -186,6 +219,13 @@ func Setup(t *testing.T) *TestEnv {
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
+	lic, err := licensekey.Parse("", licensekey.ProductionKey, time.Now())
+	require.NoError(t, err, "parse empty license")
+	if !sc.unlicensed {
+		lic, err = testLicense()
+		require.NoError(t, err, "mint test license")
+	}
+	edition := ee.New(client, lic)
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
@@ -200,12 +240,12 @@ func Setup(t *testing.T) *TestEnv {
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
-		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret, edition: edition,
 		SystemMail: systemMail, CustomerMail: customerMail,
 	}
 }

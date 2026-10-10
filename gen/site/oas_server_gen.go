@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// GET /workspaces/{slug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
+	// SiteAuditList implements SiteAudit_list operation.
+	//
+	// List the workspace's Audit log, newest first (Enterprise; owner and admin only).
+	//
+	// GET /workspaces/{slug}/audit-entries
+	SiteAuditList(ctx context.Context, params SiteAuditListParams) (SiteAuditListRes, error)
 	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 	//
 	// Confirm an email change from the token sent to the new address. Public: the link is opened from the

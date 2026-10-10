@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -484,6 +485,21 @@ func (_c *WorkspaceCreate) AddInvitations(v ...*Invitation) *WorkspaceCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddInvitationIDs(ids...)
+}
+
+// AddAuditEntryIDs adds the "audit_entries" edge to the AuditEntry entity by IDs.
+func (_c *WorkspaceCreate) AddAuditEntryIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddAuditEntryIDs(ids...)
+	return _c
+}
+
+// AddAuditEntries adds the "audit_entries" edges to the AuditEntry entity.
+func (_c *WorkspaceCreate) AddAuditEntries(v ...*AuditEntry) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAuditEntryIDs(ids...)
 }
 
 // Mutation returns the WorkspaceMutation object of the builder.
@@ -988,6 +1004,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AuditEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

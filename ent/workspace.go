@@ -89,9 +89,11 @@ type WorkspaceEdges struct {
 	Memberships []*Membership `json:"memberships,omitempty"`
 	// Invitations holds the value of the invitations edge.
 	Invitations []*Invitation `json:"invitations,omitempty"`
+	// AuditEntries holds the value of the audit_entries edge.
+	AuditEntries []*AuditEntry `json:"audit_entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [21]bool
+	loadedTypes [22]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -281,6 +283,15 @@ func (e WorkspaceEdges) InvitationsOrErr() ([]*Invitation, error) {
 		return e.Invitations, nil
 	}
 	return nil, &NotLoadedError{edge: "invitations"}
+}
+
+// AuditEntriesOrErr returns the AuditEntries value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) AuditEntriesOrErr() ([]*AuditEntry, error) {
+	if e.loadedTypes[21] {
+		return e.AuditEntries, nil
+	}
+	return nil, &NotLoadedError{edge: "audit_entries"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -502,6 +513,11 @@ func (_m *Workspace) QueryMemberships() *MembershipQuery {
 // QueryInvitations queries the "invitations" edge of the Workspace entity.
 func (_m *Workspace) QueryInvitations() *InvitationQuery {
 	return NewWorkspaceClient(_m.config).QueryInvitations(_m)
+}
+
+// QueryAuditEntries queries the "audit_entries" edge of the Workspace entity.
+func (_m *Workspace) QueryAuditEntries() *AuditEntryQuery {
+	return NewWorkspaceClient(_m.config).QueryAuditEntries(_m)
 }
 
 // Update returns a builder for updating this Workspace.
