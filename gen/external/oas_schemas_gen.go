@@ -4857,13 +4857,15 @@ func (s *SendLimitValue) SetSource(val NilSendLimitSource) {
 type SendLimitWarning string
 
 const (
-	SendLimitWarningUnlimited SendLimitWarning = "unlimited"
+	SendLimitWarningUnlimited                SendLimitWarning = "unlimited"
+	SendLimitWarningProviderQuotaUnavailable SendLimitWarning = "providerQuotaUnavailable"
 )
 
 // AllValues returns all SendLimitWarning values.
 func (SendLimitWarning) AllValues() []SendLimitWarning {
 	return []SendLimitWarning{
 		SendLimitWarningUnlimited,
+		SendLimitWarningProviderQuotaUnavailable,
 	}
 }
 
@@ -4871,6 +4873,8 @@ func (SendLimitWarning) AllValues() []SendLimitWarning {
 func (s SendLimitWarning) MarshalText() ([]byte, error) {
 	switch s {
 	case SendLimitWarningUnlimited:
+		return []byte(s), nil
+	case SendLimitWarningProviderQuotaUnavailable:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4882,6 +4886,9 @@ func (s *SendLimitWarning) UnmarshalText(data []byte) error {
 	switch SendLimitWarning(data) {
 	case SendLimitWarningUnlimited:
 		*s = SendLimitWarningUnlimited
+		return nil
+	case SendLimitWarningProviderQuotaUnavailable:
+		*s = SendLimitWarningProviderQuotaUnavailable
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

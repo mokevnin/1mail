@@ -409,7 +409,7 @@ export const zSiteSendLimitValue = z.object({
 /**
  * A reason to look at an Integration's Send rate limit
  */
-export const zSiteSendLimitWarning = z.enum(['unlimited']);
+export const zSiteSendLimitWarning = z.enum(['unlimited', 'providerQuotaUnavailable']);
 
 /**
  * The Send rate limit as enforced, with the last 24 hours of usage

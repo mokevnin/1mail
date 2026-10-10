@@ -139,6 +139,9 @@ export function IntegrationsSection({ slug }: { slug: string }) {
   const isSes = form.values.provider === 'ses'
   const records = integrationsQuery.data ?? []
   const unlimited = records.filter((record) => record.sendLimit.warnings.includes('unlimited'))
+  const quotaUnavailable = records.filter((record) =>
+    record.sendLimit.warnings.includes('providerQuotaUnavailable'),
+  )
 
   return (
     <Card withBorder>
@@ -283,6 +286,20 @@ export function IntegrationsSection({ slug }: { slug: string }) {
           mb="sm"
         >
           {t(($) => $.settings.integrations.limits.unlimitedWarning)}
+        </Alert>
+      ))}
+
+      {quotaUnavailable.map((record) => (
+        <Alert
+          key={record.id}
+          color="yellow"
+          variant="light"
+          title={t(($) => $.settings.integrations.limits.quotaUnavailableTitle, {
+            name: record.name,
+          })}
+          mb="sm"
+        >
+          {t(($) => $.settings.integrations.limits.quotaUnavailableWarning)}
         </Alert>
       ))}
 

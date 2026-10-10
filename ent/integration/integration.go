@@ -37,6 +37,14 @@ const (
 	FieldMaxPerSecond = "max_per_second"
 	// FieldMaxPerDay holds the string denoting the max_per_day field in the database.
 	FieldMaxPerDay = "max_per_day"
+	// FieldProviderMaxPerSecond holds the string denoting the provider_max_per_second field in the database.
+	FieldProviderMaxPerSecond = "provider_max_per_second"
+	// FieldProviderMaxPerDay holds the string denoting the provider_max_per_day field in the database.
+	FieldProviderMaxPerDay = "provider_max_per_day"
+	// FieldProviderQuotaCheckedAt holds the string denoting the provider_quota_checked_at field in the database.
+	FieldProviderQuotaCheckedAt = "provider_quota_checked_at"
+	// FieldProviderQuotaUnavailable holds the string denoting the provider_quota_unavailable field in the database.
+	FieldProviderQuotaUnavailable = "provider_quota_unavailable"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// EdgeSendLimiter holds the string denoting the send_limiter edge name in mutations.
@@ -73,6 +81,10 @@ var Columns = []string{
 	FieldIsDefault,
 	FieldMaxPerSecond,
 	FieldMaxPerDay,
+	FieldProviderMaxPerSecond,
+	FieldProviderMaxPerDay,
+	FieldProviderQuotaCheckedAt,
+	FieldProviderQuotaUnavailable,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -102,6 +114,8 @@ var (
 	MaxPerSecondValidator func(int) error
 	// MaxPerDayValidator is a validator for the "max_per_day" field. It is called by the builders before save.
 	MaxPerDayValidator func(int) error
+	// DefaultProviderQuotaUnavailable holds the default value on creation for the "provider_quota_unavailable" field.
+	DefaultProviderQuotaUnavailable bool
 )
 
 // Channel defines the type for the "channel" enum field.
@@ -214,6 +228,26 @@ func ByMaxPerSecond(opts ...sql.OrderTermOption) OrderOption {
 // ByMaxPerDay orders the results by the max_per_day field.
 func ByMaxPerDay(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMaxPerDay, opts...).ToFunc()
+}
+
+// ByProviderMaxPerSecond orders the results by the provider_max_per_second field.
+func ByProviderMaxPerSecond(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderMaxPerSecond, opts...).ToFunc()
+}
+
+// ByProviderMaxPerDay orders the results by the provider_max_per_day field.
+func ByProviderMaxPerDay(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderMaxPerDay, opts...).ToFunc()
+}
+
+// ByProviderQuotaCheckedAt orders the results by the provider_quota_checked_at field.
+func ByProviderQuotaCheckedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderQuotaCheckedAt, opts...).ToFunc()
+}
+
+// ByProviderQuotaUnavailable orders the results by the provider_quota_unavailable field.
+func ByProviderQuotaUnavailable(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderQuotaUnavailable, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

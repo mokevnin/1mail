@@ -464,7 +464,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL)
 		if err != nil {
 			return nil, err
 		}
@@ -757,7 +761,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	return apisite.Deps{
 		Accounts: acc, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
-		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
+		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, QuotaRefresh: jc.Client,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,
 	}, nil
 }

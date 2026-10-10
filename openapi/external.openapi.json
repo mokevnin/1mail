@@ -5145,7 +5145,7 @@
       },
       "SendLimitWarning": {
         "type": "string",
-        "enum": ["unlimited"],
+        "enum": ["unlimited", "providerQuotaUnavailable"],
         "description": "A reason to look at an Integration's Send rate limit"
       },
       "SendTransactionalEmailInput": {

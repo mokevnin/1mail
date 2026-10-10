@@ -8551,6 +8551,54 @@ func (x *IntegrationScopedCreate) SetNillableMaxPerDay(v *int) *IntegrationScope
 	return x
 }
 
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (x *IntegrationScopedCreate) SetProviderMaxPerSecond(v int) *IntegrationScopedCreate {
+	x.b.SetProviderMaxPerSecond(v)
+	return x
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableProviderMaxPerSecond(v *int) *IntegrationScopedCreate {
+	x.b.SetNillableProviderMaxPerSecond(v)
+	return x
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (x *IntegrationScopedCreate) SetProviderMaxPerDay(v int) *IntegrationScopedCreate {
+	x.b.SetProviderMaxPerDay(v)
+	return x
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableProviderMaxPerDay(v *int) *IntegrationScopedCreate {
+	x.b.SetNillableProviderMaxPerDay(v)
+	return x
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (x *IntegrationScopedCreate) SetProviderQuotaCheckedAt(v time.Time) *IntegrationScopedCreate {
+	x.b.SetProviderQuotaCheckedAt(v)
+	return x
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationScopedCreate {
+	x.b.SetNillableProviderQuotaCheckedAt(v)
+	return x
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (x *IntegrationScopedCreate) SetProviderQuotaUnavailable(v bool) *IntegrationScopedCreate {
+	x.b.SetProviderQuotaUnavailable(v)
+	return x
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationScopedCreate {
+	x.b.SetNillableProviderQuotaUnavailable(v)
+	return x
+}
+
 // SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
 func (x *IntegrationScopedCreate) SetSendLimiterID(id int64) *IntegrationScopedCreate {
 	x.b.SetSendLimiterID(id)
@@ -8769,6 +8817,84 @@ func (u *IntegrationScopedUpsert) UpdateMaxPerDay() *IntegrationScopedUpsert {
 // ClearMaxPerDay clears the value of the "max_per_day" field.
 func (u *IntegrationScopedUpsert) ClearMaxPerDay() *IntegrationScopedUpsert {
 	u.u.SetNull(integration.FieldMaxPerDay)
+	return u
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (u *IntegrationScopedUpsert) SetProviderMaxPerSecond(v int) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldProviderMaxPerSecond, v)
+	return u
+}
+
+// AddProviderMaxPerSecond adds v to the "provider_max_per_second" field.
+func (u *IntegrationScopedUpsert) AddProviderMaxPerSecond(v int) *IntegrationScopedUpsert {
+	u.u.Add(integration.FieldProviderMaxPerSecond, v)
+	return u
+}
+
+// UpdateProviderMaxPerSecond sets the "provider_max_per_second" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateProviderMaxPerSecond() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldProviderMaxPerSecond)
+	return u
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (u *IntegrationScopedUpsert) ClearProviderMaxPerSecond() *IntegrationScopedUpsert {
+	u.u.SetNull(integration.FieldProviderMaxPerSecond)
+	return u
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (u *IntegrationScopedUpsert) SetProviderMaxPerDay(v int) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldProviderMaxPerDay, v)
+	return u
+}
+
+// AddProviderMaxPerDay adds v to the "provider_max_per_day" field.
+func (u *IntegrationScopedUpsert) AddProviderMaxPerDay(v int) *IntegrationScopedUpsert {
+	u.u.Add(integration.FieldProviderMaxPerDay, v)
+	return u
+}
+
+// UpdateProviderMaxPerDay sets the "provider_max_per_day" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateProviderMaxPerDay() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldProviderMaxPerDay)
+	return u
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (u *IntegrationScopedUpsert) ClearProviderMaxPerDay() *IntegrationScopedUpsert {
+	u.u.SetNull(integration.FieldProviderMaxPerDay)
+	return u
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (u *IntegrationScopedUpsert) SetProviderQuotaCheckedAt(v time.Time) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldProviderQuotaCheckedAt, v)
+	return u
+}
+
+// UpdateProviderQuotaCheckedAt sets the "provider_quota_checked_at" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateProviderQuotaCheckedAt() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldProviderQuotaCheckedAt)
+	return u
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (u *IntegrationScopedUpsert) ClearProviderQuotaCheckedAt() *IntegrationScopedUpsert {
+	u.u.SetNull(integration.FieldProviderQuotaCheckedAt)
+	return u
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (u *IntegrationScopedUpsert) SetProviderQuotaUnavailable(v bool) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldProviderQuotaUnavailable, v)
+	return u
+}
+
+// UpdateProviderQuotaUnavailable sets the "provider_quota_unavailable" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateProviderQuotaUnavailable() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldProviderQuotaUnavailable)
 	return u
 }
 
@@ -9030,6 +9156,84 @@ func (x *IntegrationScopedUpdateOne) ClearMaxPerDay() *IntegrationScopedUpdateOn
 	return x
 }
 
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdateOne) SetProviderMaxPerSecond(v int) *IntegrationScopedUpdateOne {
+	x.b.SetProviderMaxPerSecond(v)
+	return x
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableProviderMaxPerSecond(v *int) *IntegrationScopedUpdateOne {
+	x.b.SetNillableProviderMaxPerSecond(v)
+	return x
+}
+
+// AddProviderMaxPerSecond adds value to the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdateOne) AddProviderMaxPerSecond(v int) *IntegrationScopedUpdateOne {
+	x.b.AddProviderMaxPerSecond(v)
+	return x
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdateOne) ClearProviderMaxPerSecond() *IntegrationScopedUpdateOne {
+	x.b.ClearProviderMaxPerSecond()
+	return x
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdateOne) SetProviderMaxPerDay(v int) *IntegrationScopedUpdateOne {
+	x.b.SetProviderMaxPerDay(v)
+	return x
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableProviderMaxPerDay(v *int) *IntegrationScopedUpdateOne {
+	x.b.SetNillableProviderMaxPerDay(v)
+	return x
+}
+
+// AddProviderMaxPerDay adds value to the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdateOne) AddProviderMaxPerDay(v int) *IntegrationScopedUpdateOne {
+	x.b.AddProviderMaxPerDay(v)
+	return x
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdateOne) ClearProviderMaxPerDay() *IntegrationScopedUpdateOne {
+	x.b.ClearProviderMaxPerDay()
+	return x
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (x *IntegrationScopedUpdateOne) SetProviderQuotaCheckedAt(v time.Time) *IntegrationScopedUpdateOne {
+	x.b.SetProviderQuotaCheckedAt(v)
+	return x
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationScopedUpdateOne {
+	x.b.SetNillableProviderQuotaCheckedAt(v)
+	return x
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (x *IntegrationScopedUpdateOne) ClearProviderQuotaCheckedAt() *IntegrationScopedUpdateOne {
+	x.b.ClearProviderQuotaCheckedAt()
+	return x
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (x *IntegrationScopedUpdateOne) SetProviderQuotaUnavailable(v bool) *IntegrationScopedUpdateOne {
+	x.b.SetProviderQuotaUnavailable(v)
+	return x
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationScopedUpdateOne {
+	x.b.SetNillableProviderQuotaUnavailable(v)
+	return x
+}
+
 // SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
 func (x *IntegrationScopedUpdateOne) SetSendLimiterID(id int64) *IntegrationScopedUpdateOne {
 	x.b.SetSendLimiterID(id)
@@ -9225,6 +9429,84 @@ func (x *IntegrationScopedUpdate) AddMaxPerDay(v int) *IntegrationScopedUpdate {
 // ClearMaxPerDay clears the value of the "max_per_day" field.
 func (x *IntegrationScopedUpdate) ClearMaxPerDay() *IntegrationScopedUpdate {
 	x.b.ClearMaxPerDay()
+	return x
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdate) SetProviderMaxPerSecond(v int) *IntegrationScopedUpdate {
+	x.b.SetProviderMaxPerSecond(v)
+	return x
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableProviderMaxPerSecond(v *int) *IntegrationScopedUpdate {
+	x.b.SetNillableProviderMaxPerSecond(v)
+	return x
+}
+
+// AddProviderMaxPerSecond adds value to the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdate) AddProviderMaxPerSecond(v int) *IntegrationScopedUpdate {
+	x.b.AddProviderMaxPerSecond(v)
+	return x
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (x *IntegrationScopedUpdate) ClearProviderMaxPerSecond() *IntegrationScopedUpdate {
+	x.b.ClearProviderMaxPerSecond()
+	return x
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdate) SetProviderMaxPerDay(v int) *IntegrationScopedUpdate {
+	x.b.SetProviderMaxPerDay(v)
+	return x
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableProviderMaxPerDay(v *int) *IntegrationScopedUpdate {
+	x.b.SetNillableProviderMaxPerDay(v)
+	return x
+}
+
+// AddProviderMaxPerDay adds value to the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdate) AddProviderMaxPerDay(v int) *IntegrationScopedUpdate {
+	x.b.AddProviderMaxPerDay(v)
+	return x
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (x *IntegrationScopedUpdate) ClearProviderMaxPerDay() *IntegrationScopedUpdate {
+	x.b.ClearProviderMaxPerDay()
+	return x
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (x *IntegrationScopedUpdate) SetProviderQuotaCheckedAt(v time.Time) *IntegrationScopedUpdate {
+	x.b.SetProviderQuotaCheckedAt(v)
+	return x
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationScopedUpdate {
+	x.b.SetNillableProviderQuotaCheckedAt(v)
+	return x
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (x *IntegrationScopedUpdate) ClearProviderQuotaCheckedAt() *IntegrationScopedUpdate {
+	x.b.ClearProviderQuotaCheckedAt()
+	return x
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (x *IntegrationScopedUpdate) SetProviderQuotaUnavailable(v bool) *IntegrationScopedUpdate {
+	x.b.SetProviderQuotaUnavailable(v)
+	return x
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationScopedUpdate {
+	x.b.SetNillableProviderQuotaUnavailable(v)
 	return x
 }
 

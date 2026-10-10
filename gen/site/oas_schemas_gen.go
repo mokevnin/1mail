@@ -4999,7 +4999,7 @@ type SiteIntegrationResource struct {
 	MaxPerSecond NilInt32 `json:"maxPerSecond"`
 	// Send rate limit: most messages per rolling 24 hours; null means no daily limit.
 	MaxPerDay NilInt32 `json:"maxPerDay"`
-	// The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage.
+	// The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage.
 	SendLimit SiteSendLimitStatus `json:"sendLimit"`
 	// Provider config (secrets redacted).
 	Config SiteIntegrationConfig `json:"config"`
@@ -6270,13 +6270,15 @@ func (s *SiteSendLimitValue) SetSource(val NilSiteSendLimitSource) {
 type SiteSendLimitWarning string
 
 const (
-	SiteSendLimitWarningUnlimited SiteSendLimitWarning = "unlimited"
+	SiteSendLimitWarningUnlimited                SiteSendLimitWarning = "unlimited"
+	SiteSendLimitWarningProviderQuotaUnavailable SiteSendLimitWarning = "providerQuotaUnavailable"
 )
 
 // AllValues returns all SiteSendLimitWarning values.
 func (SiteSendLimitWarning) AllValues() []SiteSendLimitWarning {
 	return []SiteSendLimitWarning{
 		SiteSendLimitWarningUnlimited,
+		SiteSendLimitWarningProviderQuotaUnavailable,
 	}
 }
 
@@ -6284,6 +6286,8 @@ func (SiteSendLimitWarning) AllValues() []SiteSendLimitWarning {
 func (s SiteSendLimitWarning) MarshalText() ([]byte, error) {
 	switch s {
 	case SiteSendLimitWarningUnlimited:
+		return []byte(s), nil
+	case SiteSendLimitWarningProviderQuotaUnavailable:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -6295,6 +6299,9 @@ func (s *SiteSendLimitWarning) UnmarshalText(data []byte) error {
 	switch SiteSendLimitWarning(data) {
 	case SiteSendLimitWarningUnlimited:
 		*s = SiteSendLimitWarningUnlimited
+		return nil
+	case SiteSendLimitWarningProviderQuotaUnavailable:
+		*s = SiteSendLimitWarningProviderQuotaUnavailable
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

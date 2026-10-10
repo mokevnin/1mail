@@ -34,7 +34,6 @@ import (
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/reputation"
@@ -135,6 +134,9 @@ type TestEnv struct {
 	// Captured sends from the inline jobs adapter, for assertions.
 	SystemMail   *CapturingSender // platform mail (welcome, …)
 	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
+
+	// SES scripts the send quota every "ses" Integration reports.
+	SES *FakeSES
 }
 
 func Setup(t *testing.T) *TestEnv {
@@ -167,12 +169,14 @@ func Setup(t *testing.T) *TestEnv {
 	}
 	tracker := tracking.New(baseCfg.JWTSecret, baseCfg.AppURL)
 	sender := outbound.New(bus, resolver, tracker)
-	inline := jobs.NewInline(client, sender, systemMail, stubTXT, baseCfg.AppURL)
 	// Cipher (over the fixture-sealing key) and provider catalog for the site
-	// handlers — mirrors the app's DI singletons.
+	// handlers and the inline jobs — mirrors the app's DI singletons, except that
+	// SES's quota lookup is answered by a fake instead of the AWS API.
 	cipher, err := secrets.NewCipher(baseCfg.EncryptionKey)
 	require.NoError(t, err, "build cipher")
-	catalog := registry.Default()
+	fakeSES := &FakeSES{}
+	catalog := catalogWith(fakeSES)
+	inline := jobs.NewInline(client, sender, systemMail, stubTXT, cipher, catalog, baseCfg.AppURL)
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
@@ -199,14 +203,14 @@ func Setup(t *testing.T) *TestEnv {
 		Accounts: acc, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
-		Welcome: inline, SysMail: inline, DomainVerify: inline,
+		Welcome: inline, SysMail: inline, DomainVerify: inline, QuotaRefresh: inline,
 		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
 		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret,
-		SystemMail: systemMail, CustomerMail: customerMail,
+		SystemMail: systemMail, CustomerMail: customerMail, SES: fakeSES,
 	}
 }
 

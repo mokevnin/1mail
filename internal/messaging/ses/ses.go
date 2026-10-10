@@ -121,6 +121,33 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) (messagin
 	return messaging.Receipt{MessageID: aws.ToString(out.MessageId)}, nil
 }
 
+// SendQuota reads the account's send quota (GetSendQuota): MaxSendRate messages per
+// second and Max24HourSend per rolling 24 hours. The API reports whole numbers as
+// floats; a rate below one rounds up to one message per second, and a non-positive
+// value (SES reports -1 for an unbounded account) is no ceiling.
+func (s *sender) SendQuota(ctx context.Context) (messaging.Quota, error) {
+	client, err := s.client(ctx)
+	if err != nil {
+		return messaging.Quota{}, err
+	}
+	out, err := client.GetSendQuota(ctx, &ses.GetSendQuotaInput{})
+	if err != nil {
+		return messaging.Quota{}, fmt.Errorf("ses: get send quota: %w", err)
+	}
+	return messaging.Quota{
+		PerSecond: quotaValue(out.MaxSendRate),
+		PerDay:    quotaValue(out.Max24HourSend),
+	}, nil
+}
+
+func quotaValue(v float64) *int {
+	if v <= 0 {
+		return nil
+	}
+	n := max(1, int(v))
+	return &n
+}
+
 func (s *sender) client(ctx context.Context) (*ses.Client, error) {
 	creds := credentials.NewStaticCredentialsProvider(s.cfg.AccessKeyID, s.cfg.SecretAccessKey, "")
 	cfg, err := config.LoadDefaultConfig(ctx,

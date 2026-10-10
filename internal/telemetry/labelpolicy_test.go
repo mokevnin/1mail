@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
@@ -141,7 +142,7 @@ func runJob(t *testing.T, env *testhelper.TestEnv, cfg *config.Config, srvAddr, 
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
 	require.NoError(t, err)
 	mod := outbound.New(env.Bus, nil, tracking.New("test-secret", "http://local"))
-	client, err := jobs.NewClient(pool, env.DB, mod, cipher, env.SystemMail, nil, cfg.AppURL)
+	client, err := jobs.NewClient(pool, env.DB, mod, cipher, env.SystemMail, nil, registry.Default(), cfg.AppURL)
 	require.NoError(t, err)
 	admin, err := river.NewClient(riverpgxv5.New(pool), &river.Config{})
 	require.NoError(t, err)

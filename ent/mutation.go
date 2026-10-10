@@ -10424,29 +10424,35 @@ func (m *EventMutation) ResetEdge(name string) error {
 // IntegrationMutation represents an operation that mutates the Integration nodes in the graph.
 type IntegrationMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *int64
-	created_at          *time.Time
-	updated_at          *time.Time
-	name                *string
-	channel             *integration.Channel
-	provider            *integration.Provider
-	config_encrypted    *string
-	enabled             *bool
-	is_default          *bool
-	max_per_second      *int
-	addmax_per_second   *int
-	max_per_day         *int
-	addmax_per_day      *int
-	clearedFields       map[string]struct{}
-	workspace           *int64
-	clearedworkspace    bool
-	send_limiter        *int64
-	clearedsend_limiter bool
-	done                bool
-	oldValue            func(context.Context) (*Integration, error)
-	predicates          []predicate.Integration
+	op                         Op
+	typ                        string
+	id                         *int64
+	created_at                 *time.Time
+	updated_at                 *time.Time
+	name                       *string
+	channel                    *integration.Channel
+	provider                   *integration.Provider
+	config_encrypted           *string
+	enabled                    *bool
+	is_default                 *bool
+	max_per_second             *int
+	addmax_per_second          *int
+	max_per_day                *int
+	addmax_per_day             *int
+	provider_max_per_second    *int
+	addprovider_max_per_second *int
+	provider_max_per_day       *int
+	addprovider_max_per_day    *int
+	provider_quota_checked_at  *time.Time
+	provider_quota_unavailable *bool
+	clearedFields              map[string]struct{}
+	workspace                  *int64
+	clearedworkspace           bool
+	send_limiter               *int64
+	clearedsend_limiter        bool
+	done                       bool
+	oldValue                   func(context.Context) (*Integration, error)
+	predicates                 []predicate.Integration
 }
 
 var _ ent.Mutation = (*IntegrationMutation)(nil)
@@ -11017,6 +11023,231 @@ func (m *IntegrationMutation) ResetMaxPerDay() {
 	delete(m.clearedFields, integration.FieldMaxPerDay)
 }
 
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (m *IntegrationMutation) SetProviderMaxPerSecond(i int) {
+	m.provider_max_per_second = &i
+	m.addprovider_max_per_second = nil
+}
+
+// ProviderMaxPerSecond returns the value of the "provider_max_per_second" field in the mutation.
+func (m *IntegrationMutation) ProviderMaxPerSecond() (r int, exists bool) {
+	v := m.provider_max_per_second
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderMaxPerSecond returns the old "provider_max_per_second" field's value of the Integration entity.
+// If the Integration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IntegrationMutation) OldProviderMaxPerSecond(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderMaxPerSecond is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderMaxPerSecond requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderMaxPerSecond: %w", err)
+	}
+	return oldValue.ProviderMaxPerSecond, nil
+}
+
+// AddProviderMaxPerSecond adds i to the "provider_max_per_second" field.
+func (m *IntegrationMutation) AddProviderMaxPerSecond(i int) {
+	if m.addprovider_max_per_second != nil {
+		*m.addprovider_max_per_second += i
+	} else {
+		m.addprovider_max_per_second = &i
+	}
+}
+
+// AddedProviderMaxPerSecond returns the value that was added to the "provider_max_per_second" field in this mutation.
+func (m *IntegrationMutation) AddedProviderMaxPerSecond() (r int, exists bool) {
+	v := m.addprovider_max_per_second
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (m *IntegrationMutation) ClearProviderMaxPerSecond() {
+	m.provider_max_per_second = nil
+	m.addprovider_max_per_second = nil
+	m.clearedFields[integration.FieldProviderMaxPerSecond] = struct{}{}
+}
+
+// ProviderMaxPerSecondCleared returns if the "provider_max_per_second" field was cleared in this mutation.
+func (m *IntegrationMutation) ProviderMaxPerSecondCleared() bool {
+	_, ok := m.clearedFields[integration.FieldProviderMaxPerSecond]
+	return ok
+}
+
+// ResetProviderMaxPerSecond resets all changes to the "provider_max_per_second" field.
+func (m *IntegrationMutation) ResetProviderMaxPerSecond() {
+	m.provider_max_per_second = nil
+	m.addprovider_max_per_second = nil
+	delete(m.clearedFields, integration.FieldProviderMaxPerSecond)
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (m *IntegrationMutation) SetProviderMaxPerDay(i int) {
+	m.provider_max_per_day = &i
+	m.addprovider_max_per_day = nil
+}
+
+// ProviderMaxPerDay returns the value of the "provider_max_per_day" field in the mutation.
+func (m *IntegrationMutation) ProviderMaxPerDay() (r int, exists bool) {
+	v := m.provider_max_per_day
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderMaxPerDay returns the old "provider_max_per_day" field's value of the Integration entity.
+// If the Integration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IntegrationMutation) OldProviderMaxPerDay(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderMaxPerDay is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderMaxPerDay requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderMaxPerDay: %w", err)
+	}
+	return oldValue.ProviderMaxPerDay, nil
+}
+
+// AddProviderMaxPerDay adds i to the "provider_max_per_day" field.
+func (m *IntegrationMutation) AddProviderMaxPerDay(i int) {
+	if m.addprovider_max_per_day != nil {
+		*m.addprovider_max_per_day += i
+	} else {
+		m.addprovider_max_per_day = &i
+	}
+}
+
+// AddedProviderMaxPerDay returns the value that was added to the "provider_max_per_day" field in this mutation.
+func (m *IntegrationMutation) AddedProviderMaxPerDay() (r int, exists bool) {
+	v := m.addprovider_max_per_day
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (m *IntegrationMutation) ClearProviderMaxPerDay() {
+	m.provider_max_per_day = nil
+	m.addprovider_max_per_day = nil
+	m.clearedFields[integration.FieldProviderMaxPerDay] = struct{}{}
+}
+
+// ProviderMaxPerDayCleared returns if the "provider_max_per_day" field was cleared in this mutation.
+func (m *IntegrationMutation) ProviderMaxPerDayCleared() bool {
+	_, ok := m.clearedFields[integration.FieldProviderMaxPerDay]
+	return ok
+}
+
+// ResetProviderMaxPerDay resets all changes to the "provider_max_per_day" field.
+func (m *IntegrationMutation) ResetProviderMaxPerDay() {
+	m.provider_max_per_day = nil
+	m.addprovider_max_per_day = nil
+	delete(m.clearedFields, integration.FieldProviderMaxPerDay)
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (m *IntegrationMutation) SetProviderQuotaCheckedAt(t time.Time) {
+	m.provider_quota_checked_at = &t
+}
+
+// ProviderQuotaCheckedAt returns the value of the "provider_quota_checked_at" field in the mutation.
+func (m *IntegrationMutation) ProviderQuotaCheckedAt() (r time.Time, exists bool) {
+	v := m.provider_quota_checked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderQuotaCheckedAt returns the old "provider_quota_checked_at" field's value of the Integration entity.
+// If the Integration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IntegrationMutation) OldProviderQuotaCheckedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderQuotaCheckedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderQuotaCheckedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderQuotaCheckedAt: %w", err)
+	}
+	return oldValue.ProviderQuotaCheckedAt, nil
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (m *IntegrationMutation) ClearProviderQuotaCheckedAt() {
+	m.provider_quota_checked_at = nil
+	m.clearedFields[integration.FieldProviderQuotaCheckedAt] = struct{}{}
+}
+
+// ProviderQuotaCheckedAtCleared returns if the "provider_quota_checked_at" field was cleared in this mutation.
+func (m *IntegrationMutation) ProviderQuotaCheckedAtCleared() bool {
+	_, ok := m.clearedFields[integration.FieldProviderQuotaCheckedAt]
+	return ok
+}
+
+// ResetProviderQuotaCheckedAt resets all changes to the "provider_quota_checked_at" field.
+func (m *IntegrationMutation) ResetProviderQuotaCheckedAt() {
+	m.provider_quota_checked_at = nil
+	delete(m.clearedFields, integration.FieldProviderQuotaCheckedAt)
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (m *IntegrationMutation) SetProviderQuotaUnavailable(b bool) {
+	m.provider_quota_unavailable = &b
+}
+
+// ProviderQuotaUnavailable returns the value of the "provider_quota_unavailable" field in the mutation.
+func (m *IntegrationMutation) ProviderQuotaUnavailable() (r bool, exists bool) {
+	v := m.provider_quota_unavailable
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderQuotaUnavailable returns the old "provider_quota_unavailable" field's value of the Integration entity.
+// If the Integration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IntegrationMutation) OldProviderQuotaUnavailable(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderQuotaUnavailable is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderQuotaUnavailable requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderQuotaUnavailable: %w", err)
+	}
+	return oldValue.ProviderQuotaUnavailable, nil
+}
+
+// ResetProviderQuotaUnavailable resets all changes to the "provider_quota_unavailable" field.
+func (m *IntegrationMutation) ResetProviderQuotaUnavailable() {
+	m.provider_quota_unavailable = nil
+}
+
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (m *IntegrationMutation) ClearWorkspace() {
 	m.clearedworkspace = true
@@ -11117,7 +11348,7 @@ func (m *IntegrationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *IntegrationMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 15)
 	if m.created_at != nil {
 		fields = append(fields, integration.FieldCreatedAt)
 	}
@@ -11151,6 +11382,18 @@ func (m *IntegrationMutation) Fields() []string {
 	if m.max_per_day != nil {
 		fields = append(fields, integration.FieldMaxPerDay)
 	}
+	if m.provider_max_per_second != nil {
+		fields = append(fields, integration.FieldProviderMaxPerSecond)
+	}
+	if m.provider_max_per_day != nil {
+		fields = append(fields, integration.FieldProviderMaxPerDay)
+	}
+	if m.provider_quota_checked_at != nil {
+		fields = append(fields, integration.FieldProviderQuotaCheckedAt)
+	}
+	if m.provider_quota_unavailable != nil {
+		fields = append(fields, integration.FieldProviderQuotaUnavailable)
+	}
 	return fields
 }
 
@@ -11181,6 +11424,14 @@ func (m *IntegrationMutation) Field(name string) (ent.Value, bool) {
 		return m.MaxPerSecond()
 	case integration.FieldMaxPerDay:
 		return m.MaxPerDay()
+	case integration.FieldProviderMaxPerSecond:
+		return m.ProviderMaxPerSecond()
+	case integration.FieldProviderMaxPerDay:
+		return m.ProviderMaxPerDay()
+	case integration.FieldProviderQuotaCheckedAt:
+		return m.ProviderQuotaCheckedAt()
+	case integration.FieldProviderQuotaUnavailable:
+		return m.ProviderQuotaUnavailable()
 	}
 	return nil, false
 }
@@ -11212,6 +11463,14 @@ func (m *IntegrationMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldMaxPerSecond(ctx)
 	case integration.FieldMaxPerDay:
 		return m.OldMaxPerDay(ctx)
+	case integration.FieldProviderMaxPerSecond:
+		return m.OldProviderMaxPerSecond(ctx)
+	case integration.FieldProviderMaxPerDay:
+		return m.OldProviderMaxPerDay(ctx)
+	case integration.FieldProviderQuotaCheckedAt:
+		return m.OldProviderQuotaCheckedAt(ctx)
+	case integration.FieldProviderQuotaUnavailable:
+		return m.OldProviderQuotaUnavailable(ctx)
 	}
 	return nil, fmt.Errorf("unknown Integration field %s", name)
 }
@@ -11298,6 +11557,34 @@ func (m *IntegrationMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMaxPerDay(v)
 		return nil
+	case integration.FieldProviderMaxPerSecond:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderMaxPerSecond(v)
+		return nil
+	case integration.FieldProviderMaxPerDay:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderMaxPerDay(v)
+		return nil
+	case integration.FieldProviderQuotaCheckedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderQuotaCheckedAt(v)
+		return nil
+	case integration.FieldProviderQuotaUnavailable:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderQuotaUnavailable(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Integration field %s", name)
 }
@@ -11312,6 +11599,12 @@ func (m *IntegrationMutation) AddedFields() []string {
 	if m.addmax_per_day != nil {
 		fields = append(fields, integration.FieldMaxPerDay)
 	}
+	if m.addprovider_max_per_second != nil {
+		fields = append(fields, integration.FieldProviderMaxPerSecond)
+	}
+	if m.addprovider_max_per_day != nil {
+		fields = append(fields, integration.FieldProviderMaxPerDay)
+	}
 	return fields
 }
 
@@ -11324,6 +11617,10 @@ func (m *IntegrationMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedMaxPerSecond()
 	case integration.FieldMaxPerDay:
 		return m.AddedMaxPerDay()
+	case integration.FieldProviderMaxPerSecond:
+		return m.AddedProviderMaxPerSecond()
+	case integration.FieldProviderMaxPerDay:
+		return m.AddedProviderMaxPerDay()
 	}
 	return nil, false
 }
@@ -11347,6 +11644,20 @@ func (m *IntegrationMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddMaxPerDay(v)
 		return nil
+	case integration.FieldProviderMaxPerSecond:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderMaxPerSecond(v)
+		return nil
+	case integration.FieldProviderMaxPerDay:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderMaxPerDay(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Integration numeric field %s", name)
 }
@@ -11360,6 +11671,15 @@ func (m *IntegrationMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(integration.FieldMaxPerDay) {
 		fields = append(fields, integration.FieldMaxPerDay)
+	}
+	if m.FieldCleared(integration.FieldProviderMaxPerSecond) {
+		fields = append(fields, integration.FieldProviderMaxPerSecond)
+	}
+	if m.FieldCleared(integration.FieldProviderMaxPerDay) {
+		fields = append(fields, integration.FieldProviderMaxPerDay)
+	}
+	if m.FieldCleared(integration.FieldProviderQuotaCheckedAt) {
+		fields = append(fields, integration.FieldProviderQuotaCheckedAt)
 	}
 	return fields
 }
@@ -11380,6 +11700,15 @@ func (m *IntegrationMutation) ClearField(name string) error {
 		return nil
 	case integration.FieldMaxPerDay:
 		m.ClearMaxPerDay()
+		return nil
+	case integration.FieldProviderMaxPerSecond:
+		m.ClearProviderMaxPerSecond()
+		return nil
+	case integration.FieldProviderMaxPerDay:
+		m.ClearProviderMaxPerDay()
+		return nil
+	case integration.FieldProviderQuotaCheckedAt:
+		m.ClearProviderQuotaCheckedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Integration nullable field %s", name)
@@ -11421,6 +11750,18 @@ func (m *IntegrationMutation) ResetField(name string) error {
 		return nil
 	case integration.FieldMaxPerDay:
 		m.ResetMaxPerDay()
+		return nil
+	case integration.FieldProviderMaxPerSecond:
+		m.ResetProviderMaxPerSecond()
+		return nil
+	case integration.FieldProviderMaxPerDay:
+		m.ResetProviderMaxPerDay()
+		return nil
+	case integration.FieldProviderQuotaCheckedAt:
+		m.ResetProviderQuotaCheckedAt()
+		return nil
+	case integration.FieldProviderQuotaUnavailable:
+		m.ResetProviderQuotaUnavailable()
 		return nil
 	}
 	return fmt.Errorf("unknown Integration field %s", name)

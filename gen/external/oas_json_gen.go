@@ -12856,6 +12856,8 @@ func (s *SendLimitWarning) Decode(d *jx.Decoder) error {
 	switch SendLimitWarning(v) {
 	case SendLimitWarningUnlimited:
 		*s = SendLimitWarningUnlimited
+	case SendLimitWarningProviderQuotaUnavailable:
+		*s = SendLimitWarningProviderQuotaUnavailable
 	default:
 		*s = SendLimitWarning(v)
 	}

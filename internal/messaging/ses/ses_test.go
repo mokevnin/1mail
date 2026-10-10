@@ -186,3 +186,54 @@ func TestBuildRejectsMalformedConfig(t *testing.T) {
 	_, err := ses.Descriptor().Build([]byte(`{`), nil)
 	assert.ErrorContains(t, err, "invalid config")
 }
+
+func quotaBody(max24h, rate string) string {
+	return `<GetSendQuotaResponse xmlns="http://ses.amazonaws.com/doc/2010-12-01/">
+<GetSendQuotaResult><Max24HourSend>` + max24h + `</Max24HourSend><MaxSendRate>` + rate + `</MaxSendRate><SentLast24Hours>7.0</SentLast24Hours></GetSendQuotaResult>
+<ResponseMetadata><RequestId>req-4</RequestId></ResponseMetadata></GetSendQuotaResponse>`
+}
+
+func quotaReader(t *testing.T, endpoint string) messaging.QuotaReader {
+	t.Helper()
+	reader, ok := build(t, endpoint).(messaging.QuotaReader)
+	require.True(t, ok, "the SES sender reports the account's send quota")
+	return reader
+}
+
+func TestSendQuota(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("reads the account's rate and daily quota", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusOK, quotaBody("50000.0", "14.0"))
+		got, err := quotaReader(t, api.srv.URL).SendQuota(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "GetSendQuota", api.form.Get("Action"))
+		require.NotNil(t, got.PerSecond)
+		require.NotNil(t, got.PerDay)
+		assert.Equal(t, 14, *got.PerSecond)
+		assert.Equal(t, 50000, *got.PerDay)
+	})
+
+	t.Run("a fractional rate rounds down but never to zero", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusOK, quotaBody("200.0", "0.5"))
+		got, err := quotaReader(t, api.srv.URL).SendQuota(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, 1, *got.PerSecond, "a sandbox account sends one message per second")
+	})
+
+	t.Run("a value the provider does not bound is no ceiling", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusOK, quotaBody("-1.0", "0.0"))
+		got, err := quotaReader(t, api.srv.URL).SendQuota(ctx)
+		require.NoError(t, err)
+		assert.Nil(t, got.PerSecond)
+		assert.Nil(t, got.PerDay)
+	})
+
+	t.Run("a denied lookup is an error", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusForbidden, `<ErrorResponse xmlns="http://ses.amazonaws.com/doc/2010-12-01/">
+<Error><Type>Sender</Type><Code>AccessDenied</Code><Message>not authorized to perform ses:GetSendQuota</Message></Error>
+<RequestId>req-5</RequestId></ErrorResponse>`)
+		_, err := quotaReader(t, api.srv.URL).SendQuota(ctx)
+		assert.ErrorContains(t, err, "ses: get send quota")
+	})
+}

@@ -2823,6 +2823,8 @@ func (s SiteSendLimitWarning) Validate() error {
 	switch s {
 	case "unlimited":
 		return nil
+	case "providerQuotaUnavailable":
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}

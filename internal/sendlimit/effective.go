@@ -8,15 +8,13 @@ import (
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 )
 
-// Source says where an effective ceiling comes from. Only SourceManual is produced
-// today; the provider-reported quota (SES GetSendQuota) joins it in Effective, which
-// is the one place enforcement and display both read a ceiling from.
+// Source says where an effective ceiling comes from.
 type Source string
 
 const (
 	// SourceManual is the operator-set value on the Integration.
 	SourceManual Source = "manual"
-	// SourceProvider is the value the provider reports.
+	// SourceProvider is the value the provider reports (SES GetSendQuota).
 	SourceProvider Source = "provider"
 )
 
@@ -33,21 +31,32 @@ type Value struct {
 type Effective struct {
 	PerSecond Value
 	PerDay    Value
+
+	// ProviderQuotaUnavailable is set when the last provider quota lookup failed, so
+	// the ceilings above rest on the manual value alone (or on none).
+	ProviderQuotaUnavailable bool
 }
 
-// EffectiveOf computes the ceilings an Integration is held to.
+// EffectiveOf computes the ceilings an Integration is held to. It is the one place
+// manual, provider (and later warmup) values are folded into a ceiling.
 func EffectiveOf(integ *ent.Integration) Effective {
 	return Effective{
-		PerSecond: manual(integ.MaxPerSecond),
-		PerDay:    manual(integ.MaxPerDay),
+		PerSecond:                lowest(integ.MaxPerSecond, integ.ProviderMaxPerSecond),
+		PerDay:                   lowest(integ.MaxPerDay, integ.ProviderMaxPerDay),
+		ProviderQuotaUnavailable: integ.ProviderQuotaUnavailable,
 	}
 }
 
-func manual(v *int) Value {
-	if v == nil {
+// lowest is the minimum rule: the lower of the two ceilings, the manual one on a tie.
+func lowest(manual, provider *int) Value {
+	switch {
+	case manual == nil && provider == nil:
 		return Value{}
+	case provider == nil || (manual != nil && *manual <= *provider):
+		return Value{Limit: manual, Source: SourceManual}
+	default:
+		return Value{Limit: provider, Source: SourceProvider}
 	}
-	return Value{Limit: v, Source: SourceManual}
 }
 
 // Limits is what the token buckets enforce.

@@ -78,6 +78,9 @@ enum SendLimitSource {
 enum SendLimitWarning {
   /** No ceiling applies: sends are not paced and the provider may throttle or block them */
   unlimited,
+
+  /** The provider's send quota could not be read (no permission, or a compatible service without the call), so only the manual limit applies */
+  providerQuotaUnavailable,
 }
 
 /** One effective ceiling: the lowest of the manual and provider values, manual on a tie */

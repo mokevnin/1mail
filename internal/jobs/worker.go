@@ -49,7 +49,7 @@ type Client struct {
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, catalog *messaging.Catalog, appURL string) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -67,6 +67,10 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	// SES send quota discovery (ADR 0023): refreshed hourly because quotas grow as an
+	// account matures, and on Integration save by the API handlers.
+	river.AddWorker(workers, &RefreshSendQuotasWorker{ent: entClient})
+	river.AddWorker(workers, &RefreshIntegrationQuotaWorker{ent: entClient, cipher: cipher, catalog: catalog})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
@@ -88,6 +92,13 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 				river.PeriodicInterval(15*time.Minute),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			river.NewPeriodicJob(
+				river.PeriodicInterval(time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return RefreshSendQuotasArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
@@ -113,6 +124,14 @@ func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 		opts.ScheduledAt = *scheduledAt
 	}
 	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID, ScheduledAt: scheduledAt}, opts)
+	return err
+}
+
+// EnqueueIntegrationQuotaRefresh schedules a read of one Integration's provider send
+// quota (on save; the hourly tick covers the rest). Fire-and-forget: the result, or
+// the warning that it could not be read, lands on the row.
+func (c *Client) EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error {
+	_, err := c.river.Insert(ctx, RefreshIntegrationQuotaArgs{IntegrationID: integrationID}, nil)
 	return err
 }
 

@@ -407,6 +407,10 @@ var (
 		{Name: "is_default", Type: field.TypeBool, Default: false},
 		{Name: "max_per_second", Type: field.TypeInt, Nullable: true},
 		{Name: "max_per_day", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_max_per_second", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_max_per_day", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_quota_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "provider_quota_unavailable", Type: field.TypeBool, Default: false},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// IntegrationsTable holds the schema information for the "integrations" table.
@@ -417,7 +421,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "integrations_workspaces_integrations",
-				Columns:    []*schema.Column{IntegrationsColumns[11]},
+				Columns:    []*schema.Column{IntegrationsColumns[15]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -426,7 +430,7 @@ var (
 			{
 				Name:    "integration_workspace_id_channel",
 				Unique:  true,
-				Columns: []*schema.Column{IntegrationsColumns[11], IntegrationsColumns[4]},
+				Columns: []*schema.Column{IntegrationsColumns[15], IntegrationsColumns[4]},
 				Annotation: &entsql.IndexAnnotation{
 					Where: "is_default",
 				},

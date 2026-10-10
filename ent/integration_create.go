@@ -146,6 +146,62 @@ func (_c *IntegrationCreate) SetNillableMaxPerDay(v *int) *IntegrationCreate {
 	return _c
 }
 
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (_c *IntegrationCreate) SetProviderMaxPerSecond(v int) *IntegrationCreate {
+	_c.mutation.SetProviderMaxPerSecond(v)
+	return _c
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableProviderMaxPerSecond(v *int) *IntegrationCreate {
+	if v != nil {
+		_c.SetProviderMaxPerSecond(*v)
+	}
+	return _c
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (_c *IntegrationCreate) SetProviderMaxPerDay(v int) *IntegrationCreate {
+	_c.mutation.SetProviderMaxPerDay(v)
+	return _c
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableProviderMaxPerDay(v *int) *IntegrationCreate {
+	if v != nil {
+		_c.SetProviderMaxPerDay(*v)
+	}
+	return _c
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (_c *IntegrationCreate) SetProviderQuotaCheckedAt(v time.Time) *IntegrationCreate {
+	_c.mutation.SetProviderQuotaCheckedAt(v)
+	return _c
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationCreate {
+	if v != nil {
+		_c.SetProviderQuotaCheckedAt(*v)
+	}
+	return _c
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (_c *IntegrationCreate) SetProviderQuotaUnavailable(v bool) *IntegrationCreate {
+	_c.mutation.SetProviderQuotaUnavailable(v)
+	return _c
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationCreate {
+	if v != nil {
+		_c.SetProviderQuotaUnavailable(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *IntegrationCreate) SetID(v int64) *IntegrationCreate {
 	_c.mutation.SetID(v)
@@ -231,6 +287,10 @@ func (_c *IntegrationCreate) defaults() {
 		v := integration.DefaultIsDefault
 		_c.mutation.SetIsDefault(v)
 	}
+	if _, ok := _c.mutation.ProviderQuotaUnavailable(); !ok {
+		v := integration.DefaultProviderQuotaUnavailable
+		_c.mutation.SetProviderQuotaUnavailable(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -286,6 +346,9 @@ func (_c *IntegrationCreate) check() error {
 		if err := integration.MaxPerDayValidator(v); err != nil {
 			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.ProviderQuotaUnavailable(); !ok {
+		return &ValidationError{Name: "provider_quota_unavailable", err: errors.New(`ent: missing required field "Integration.provider_quota_unavailable"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Integration.workspace"`)}
@@ -362,6 +425,22 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.MaxPerDay(); ok {
 		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
 		_node.MaxPerDay = &value
+	}
+	if value, ok := _c.mutation.ProviderMaxPerSecond(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerSecond, field.TypeInt, value)
+		_node.ProviderMaxPerSecond = &value
+	}
+	if value, ok := _c.mutation.ProviderMaxPerDay(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerDay, field.TypeInt, value)
+		_node.ProviderMaxPerDay = &value
+	}
+	if value, ok := _c.mutation.ProviderQuotaCheckedAt(); ok {
+		_spec.SetField(integration.FieldProviderQuotaCheckedAt, field.TypeTime, value)
+		_node.ProviderQuotaCheckedAt = &value
+	}
+	if value, ok := _c.mutation.ProviderQuotaUnavailable(); ok {
+		_spec.SetField(integration.FieldProviderQuotaUnavailable, field.TypeBool, value)
+		_node.ProviderQuotaUnavailable = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -592,6 +671,84 @@ func (u *IntegrationUpsert) ClearMaxPerDay() *IntegrationUpsert {
 	return u
 }
 
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (u *IntegrationUpsert) SetProviderMaxPerSecond(v int) *IntegrationUpsert {
+	u.Set(integration.FieldProviderMaxPerSecond, v)
+	return u
+}
+
+// UpdateProviderMaxPerSecond sets the "provider_max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateProviderMaxPerSecond() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldProviderMaxPerSecond)
+	return u
+}
+
+// AddProviderMaxPerSecond adds v to the "provider_max_per_second" field.
+func (u *IntegrationUpsert) AddProviderMaxPerSecond(v int) *IntegrationUpsert {
+	u.Add(integration.FieldProviderMaxPerSecond, v)
+	return u
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (u *IntegrationUpsert) ClearProviderMaxPerSecond() *IntegrationUpsert {
+	u.SetNull(integration.FieldProviderMaxPerSecond)
+	return u
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (u *IntegrationUpsert) SetProviderMaxPerDay(v int) *IntegrationUpsert {
+	u.Set(integration.FieldProviderMaxPerDay, v)
+	return u
+}
+
+// UpdateProviderMaxPerDay sets the "provider_max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateProviderMaxPerDay() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldProviderMaxPerDay)
+	return u
+}
+
+// AddProviderMaxPerDay adds v to the "provider_max_per_day" field.
+func (u *IntegrationUpsert) AddProviderMaxPerDay(v int) *IntegrationUpsert {
+	u.Add(integration.FieldProviderMaxPerDay, v)
+	return u
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (u *IntegrationUpsert) ClearProviderMaxPerDay() *IntegrationUpsert {
+	u.SetNull(integration.FieldProviderMaxPerDay)
+	return u
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (u *IntegrationUpsert) SetProviderQuotaCheckedAt(v time.Time) *IntegrationUpsert {
+	u.Set(integration.FieldProviderQuotaCheckedAt, v)
+	return u
+}
+
+// UpdateProviderQuotaCheckedAt sets the "provider_quota_checked_at" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateProviderQuotaCheckedAt() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldProviderQuotaCheckedAt)
+	return u
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (u *IntegrationUpsert) ClearProviderQuotaCheckedAt() *IntegrationUpsert {
+	u.SetNull(integration.FieldProviderQuotaCheckedAt)
+	return u
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (u *IntegrationUpsert) SetProviderQuotaUnavailable(v bool) *IntegrationUpsert {
+	u.Set(integration.FieldProviderQuotaUnavailable, v)
+	return u
+}
+
+// UpdateProviderQuotaUnavailable sets the "provider_quota_unavailable" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateProviderQuotaUnavailable() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldProviderQuotaUnavailable)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -808,6 +965,97 @@ func (u *IntegrationUpsertOne) UpdateMaxPerDay() *IntegrationUpsertOne {
 func (u *IntegrationUpsertOne) ClearMaxPerDay() *IntegrationUpsertOne {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.ClearMaxPerDay()
+	})
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (u *IntegrationUpsertOne) SetProviderMaxPerSecond(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderMaxPerSecond(v)
+	})
+}
+
+// AddProviderMaxPerSecond adds v to the "provider_max_per_second" field.
+func (u *IntegrationUpsertOne) AddProviderMaxPerSecond(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddProviderMaxPerSecond(v)
+	})
+}
+
+// UpdateProviderMaxPerSecond sets the "provider_max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateProviderMaxPerSecond() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderMaxPerSecond()
+	})
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (u *IntegrationUpsertOne) ClearProviderMaxPerSecond() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderMaxPerSecond()
+	})
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (u *IntegrationUpsertOne) SetProviderMaxPerDay(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderMaxPerDay(v)
+	})
+}
+
+// AddProviderMaxPerDay adds v to the "provider_max_per_day" field.
+func (u *IntegrationUpsertOne) AddProviderMaxPerDay(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddProviderMaxPerDay(v)
+	})
+}
+
+// UpdateProviderMaxPerDay sets the "provider_max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateProviderMaxPerDay() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderMaxPerDay()
+	})
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (u *IntegrationUpsertOne) ClearProviderMaxPerDay() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderMaxPerDay()
+	})
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (u *IntegrationUpsertOne) SetProviderQuotaCheckedAt(v time.Time) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderQuotaCheckedAt(v)
+	})
+}
+
+// UpdateProviderQuotaCheckedAt sets the "provider_quota_checked_at" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateProviderQuotaCheckedAt() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderQuotaCheckedAt()
+	})
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (u *IntegrationUpsertOne) ClearProviderQuotaCheckedAt() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderQuotaCheckedAt()
+	})
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (u *IntegrationUpsertOne) SetProviderQuotaUnavailable(v bool) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderQuotaUnavailable(v)
+	})
+}
+
+// UpdateProviderQuotaUnavailable sets the "provider_quota_unavailable" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateProviderQuotaUnavailable() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderQuotaUnavailable()
 	})
 }
 
@@ -1193,6 +1441,97 @@ func (u *IntegrationUpsertBulk) UpdateMaxPerDay() *IntegrationUpsertBulk {
 func (u *IntegrationUpsertBulk) ClearMaxPerDay() *IntegrationUpsertBulk {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.ClearMaxPerDay()
+	})
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (u *IntegrationUpsertBulk) SetProviderMaxPerSecond(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderMaxPerSecond(v)
+	})
+}
+
+// AddProviderMaxPerSecond adds v to the "provider_max_per_second" field.
+func (u *IntegrationUpsertBulk) AddProviderMaxPerSecond(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddProviderMaxPerSecond(v)
+	})
+}
+
+// UpdateProviderMaxPerSecond sets the "provider_max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateProviderMaxPerSecond() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderMaxPerSecond()
+	})
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (u *IntegrationUpsertBulk) ClearProviderMaxPerSecond() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderMaxPerSecond()
+	})
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (u *IntegrationUpsertBulk) SetProviderMaxPerDay(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderMaxPerDay(v)
+	})
+}
+
+// AddProviderMaxPerDay adds v to the "provider_max_per_day" field.
+func (u *IntegrationUpsertBulk) AddProviderMaxPerDay(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddProviderMaxPerDay(v)
+	})
+}
+
+// UpdateProviderMaxPerDay sets the "provider_max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateProviderMaxPerDay() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderMaxPerDay()
+	})
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (u *IntegrationUpsertBulk) ClearProviderMaxPerDay() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderMaxPerDay()
+	})
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (u *IntegrationUpsertBulk) SetProviderQuotaCheckedAt(v time.Time) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderQuotaCheckedAt(v)
+	})
+}
+
+// UpdateProviderQuotaCheckedAt sets the "provider_quota_checked_at" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateProviderQuotaCheckedAt() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderQuotaCheckedAt()
+	})
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (u *IntegrationUpsertBulk) ClearProviderQuotaCheckedAt() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearProviderQuotaCheckedAt()
+	})
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (u *IntegrationUpsertBulk) SetProviderQuotaUnavailable(v bool) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetProviderQuotaUnavailable(v)
+	})
+}
+
+// UpdateProviderQuotaUnavailable sets the "provider_quota_unavailable" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateProviderQuotaUnavailable() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateProviderQuotaUnavailable()
 	})
 }
 

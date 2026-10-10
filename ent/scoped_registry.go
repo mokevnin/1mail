@@ -676,6 +676,16 @@ func ScopedEntities() []ScopedEntity {
 				if src.MaxPerDay != nil {
 					b.SetMaxPerDay(*src.MaxPerDay)
 				}
+				if src.ProviderMaxPerSecond != nil {
+					b.SetProviderMaxPerSecond(*src.ProviderMaxPerSecond)
+				}
+				if src.ProviderMaxPerDay != nil {
+					b.SetProviderMaxPerDay(*src.ProviderMaxPerDay)
+				}
+				if src.ProviderQuotaCheckedAt != nil {
+					b.SetProviderQuotaCheckedAt(*src.ProviderQuotaCheckedAt)
+				}
+				b.SetProviderQuotaUnavailable(src.ProviderQuotaUnavailable)
 				created, err := b.Save(ctx)
 				if err != nil {
 					return 0, err

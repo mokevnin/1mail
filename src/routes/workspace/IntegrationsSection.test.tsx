@@ -208,6 +208,33 @@ test('warns when an Integration has no send limit', async () => {
   await expect.element(screen.getByText('Per second: Unlimited')).toBeInTheDocument()
 })
 
+test('warns when the provider send quota could not be read', async () => {
+  const ses: SiteIntegrationResource = {
+    ...limited,
+    name: 'Amazon SES',
+    sendLimit: { ...limited.sendLimit, warnings: ['providerQuotaUnavailable'] },
+  }
+  mockClientRoutes([list([ses])])
+  const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
+
+  await expect
+    .element(screen.getByText("Amazon SES: the provider's send quota could not be read"))
+    .toBeInTheDocument()
+  await expect
+    .element(screen.getByText('Without the provider quota', { exact: false }))
+    .toBeInTheDocument()
+})
+
+test('shows no quota warning when the provider quota is known', async () => {
+  mockClientRoutes([list([limited])])
+  const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
+
+  await expect.element(screen.getByText('Per second: 14')).toBeInTheDocument()
+  await expect
+    .element(screen.getByText('send quota could not be read', { exact: false }))
+    .not.toBeInTheDocument()
+})
+
 test('shows the effective limit, its source and the 24-hour usage', async () => {
   mockClientRoutes([list([limited])])
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)

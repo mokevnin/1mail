@@ -81,6 +81,9 @@ func sendLimitStatus(row *ent.Integration, usage map[int64]int) externalapi.Send
 	if eff.Unlimited() {
 		out.Warnings = append(out.Warnings, externalapi.SendLimitWarningUnlimited)
 	}
+	if eff.ProviderQuotaUnavailable {
+		out.Warnings = append(out.Warnings, externalapi.SendLimitWarningProviderQuotaUnavailable)
+	}
 	return out
 }
 

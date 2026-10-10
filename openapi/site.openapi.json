@@ -6607,7 +6607,7 @@
                 "$ref": "#/components/schemas/SiteSendLimitStatus"
               }
             ],
-            "description": "The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage"
+            "description": "The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage"
           },
           "config": {
             "allOf": [
@@ -7049,7 +7049,7 @@
       },
       "SiteSendLimitWarning": {
         "type": "string",
-        "enum": ["unlimited"],
+        "enum": ["unlimited", "providerQuotaUnavailable"],
         "description": "A reason to look at an Integration's Send rate limit"
       },
       "SiteSendingDomainResource": {

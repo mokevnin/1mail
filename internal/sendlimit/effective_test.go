@@ -31,6 +31,36 @@ func TestEffectiveOfReportsManualValuesAndTheirSource(t *testing.T) {
 	assert.False(t, onlyDay.Unlimited(), "one ceiling is enough to be limited")
 }
 
+func TestEffectiveOfTakesTheLowestOfManualAndProviderValues(t *testing.T) {
+	cases := []struct {
+		name             string
+		manual, provider *int
+		want             sendlimit.Value
+	}{
+		{"neither", nil, nil, sendlimit.Value{}},
+		{"provider only", nil, ptr(14), sendlimit.Value{Limit: ptr(14), Source: sendlimit.SourceProvider}},
+		{"manual only", ptr(5), nil, sendlimit.Value{Limit: ptr(5), Source: sendlimit.SourceManual}},
+		{"manual is lower", ptr(5), ptr(14), sendlimit.Value{Limit: ptr(5), Source: sendlimit.SourceManual}},
+		{"provider is lower", ptr(50), ptr(14), sendlimit.Value{Limit: ptr(14), Source: sendlimit.SourceProvider}},
+		{"manual wins a tie", ptr(14), ptr(14), sendlimit.Value{Limit: ptr(14), Source: sendlimit.SourceManual}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := sendlimit.EffectiveOf(&ent.Integration{
+				MaxPerSecond: c.manual, ProviderMaxPerSecond: c.provider,
+				MaxPerDay: c.manual, ProviderMaxPerDay: c.provider,
+			})
+			assert.Equal(t, c.want, got.PerSecond)
+			assert.Equal(t, c.want, got.PerDay)
+		})
+	}
+}
+
+func TestEffectiveOfReportsAnUnavailableProviderQuota(t *testing.T) {
+	assert.False(t, sendlimit.EffectiveOf(&ent.Integration{}).ProviderQuotaUnavailable)
+	assert.True(t, sendlimit.EffectiveOf(&ent.Integration{ProviderQuotaUnavailable: true}).ProviderQuotaUnavailable)
+}
+
 func TestUsageCountsSentMessagesPerIntegrationOverTheLastDay(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
