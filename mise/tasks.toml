@@ -153,7 +153,8 @@ else
       refuse="$refuse; cannot read the mise environment of $path (mise trust it?)"; continue
     fi
     db=$(printf '%s\n' "$out" | sed -n "s/^export PGDATABASE=//p" | tr -d "'")
-    if [ -z "$db" ]; then echo "nodb    $path (declares no database)"; continue; fi
+    # Every checkout declares `db`: an empty name means its environment was not read properly.
+    if [ -z "$db" ]; then refuse="$refuse; $path exports no PGDATABASE"; continue; fi
     # Postgres truncates identifiers at 63 bytes: a long name would make its twins collide.
     if [ $(($(printf '%s' "$db" | wc -c) + 6)) -gt 63 ]; then refuse="$refuse; $db is too long for its _test/_e2e/_atlas twins"; continue; fi
     printf '%s\n%s_test\n%s_e2e\n%s_atlas\n' "$db" "$db" "$db" "$db" >> "$keep"

@@ -2,9 +2,11 @@
 # the primary checkout serves 1mail.localhost on :443, a linked worktree serves its own
 # <dir>.1mail.localhost on its own port, so several stacks run side by side.
 {
-	# The default admin endpoint (:2019) and the :80 redirect listener are single-instance.
-	admin off
-	auto_https disable_redirects
+	# Caddy's admin API (`caddy trust` reads the root certificate from it) and the HTTP
+	# listener behind the http -> https redirect are one per instance: 2019 and 80 in the
+	# primary checkout, offset ports in a linked worktree (.mise.toml).
+	admin {$CADDY_ADMIN}
+	http_port {$CADDY_HTTP_PORT}
 }
 
 {$APP_HOST}:{$CADDY_PORT} {

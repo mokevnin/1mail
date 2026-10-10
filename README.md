@@ -105,18 +105,19 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
 The entry point is **https://1mail.localhost** (Caddy terminates TLS with its internal CA).
 Daemons:
 
-| Daemon   | URL / port                     | Notes                                                       |
-| -------- | ------------------------------ | ----------------------------------------------------------- |
-| caddy    | `:443`                         | TLS + routing, see `Caddyfile`                              |
-| frontend | `:5173` (Vite)                 | proxied by Caddy                                            |
-| backend  | `:3300`                        | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
-| db       | `127.0.0.1:15432` (`mise env`) | mise `postgres` preset, dev DB `1mail_development`          |
-| mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                |
+| Daemon   | URL / port                     | Notes                                                                       |
+| -------- | ------------------------------ | --------------------------------------------------------------------------- |
+| caddy    | `:443`                         | TLS + routing, see `Caddyfile`                                              |
+| frontend | `:5173` (Vite)                 | proxied by Caddy                                                            |
+| backend  | `:3300`                        | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth`                 |
+| db       | `127.0.0.1:15432` (`mise env`) | mise `postgres` preset, dev DB `1mail_development` (shared mode: see below) |
+| mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                                |
 
 > These are the primary checkout's ports. A linked worktree gets offset ports and its own origin
 > (`https://<dir>.1mail.localhost:<port>`, printed by `mise env`), so stacks never collide. With
 > many worktrees, share one Postgres between them (`MISE_ENV=shared`, see AGENTS.md, "Dev
-> environment").
+> environment"); each checkout then has its own database there, named from its path. In a linked
+> worktree trust Caddy's CA with `caddy trust --address "$CADDY_ADMIN"` (its admin API is not on :2019).
 >
 > The backend runs the real Go server under [air](https://github.com/air-verse/air) for
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not

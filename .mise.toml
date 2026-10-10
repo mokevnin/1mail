@@ -47,6 +47,10 @@ APP_ENV = "development"
 APP_HOST = "{% if env.CADDY_PORT == '443' %}1mail.localhost{% else %}{{ config_root | basename | lower | replace(from='_', to='-') }}.1mail.localhost{% endif %}"
 API_HOST = "api.{{ env.APP_HOST }}"
 APP_URL = "https://{{ env.APP_HOST }}{% if env.CADDY_PORT != '443' %}:{{ env.CADDY_PORT }}{% endif %}"
+# Caddy's admin API (2019 + offset) and HTTP listener (80 in the primary checkout, otherwise
+# 4000 + offset, clear of every other base + offset range).
+CADDY_ADMIN = "127.0.0.1:{{ env.CADDY_PORT | int - 443 + 2019 }}"
+CADDY_HTTP_PORT = "{% if env.CADDY_PORT == '443' %}80{% else %}{{ env.CADDY_PORT | int + 3557 }}{% endif %}"
 APP_LOCALE = "en"
 PORT = "{{ env.BACKEND_PORT }}"
 # Opt-in Prometheus listener (ADR 0018); never reachable through Caddy. Every daemon port is

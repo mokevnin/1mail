@@ -244,11 +244,17 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
 **Ports and origins per checkout.** Every daemon declares `port = { auto = true, base = <port> }`:
 the primary checkout gets exactly the ports above (caddy 443, vite 5173, backend 3300, mailpit
 8025/1025, metrics 9090); a linked worktree gets one slot offset (`base + N`, the same `N` for all
-of its daemons), so any number of stacks run at once. mise resolves the ports at config load, so
+of its daemons), so many stacks run at once. The slot comes from a hash of the checkout's path,
+not a registry: two worktrees can land on the same one (two of 14 here did), and then the second
+stack fails to start with an error naming the daemon and the other project. Pin the later one
+in its `.mise.local.toml` (`[daemons.backend]` ... `port = 3601`, the same for `frontend`,
+`mailpit`, `caddy` and, without the shared Postgres, `db`; SMTP, metrics and Caddy's admin/HTTP ports follow from them). mise resolves the ports at config load, so
 `[env]` templates them (`PORT`, `SMTP_PORT`, `METRICS_ADDR`, `APP_URL`, `APP_HOST`, `API_HOST`), and
 the Caddyfile (`{$BACKEND_PORT}`, `{$APP_HOST}`, ...), `vite.config.ts` and the `ready_cmd`s read the
 exported `<NAME>_PORT` (`ready_port` cannot be templated). Ports with no daemon of their own (SMTP,
-metrics) are the base plus that same offset. A linked worktree's origin is
+metrics) are the base plus that same offset; Caddy's admin API (`CADDY_ADMIN`, 2019 + offset, what
+`caddy trust --address "$CADDY_ADMIN"` reads) and HTTP redirect listener (`CADDY_HTTP_PORT`: 80 in
+the primary checkout, 4000 + offset elsewhere) are per instance too. A linked worktree's origin is
 `https://<dir-name>.1mail.localhost:<caddy port>` (API: `https://api.<dir-name>.1mail.localhost:<caddy port>`):
 browser cookies are shared across the ports of one host, so a per-worktree host keeps the session
 cookies apart; `*.localhost` resolves to loopback and Caddy's internal CA signs each name.
