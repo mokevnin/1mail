@@ -31,6 +31,10 @@ const (
 	AutomationGlobexID = 900
 	// AutomationGlobexName is from fixtures/automations.
 	AutomationGlobexName = "Globex automation"
+	// AutomationHoldDemoID is from fixtures/automations.
+	AutomationHoldDemoID = 103
+	// AutomationHoldDemoName is from fixtures/automations.
+	AutomationHoldDemoName = "Hold demo"
 	// AutomationRunWelcomeCompletedID is from fixtures/automation_runs.
 	AutomationRunWelcomeCompletedID = 1000
 	// AutomationTagOnEngagementID is from fixtures/automations.

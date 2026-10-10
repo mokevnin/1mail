@@ -52,6 +52,12 @@ const rejectedBody = `<ErrorResponse xmlns="http://ses.amazonaws.com/doc/2010-12
 <Error><Type>Sender</Type><Code>MessageRejected</Code><Message>identity not verified</Message></Error>
 <RequestId>req-2</RequestId></ErrorResponse>`
 
+func throttledBody(message string) string {
+	return `<ErrorResponse xmlns="http://ses.amazonaws.com/doc/2010-12-01/">
+<Error><Type>Sender</Type><Code>Throttling</Code><Message>` + message + `</Message></Error>
+<RequestId>req-3</RequestId></ErrorResponse>`
+}
+
 func build(t *testing.T, endpoint string) messaging.EmailSender {
 	t.Helper()
 	raw := fmt.Sprintf(`{"region":"eu-west-1","accessKeyId":"AKIATEST","secretAccessKey":"shh","from":"noreply@acme.com","fromName":"Acme","endpoint":%q}`, endpoint)
@@ -112,6 +118,26 @@ func TestSendErrors(t *testing.T) {
 		_, err := build(t, api.srv.URL).Send(ctx, msg)
 		assert.ErrorContains(t, err, "ses: send")
 		assert.ErrorContains(t, err, "MessageRejected")
+	})
+
+	t.Run("throttling is classified as too fast", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusBadRequest, throttledBody("Maximum sending rate exceeded."))
+		_, err := build(t, api.srv.URL).Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrThrottled)
+		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("daily quota is classified as quota exceeded", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusBadRequest, throttledBody("Daily message quota exceeded."))
+		_, err := build(t, api.srv.URL).Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("a rejected message is not throttling", func(t *testing.T) {
+		api := newSESAPI(t, http.StatusBadRequest, rejectedBody)
+		_, err := build(t, api.srv.URL).Send(ctx, msg)
+		assert.NotErrorIs(t, err, messaging.ErrThrottled)
+		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 
 	t.Run("unusable AWS environment config", func(t *testing.T) {
