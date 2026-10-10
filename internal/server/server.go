@@ -130,7 +130,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// requestID is outermost so the correlation id is in context before recoverer
 	// runs — the panic log then carries request_id. (requestID is trivial and
 	// cannot itself panic, so nothing downstream of recovery is lost.)
-	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
+	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes), corsMiddleware(cfg.CORSOrigins)), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
@@ -150,7 +150,10 @@ func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, er
 func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
 	code := http.StatusInternalServerError
 	var oe ogenerrors.Error
+	var tooBig *http.MaxBytesError
 	switch {
+	case errors.As(err, &tooBig):
+		code = http.StatusRequestEntityTooLarge
 	case errors.As(err, &oe):
 		code = oe.Code()
 	case errors.Is(err, ent.ErrNotInWorkspace):
@@ -212,6 +215,22 @@ func timeout(d time.Duration) func(http.Handler) http.Handler {
 			ctx, cancel := context.WithTimeout(r.Context(), d)
 			defer cancel()
 			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// bodyLimit caps every request body before a handler or the ogen decoder reads it:
+// collect gets its own (smaller) cap, everything else the default. An oversized
+// body surfaces as *http.MaxBytesError, which problemErrorHandler renders as 413.
+func bodyLimit(def, collect int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			limit := def
+			if strings.HasPrefix(r.URL.Path, "/collect/") {
+				limit = collect
+			}
+			r.Body = http.MaxBytesReader(w, r.Body, limit)
+			next.ServeHTTP(w, r)
 		})
 	}
 }

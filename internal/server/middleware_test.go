@@ -3,8 +3,10 @@ package server
 import (
 	"database/sql"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,4 +134,27 @@ func TestChainRunsMiddlewareOutermostFirst(t *testing.T) {
 	}
 	do(t, chain(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { order = append(order, "handler") }), mw("a"), mw("b")), http.MethodGet, "/", nil)
 	assert.Equal(t, []string{"a", "b", "handler"}, order)
+}
+
+func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
+	h := bodyLimit(8, 4)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := io.ReadAll(r.Body); err != nil {
+			problemErrorHandler(r.Context(), w, r, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	post := func(path, body string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, strings.NewReader(body)))
+		return rec
+	}
+
+	assert.Equal(t, http.StatusNoContent, post("/api/x", "12345678").Code)
+	rec := post("/api/x", "123456789")
+	assert.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
+	assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
+
+	assert.Equal(t, http.StatusNoContent, post("/collect/x", "1234").Code)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, post("/collect/x", "12345").Code)
 }

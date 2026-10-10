@@ -173,6 +173,8 @@ func New(env string) (*App, error) {
 			Addr:              ":" + cfg.Port,
 			Handler:           handler,
 			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       30 * time.Second,
+			IdleTimeout:       120 * time.Second,
 		},
 		injector: injector,
 		events:   evRuntime,

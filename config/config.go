@@ -24,6 +24,11 @@ type Config struct {
 	SMTPFrom       string
 	EncryptionKey  string
 	AutoMigrate    bool
+	// MaxBodyBytes caps a request body on every surface but /collect;
+	// CollectMaxBodyBytes caps the public tracking ingestion (its key ships in
+	// customer pages, so anyone can post to it).
+	MaxBodyBytes        int64
+	CollectMaxBodyBytes int64
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -69,6 +74,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("LOG_LEVEL", "info")
 	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
 	v.SetDefault("APP_LOCALE", "en")
+	v.SetDefault("MAX_BODY_BYTES", 1<<20)
+	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -108,10 +115,13 @@ func Load(envName string) (*Config, error) {
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
-		IsDev:          isDevEnv(envName),
-		Locale:         i18n.Normalize(v.GetString("APP_LOCALE")),
-		LogLevel:       v.GetString("LOG_LEVEL"),
-		LogFormat:      v.GetString("LOG_FORMAT"),
+
+		MaxBodyBytes:        v.GetInt64("MAX_BODY_BYTES"),
+		CollectMaxBodyBytes: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+		IsDev:               isDevEnv(envName),
+		Locale:              i18n.Normalize(v.GetString("APP_LOCALE")),
+		LogLevel:            v.GetString("LOG_LEVEL"),
+		LogFormat:           v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 
@@ -134,6 +144,9 @@ func (c *Config) validate(envName string) error {
 	// with an empty key — refuse to boot rather than ship that footgun.
 	if !isDevEnv(envName) && c.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET is required outside development")
+	}
+	if c.MaxBodyBytes <= 0 || c.CollectMaxBodyBytes <= 0 {
+		return fmt.Errorf("MAX_BODY_BYTES and COLLECT_MAX_BODY_BYTES must be positive")
 	}
 	return nil
 }

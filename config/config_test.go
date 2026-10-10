@@ -18,7 +18,7 @@ func TestConfigValidate_JWTSecret(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := &Config{JWTSecret: tc.jwtSecret}
+			c := &Config{JWTSecret: tc.jwtSecret, MaxBodyBytes: 1, CollectMaxBodyBytes: 1}
 			err := c.validate(tc.env)
 			if tc.wantErr && err == nil {
 				t.Fatalf("validate(%q) with secret %q: want error, got nil", tc.env, tc.jwtSecret)
