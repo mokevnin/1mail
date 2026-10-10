@@ -83,16 +83,21 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
+	siteCheck := apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client, site.Clock)
+	// The site handlers reissue or clear the acting session cookie (ADR 0020)
+	// through the same token service that issues logins.
+	sessions := apiauth.NewSessions(authSvc.TokenService(), siteCheck)
+	site.Sessions = sessions
 	siteSrv, err := siteapi.NewServer(
 		apisite.NewHandlers(site),
-		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client, site.Clock),
+		siteCheck,
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
 	)
 	if err != nil {
 		return nil, err
 	}
-	mux.Handle("/site/", siteSrv)
+	mux.Handle("/site/", sessions.Bind(siteSrv))
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler); built by
 	// NewExternalAPI so the MCP surface dispatches through the same server.

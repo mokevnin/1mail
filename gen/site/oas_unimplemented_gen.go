@@ -759,6 +759,16 @@ func (UnimplementedHandler) SiteUserResendVerification(ctx context.Context) erro
 	return ht.ErrNotImplemented
 }
 
+// SiteUserSignOutEverywhere implements SiteUser_signOutEverywhere operation.
+//
+// Sign out everywhere: end every session of the user, on every device, including the one making the
+// request (its cookie is cleared).
+//
+// POST /me/sign-out-everywhere
+func (UnimplementedHandler) SiteUserSignOutEverywhere(ctx context.Context) error {
+	return ht.ErrNotImplemented
+}
+
 // SiteUserUpdateMe implements SiteUser_updateMe operation.
 //
 // Update the authenticated user's profile (name and/or password).

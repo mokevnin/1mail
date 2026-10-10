@@ -789,6 +789,19 @@
         }
       }
     },
+    "/me/sign-out-everywhere": {
+      "post": {
+        "operationId": "SiteUser_signOutEverywhere",
+        "description": "Sign out everywhere: end every session of the user, on every device,\nincluding the one making the request (its cookie is cleared).",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          }
+        },
+        "tags": ["Site User"]
+      }
+    },
     "/me/verification-email": {
       "post": {
         "operationId": "SiteUser_resendVerification",

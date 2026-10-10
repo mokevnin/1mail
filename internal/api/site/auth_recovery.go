@@ -109,9 +109,11 @@ func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVer
 }
 
 // SiteAuthConfirmEmailChange applies a requested email change once the new
-// address is confirmed via the token sent to it. Public: the link is opened from
-// the new inbox, which carries no session, and swapping the email invalidates any
-// existing cookie anyway — the SPA routes the user to sign in with the new email.
+// address is confirmed via the token sent to it. Public: the link may be opened
+// from a browser without a session. The change ends every session of the User
+// (ADR 0020); when the confirming request carries a valid session of that same
+// User, it continues under a fresh token in the same response. The link alone
+// never signs anyone in.
 func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.SiteConfirmEmailChangeInput) (siteapi.SiteAuthConfirmEmailChangeRes, error) {
 	uid, extra, err := h.tokens.Parse(req.Token, authtoken.PurposeEmailChange, h.currentEmailBinding(ctx))
 	if err != nil {
@@ -123,6 +125,8 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, i18n.T("errors.confirm_link_bad", nil)))
 		return &v, nil
 	}
+	// Checked before the change: the epoch bump ends this session too.
+	holder, signedIn := h.sessions.Holder(ctx)
 	// The new address was proven by clicking this link, so it is verified. The
 	// unique index also guards the race if the address was taken meanwhile.
 	err = h.accounts.ChangeEmail(ctx, uid, newEmail)
@@ -132,6 +136,11 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 	}
 	if err != nil {
 		return nil, err
+	}
+	if signedIn && holder == uid {
+		if err := h.sessions.Issue(ctx, newEmail); err != nil {
+			return nil, err
+		}
 	}
 	return &siteapi.SiteAuthConfirmEmailChangeOK{}, nil
 }

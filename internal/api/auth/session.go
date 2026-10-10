@@ -2,10 +2,15 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"errors"
 	"log/slog"
+	"net/http"
 	"strconv"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mokevnin/1mail/ent"
 	entuser "github.com/mokevnin/1mail/ent/user"
 )
@@ -67,4 +72,95 @@ func sessionUser(claims gptoken.Claims) (id, epoch int64, ok bool) {
 		return 0, 0, false
 	}
 	return id, epoch, true
+}
+
+// Sessions writes the site session cookie on the response of the request being
+// served (ADR 0020): a revocation point that keeps the acting User signed in
+// reissues it under the new epoch, and "sign out everywhere" clears it. ogen
+// handlers see no ResponseWriter, so Bind puts the request's writer in its
+// context; cookies go through the go-pkgz token service, so they carry the
+// login's exact attributes and the claims updater stamps the current epoch.
+type Sessions struct {
+	tokens *gptoken.Service
+	check  *SiteSecurityHandler
+}
+
+// NewSessions builds the cookie writer over the go-pkgz service that issues
+// logins and the handler that verifies site sessions.
+func NewSessions(tokens *gptoken.Service, check *SiteSecurityHandler) *Sessions {
+	return &Sessions{tokens: tokens, check: check}
+}
+
+type exchange struct {
+	w http.ResponseWriter
+	r *http.Request
+}
+
+var exchangeKey = struct{ name string }{"sessionExchange"}
+
+// Bind makes the request's writer reachable from the handlers next serves.
+func (s *Sessions) Bind(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), exchangeKey, &exchange{w: w, r: r})
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func exchangeFrom(ctx context.Context) (*exchange, error) {
+	ex, ok := ctx.Value(exchangeKey).(*exchange)
+	if !ok {
+		return nil, errors.New("session: request not bound (Sessions.Bind)")
+	}
+	return ex, nil
+}
+
+// Issue sets a fresh session cookie for the User with the given login email,
+// stamped with their current epoch. Call it after the epoch bump has committed:
+// a cookie stamped before carries the old epoch and is rejected.
+func (s *Sessions) Issue(ctx context.Context, email string) error {
+	ex, err := exchangeFrom(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = s.tokens.Set(ex.w, gptoken.Claims{
+		// Name is what the claims updater resolves; ID is go-pkgz's display id
+		// (the session check reads the stamped User id instead).
+		User: &gptoken.User{Name: email, ID: "direct_" + gptoken.HashID(sha256.New(), email)},
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:       rand.Text(),
+			Issuer:   s.tokens.Issuer,
+			Audience: jwt.ClaimStrings{s.tokens.Issuer},
+		},
+		AuthProvider: &gptoken.AuthProvider{Name: "direct"},
+	})
+	return err
+}
+
+// End clears the session cookie of the request being served.
+func (s *Sessions) End(ctx context.Context) error {
+	ex, err := exchangeFrom(ctx)
+	if err != nil {
+		return err
+	}
+	s.tokens.Reset(ex.w)
+	return nil
+}
+
+// Holder returns the id of the User whose valid session the request carries, for
+// public operations that act on a session when one is present. ok is false when
+// the request carries none or one that does not verify.
+func (s *Sessions) Holder(ctx context.Context) (id int64, ok bool) {
+	ex, err := exchangeFrom(ctx)
+	if err != nil {
+		return 0, false
+	}
+	c, err := ex.r.Cookie(s.tokens.JWTCookieName)
+	if err != nil {
+		return 0, false
+	}
+	u, err := s.check.Verify(ctx, c.Value)
+	if err != nil {
+		return 0, false
+	}
+	return u.ID, true
 }

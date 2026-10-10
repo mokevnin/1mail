@@ -1479,6 +1479,11 @@ export const zSiteUserUpdateMeResponse = zSiteUserResource;
 
 export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
 
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteUserSignOutEverywhereResponse = z.void();
+
 export const zSiteOAuthDescribeQuery = z.object({
   clientId: z.string(),
   redirectUri: z.string(),

@@ -12400,6 +12400,15 @@ func decodeSiteUserResendVerificationResponse(resp *http.Response) (res *SiteUse
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
 
+func decodeSiteUserSignOutEverywhereResponse(resp *http.Response) (res *SiteUserSignOutEverywhereNoContent, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &SiteUserSignOutEverywhereNoContent{}, nil
+	}
+	return res, validate.UnexpectedStatusCodeWithResponse(resp)
+}
+
 func decodeSiteUserUpdateMeResponse(resp *http.Response) (res SiteUserUpdateMeRes, _ error) {
 	switch resp.StatusCode {
 	case 200:

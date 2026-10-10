@@ -70,6 +70,12 @@ namespace SiteUser {
     | ConflictProblem
     | UnprocessableEntityProblem;
 
+  /** Sign out everywhere: end every session of the user, on every device,
+   * including the one making the request (its cookie is cleared). */
+  @post
+  @route("/sign-out-everywhere")
+  op signOutEverywhere(): NoContentResponse;
+
   /** Resend the signup email-verification link to the current address */
   @post
   @route("/verification-email")

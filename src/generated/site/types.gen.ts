@@ -2926,6 +2926,22 @@ export type SiteUserEmailChangeResponses = {
   202: unknown;
 };
 
+export type SiteUserSignOutEverywhereData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/sign-out-everywhere';
+};
+
+export type SiteUserSignOutEverywhereResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteUserSignOutEverywhereResponse = SiteUserSignOutEverywhereResponses[keyof SiteUserSignOutEverywhereResponses];
+
 export type SiteUserResendVerificationData = {
   body?: never;
   path?: never;

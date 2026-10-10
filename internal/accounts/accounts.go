@@ -262,8 +262,9 @@ func (a *Accounts) CreateUser(ctx context.Context, name, email, passwordHash str
 }
 
 // UpdateProfile sets the User's name and/or password hash (nil leaves a field
-// unchanged) and returns the stored User. A password change is recorded as an Audit
-// entry in every Workspace the User belongs to, in the same transaction.
+// unchanged) and returns the stored User. A password change bumps the session
+// epoch, ending every session issued before it (ADR 0020), and is recorded as an
+// Audit entry in every Workspace the User belongs to, in the same transaction.
 func (a *Accounts) UpdateProfile(ctx context.Context, id int64, name, passwordHash *string) (*ent.User, error) {
 	var saved *ent.User
 	err := a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
@@ -272,7 +273,8 @@ func (a *Accounts) UpdateProfile(ctx context.Context, id int64, name, passwordHa
 			upd = upd.SetName(*name)
 		}
 		if passwordHash != nil {
-			upd = upd.SetPasswordHash(*passwordHash)
+			// A new password ends every session issued before it (ADR 0020).
+			upd = upd.SetPasswordHash(*passwordHash).AddSessionEpoch(1)
 		}
 		u, err := upd.Save(ctx)
 		if err != nil {
@@ -292,6 +294,12 @@ func (a *Accounts) UpdateProfile(ctx context.Context, id int64, name, passwordHa
 func (a *Accounts) SetPassword(ctx context.Context, id int64, passwordHash string) error {
 	_, err := a.UpdateProfile(ctx, id, nil, &passwordHash)
 	return err
+}
+
+// EndSessions bumps the User's session epoch, ending every session issued before
+// it on every device (ADR 0020, "sign out everywhere").
+func (a *Accounts) EndSessions(ctx context.Context, id int64) error {
+	return a.ent.User.UpdateOneID(id).AddSessionEpoch(1).Exec(ctx)
 }
 
 // RecordLogin records a successful sign-in of the User as `user.login` in the log of
@@ -333,10 +341,11 @@ func (a *Accounts) MarkEmailVerified(ctx context.Context, id int64) error {
 }
 
 // ChangeEmail swaps the login email for one proven by a confirmation link, so it is
-// stored verified. The unique index guards a race on the address (see
+// stored verified, and bumps the session epoch: every session issued before the
+// change ends (ADR 0020). The unique index guards a race on the address (see
 // service.IsUniqueViolation).
 func (a *Accounts) ChangeEmail(ctx context.Context, id int64, newEmail string) error {
-	return a.ent.User.UpdateOneID(id).SetEmail(newEmail).SetEmailVerifiedAt(time.Now()).Exec(ctx)
+	return a.ent.User.UpdateOneID(id).SetEmail(newEmail).SetEmailVerifiedAt(time.Now()).AddSessionEpoch(1).Exec(ctx)
 }
 
 // PendingInvitation looks up a pending, unexpired Invitation by its raw token, with

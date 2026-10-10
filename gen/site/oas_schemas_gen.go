@@ -10413,6 +10413,9 @@ func (s *SiteUserResource) SetCreatedAt(val Timestamp) {
 
 func (*SiteUserResource) siteUserUpdateMeRes() {}
 
+// SiteUserSignOutEverywhereNoContent is response for SiteUserSignOutEverywhere operation.
+type SiteUserSignOutEverywhereNoContent struct{}
+
 type SiteUserUpdateMeForbidden ProblemDetails
 
 func (*SiteUserUpdateMeForbidden) siteUserUpdateMeRes() {}

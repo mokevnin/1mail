@@ -88,6 +88,7 @@ const (
 	SiteUserEmailChangeOperation            OperationName = "SiteUserEmailChange"
 	SiteUserGetMeOperation                  OperationName = "SiteUserGetMe"
 	SiteUserResendVerificationOperation     OperationName = "SiteUserResendVerification"
+	SiteUserSignOutEverywhereOperation      OperationName = "SiteUserSignOutEverywhere"
 	SiteUserUpdateMeOperation               OperationName = "SiteUserUpdateMe"
 	SiteWebhooksCreateOperation             OperationName = "SiteWebhooksCreate"
 	SiteWebhooksDeleteOperation             OperationName = "SiteWebhooksDelete"

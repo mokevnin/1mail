@@ -4058,6 +4058,12 @@ func encodeSiteUserResendVerificationResponse(response *SiteUserResendVerificati
 	return nil
 }
 
+func encodeSiteUserSignOutEverywhereResponse(response *SiteUserSignOutEverywhereNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
 func encodeSiteUserUpdateMeResponse(response SiteUserUpdateMeRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SiteUserResource:

@@ -529,6 +529,13 @@ type Invoker interface {
 	//
 	// POST /me/verification-email
 	SiteUserResendVerification(ctx context.Context) error
+	// SiteUserSignOutEverywhere invokes SiteUser_signOutEverywhere operation.
+	//
+	// Sign out everywhere: end every session of the user, on every device, including the one making the
+	// request (its cookie is cleared).
+	//
+	// POST /me/sign-out-everywhere
+	SiteUserSignOutEverywhere(ctx context.Context) error
 	// SiteUserUpdateMe invokes SiteUser_updateMe operation.
 	//
 	// Update the authenticated user's profile (name and/or password).
@@ -12683,6 +12690,120 @@ func (c *Client) sendSiteUserResendVerification(ctx context.Context) (res *SiteU
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteUserResendVerificationResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteUserSignOutEverywhere invokes SiteUser_signOutEverywhere operation.
+//
+// Sign out everywhere: end every session of the user, on every device, including the one making the
+// request (its cookie is cleared).
+//
+// POST /me/sign-out-everywhere
+func (c *Client) SiteUserSignOutEverywhere(ctx context.Context) error {
+	_, err := c.sendSiteUserSignOutEverywhere(ctx)
+	return err
+}
+
+func (c *Client) sendSiteUserSignOutEverywhere(ctx context.Context) (res *SiteUserSignOutEverywhereNoContent, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteUser_signOutEverywhere"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/sign-out-everywhere"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteUserSignOutEverywhereOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/sign-out-everywhere"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteUserSignOutEverywhereOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteUserSignOutEverywhereResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

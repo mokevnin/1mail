@@ -278,30 +278,39 @@ func NewSiteSecurityHandler(jwtSecret string, client *ent.Client, now func() tim
 var _ siteapi.SecurityHandler = (*SiteSecurityHandler)(nil)
 
 func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.OperationName, t siteapi.ApiKeyAuth) (context.Context, error) {
-	claims, err := h.tokens.Parse(t.APIKey)
+	u, err := h.Verify(ctx, t.APIKey)
 	if err != nil {
-		return ctx, ErrUnauthorized
+		return ctx, err
+	}
+	return WithSiteAuth(ctx, &SiteAuth{UserID: u.ID, Email: u.Email}), nil
+}
+
+// Verify checks a raw session token (signature, expiry, User id and epoch) and
+// returns the User it belongs to, or ErrUnauthorized.
+func (h *SiteSecurityHandler) Verify(ctx context.Context, raw string) (*ent.User, error) {
+	claims, err := h.tokens.Parse(raw)
+	if err != nil {
+		return nil, ErrUnauthorized
 	}
 	if claims.ExpiresAt == nil || !h.now().Before(claims.ExpiresAt.Time) {
-		return ctx, ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 	id, epoch, ok := sessionUser(claims)
 	if !ok {
-		return ctx, ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 
 	u, err := h.ent.User.Get(ctx, id)
 	if ent.IsNotFound(err) {
-		return ctx, ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 	if err != nil {
-		return ctx, err
+		return nil, err
 	}
 	if u.SessionEpoch != epoch {
-		return ctx, ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
-
-	return WithSiteAuth(ctx, &SiteAuth{UserID: u.ID, Email: u.Email}), nil
+	return u, nil
 }
 
 // CredChecker verifies user credentials for go-pkgz/auth direct provider.
