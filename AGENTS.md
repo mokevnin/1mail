@@ -9,6 +9,11 @@ Go backend + React/Vite frontend in a single repo. The data model is workspace-s
 (multi-tenant): contacts, events, api tokens, and tracking entities all belong to a
 `workspace`.
 
+**The project is greenfield.** There are no production users and no legacy contracts to
+preserve: no backward compatibility, no compat shims, deprecation paths or fallbacks.
+Rewrite whatever the cleanest design needs: the TypeSpec contract, ent schema, tests and
+every caller (regenerate afterwards), rather than layering the new design over the old.
+
 ## Codegen pipeline (read this first)
 
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
