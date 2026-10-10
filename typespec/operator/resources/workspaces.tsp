@@ -45,6 +45,56 @@ model OperatorWorkspaceResource {
   suspension?: OperatorSuspension | null;
 }
 
+/** A rate as the (numerator, denominator, rate) triple (ADR 0011) */
+model OperatorRate {
+  /** Events counted against the rate */
+  numerator: int32;
+
+  /** The population the rate is over */
+  denominator: int32;
+
+  /** numerator / denominator; null (undefined) when fewer sends than the volume floor
+   * were made in the window, never reported as 0 */
+  rate: float64 | null;
+}
+
+/** The Complaint and Bounce rates of one Sending domain over the trailing window */
+model OperatorDomainRates {
+  /** Sending domain id */
+  sendingDomainId: EntityId;
+
+  /** The domain the rates are for */
+  domain: string;
+
+  /** Complaints over sent minus hard bounces */
+  complaintRate: OperatorRate;
+
+  /** Hard bounces over sent */
+  bounceRate: OperatorRate;
+}
+
+/** A Workspace's deliverability over the trailing window: the rates of ADR 0011 per
+ * Sending domain, and how much it sent. Counts only, never message content. */
+model OperatorDeliverability {
+  /** Length of the trailing window, in hours */
+  windowHours: int32;
+
+  /** Fewest sends in the window (per Sending domain) for a rate to be defined */
+  volumeFloor: int32;
+
+  /** Messages sent in the window across all Sending domains */
+  sendVolume: int32;
+
+  /** One entry per Sending domain, oldest first */
+  domains: OperatorDomainRates[];
+}
+
+/** A Workspace with its deliverability, as the detail page shows it */
+model OperatorWorkspaceDetailResource {
+  ...OperatorWorkspaceResource;
+  deliverability: OperatorDeliverability;
+}
+
 /** Search filter of the Workspace list */
 model OperatorWorkspaceSearch {
   /** Only Workspaces whose slug contains this text (case-insensitive) */
@@ -60,11 +110,11 @@ namespace OperatorWorkspaces {
     | Page<OperatorWorkspaceResource>
     | UnauthorizedProblem;
 
-  /** One Workspace's metadata and suspension state */
+  /** One Workspace's metadata, suspension state, rates and send volume */
   @route("/{workspaceId}")
   @get
   op get(@path workspaceId: EntityId):
-    | OperatorWorkspaceResource
+    | OperatorWorkspaceDetailResource
     | UnauthorizedProblem
     | NotFoundProblem;
 }

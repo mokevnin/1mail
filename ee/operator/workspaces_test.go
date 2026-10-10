@@ -19,7 +19,7 @@ import (
 // (never Contacts, content, Events or the Workspace's secret keys).
 func requireMetadataOnly(t *testing.T, w map[string]any) {
 	t.Helper()
-	allowed := []string{"id", "slug", "name", "createdAt", "suspension"}
+	allowed := []string{"id", "slug", "name", "createdAt", "suspension", "deliverability"}
 	for k := range w {
 		assert.Contains(t, allowed, k)
 	}
@@ -66,8 +66,8 @@ func TestTheWorkspaceListShowsEveryWorkspaceNewestFirst(t *testing.T) {
 
 	page := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{})
 
-	assert.Equal(t, []string{"hooli", "umbrella", "initech", "globex", "acme"}, slugs(page.Items))
-	assert.EqualValues(t, 5, page.TotalItems)
+	assert.Equal(t, []string{"soylent", "hooli", "umbrella", "initech", "globex", "acme"}, slugs(page.Items))
+	assert.EqualValues(t, 6, page.TotalItems)
 	assert.EqualValues(t, 1, page.TotalPages)
 	assert.EqualValues(t, 1, page.Page)
 }
@@ -80,8 +80,8 @@ func TestTheWorkspaceListIsPaginated(t *testing.T) {
 		Page: operatorapi.NewOptInt32(2), PageSize: operatorapi.NewOptInt32(2),
 	})
 
-	assert.Equal(t, []string{"initech", "globex"}, slugs(second.Items))
-	assert.EqualValues(t, 5, second.TotalItems)
+	assert.Equal(t, []string{"umbrella", "initech"}, slugs(second.Items))
+	assert.EqualValues(t, 6, second.TotalItems)
 	assert.EqualValues(t, 3, second.TotalPages)
 	assert.EqualValues(t, 2, second.PageSize)
 }
@@ -124,13 +124,13 @@ func TestTheDetailShowsMetadataAndTheSuspensionState(t *testing.T) {
 	h := newHarness(t)
 	c, _ := h.operatorSession(t)
 
-	acme, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.AcmeID)).(*operatorapi.OperatorWorkspaceResource)
+	acme, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.AcmeID)).(*operatorapi.OperatorWorkspaceDetailResource)
 	require.True(t, ok)
 	assert.Equal(t, fixtures.AcmeSlug, acme.Slug)
 	assert.Equal(t, fixtures.AcmeName, acme.Name)
 	assert.False(t, acme.Suspension.Set, "an active Workspace has no suspension")
 
-	hooli, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.HooliID)).(*operatorapi.OperatorWorkspaceResource)
+	hooli, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.HooliID)).(*operatorapi.OperatorWorkspaceDetailResource)
 	require.True(t, ok)
 	require.True(t, hooli.Suspension.Set)
 	assert.Equal(t, operatorapi.OperatorSuspensionActorKindOperator, hooli.Suspension.Value.Actor.Kind)
@@ -185,4 +185,72 @@ func TestTheWorkspaceEndpointsAnswer404WithoutTheLicense(t *testing.T) {
 	for _, path := range []string{"/operator/workspaces", "/operator/workspaces/" + strconv.Itoa(fixtures.AcmeID)} {
 		assert.Equal(t, http.StatusNotFound, get(t, h.env.Server, path).Code, path)
 	}
+}
+
+// Fixtures (events.yml): mail.soylent.test sent 8, 1 hard bounce, 1 soft bounce and 1
+// complaint in the last 24 hours, plus a send 48 hours ago outside the window;
+// idle.soylent.test has no traffic.
+func soylentDeliverability(t *testing.T, h *harness) operatorapi.OperatorDeliverability {
+	t.Helper()
+	c, _ := h.operatorSession(t)
+	soylent, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.SoylentID)).(*operatorapi.OperatorWorkspaceDetailResource)
+	require.True(t, ok)
+	return soylent.Deliverability
+}
+
+func domainRates(t *testing.T, d operatorapi.OperatorDeliverability, domain string) operatorapi.OperatorDomainRates {
+	t.Helper()
+	for _, r := range d.Domains {
+		if r.Domain == domain {
+			return r
+		}
+	}
+	require.Failf(t, "domain not listed", "%s", domain)
+	return operatorapi.OperatorDomainRates{}
+}
+
+func TestBelowTheVolumeFloorTheRatesAreUndefinedButTheCountsShow(t *testing.T) {
+	d := soylentDeliverability(t, newHarness(t))
+
+	assert.EqualValues(t, 24, d.WindowHours)
+	assert.EqualValues(t, 1000, d.VolumeFloor)
+	assert.EqualValues(t, 8, d.SendVolume, "the send 48 hours ago is outside the window")
+	require.Len(t, d.Domains, 2)
+
+	mail := domainRates(t, d, fixtures.SendingDomainSoylentDomain)
+	assert.EqualValues(t, 1, mail.ComplaintRate.Numerator)
+	assert.EqualValues(t, 7, mail.ComplaintRate.Denominator, "complaints are over sent minus hard bounces")
+	assert.True(t, mail.ComplaintRate.Rate.Null, "8 sent is below the floor")
+	assert.EqualValues(t, 1, mail.BounceRate.Numerator, "a soft bounce is not counted")
+	assert.EqualValues(t, 8, mail.BounceRate.Denominator)
+	assert.True(t, mail.BounceRate.Rate.Null)
+
+	idle := domainRates(t, d, fixtures.SendingDomainSoylentIdleDomain)
+	assert.EqualValues(t, 0, idle.BounceRate.Denominator)
+	assert.True(t, idle.BounceRate.Rate.Null)
+	assert.True(t, idle.ComplaintRate.Rate.Null)
+}
+
+func TestAtOrAboveTheVolumeFloorTheRatesAreDefined(t *testing.T) {
+	d := soylentDeliverability(t, newHarness(t, testhelper.WithOperatorVolumeFloor(8)))
+
+	assert.EqualValues(t, 8, d.VolumeFloor)
+	mail := domainRates(t, d, fixtures.SendingDomainSoylentDomain)
+	require.False(t, mail.ComplaintRate.Rate.Null)
+	assert.InDelta(t, 1.0/7.0, mail.ComplaintRate.Rate.Value, 1e-9)
+	require.False(t, mail.BounceRate.Rate.Null)
+	assert.InDelta(t, 1.0/8.0, mail.BounceRate.Rate.Value, 1e-9)
+
+	idle := domainRates(t, d, fixtures.SendingDomainSoylentIdleDomain)
+	assert.True(t, idle.BounceRate.Rate.Null, "no traffic is below any floor")
+}
+
+func TestAWorkspaceWithoutSendingDomainsHasNoRatesAndNoVolume(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	hooli, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.HooliID)).(*operatorapi.OperatorWorkspaceDetailResource)
+	require.True(t, ok)
+	assert.Empty(t, hooli.Deliverability.Domains)
+	assert.EqualValues(t, 0, hooli.Deliverability.SendVolume)
 }

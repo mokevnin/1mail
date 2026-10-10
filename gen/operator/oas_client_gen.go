@@ -58,7 +58,7 @@ type Invoker interface {
 	OperatorMeGet(ctx context.Context) (OperatorMeGetRes, error)
 	// OperatorWorkspacesGet invokes OperatorWorkspaces_get operation.
 	//
-	// One Workspace's metadata and suspension state.
+	// One Workspace's metadata, suspension state, rates and send volume.
 	//
 	// GET /workspaces/{workspaceId}
 	OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (OperatorWorkspacesGetRes, error)
@@ -475,7 +475,7 @@ func (c *Client) sendOperatorMeGet(ctx context.Context) (res OperatorMeGetRes, e
 
 // OperatorWorkspacesGet invokes OperatorWorkspaces_get operation.
 //
-// One Workspace's metadata and suspension state.
+// One Workspace's metadata, suspension state, rates and send volume.
 //
 // GET /workspaces/{workspaceId}
 func (c *Client) OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (OperatorWorkspacesGetRes, error) {

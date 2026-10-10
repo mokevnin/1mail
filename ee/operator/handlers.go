@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mokevnin/sphericon/ent"
 	"github.com/mokevnin/sphericon/ent/workspace"
@@ -165,8 +166,46 @@ func (h *Handlers) OperatorWorkspacesGet(ctx context.Context, params operatorapi
 	if err != nil {
 		return nil, err
 	}
-	res := workspaceResource(w)
+	d, err := h.module.WorkspaceDeliverability(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	res := workspaceDetail(w, d)
 	return &res, nil
+}
+
+// workspaceDetail is the detail page's view: the metadata of workspaceResource plus
+// the deliverability counts.
+func workspaceDetail(w *ent.Workspace, d Deliverability) operatorapi.OperatorWorkspaceDetailResource {
+	base := workspaceResource(w)
+	domains := make([]operatorapi.OperatorDomainRates, 0, len(d.Domains))
+	for _, r := range d.Domains {
+		domains = append(domains, operatorapi.OperatorDomainRates{
+			SendingDomainId: operatorapi.EntityId(strconv.FormatInt(r.SendingDomainID, 10)),
+			Domain:          r.Domain,
+			ComplaintRate:   rateResource(r.Complaint),
+			BounceRate:      rateResource(r.Bounce),
+		})
+	}
+	return operatorapi.OperatorWorkspaceDetailResource{
+		ID: base.ID, Slug: base.Slug, Name: base.Name, CreatedAt: base.CreatedAt, Suspension: base.Suspension,
+		Deliverability: operatorapi.OperatorDeliverability{
+			WindowHours: int32(d.Window / time.Hour),
+			VolumeFloor: int32(d.VolumeFloor),
+			SendVolume:  int32(d.SendVolume),
+			Domains:     domains,
+		},
+	}
+}
+
+func rateResource(r Rate) operatorapi.OperatorRate {
+	out := operatorapi.OperatorRate{Numerator: int32(r.Numerator), Denominator: int32(r.Denominator)}
+	if r.Rate == nil {
+		out.Rate = operatorapi.NilFloat64{Null: true}
+	} else {
+		out.Rate = operatorapi.NewNilFloat64(*r.Rate)
+	}
+	return out
 }
 
 func workspaceNotFound() *operatorapi.OperatorWorkspacesGetNotFound {

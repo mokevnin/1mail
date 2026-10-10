@@ -40,6 +40,36 @@ export const zOperatorLoginResult = z.object({
 });
 
 /**
+ * A rate as the (numerator, denominator, rate) triple (ADR 0011)
+ */
+export const zOperatorRate = z.object({
+  numerator: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  denominator: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  rate: z.number().nullable()
+});
+
+/**
+ * The Complaint and Bounce rates of one Sending domain over the trailing window
+ */
+export const zOperatorDomainRates = z.object({
+  sendingDomainId: zEntityId,
+  domain: z.string(),
+  complaintRate: zOperatorRate,
+  bounceRate: zOperatorRate
+});
+
+/**
+ * A Workspace's deliverability over the trailing window: the rates of ADR 0011 per
+ * Sending domain, and how much it sent. Counts only, never message content.
+ */
+export const zOperatorDeliverability = z.object({
+  windowHours: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  volumeFloor: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  sendVolume: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  domains: z.array(zOperatorDomainRates)
+});
+
+/**
  * The authenticated platform Operator (shown to customers only as "sphericon staff")
  */
 export const zOperatorResource = z.object({
@@ -142,6 +172,18 @@ export const zOperatorSuspension = z.object({
 });
 
 /**
+ * A Workspace with its deliverability, as the detail page shows it
+ */
+export const zOperatorWorkspaceDetailResource = z.object({
+  id: zEntityId,
+  slug: z.string(),
+  name: z.string(),
+  createdAt: zTimestamp,
+  suspension: z.exactOptional(zOperatorSuspension.nullable()),
+  deliverability: zOperatorDeliverability
+});
+
+/**
  * A Workspace as the Operator console sees it: metadata only, never Contacts,
  * content or Events (ADR 0026).
  */
@@ -223,4 +265,4 @@ export const zOperatorWorkspacesGetPath = z.object({
 /**
  * The request has succeeded.
  */
-export const zOperatorWorkspacesGetResponse = zOperatorWorkspaceResource;
+export const zOperatorWorkspacesGetResponse = zOperatorWorkspaceDetailResource;

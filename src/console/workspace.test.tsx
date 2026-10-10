@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 
 import { handleOperatorWorkspacesGet } from '../generated/operator/msw.gen.ts'
-import type { OperatorWorkspaceResource } from '../generated/operator/types.gen.ts'
+import type { OperatorWorkspaceDetailResource } from '../generated/operator/types.gen.ts'
 import { consoleWorkspaceRoute } from '../router.tsx'
 import { problem } from '../test/problem.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
@@ -15,7 +15,7 @@ const MOUNT = {
   initialPath: consoleWorkspaceRoute.id.replace('$workspaceId', '5'),
 }
 
-const HOOLI: OperatorWorkspaceResource = {
+const HOOLI: OperatorWorkspaceDetailResource = {
   id: '5',
   slug: 'hooli',
   name: 'Hooli',
@@ -25,6 +25,21 @@ const HOOLI: OperatorWorkspaceResource = {
     actor: { kind: 'operator', id: 'op-fixture' },
     reason: 'abuse report',
   },
+  deliverability: { windowHours: 24, volumeFloor: 1000, sendVolume: 0, domains: [] },
+}
+
+const ABOVE_FLOOR = {
+  sendingDomainId: '400',
+  domain: 'mail.soylent.test',
+  complaintRate: { numerator: 3, denominator: 1200, rate: 0.0025 },
+  bounceRate: { numerator: 60, denominator: 1300, rate: 0.046 },
+}
+
+const BELOW_FLOOR = {
+  sendingDomainId: '401',
+  domain: 'promo.soylent.test',
+  complaintRate: { numerator: 1, denominator: 7, rate: null },
+  bounceRate: { numerator: 1, denominator: 8, rate: null },
 }
 
 test('shows the metadata and who suspended the workspace, and why', async () => {
@@ -64,4 +79,59 @@ test('an unknown workspace shows the error', async () => {
   const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
 
   await expect.element(screen.getByText('workspace not found')).toBeInTheDocument()
+})
+
+test('shows the send volume and the rates with their counts per sending domain', async () => {
+  worker.use(
+    handleOperatorWorkspacesGet({
+      body: {
+        ...HOOLI,
+        deliverability: {
+          windowHours: 24,
+          volumeFloor: 1000,
+          sendVolume: 1308,
+          domains: [ABOVE_FLOOR],
+        },
+      },
+    }),
+  )
+  const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
+
+  await expect.element(screen.getByText('mail.soylent.test')).toBeInTheDocument()
+  await expect.element(screen.getByText('0.25%')).toBeInTheDocument()
+  await expect.element(screen.getByText('3 / 1200')).toBeInTheDocument()
+  await expect.element(screen.getByText('4.6%')).toBeInTheDocument()
+  await expect.element(screen.getByText('1,308')).toBeInTheDocument()
+  await expect.element(screen.getByText('Last 24 hours')).toBeInTheDocument()
+})
+
+test('a rate below the volume floor shows the notice and its counts, never a percentage', async () => {
+  worker.use(
+    handleOperatorWorkspacesGet({
+      body: {
+        ...HOOLI,
+        deliverability: {
+          windowHours: 24,
+          volumeFloor: 1000,
+          sendVolume: 8,
+          domains: [BELOW_FLOOR],
+        },
+      },
+    }),
+  )
+  const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
+
+  await expect.element(screen.getByText('promo.soylent.test')).toBeInTheDocument()
+  await expect
+    .element(screen.getByText('Not enough data (fewer than 1000 sent)').first())
+    .toBeInTheDocument()
+  await expect.element(screen.getByText('1 / 8')).toBeInTheDocument()
+  await expect.element(screen.getByText('1 / 7')).toBeInTheDocument()
+})
+
+test('a workspace with no sending domains says so', async () => {
+  worker.use(handleOperatorWorkspacesGet({ body: HOOLI }))
+  const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
+
+  await expect.element(screen.getByText('No sending domains.')).toBeInTheDocument()
 })

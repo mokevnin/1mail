@@ -284,6 +284,16 @@ export default interface Resources {
         "loadError": "Could not load the workspace",
         "noReason": "No reason given",
         "notSuspended": "Sending is not suspended.",
+        "rates": {
+          "belowFloor": "Not enough data (fewer than {{floor}} sent)",
+          "bounceRate": "Bounce rate",
+          "complaintRate": "Complaint rate",
+          "domain": "Sending domain",
+          "noDomains": "No sending domains.",
+          "sendVolume": "Sent",
+          "title": "Deliverability",
+          "window": "Last {{hours}} hours"
+        },
         "reason": "Reason",
         "suspendedAt": "Suspended at",
         "suspendedBy": "Suspended by",

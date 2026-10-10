@@ -110,7 +110,7 @@ export const operatorWorkspacesList = <ThrowOnError extends boolean = false>(opt
 });
 
 /**
- * One Workspace's metadata and suspension state
+ * One Workspace's metadata, suspension state, rates and send volume
  */
 export const operatorWorkspacesGet = <ThrowOnError extends boolean = false>(options: Options<OperatorWorkspacesGetData, ThrowOnError>): RequestResult<OperatorWorkspacesGetResponses, OperatorWorkspacesGetErrors, ThrowOnError> => (options.client ?? client).get<OperatorWorkspacesGetResponses, OperatorWorkspacesGetErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
