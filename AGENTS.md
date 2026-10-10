@@ -258,3 +258,9 @@ Single-context: one `GLOSSARY.md` at the repo root plus `docs/adr/`. See `docs/a
 ### Advisor before /to-spec
 
 Before running the `to-spec` skill, call the `advisor` tool first and take its advice into account. The skill is vendored, so this rule lives here rather than in the skill.
+
+### Merge main before marking ready
+
+In `implement-spec`, before marking the draft PR ready, merge a freshly fetched `origin/main` into
+the integration branch, push, and merge the PR at once: `main` moves while the integration runs, and a
+conflicting PR runs no CI. The skill is vendored, so this rule lives here rather than in the skill.

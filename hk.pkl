@@ -32,6 +32,12 @@ local linters = new Mapping {
         check = "zizmor --no-progress {{files}}"
     }
     ["typos"] = Builtins.typos
+    // A merge of main can introduce a second ADR with the same number.
+    ["adr_numbers"] {
+        glob = List("docs/adr/*.md")
+        check = "mise run check:adr"
+        exclusive = true
+    }
     // Project-specific syntax rules (sgconfig.yml, ast-grep/rules).
     ["ast_grep"] {
         glob = List("src/**/*.ts", "src/**/*.tsx")

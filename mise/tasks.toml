@@ -112,7 +112,7 @@ while IFS=$'\t' read -r path ref; do
   if [ -z "${usage_apply:-}" ]; then echo "would remove $path ($branch)"; continue; fi
   (cd "$path" && mise daemons stop >/dev/null 2>&1) || true
   git worktree unlock "$path" 2>/dev/null || true
-  git worktree remove "$path" && git branch -d "$branch" >/dev/null && echo "removed $path ($branch)"
+  git worktree remove "$path" && git branch -D "$branch" >/dev/null && echo "removed $path ($branch)"
 done
 '''
 
@@ -269,7 +269,11 @@ run = [
 
 ["check:be"]
 description = "golangci-lint, govulncheck and go.mod tidiness"
-run = ["golangci-lint run ./...", "go tool govulncheck ./...", "go mod tidy -diff"]
+run = [
+  "golangci-lint run --allow-serial-runners ./...",
+  "go tool govulncheck ./...",
+  "go mod tidy -diff",
+]
 
 ["check:ast"]
 description = "Project-specific syntax rules (sgconfig.yml, ast-grep/): tests, then scan"
