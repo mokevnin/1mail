@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
@@ -23,34 +24,19 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 		return &res, nil
 	}
 
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	q := auth.TokenScoped(ctx).Contact().Query()
-
-	total, err := q.Count(ctx)
+	page, err := h.contacts.List(ctx, auth.TokenScoped(ctx), pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-
-	items, err := q.Order(ent.Asc(contact.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]externalapi.ContactResource, len(items))
-	for i, c := range items {
-		resources[i] = mapper.ContactToResource(c)
 	}
 
 	return &externalapi.ContactsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(c *ent.Contact, _ int) externalapi.ContactResource {
+			return mapper.ContactToResource(c)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

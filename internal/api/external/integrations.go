@@ -10,7 +10,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/integration"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
@@ -31,18 +30,8 @@ func (h *Handlers) IntegrationsList(ctx context.Context, params externalapi.Inte
 		res := externalapi.IntegrationsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
 	s := auth.TokenScoped(ctx)
-	q := s.Integration().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := q.Order(ent.Asc(integration.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
+	page, err := h.integrations.List(ctx, s, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -50,18 +39,18 @@ func (h *Handlers) IntegrationsList(ctx context.Context, params externalapi.Inte
 	if err != nil {
 		return nil, err
 	}
-	items := make([]externalapi.IntegrationResource, len(rows))
-	for i, row := range rows {
+	items := make([]externalapi.IntegrationResource, len(page.Items))
+	for i, row := range page.Items {
 		if items[i], err = h.integrationResource(row, usage); err != nil {
 			return nil, err
 		}
 	}
 	return &externalapi.IntegrationsListOK{
 		Items:      items,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

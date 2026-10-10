@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
@@ -26,30 +27,18 @@ func (h *Handlers) SendingDomainsList(ctx context.Context, params externalapi.Se
 		res := externalapi.SendingDomainsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	q := auth.TokenScoped(ctx).SendingDomain().Query()
-	total, err := q.Count(ctx)
+	page, err := h.sendingDomains.List(ctx, auth.TokenScoped(ctx), pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-	rows, err := q.Order(ent.Asc(sendingdomain.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items := make([]externalapi.SendingDomainResource, len(rows))
-	for i, d := range rows {
-		items[i] = sendingDomainResource(d)
 	}
 	return &externalapi.SendingDomainsListOK{
-		Items:      items,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(d *ent.SendingDomain, _ int) externalapi.SendingDomainResource {
+			return sendingDomainResource(d)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

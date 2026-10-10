@@ -5,8 +5,9 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/segment"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
@@ -20,32 +21,18 @@ func (h *Handlers) SegmentsList(ctx context.Context, params externalapi.Segments
 		return &res, nil
 	}
 
-	ws := auth.TokenScoped(ctx)
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	q := ws.Segment().Query()
-	total, err := q.Count(ctx)
+	page, err := h.segments.List(ctx, auth.TokenScoped(ctx), pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-	items, err := q.Order(ent.Asc(segment.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]externalapi.SegmentResource, len(items))
-	for i, s := range items {
-		out[i] = mapper.SegmentToResource(s)
 	}
 	return &externalapi.SegmentsListOK{
-		Items:      out,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(s *ent.Segment, _ int) externalapi.SegmentResource {
+			return mapper.SegmentToResource(s)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

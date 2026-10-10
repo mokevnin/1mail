@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 // Alias key fields, as reported by ConflictError.Field.
@@ -405,4 +406,13 @@ func domainError(err error) error {
 		}
 	}
 	return err
+}
+
+// List returns one page of the Workspace's Contacts, ascending by id.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Contact], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.Contact().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Contact, error) {
+			return s.Contact().Query().Order(ent.Asc(contact.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }

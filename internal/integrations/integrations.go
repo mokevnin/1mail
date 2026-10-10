@@ -23,6 +23,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
 	"github.com/mokevnin/1mail/internal/messaging/smtp"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/secrets"
 )
 
@@ -436,4 +437,13 @@ func (m *Module) Redact(row *ent.Integration) (RedactedConfig, error) {
 		}}, nil
 	}
 	return RedactedConfig{}, errUnknownProvider
+}
+
+// List returns one page of the Workspace's Integrations, ascending by id.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Integration], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.Integration().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Integration, error) {
+			return s.Integration().Query().Order(ent.Asc(integration.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }

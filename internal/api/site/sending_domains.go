@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
@@ -54,38 +55,19 @@ func (h *Handlers) SiteSendingDomainsList(ctx context.Context, params siteapi.Si
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := s.SendingDomain().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items, err := q.Order(ent.Desc(sendingdomain.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
+	page, err := h.sendingDomains.List(ctx, s, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 
-	resources := make([]siteapi.SiteSendingDomainResource, len(items))
-	for i, d := range items {
-		resources[i] = sendingDomainResource(d)
-	}
 	return &siteapi.SiteSendingDomainsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(d *ent.SendingDomain, _ int) siteapi.SiteSendingDomainResource {
+			return sendingDomainResource(d)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

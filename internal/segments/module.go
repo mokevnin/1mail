@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 // Domain errors returned by Module. Callers match with errors.Is.
@@ -107,4 +109,13 @@ func (s *Module) Count(ctx context.Context, ws *ent.Scoped, id int64) (int, erro
 		def = *seg.Definition
 	}
 	return s.Preview(ctx, ws, def)
+}
+
+// List returns one page of the Workspace's Segments, ascending by id.
+func (s *Module) List(ctx context.Context, ws *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Segment], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return ws.Segment().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Segment, error) {
+			return ws.Segment().Query().Order(ent.Asc(segment.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }
