@@ -1,6 +1,7 @@
 name: Dependency review
 
-# Runs only on release-please pull requests.
+# Runs on pull requests only (in practice: Dependabot PRs, since maintainers commit
+# straight to main). Blocks known-vulnerable or license-incompatible dependencies.
 on:
   pull_request:
 
@@ -9,7 +10,6 @@ permissions:
 
 jobs:
   dependency-review:
-    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
