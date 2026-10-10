@@ -125,7 +125,7 @@ func PaceRecipients(ctx context.Context, client *ent.Client, broadcastID int64, 
 	if err != nil {
 		return nil, err
 	}
-	step := (sendlimit.Limits{PerSecond: integ.MaxPerSecond, PerDay: integ.MaxPerDay}).Interval()
+	step := sendlimit.EffectiveOf(integ).Limits().Interval()
 	if step <= 0 || n == 0 {
 		return nil, s.Broadcast().UpdateOneID(b.ID).ClearLastScheduledAt().Exec(ctx)
 	}

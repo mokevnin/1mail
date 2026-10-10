@@ -60,6 +60,21 @@ func TestPlannerSpreadsRecipientJobsAtTheEffectiveRate(t *testing.T) {
 	assert.Equal(t, broadcast.StatusSending, b.Status, "pacing adds no status")
 }
 
+// A ceiling discovered from the provider paces a Broadcast just like a manual one: the
+// effective rate is the lower of the two (ADR 0023).
+func TestPlannerPacesByTheProviderDiscoveredRate(t *testing.T) {
+	e := newRiverEnv(t)
+	ctx := e.workCtx()
+	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetProviderMaxPerSecond(4).SetMaxPerSecond(100).ExecX(ctx)
+
+	e.planBroadcast(t, fixtures.BroadcastDraftID)
+
+	times := e.recipientJobTimes(t)
+	require.Greater(t, len(times), 2)
+	assert.InDelta(t, 250*time.Millisecond, times[1].Sub(times[0]), float64(5*time.Millisecond), "one over the provider's 4 per second")
+	assert.NotNil(t, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).LastScheduledAt)
+}
+
 // A Broadcast scheduled for later starts pacing at its scheduled time, not at now.
 func TestPlannerStartsAtTheScheduledTimeWhenLater(t *testing.T) {
 	e := newRiverEnv(t)
