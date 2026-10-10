@@ -561,6 +561,10 @@ const (
 	VisitorErasableID = 300
 	// VisitorGlobexID is from fixtures/visitors.
 	VisitorGlobexID = 900
+	// WebhookCodebasicsDisabledID is from fixtures/webhook_endpoints.
+	WebhookCodebasicsDisabledID = 101
+	// WebhookCodebasicsDisabledURL is from fixtures/webhook_endpoints.
+	WebhookCodebasicsDisabledURL = "https://hooks.codebasics.dev/disabled"
 	// WebhookCodebasicsID is from fixtures/webhook_endpoints.
 	WebhookCodebasicsID = 100
 	// WebhookCodebasicsURL is from fixtures/webhook_endpoints.

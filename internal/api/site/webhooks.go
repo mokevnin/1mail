@@ -2,40 +2,46 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"slices"
 	"strconv"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/webhooks"
 )
 
-// webhookResource builds the API resource, decrypting the signing secret so the
-// UI can display it for signature verification. Built by hand (not goverter)
-// because the secret is stored encrypted.
-func (h *Handlers) webhookResource(e *ent.WebhookEndpoint) (siteapi.SiteWebhookEndpointResource, error) {
-	secret, err := h.cipher.Decrypt(e.SecretEncrypted)
-	if err != nil {
-		return siteapi.SiteWebhookEndpointResource{}, err
-	}
-	types := e.EventTypes
-	if types == nil {
-		types = []string{}
-	}
+// webhookResource maps the endpoint with its decrypted signing secret, which the
+// UI displays for signature verification.
+func webhookResource(e webhooks.Endpoint) siteapi.SiteWebhookEndpointResource {
 	return siteapi.SiteWebhookEndpointResource{
 		ID:         siteapi.EntityId(strconv.FormatInt(e.ID, 10)),
 		URL:        e.URL,
-		Secret:     string(secret),
-		EventTypes: types,
+		Secret:     e.Secret,
+		EventTypes: lo.Ternary(e.EventTypes == nil, []string{}, e.EventTypes),
 		Enabled:    e.Enabled,
 		CreatedAt:  siteapi.Timestamp(e.CreatedAt),
 		UpdatedAt:  siteapi.Timestamp(e.UpdatedAt),
-	}, nil
+	}
+}
+
+// webhookRuleProblem maps a webhooks rule sentinel to its 422; ok is false for any
+// other error.
+func webhookRuleProblem(err error) (siteapi.ProblemDetails, bool) {
+	switch {
+	case errors.Is(err, webhooks.ErrInvalidURL):
+		return problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
+			"url": {i18n.T("errors.url_must_be_absolute", nil)},
+		}), true
+	case errors.Is(err, webhooks.ErrAuditNeedsLicense):
+		const detail = "audit.entry needs an Enterprise license"
+		return problemWithErrors(http.StatusUnprocessableEntity, detail, map[string][]string{"eventTypes": {detail}}), true
+	}
+	return siteapi.ProblemDetails{}, false
 }
 
 func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebhooksListParams) (siteapi.SiteWebhooksListRes, error) {
@@ -48,42 +54,16 @@ func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebh
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := scoped.WebhookEndpoint().Query()
-	total, err := q.Count(ctx)
+	page, err := h.webhooks.List(ctx, scoped, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-	items, err := q.Order(ent.Desc(webhookendpoint.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]siteapi.SiteWebhookEndpointResource, len(items))
-	for i, e := range items {
-		res, err := h.webhookResource(e)
-		if err != nil {
-			return nil, err
-		}
-		resources[i] = res
 	}
 	return &siteapi.SiteWebhooksListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items:      lo.Map(page.Items, func(e webhooks.Endpoint, _ int) siteapi.SiteWebhookEndpointResource { return webhookResource(e) }),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 
@@ -97,42 +77,20 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	if !service.ValidWebhookURL(req.URL) {
-		v := siteapi.SiteWebhooksCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
-			"url": {i18n.T("errors.url_must_be_absolute", nil)},
-		}))
+	enabled, hasEnabled := req.Enabled.Get()
+	e, err := h.webhooks.Create(ctx, scoped, webhooks.CreateInput{
+		URL:        req.URL,
+		EventTypes: req.EventTypes,
+		Enabled:    lo.Ternary(hasEnabled, &enabled, nil),
+	})
+	if p, ok := webhookRuleProblem(err); ok {
+		v := siteapi.SiteWebhooksCreateUnprocessableEntity(p)
 		return &v, nil
 	}
-
-	if h.auditEntryUnlicensed(req.EventTypes) {
-		v := siteapi.SiteWebhooksCreateUnprocessableEntity(auditEntryProblem())
-		return &v, nil
-	}
-
-	secret, err := service.GenerateWebhookSecret()
 	if err != nil {
 		return nil, err
 	}
-	encrypted, err := h.cipher.Encrypt([]byte(secret))
-	if err != nil {
-		return nil, err
-	}
-
-	q := scoped.WebhookEndpoint().Create().
-		SetURL(req.URL).
-		SetSecretEncrypted(encrypted).
-		SetEventTypes(req.EventTypes)
-	if v, ok := req.Enabled.Get(); ok {
-		q = q.SetEnabled(v)
-	}
-	e, err := q.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	res, err := h.webhookResource(e)
-	if err != nil {
-		return nil, err
-	}
+	res := webhookResource(e)
 	return &res, nil
 }
 
@@ -151,7 +109,7 @@ func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebho
 		v := siteapi.SiteWebhooksGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	e, err := scoped.WebhookEndpoint().Get(ctx, id)
+	e, err := h.webhooks.Get(ctx, scoped, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksGetNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &v, nil
@@ -159,10 +117,7 @@ func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebho
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.webhookResource(e)
-	if err != nil {
-		return nil, err
-	}
+	res := webhookResource(e)
 	return &res, nil
 }
 
@@ -182,28 +137,17 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 		return &v, nil
 	}
 
-	if h.auditEntryUnlicensed(req.EventTypes) {
-		v := siteapi.SiteWebhooksUpdateUnprocessableEntity(auditEntryProblem())
+	url, hasURL := req.URL.Get()
+	enabled, hasEnabled := req.Enabled.Get()
+	e, err := h.webhooks.Update(ctx, scoped, id, webhooks.UpdateInput{
+		URL:        lo.Ternary(hasURL, &url, nil),
+		EventTypes: req.EventTypes,
+		Enabled:    lo.Ternary(hasEnabled, &enabled, nil),
+	})
+	if p, ok := webhookRuleProblem(err); ok {
+		v := siteapi.SiteWebhooksUpdateUnprocessableEntity(p)
 		return &v, nil
 	}
-
-	upd := scoped.WebhookEndpoint().UpdateOneID(id)
-	if v, ok := req.URL.Get(); ok {
-		if !service.ValidWebhookURL(v) {
-			r := siteapi.SiteWebhooksUpdateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
-				"url": {i18n.T("errors.url_must_be_absolute", nil)},
-			}))
-			return &r, nil
-		}
-		upd = upd.SetURL(v)
-	}
-	if v, ok := req.Enabled.Get(); ok {
-		upd = upd.SetEnabled(v)
-	}
-	if req.EventTypes != nil {
-		upd = upd.SetEventTypes(req.EventTypes)
-	}
-	e, err := upd.Save(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksUpdateNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &v, nil
@@ -211,10 +155,7 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.webhookResource(e)
-	if err != nil {
-		return nil, err
-	}
+	res := webhookResource(e)
 	return &res, nil
 }
 
@@ -233,7 +174,7 @@ func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWe
 		v := siteapi.SiteWebhooksDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = scoped.WebhookEndpoint().DeleteOneID(id).Exec(ctx)
+	err = h.webhooks.Delete(ctx, scoped, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksDeleteNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &v, nil
@@ -242,15 +183,4 @@ func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWe
 		return nil, err
 	}
 	return &siteapi.SiteWebhooksDeleteNoContent{}, nil
-}
-
-// auditEntryUnlicensed reports whether types selects audit.entry on an instance
-// without an Enterprise license (ADR 0022: forwarding is EE only).
-func (h *Handlers) auditEntryUnlicensed(types []string) bool {
-	return slices.Contains(types, events.NameAuditEntry) && (h.audit == nil || !h.audit.Licensed())
-}
-
-func auditEntryProblem() siteapi.ProblemDetails {
-	const detail = "audit.entry needs an Enterprise license"
-	return problemWithErrors(http.StatusUnprocessableEntity, detail, map[string][]string{"eventTypes": {detail}})
 }
