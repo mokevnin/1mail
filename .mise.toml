@@ -20,6 +20,7 @@ typos = "latest"
 "aqua:boyter/scc" = "latest"
 zizmor = "latest"
 doctl = "latest"
+terraform = "latest"
 
 # Install the git hooks (hk.pkl) once the toolchain is in place.
 [hooks]
