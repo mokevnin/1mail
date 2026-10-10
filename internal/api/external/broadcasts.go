@@ -35,18 +35,16 @@ func (h *Handlers) BroadcastsList(ctx context.Context, params externalapi.Broadc
 		return &res, nil
 	}
 	ws := auth.TokenScoped(ctx)
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	items, total, err := h.broadcasts.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
+	page, err := h.broadcasts.List(ctx, ws, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 	return &externalapi.BroadcastsListOK{
-		Items:      lo.Map(items, func(b *ent.Broadcast, _ int) externalapi.BroadcastResource { return mapper.BroadcastToResource(b) }),
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items:      lo.Map(page.Items, func(b *ent.Broadcast, _ int) externalapi.BroadcastResource { return mapper.BroadcastToResource(b) }),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

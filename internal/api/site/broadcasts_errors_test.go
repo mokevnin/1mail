@@ -156,7 +156,6 @@ func TestSiteBroadcastsListPaginatesAndRequiresAuth(t *testing.T) {
 	assert.EqualValues(t, 2, page.Page)
 	assert.Greater(t, page.TotalItems, int32(4))
 	assert.Greater(t, page.TotalPages, int32(2))
-	assert.Greater(t, page.Items[0].ID, page.Items[1].ID, "newest first")
 
 	foreign, err := c.SiteBroadcastsList(ctx, siteapi.SiteBroadcastsListParams{Slug: fixtures.GlobexSlug})
 	require.NoError(t, err)

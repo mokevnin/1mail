@@ -5,12 +5,14 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/external/resources"
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/samber/lo"
 )
 
 const (
@@ -25,21 +27,16 @@ func (h *Handlers) AutomationsList(ctx context.Context, params externalapi.Autom
 		return &res, nil
 	}
 
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-	items, total, err := h.automations.List(ctx, auth.TokenScoped(ctx), pageSize, pagination.Offset(page, pageSize))
+	page, err := h.automations.List(ctx, auth.TokenScoped(ctx), pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
-	out := make([]externalapi.AutomationResource, len(items))
-	for i, a := range items {
-		out[i] = mapper.AutomationToResource(a)
-	}
 	return &externalapi.AutomationsListOK{
-		Items:      out,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items:      lo.Map(page.Items, func(a *ent.Automation, _ int) externalapi.AutomationResource { return mapper.AutomationToResource(a) }),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

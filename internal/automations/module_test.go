@@ -6,6 +6,7 @@ import (
 
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,9 +31,9 @@ func TestModuleIsConfinedToTheScopedWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, fixtures.AcmeID, created.WorkspaceID)
 
-	items, _, err := m.List(ctx, globex, 100, 0)
+	page, err := m.List(ctx, globex, pagination.Params{Page: 1, PageSize: 100})
 	require.NoError(t, err)
-	for _, a := range items {
+	for _, a := range page.Items {
 		assert.EqualValues(t, fixtures.GlobexID, a.WorkspaceID)
 	}
 }
