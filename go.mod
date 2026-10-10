@@ -32,6 +32,7 @@ require (
 	github.com/preslavrachev/gomjml v0.12.0
 	github.com/pressly/goose/v3 v3.28.0
 	github.com/prometheus/client_golang v1.23.2
+	github.com/prometheus/common v0.70.0
 	github.com/realclientip/realclientip-go v1.0.0
 	github.com/riverqueue/river v0.40.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.40.0
@@ -128,7 +129,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.70.0 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/riverqueue/river/riverdriver v0.40.0 // indirect
