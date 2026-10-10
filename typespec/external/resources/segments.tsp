@@ -72,5 +72,6 @@ interface Segments
     | PreviewSegmentResult
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }

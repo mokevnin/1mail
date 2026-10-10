@@ -14,6 +14,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
@@ -74,7 +75,33 @@ func NewExternalSecurityHandler(client *ent.Client) *ExternalSecurityHandler {
 
 var _ externalapi.SecurityHandler = (*ExternalSecurityHandler)(nil)
 
-func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
+// HandleBearerAuth authenticates the Bearer token and applies the rate limits that
+// need it (ADR 0018): a client address that spent its failed-authentication budget
+// is refused before the token is looked at, a failure counts against it, and a
+// success charges the Workspace's shared /api and /mcp budget. Rejections surface
+// as *ratelimit.LimitedError.
+func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, op externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
+	limits := ratelimit.FromContext(ctx)
+	if err := limits.AuthBlocked(); err != nil {
+		return ctx, err
+	}
+	ctx, err := h.authenticate(ctx, op, t)
+	if errors.Is(err, ErrUnauthorized) {
+		if limited := limits.AuthFailed(); limited != nil {
+			return ctx, limited
+		}
+		return ctx, err
+	}
+	if err != nil {
+		return ctx, err
+	}
+	if err := limits.ChargeWorkspace(GetTokenAuth(ctx).WorkspaceID); err != nil {
+		return ctx, err
+	}
+	return ctx, nil
+}
+
+func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
 	parsed := service.ParseToken(t.Token)
 	if parsed == nil {
 		return ctx, ErrUnauthorized

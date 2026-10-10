@@ -80,6 +80,7 @@ namespace Events {
   op create(@body body: RecordEventsInput):
     | NoContentResponse
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
 
@@ -93,6 +94,7 @@ namespace EventActions {
     | Page<EventActionResource>
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
 
@@ -104,5 +106,6 @@ namespace EventsBatch {
   op submit(@body body: RecordEventsBatchInput):
     | RecordEventsBatchResult
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
