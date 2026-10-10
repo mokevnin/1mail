@@ -38,8 +38,8 @@ func encodeSiteAuthConfirmEmailChangeRequest(
 	return nil
 }
 
-func encodeSiteAuthDirectLoginRequest(
-	req *SiteDirectLoginInput,
+func encodeSiteAuthForgotPasswordRequest(
+	req *SiteForgotPasswordInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -52,8 +52,8 @@ func encodeSiteAuthDirectLoginRequest(
 	return nil
 }
 
-func encodeSiteAuthForgotPasswordRequest(
-	req *SiteForgotPasswordInput,
+func encodeSiteAuthLoginRequest(
+	req *SiteLoginInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

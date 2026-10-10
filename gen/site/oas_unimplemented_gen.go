@@ -62,18 +62,13 @@ func (UnimplementedHandler) SiteAuditSetRetention(ctx context.Context, req *Site
 
 // SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 //
-// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-// new inbox, which has no session.
+// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+// The link alone never starts a session.
 //
 // POST /auth/confirm-email-change
-func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (r SiteAuthConfirmEmailChangeRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (r SiteAuthDirectLoginRes, _ error) {
+func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (r SiteAuthConfirmEmailChangeRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -85,6 +80,26 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 //
 // POST /auth/forgot-password
 func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (r SiteAuthForgotPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogin implements SiteAuth_login operation.
+//
+// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+// delay runs (ADR 0025).
+//
+// POST /auth/login
+func (UnimplementedHandler) SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (r SiteAuthLoginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogout implements SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (UnimplementedHandler) SiteAuthLogout(ctx context.Context) (r *SiteAuthLogoutNoContent, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -765,13 +780,15 @@ func (UnimplementedHandler) SiteUserResendVerification(ctx context.Context) erro
 // request (its cookie is cleared).
 //
 // POST /me/sign-out-everywhere
-func (UnimplementedHandler) SiteUserSignOutEverywhere(ctx context.Context) error {
-	return ht.ErrNotImplemented
+func (UnimplementedHandler) SiteUserSignOutEverywhere(ctx context.Context) (r *SiteUserSignOutEverywhereNoContent, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // SiteUserUpdateMe implements SiteUser_updateMe operation.
 //
-// Update the authenticated user's profile (name and/or password).
+// Update the authenticated user's profile (name and/or password). A password change ends every session
+// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+// response.
 //
 // PUT /me
 func (UnimplementedHandler) SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (r SiteUserUpdateMeRes, _ error) {

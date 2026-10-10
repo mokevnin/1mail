@@ -15,30 +15,21 @@ model SiteRegisterResult {
   createdAt: Timestamp;
 }
 
-model SiteDirectLoginInput {
-  user: string;
-  passwd: string;
+/** Sign in with an email and password. The email is a plain string: a malformed
+ * address must answer like an unknown one. */
+model SiteLoginInput {
+  email: string;
+  password: string;
 }
 
-model SiteDirectLoginResult {
-  name: string;
-  id: string;
-  picture?: string;
-  aud?: string;
-  ip?: string;
-  email?: string;
-  attrs?: Record<unknown>;
-  role?: string;
+/** What a login granted. `session`: the session cookie is set. A User with a
+ * Second factor will get a challenge outcome instead (ADR 0020). */
+enum SiteLoginOutcome {
+  session,
 }
 
-model SiteDirectLoginError {
-  error: string;
-}
-
-@error
-model SiteDirectLoginForbidden is Response<403> {
-  @header contentType: "application/json";
-  @body body: SiteDirectLoginError;
+model SiteLoginResult {
+  outcome: SiteLoginOutcome;
 }
 
 /** Request a password-reset link (always accepted; no account enumeration) */
@@ -77,17 +68,34 @@ namespace SiteAuth {
     | UnprocessableEntityProblem
     | TooManyRequestsProblem;
 
+  /** Check the password and start a session (the JWT cookie). Unknown email and
+   * wrong password answer the same 401; failures feed the Login throttle, which
+   * answers 429 even for a correct password while its delay runs (ADR 0025). */
   @useAuth(NoAuth)
   @post
-  @route("/direct/login")
-  op directLogin(@body body: SiteDirectLoginInput):
+  @route("/login")
+  op login(@body body: SiteLoginInput):
     | {
         @statusCode statusCode: 200;
-        @body body: SiteDirectLoginResult;
+
+        /** The session cookie, set when the outcome is `session` */
+        @header("Set-Cookie") setCookie?: string;
+
+        @body body: SiteLoginResult;
       }
-    | SiteDirectLoginForbidden
-    | BadRequestProblem
+    | UnauthorizedProblem
     | TooManyRequestsProblem;
+
+  /** End the session on this browser: clears the session cookie. */
+  @useAuth(NoAuth)
+  @post
+  @route("/logout")
+  op logout(): {
+    @statusCode statusCode: 204;
+
+    /** The expired session cookie */
+    @header("Set-Cookie") setCookie: string;
+  };
 
   /** Request a password-reset link. Always returns 202 regardless of whether
    * the email matches an account and even when the address has used its hourly
@@ -117,12 +125,25 @@ namespace SiteAuth {
     | BadRequestProblem;
 
   /** Confirm an email change from the token sent to the new address. Public:
-   * the link is opened from the new inbox, which has no session. */
+   * the link may be opened from a browser without a session. The change ends
+   * every session of the user (ADR 0020); when the request carries a valid
+   * session of that same user, it continues under the fresh cookie set in this
+   * response. The link alone never starts a session. */
   @useAuth(NoAuth)
   @post
   @route("/confirm-email-change")
-  op confirmEmailChange(@body body: SiteConfirmEmailChangeInput):
-    | OkResponse
+  op confirmEmailChange(
+    /** The confirming browser's session, if any */
+    @cookie("JWT") session?: string,
+
+    @body body: SiteConfirmEmailChangeInput,
+  ):
+    | {
+        @statusCode statusCode: 200;
+
+        /** The confirming session reissued, set when the request carried one */
+        @header("Set-Cookie") setCookie?: string;
+      }
     | BadRequestProblem
     | ConflictProblem;
 }

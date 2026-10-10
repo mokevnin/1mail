@@ -104,8 +104,7 @@ type AuditLog interface {
 type Deps struct {
 	Accounts *accounts.Accounts
 	// Attempts counts failed logins and password-reset mails per account (ADR
-	// 0025); the login route's credential checker and throttle wrapper and
-	// forgot-password share it.
+	// 0025); login and forgot-password share it.
 	Attempts       *accounts.Attempts
 	OAuth          *oauthserver.Service
 	Bus            *events.Bus
@@ -126,12 +125,12 @@ type Deps struct {
 	Tracker        *tracking.Tracker
 	AppURL         string
 	Audit          AuditLog
+	// Sessions issues the session cookie on login (ADR 0020). The composition
+	// root (server.New) builds it from the instance secret and SESSION_TTL.
+	Sessions *auth.Sessions
 	// Clock is the time the site session's expiry is checked against (ADR 0020);
 	// nil means time.Now. Tests inject one to move past a session's lifetime.
 	Clock func() time.Time
-	// Sessions writes the acting session cookie (ADR 0020); server.New fills it
-	// from the go-pkgz service that issues logins.
-	Sessions *auth.Sessions
 }
 
 func NewHandlers(d Deps) *Handlers {

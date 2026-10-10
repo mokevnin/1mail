@@ -33,23 +33,18 @@ func sendWithSession(t *testing.T, env *testhelper.TestEnv, method, path, sessio
 	return rec
 }
 
-// sessionCookie returns the JWT cookie a response sets, or nil.
-func sessionCookie(t *testing.T, rec *httptest.ResponseRecorder) *http.Cookie {
+// setSession returns the JWT cookie a response sets, or nil.
+func setSession(t *testing.T, rec *httptest.ResponseRecorder) *http.Cookie {
 	t.Helper()
 	res := rec.Result()
 	defer func() { require.NoError(t, res.Body.Close()) }()
-	for _, c := range res.Cookies() {
-		if c.Name == "JWT" {
-			return c
-		}
-	}
-	return nil
+	return sessionCookie(res)
 }
 
 // reissued returns the value of the JWT cookie a response sets, or "".
 func reissued(t *testing.T, rec *httptest.ResponseRecorder) string {
 	t.Helper()
-	if c := sessionCookie(t, rec); c != nil {
+	if c := setSession(t, rec); c != nil {
 		return c.Value
 	}
 	return ""
@@ -161,7 +156,7 @@ func TestSignOutEverywhereEndsEverySessionIncludingTheActingOne(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, workspacesStatus(t, env, other), "another device's session")
 	assert.Equal(t, http.StatusUnauthorized, workspacesStatus(t, env, acting), "the acting session")
-	cleared := sessionCookie(t, res)
+	cleared := setSession(t, res)
 	require.NotNil(t, cleared, "the acting browser's cookie is cleared")
 	assert.Empty(t, cleared.Value)
 	assert.Negative(t, cleared.MaxAge)

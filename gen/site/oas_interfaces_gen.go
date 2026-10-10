@@ -25,12 +25,12 @@ type SiteAuthConfirmEmailChangeRes interface {
 	siteAuthConfirmEmailChangeRes()
 }
 
-type SiteAuthDirectLoginRes interface {
-	siteAuthDirectLoginRes()
-}
-
 type SiteAuthForgotPasswordRes interface {
 	siteAuthForgotPasswordRes()
+}
+
+type SiteAuthLoginRes interface {
+	siteAuthLoginRes()
 }
 
 type SiteAuthRegisterRes interface {

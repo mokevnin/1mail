@@ -42,15 +42,13 @@ type Handler interface {
 	SiteAuditSetRetention(ctx context.Context, req *SiteAuditRetention, params SiteAuditSetRetentionParams) (SiteAuditSetRetentionRes, error)
 	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 	//
-	// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-	// new inbox, which has no session.
+	// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+	// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+	// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+	// The link alone never starts a session.
 	//
 	// POST /auth/confirm-email-change
-	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
-	// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-	//
-	// POST /auth/direct/login
-	SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
+	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (SiteAuthConfirmEmailChangeRes, error)
 	// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 	//
 	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -59,6 +57,20 @@ type Handler interface {
 	//
 	// POST /auth/forgot-password
 	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
+	// SiteAuthLogin implements SiteAuth_login operation.
+	//
+	// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+	// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+	// delay runs (ADR 0025).
+	//
+	// POST /auth/login
+	SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (SiteAuthLoginRes, error)
+	// SiteAuthLogout implements SiteAuth_logout operation.
+	//
+	// End the session on this browser: clears the session cookie.
+	//
+	// POST /auth/logout
+	SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error)
 	// SiteAuthRegister implements SiteAuth_register operation.
 	//
 	// POST /auth/register
@@ -514,10 +526,12 @@ type Handler interface {
 	// request (its cookie is cleared).
 	//
 	// POST /me/sign-out-everywhere
-	SiteUserSignOutEverywhere(ctx context.Context) error
+	SiteUserSignOutEverywhere(ctx context.Context) (*SiteUserSignOutEverywhereNoContent, error)
 	// SiteUserUpdateMe implements SiteUser_updateMe operation.
 	//
-	// Update the authenticated user's profile (name and/or password).
+	// Update the authenticated user's profile (name and/or password). A password change ends every session
+	// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+	// response.
 	//
 	// PUT /me
 	SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)

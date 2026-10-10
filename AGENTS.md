@@ -110,12 +110,12 @@ Frontend tests: `mise run test:watch`.
 - **DI**: `samber/do` container. `internal/app/app.go` `register()` wires every singleton
   (config, sql.DB, ent client, email sender, pubsub, the `http.Handler`). Add new
   dependencies there via `do.Provide`.
-- **HTTP**: `internal/server/server.go` `New()` mounts the three ogen servers plus
-  go-pkgz/auth onto a stdlib `http.ServeMux`, then wraps it with hand-rolled middleware
+- **HTTP**: `internal/server/server.go` `New()` mounts the three ogen servers and the
+  public endpoints onto a stdlib `http.ServeMux`, then wraps it with hand-rolled middleware
   (recoverer, requestID, timeout, CORS). Errors render as RFC 7807 `application/problem+json`.
 - **Three API surfaces**, each with its own TypeSpec spec, ogen server, handler package,
   and auth scheme:
-  - `/site/*` — frontend SPA API. Auth: **JWT cookie** (issued by go-pkgz/auth). Handlers in `internal/api/site`.
+  - `/site/*` — frontend SPA API. Auth: **JWT cookie** (issued by the `login` operation through `auth.Sessions`, ADR 0020). Handlers in `internal/api/site`.
   - `/api/*` — external/public API. Auth: **Bearer api-token** (workspace-scoped). Handlers in `internal/api/external`.
   - `/collect/*` — tracking ingestion from customer sites. Auth: **x-collect-key** header. Handlers in `internal/api/collect`.
 - Auth security handlers live in `internal/api/auth/auth.go`. External requests carry a

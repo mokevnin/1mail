@@ -75,3 +75,13 @@ func eventOverLimit(body []byte, limit int64) bool {
 	}
 	return false
 }
+
+// errReader replays the error that ended a read (nil reads as end of body).
+type errReader struct{ err error }
+
+func (e errReader) Read([]byte) (int, error) {
+	if e.err != nil {
+		return 0, e.err
+	}
+	return 0, io.EOF
+}

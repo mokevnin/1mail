@@ -91,7 +91,7 @@ func TestAuditLoginDuplicatesIntoEachOfTheUsersWorkspacesOnly(t *testing.T) {
 
 	// Mary belongs to Acme and Globex; John to Acme only.
 	require.Equal(t, 200, loginStatus(t, env, fixtures.MemberMaryEmail, fixtures.MemberMaryPassword))
-	require.Equal(t, 403, loginStatus(t, env, fixtures.OwnerJohnEmail, "wrong"), "a failed login is not recorded")
+	require.Equal(t, 401, loginStatus(t, env, fixtures.OwnerJohnEmail, "wrong"), "a failed login is not recorded")
 
 	acme := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserLogin)
 	globex := entriesNamed(t, env, fixtures.OwnerJaneEmail, fixtures.GlobexSlug, events.ActionUserLogin)
@@ -118,7 +118,7 @@ func TestAuditPasswordChangeDuplicatesIntoEachOfTheUsersWorkspaces(t *testing.T)
 		NewPassword:     siteapi.NewOptString("brand-new-pass-1"),
 	})
 	require.NoError(t, err)
-	require.IsType(t, &siteapi.SiteUserResource{}, res)
+	require.IsType(t, &siteapi.SiteUserResourceHeaders{}, res)
 
 	acme := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserPasswordChange)
 	globex := entriesNamed(t, env, fixtures.OwnerJaneEmail, fixtures.GlobexSlug, events.ActionUserPasswordChange)

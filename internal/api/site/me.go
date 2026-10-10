@@ -83,15 +83,17 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 			return nil, err
 		}
 	}
+	res := &siteapi.SiteUserResourceHeaders{Response: *mapper.UserToResource(u)}
 	// The password change ended every session; the acting one continues under a
 	// fresh token stamped with the new epoch.
 	if newHash != nil {
-		if err := h.sessions.Issue(ctx, u.Email); err != nil {
+		cookie, err := h.sessions.Issue(u)
+		if err != nil {
 			return nil, err
 		}
+		res.SetCookie = siteapi.NewOptString(cookie.String())
 	}
-
-	return mapper.UserToResource(u), nil
+	return res, nil
 }
 
 // SiteUserEmailChange requests a change of the login email. It verifies the
@@ -156,15 +158,15 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 
 // SiteUserSignOutEverywhere ends every session of the authenticated user, on
 // every device, and clears the acting browser's cookie: no session survives.
-func (h *Handlers) SiteUserSignOutEverywhere(ctx context.Context) error {
+func (h *Handlers) SiteUserSignOutEverywhere(ctx context.Context) (*siteapi.SiteUserSignOutEverywhereNoContent, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
-		return auth.ErrUnauthorized
+		return nil, auth.ErrUnauthorized
 	}
 	if err := h.accounts.EndSessions(ctx, a.UserID); err != nil {
-		return err
+		return nil, err
 	}
-	return h.sessions.End(ctx)
+	return &siteapi.SiteUserSignOutEverywhereNoContent{SetCookie: h.sessions.Cleared().String()}, nil
 }
 
 // SiteUserResendVerification re-sends the signup verification link to the

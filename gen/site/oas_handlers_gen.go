@@ -1071,8 +1071,10 @@ func (s *Server) handleSiteAuditSetRetentionRequest(args [1]string, argsEscaped 
 
 // handleSiteAuthConfirmEmailChangeRequest handles SiteAuth_confirmEmailChange operation.
 //
-// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-// new inbox, which has no session.
+// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+// The link alone never starts a session.
 //
 // POST /auth/confirm-email-change
 func (s *Server) handleSiteAuthConfirmEmailChangeRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1146,6 +1148,16 @@ func (s *Server) handleSiteAuthConfirmEmailChangeRequest(args [0]string, argsEsc
 			ID:   "SiteAuth_confirmEmailChange",
 		}
 	)
+	params, err := decodeSiteAuthConfirmEmailChangeParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	var rawBody []byte
 	request, rawBody, close, err := s.decodeSiteAuthConfirmEmailChangeRequest(r)
@@ -1173,13 +1185,18 @@ func (s *Server) handleSiteAuthConfirmEmailChangeRequest(args [0]string, argsEsc
 			OperationID:      "SiteAuth_confirmEmailChange",
 			Body:             request,
 			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
+			Params: middleware.Parameters{
+				{
+					Name: "JWT",
+					In:   "cookie",
+				}: params.JWT,
+			},
+			Raw: r,
 		}
 
 		type (
 			Request  = *SiteConfirmEmailChangeInput
-			Params   = struct{}
+			Params   = SiteAuthConfirmEmailChangeParams
 			Response = SiteAuthConfirmEmailChangeRes
 		)
 		response, err = middleware.HookMiddleware[
@@ -1189,14 +1206,14 @@ func (s *Server) handleSiteAuthConfirmEmailChangeRequest(args [0]string, argsEsc
 		](
 			m,
 			mreq,
-			nil,
+			unpackSiteAuthConfirmEmailChangeParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.SiteAuthConfirmEmailChange(ctx, request)
+				response, err = s.h.SiteAuthConfirmEmailChange(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.SiteAuthConfirmEmailChange(ctx, request)
+		response, err = s.h.SiteAuthConfirmEmailChange(ctx, request, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -1205,147 +1222,6 @@ func (s *Server) handleSiteAuthConfirmEmailChangeRequest(args [0]string, argsEsc
 	}
 
 	if err := encodeSiteAuthConfirmEmailChangeResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleSiteAuthDirectLoginRequest handles SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (s *Server) handleSiteAuthDirectLoginRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("SiteAuth_directLogin"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/auth/direct/login"),
-	}
-	// Add attributes from config.
-	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), SiteAuthDirectLoginOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(attrs...)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: SiteAuthDirectLoginOperation,
-			ID:   "SiteAuth_directLogin",
-		}
-	)
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeSiteAuthDirectLoginRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response SiteAuthDirectLoginRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    SiteAuthDirectLoginOperation,
-			OperationSummary: "",
-			OperationID:      "SiteAuth_directLogin",
-			Body:             request,
-			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
-		}
-
-		type (
-			Request  = *SiteDirectLoginInput
-			Params   = struct{}
-			Response = SiteAuthDirectLoginRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			nil,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.SiteAuthDirectLogin(ctx, request)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.SiteAuthDirectLogin(ctx, request)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeSiteAuthDirectLoginResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -1491,6 +1367,275 @@ func (s *Server) handleSiteAuthForgotPasswordRequest(args [0]string, argsEscaped
 	}
 
 	if err := encodeSiteAuthForgotPasswordResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleSiteAuthLoginRequest handles SiteAuth_login operation.
+//
+// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
+// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
+// delay runs (ADR 0025).
+//
+// POST /auth/login
+func (s *Server) handleSiteAuthLoginRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_login"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/auth/login"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), SiteAuthLoginOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(attrs...)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: SiteAuthLoginOperation,
+			ID:   "SiteAuth_login",
+		}
+	)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeSiteAuthLoginRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response SiteAuthLoginRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    SiteAuthLoginOperation,
+			OperationSummary: "",
+			OperationID:      "SiteAuth_login",
+			Body:             request,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = *SiteLoginInput
+			Params   = struct{}
+			Response = SiteAuthLoginRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.SiteAuthLogin(ctx, request)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.SiteAuthLogin(ctx, request)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeSiteAuthLoginResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleSiteAuthLogoutRequest handles SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (s *Server) handleSiteAuthLogoutRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_logout"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/auth/logout"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), SiteAuthLogoutOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(attrs...)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err error
+	)
+
+	var rawBody []byte
+
+	var response *SiteAuthLogoutNoContent
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    SiteAuthLogoutOperation,
+			OperationSummary: "",
+			OperationID:      "SiteAuth_logout",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *SiteAuthLogoutNoContent
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.SiteAuthLogout(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.SiteAuthLogout(ctx)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeSiteAuthLogoutResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -15741,12 +15886,12 @@ func (s *Server) handleSiteUserSignOutEverywhereRequest(args [0]string, argsEsca
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				err = s.h.SiteUserSignOutEverywhere(ctx)
+				response, err = s.h.SiteUserSignOutEverywhere(ctx)
 				return response, err
 			},
 		)
 	} else {
-		err = s.h.SiteUserSignOutEverywhere(ctx)
+		response, err = s.h.SiteUserSignOutEverywhere(ctx)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -15765,7 +15910,9 @@ func (s *Server) handleSiteUserSignOutEverywhereRequest(args [0]string, argsEsca
 
 // handleSiteUserUpdateMeRequest handles SiteUser_updateMe operation.
 //
-// Update the authenticated user's profile (name and/or password).
+// Update the authenticated user's profile (name and/or password). A password change ends every session
+// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+// response.
 //
 // PUT /me
 func (s *Server) handleSiteUserUpdateMeRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

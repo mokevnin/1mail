@@ -22,15 +22,13 @@ ingress. The edge may add its own limits on top.
   password. A hard lockout would let anyone lock any account (a DoS); `forgot-password` always
   works. `auth_attempt` rows are also created for unknown emails so the table cannot enumerate
   accounts; a river job purges stale rows.
-  go-pkgz/auth maps a `CredChecker` error to 500 and a wrong password to a fixed 403, so the
-  checker cannot answer 429. An HTTP wrapper around `authHandler` reads the email from the body
-  (restoring it), consults `auth_attempt` and answers 429 itself; `CredChecker` only records
-  successes and failures. The check (wrapper) and the count (checker) are two steps, so wrong
-  passwords sent in parallel before the first failure is recorded all pass the delay check. The
-  excess is bounded by the in-flight requests of one client (the per-IP login cap applies in
-  front, and each attempt is a slow password hash), and the delay applies from the next request
-  on. Closing it would mean claiming an attempt before the credential is checked, which the
-  go-pkgz/auth login contract does not allow without a larger redesign; accepted.
+  The login operation of the `/site` contract (ADR 0020) consults `auth_attempt` before it checks
+  the password, answers 429 itself, and records the failure or success. The check and the count
+  are two steps, so wrong passwords sent in parallel before the first failure is recorded all pass
+  the delay check. The excess is bounded by the in-flight requests of one client (the per-IP login
+  cap applies in front, and each attempt is a slow password hash), and the delay applies from the
+  next request on. Closing it would mean claiming an attempt before the credential is checked;
+  accepted.
 - **Tracking never refuses a recipient.** Opens and clicks come mostly from mailbox-provider
   proxies (Gmail image proxy, Apple MPP), link scanners and RFC 8058 one-click POSTs, which share
   few IPs, so a per-IP 429 would break links and the ADR 0012 unsubscribe guarantee. A click

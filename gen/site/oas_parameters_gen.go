@@ -1513,6 +1513,69 @@ func decodeSiteAuditSetRetentionParams(args [1]string, argsEscaped bool, r *http
 	return params, nil
 }
 
+// SiteAuthConfirmEmailChangeParams is parameters of SiteAuth_confirmEmailChange operation.
+type SiteAuthConfirmEmailChangeParams struct {
+	// The confirming browser's session, if any.
+	JWT OptString `json:",omitempty,omitzero"`
+}
+
+func unpackSiteAuthConfirmEmailChangeParams(packed middleware.Parameters) (params SiteAuthConfirmEmailChangeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "JWT",
+			In:   "cookie",
+		}
+		if v, ok := packed[key]; ok {
+			params.JWT = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeSiteAuthConfirmEmailChangeParams(args [0]string, argsEscaped bool, r *http.Request) (params SiteAuthConfirmEmailChangeParams, _ error) {
+	c := uri.NewCookieDecoder(r)
+	// Decode cookie: JWT.
+	if err := func() error {
+		cfg := uri.CookieParameterDecodingConfig{
+			Name:    "JWT",
+			Explode: false,
+		}
+		if err := c.HasParam(cfg); err == nil {
+			if err := c.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotJWTVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotJWTVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.JWT.SetTo(paramsDotJWTVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "JWT",
+			In:   "cookie",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteAutomationsActivateParams is parameters of SiteAutomations_activate operation.
 type SiteAutomationsActivateParams struct {
 	// URL-safe unique slug; the route key for nested workspace resources.

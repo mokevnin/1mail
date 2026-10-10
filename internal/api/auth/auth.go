@@ -9,12 +9,10 @@ import (
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
-	entuser "github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/service"
@@ -311,45 +309,4 @@ func (h *SiteSecurityHandler) Verify(ctx context.Context, raw string) (*ent.User
 		return nil, ErrUnauthorized
 	}
 	return u, nil
-}
-
-// CredChecker verifies user credentials for go-pkgz/auth direct provider.
-//
-// It also feeds the per-account login throttle (ADR 0025): every failure is counted,
-// for unknown emails too, and a success resets the counter. It never answers 429
-// itself, because go-pkgz/auth turns a checker error into a 500; the login route's
-// HTTP wrapper in internal/server consults the same counters before the provider runs.
-type CredChecker struct {
-	ent      *ent.Client
-	attempts *accounts.Attempts
-}
-
-func NewCredChecker(client *ent.Client, attempts *accounts.Attempts) *CredChecker {
-	return &CredChecker{ent: client, attempts: attempts}
-}
-
-func (c *CredChecker) Check(user, password string) (bool, error) {
-	ctx := context.Background()
-	ok, err := c.verify(ctx, user, password)
-	if err != nil {
-		return false, err
-	}
-	if ok {
-		return true, c.attempts.RecordSuccess(ctx, accounts.KindLogin, user)
-	}
-	return false, c.attempts.RecordFailure(ctx, accounts.KindLogin, user)
-}
-
-func (c *CredChecker) verify(ctx context.Context, user, password string) (bool, error) {
-	u, err := c.ent.User.Query().Where(entuser.Email(user)).Only(ctx)
-	if ent.IsNotFound(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	if u.PasswordHash == "" {
-		return false, nil
-	}
-	return service.VerifyPassword(u.PasswordHash, password), nil
 }

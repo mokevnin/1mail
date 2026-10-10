@@ -114,7 +114,7 @@ func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVer
 // (ADR 0020); when the confirming request carries a valid session of that same
 // User, it continues under a fresh token in the same response. The link alone
 // never signs anyone in.
-func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.SiteConfirmEmailChangeInput) (siteapi.SiteAuthConfirmEmailChangeRes, error) {
+func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.SiteConfirmEmailChangeInput, params siteapi.SiteAuthConfirmEmailChangeParams) (siteapi.SiteAuthConfirmEmailChangeRes, error) {
 	uid, extra, err := h.tokens.Parse(req.Token, authtoken.PurposeEmailChange, h.currentEmailBinding(ctx))
 	if err != nil {
 		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, i18n.T("errors.confirm_link_invalid", nil)))
@@ -126,7 +126,10 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 		return &v, nil
 	}
 	// Checked before the change: the epoch bump ends this session too.
-	holder, signedIn := h.sessions.Holder(ctx)
+	acting, err := h.holdsSession(ctx, params.JWT.Or(""), uid)
+	if err != nil {
+		return nil, err
+	}
 	// The new address was proven by clicking this link, so it is verified. The
 	// unique index also guards the race if the address was taken meanwhile.
 	err = h.accounts.ChangeEmail(ctx, uid, newEmail)
@@ -137,12 +140,33 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 	if err != nil {
 		return nil, err
 	}
-	if signedIn && holder == uid {
-		if err := h.sessions.Issue(ctx, newEmail); err != nil {
+	res := &siteapi.SiteAuthConfirmEmailChangeOK{}
+	if acting {
+		u, err := h.accounts.User(ctx, uid)
+		if err != nil {
 			return nil, err
 		}
+		cookie, err := h.sessions.Issue(u)
+		if err != nil {
+			return nil, err
+		}
+		res.SetCookie = siteapi.NewOptString(cookie.String())
 	}
-	return &siteapi.SiteAuthConfirmEmailChangeOK{}, nil
+	return res, nil
+}
+
+// holdsSession reports whether a raw session token is a current session of the
+// User uid: it verifies and carries uid and that User's present epoch.
+func (h *Handlers) holdsSession(ctx context.Context, raw string, uid int64) (bool, error) {
+	id, epoch, ok := h.sessions.Holder(raw)
+	if !ok || id != uid {
+		return false, nil
+	}
+	u, err := h.accounts.User(ctx, uid)
+	if err != nil {
+		return false, err
+	}
+	return u.SessionEpoch == epoch, nil
 }
 
 // passwordHashBinding resolves a user's current password hash — the binding for

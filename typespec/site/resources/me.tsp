@@ -53,10 +53,19 @@ namespace SiteUser {
     @body body: SiteUserResource;
   };
 
-  /** Update the authenticated user's profile (name and/or password) */
+  /** Update the authenticated user's profile (name and/or password). A password
+   * change ends every session of the user (ADR 0020); the acting one continues
+   * under the fresh session cookie set in this response. */
   @put
   op updateMe(@body body: SiteUpdateMeInput):
-    | SiteUserResource
+    | {
+        @statusCode statusCode: 200;
+
+        /** The acting session reissued, set when the password changed */
+        @header("Set-Cookie") setCookie?: string;
+
+        @body body: SiteUserResource;
+      }
     | ForbiddenProblem
     | UnprocessableEntityProblem;
 
@@ -74,7 +83,12 @@ namespace SiteUser {
    * including the one making the request (its cookie is cleared). */
   @post
   @route("/sign-out-everywhere")
-  op signOutEverywhere(): NoContentResponse;
+  op signOutEverywhere(): {
+    @statusCode statusCode: 204;
+
+    /** The expired session cookie */
+    @header("Set-Cookie") setCookie: string;
+  };
 
   /** Resend the signup email-verification link to the current address */
   @post

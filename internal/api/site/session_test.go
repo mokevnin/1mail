@@ -3,7 +3,6 @@ package site_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -40,11 +39,7 @@ func TestSiteSessionEndsAfterTheConfiguredLifetime(t *testing.T) {
 	c := &movableClock{t: time.Now()}
 	env := testhelper.Setup(t, testhelper.WithClock(c.now))
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
-		strings.NewReader(loginBody(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)))
-	req.Header.Set("Content-Type", "application/json")
-	env.Server.ServeHTTP(rec, req)
+	rec := postLogin(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
 	require.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
 
 	var cookie *http.Cookie

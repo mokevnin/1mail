@@ -5,8 +5,8 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useRouter, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
+import { siteAuthLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type { SiteLoginInput } from '../../generated/site/types.gen.ts'
 import { useApiErrorMessage } from '../../hooks/useApiErrorMessage.ts'
 import { forgotPasswordRoute, indexRoute, registerRoute } from '../../router.tsx'
 import { getRateLimitWait } from '../../utils/apiErrors.ts'
@@ -29,19 +29,19 @@ export function LoginPage() {
       : t(($) => $.login.rateLimitedSeconds, { count: wait.count })
   }
 
-  const form = useForm<SiteDirectLoginInput>({
+  const form = useForm<SiteLoginInput>({
     initialValues: {
-      user: '',
-      passwd: '',
+      email: '',
+      password: '',
     },
   })
 
   const loginMutation = useMutation({
-    ...siteAuthDirectLoginMutation(),
+    ...siteAuthLoginMutation(),
     onSuccess: () => (redirect ? router.history.push(redirect) : navigate({ to: indexRoute.to })),
     onError: (error) => {
       // Drop the rejected password so the user retypes a fresh one.
-      form.setFieldValue('passwd', '')
+      form.setFieldValue('password', '')
       notifications.show({
         color: 'red',
         title: t(($) => $.login.errorTitle),
@@ -55,11 +55,11 @@ export function LoginPage() {
     },
   })
 
-  const handleSubmit = (values: SiteDirectLoginInput) => {
+  const handleSubmit = (values: SiteLoginInput) => {
     loginMutation.mutate({
       body: {
-        user: values.user.trim(),
-        passwd: values.passwd,
+        email: values.email.trim(),
+        password: values.password,
       },
     })
   }
@@ -74,12 +74,12 @@ export function LoginPage() {
             label={t(($) => $.login.emailLabel)}
             type="email"
             required
-            {...form.getInputProps('user')}
+            {...form.getInputProps('email')}
           />
           <PasswordInput
             label={t(($) => $.login.passwordLabel)}
             required
-            {...form.getInputProps('passwd')}
+            {...form.getInputProps('password')}
           />
 
           <Group justify="space-between" align="center">

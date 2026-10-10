@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,7 +18,7 @@ import (
 )
 
 const (
-	loginPath     = "/site/auth/direct/login"
+	loginPath     = "/site/auth/login"
 	loginFailures = 5
 	// An address no account has.
 	unknownLoginEmail = "nobody@nowhere.test"
@@ -42,14 +40,14 @@ func loginEnv(t *testing.T, ipLimit int) (*testhelper.TestEnv, *frozenClock) {
 
 func login(t *testing.T, env *testhelper.TestEnv, user, password string) *httptest.ResponseRecorder {
 	t.Helper()
-	return postJSON(t, env, loginPath, fmt.Sprintf(`{"user":%q,"passwd":%q}`, user, password), nil)
+	return postJSON(t, env, loginPath, fmt.Sprintf(`{"email":%q,"password":%q}`, user, password), nil)
 }
 
 func failLogins(t *testing.T, env *testhelper.TestEnv, user string, times int) {
 	t.Helper()
 	for i := range times {
 		rec := login(t, env, user, "wrong-password")
-		require.Equal(t, http.StatusForbidden, rec.Code, "failure %d", i+1)
+		require.Equal(t, http.StatusUnauthorized, rec.Code, "failure %d", i+1)
 	}
 }
 
@@ -109,43 +107,19 @@ func TestUnknownEmailsThrottleLikeKnownOnesAndLeaveRows(t *testing.T) {
 	assert.Equal(t, http.StatusTooManyRequests, login(t, env, fixtures.GhostLoginAttemptEmail, "whatever").Code)
 }
 
-func TestTheBodyStillReachesTheProvider(t *testing.T) {
-	env, _ := loginEnv(t, 0)
-
-	form := url.Values{"user": {fixtures.OwnerJohnEmail}, "passwd": {fixtures.OwnerJohnPassword}}
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, loginPath, strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
-	env.Server.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code, "form body")
-
-	assert.Equal(t, http.StatusOK, login(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword).Code, "json body")
-}
-
-// The provider also serves /auth/direct/login; throttling only the /site alias would
-// leave the other path as a bypass.
-func TestTheAuthPrefixedLoginRouteIsThrottledToo(t *testing.T) {
-	env, _ := loginEnv(t, 0)
-	body := fmt.Sprintf(`{"user":%q,"passwd":"wrong-password"}`, fixtures.OwnerJohnEmail)
-	for range loginFailures {
-		require.Equal(t, http.StatusForbidden, postJSON(t, env, "/auth/direct/login", body, nil).Code)
-	}
-	assert.Equal(t, http.StatusTooManyRequests, login(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword).Code)
-}
-
 func TestLoginIsLimitedPerIPAcrossAccounts(t *testing.T) {
 	const ipLimit = 3
 	env, _ := loginEnv(t, ipLimit)
 	for i := range ipLimit {
 		rec := login(t, env, fmt.Sprintf("spray%d@nowhere.test", i), "x")
-		require.Equal(t, http.StatusForbidden, rec.Code)
+		require.Equal(t, http.StatusUnauthorized, rec.Code)
 	}
 	rec := login(t, env, "spray-last@nowhere.test", "x")
 	require.Equal(t, http.StatusTooManyRequests, rec.Code)
 	assert.NotEmpty(t, rec.Header().Get("Retry-After"))
 
-	other := postJSON(t, env, loginPath, `{"user":"a@nowhere.test","passwd":"x"}`, map[string]string{"X-Forwarded-For": "203.0.113.9"})
-	assert.Equal(t, http.StatusForbidden, other.Code, "another address has its own budget")
+	other := postJSON(t, env, loginPath, `{"email":"a@nowhere.test","password":"x"}`, map[string]string{"X-Forwarded-For": "203.0.113.9"})
+	assert.Equal(t, http.StatusUnauthorized, other.Code, "another address has its own budget")
 }
 
 func TestDisabledLoginLimitsNeverThrottle(t *testing.T) {

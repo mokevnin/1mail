@@ -2,12 +2,10 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,23 +21,104 @@ const (
 	ClaimEpoch  = "epoch"
 )
 
-// SessionClaims is the go-pkgz claims updater (Opts.ClaimsUpd): at issuance it
-// resolves the login the provider put into the token's user name and writes that
-// User's id and current session epoch into the token. A login it cannot resolve
-// leaves the claims as they are, and the site security handler rejects the token.
+// SessionCookie is the name of the cookie that carries the session token; the
+// /site contract's cookie security scheme reads it.
+const SessionCookie = "JWT"
+
+// sessionIssuer is the token issuer and audience of every session.
+const sessionIssuer = "1mail"
+
+// Sessions issues and clears the site session (ADR 0020): a JWT signed with the
+// instance secret, carried in an HttpOnly, SameSite=Lax cookie that lives as long as
+// the token (SESSION_TTL, no refresh). It is the one place a session is minted; the
+// login operation, and later the Second factor step, hand its cookie to the client.
+type Sessions struct {
+	tokens *gptoken.Service
+	ttl    time.Duration
+	secure bool
+	now    func() time.Time
+}
+
+// NewSessions builds the issuer. secure sets the cookie's Secure attribute (the
+// instance is served over HTTPS); now is the clock of the token's expiry, nil
+// meaning time.Now.
+func NewSessions(jwtSecret string, ttl time.Duration, secure bool, now func() time.Time) *Sessions {
+	if now == nil {
+		now = time.Now
+	}
+	return &Sessions{
+		tokens: gptoken.NewService(gptoken.Opts{
+			SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
+			Issuer:       sessionIssuer,
+			DisableXSRF:  true,
+		}),
+		ttl:    ttl,
+		secure: secure,
+		now:    now,
+	}
+}
+
+// Issue signs a session for u, stamped with its id and current session epoch, and
+// returns the cookie that carries it.
+func (s *Sessions) Issue(u *ent.User) (*http.Cookie, error) {
+	now := s.now()
+	claims := gptoken.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    sessionIssuer,
+			Audience:  jwt.ClaimStrings{sessionIssuer},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.ttl)),
+		},
+		User: &gptoken.User{Name: u.Email, ID: "user_" + strconv.FormatInt(u.ID, 10), Email: u.Email},
+	}
+	stampUser(&claims, u)
+	tk, err := s.tokens.Token(claims)
+	if err != nil {
+		return nil, err
+	}
+	return s.cookie(tk, int(s.ttl.Seconds())), nil
+}
+
+// Holder reads a raw session token the request carries without requiring one (a
+// public operation that keeps the acting session when there is one): it checks the
+// signature and expiry and returns the User id and epoch the token was issued
+// under. The caller compares the epoch with the User's; ok is false for a token
+// that does not verify.
+func (s *Sessions) Holder(raw string) (id, epoch int64, ok bool) {
+	if raw == "" {
+		return 0, 0, false
+	}
+	claims, err := s.tokens.Parse(raw)
+	if err != nil || claims.ExpiresAt == nil || !s.now().Before(claims.ExpiresAt.Time) {
+		return 0, 0, false
+	}
+	return sessionUser(claims)
+}
+
+// Cleared is the cookie that ends the session on the client: empty and expired.
+func (s *Sessions) Cleared() *http.Cookie {
+	c := s.cookie("", -1)
+	c.Expires = time.Unix(0, 0)
+	return c
+}
+
+func (s *Sessions) cookie(value string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name: SessionCookie, Value: value, Path: "/", MaxAge: maxAge,
+		HttpOnly: true, Secure: s.secure, SameSite: http.SameSiteLaxMode,
+	}
+}
+
+// SessionClaims stamps hand-built claims (the test harness mints tokens through it):
+// it resolves the login in the token's user name and writes that User's id and
+// current session epoch into the token. A login it cannot resolve leaves the claims
+// as they are, and the site security handler rejects the token.
 type SessionClaims struct {
 	ent *ent.Client
 }
 
 func NewSessionClaims(client *ent.Client) *SessionClaims {
 	return &SessionClaims{ent: client}
-}
-
-var _ gptoken.ClaimsUpdater = (*SessionClaims)(nil)
-
-// Update is the go-pkgz hook; it carries no context, so it stamps under a fresh one.
-func (s *SessionClaims) Update(claims gptoken.Claims) gptoken.Claims {
-	return s.Stamp(context.Background(), claims)
 }
 
 // Stamp writes the id and current session epoch of the User the claims' login names.
@@ -52,9 +131,14 @@ func (s *SessionClaims) Stamp(ctx context.Context, claims gptoken.Claims) gptoke
 		slog.ErrorContext(ctx, "session: user of a new token not resolved", "error", err)
 		return claims
 	}
+	stampUser(&claims, u)
+	return claims
+}
+
+// stampUser writes the User's id and session epoch into the claims' user.
+func stampUser(claims *gptoken.Claims, u *ent.User) {
 	claims.User.SetStrAttr(ClaimUserID, strconv.FormatInt(u.ID, 10))
 	claims.User.SetStrAttr(ClaimEpoch, strconv.FormatInt(u.SessionEpoch, 10))
-	return claims
 }
 
 // sessionUser reads the User id and epoch a session token carries. ok is false
@@ -72,95 +156,4 @@ func sessionUser(claims gptoken.Claims) (id, epoch int64, ok bool) {
 		return 0, 0, false
 	}
 	return id, epoch, true
-}
-
-// Sessions writes the site session cookie on the response of the request being
-// served (ADR 0020): a revocation point that keeps the acting User signed in
-// reissues it under the new epoch, and "sign out everywhere" clears it. ogen
-// handlers see no ResponseWriter, so Bind puts the request's writer in its
-// context; cookies go through the go-pkgz token service, so they carry the
-// login's exact attributes and the claims updater stamps the current epoch.
-type Sessions struct {
-	tokens *gptoken.Service
-	check  *SiteSecurityHandler
-}
-
-// NewSessions builds the cookie writer over the go-pkgz service that issues
-// logins and the handler that verifies site sessions.
-func NewSessions(tokens *gptoken.Service, check *SiteSecurityHandler) *Sessions {
-	return &Sessions{tokens: tokens, check: check}
-}
-
-type exchange struct {
-	w http.ResponseWriter
-	r *http.Request
-}
-
-var exchangeKey = struct{ name string }{"sessionExchange"}
-
-// Bind makes the request's writer reachable from the handlers next serves.
-func (s *Sessions) Bind(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), exchangeKey, &exchange{w: w, r: r})
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func exchangeFrom(ctx context.Context) (*exchange, error) {
-	ex, ok := ctx.Value(exchangeKey).(*exchange)
-	if !ok {
-		return nil, errors.New("session: request not bound (Sessions.Bind)")
-	}
-	return ex, nil
-}
-
-// Issue sets a fresh session cookie for the User with the given login email,
-// stamped with their current epoch. Call it after the epoch bump has committed:
-// a cookie stamped before carries the old epoch and is rejected.
-func (s *Sessions) Issue(ctx context.Context, email string) error {
-	ex, err := exchangeFrom(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = s.tokens.Set(ex.w, gptoken.Claims{
-		// Name is what the claims updater resolves; ID is go-pkgz's display id
-		// (the session check reads the stamped User id instead).
-		User: &gptoken.User{Name: email, ID: "direct_" + gptoken.HashID(sha256.New(), email)},
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:       rand.Text(),
-			Issuer:   s.tokens.Issuer,
-			Audience: jwt.ClaimStrings{s.tokens.Issuer},
-		},
-		AuthProvider: &gptoken.AuthProvider{Name: "direct"},
-	})
-	return err
-}
-
-// End clears the session cookie of the request being served.
-func (s *Sessions) End(ctx context.Context) error {
-	ex, err := exchangeFrom(ctx)
-	if err != nil {
-		return err
-	}
-	s.tokens.Reset(ex.w)
-	return nil
-}
-
-// Holder returns the id of the User whose valid session the request carries, for
-// public operations that act on a session when one is present. ok is false when
-// the request carries none or one that does not verify.
-func (s *Sessions) Holder(ctx context.Context) (id int64, ok bool) {
-	ex, err := exchangeFrom(ctx)
-	if err != nil {
-		return 0, false
-	}
-	c, err := ex.r.Cookie(s.tokens.JWTCookieName)
-	if err != nil {
-		return 0, false
-	}
-	u, err := s.check.Verify(ctx, c.Value)
-	if err != nil {
-		return 0, false
-	}
-	return u.ID, true
 }

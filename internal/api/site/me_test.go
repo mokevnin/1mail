@@ -3,8 +3,6 @@ package site_test
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -14,16 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// loginStatus drives the real direct-login endpoint and returns the status code,
+// loginStatus drives the real login endpoint and returns the status code,
 // used to prove a password change took effect end to end.
 func loginStatus(t *testing.T, env *testhelper.TestEnv, email, password string) int {
 	t.Helper()
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
-		strings.NewReader(`{"user":"`+email+`","passwd":"`+password+`"}`))
-	req.Header.Set("Content-Type", "application/json")
-	env.Server.ServeHTTP(rec, req)
-	return rec.Code
+	return postLogin(t, env, email, password).Code
 }
 
 func TestSiteUserGetMe(t *testing.T) {
@@ -43,9 +36,9 @@ func TestSiteUserUpdateMeName(t *testing.T) {
 
 	res, err := c.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{Name: siteapi.NewOptString("Renamed")})
 	require.NoError(t, err)
-	updated, ok := res.(*siteapi.SiteUserResource)
+	updated, ok := res.(*siteapi.SiteUserResourceHeaders)
 	require.Truef(t, ok, "got %T", res)
-	assert.Equal(t, "Renamed", updated.Name)
+	assert.Equal(t, "Renamed", updated.Response.Name)
 
 	// The change persists.
 	me, err := c.SiteUserGetMe(ctx)
@@ -87,9 +80,9 @@ func TestSiteUserUpdateMePasswordChange(t *testing.T) {
 		NewPassword:     siteapi.NewOptString("newsecret123"),
 	})
 	require.NoError(t, err)
-	assert.IsType(t, &siteapi.SiteUserResource{}, res)
+	assert.IsType(t, &siteapi.SiteUserResourceHeaders{}, res)
 
 	// The new password works; the old one no longer does.
 	assert.Equal(t, http.StatusOK, loginStatus(t, env, fixtures.OwnerJohnEmail, "newsecret123"))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
+	assert.Equal(t, http.StatusUnauthorized, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 }
