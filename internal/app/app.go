@@ -522,7 +522,8 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 		return accounts.NewAttempts(client.Client,
-			accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures))), nil
+			accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures)),
+			accounts.WithRule(accounts.KindPasswordReset, accounts.ResetRule(cfg.RateLimits.ForgotAddress))), nil
 	})
 
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the

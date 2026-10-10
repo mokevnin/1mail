@@ -42,7 +42,9 @@ func TestForgotPasswordFullResetFlow(t *testing.T) {
 	c := env.SiteAnonymous(t)
 	ctx := context.Background()
 
-	require.NoError(t, c.SiteAuthForgotPassword(ctx, &siteapi.SiteForgotPasswordInput{Email: fixtures.OwnerJohnEmail}))
+	forgot, err := c.SiteAuthForgotPassword(ctx, &siteapi.SiteForgotPasswordInput{Email: fixtures.OwnerJohnEmail})
+	require.NoError(t, err)
+	require.IsType(t, &siteapi.SiteAuthForgotPasswordAccepted{}, forgot)
 
 	_, body := lastSystemEmail(t, env)
 	token := tokenFromEmail(t, body)
@@ -66,8 +68,10 @@ func TestForgotPasswordUnknownEmailIsSilent(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := env.SiteAnonymous(t)
 
-	require.NoError(t, c.SiteAuthForgotPassword(context.Background(),
-		&siteapi.SiteForgotPasswordInput{Email: "nobody@example.com"}))
+	res, err := c.SiteAuthForgotPassword(context.Background(),
+		&siteapi.SiteForgotPasswordInput{Email: "nobody@example.com"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteAuthForgotPasswordAccepted{}, res)
 	assert.Empty(t, env.SystemMail.Messages(), "no email for an unknown address (no enumeration)")
 }
 

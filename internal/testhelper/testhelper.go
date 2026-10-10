@@ -220,7 +220,8 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	acc := accounts.New(client, bus)
 	attempts := accounts.NewAttempts(client,
 		accounts.WithClock(st.now),
-		accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures)))
+		accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures)),
+		accounts.WithRule(accounts.KindPasswordReset, accounts.ResetRule(cfg.RateLimits.ForgotAddress)))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,

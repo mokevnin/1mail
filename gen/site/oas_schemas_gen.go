@@ -1342,6 +1342,7 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 }
 
 func (*ProblemDetailsHeaders) siteAuthDirectLoginRes()            {}
+func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
 func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
 func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
 func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
@@ -1835,6 +1836,8 @@ func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 
 // SiteAuthForgotPasswordAccepted is response for SiteAuthForgotPassword operation.
 type SiteAuthForgotPasswordAccepted struct{}
+
+func (*SiteAuthForgotPasswordAccepted) siteAuthForgotPasswordRes() {}
 
 type SiteAuthRegisterConflict ProblemDetails
 

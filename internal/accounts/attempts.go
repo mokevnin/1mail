@@ -29,6 +29,10 @@ type Rule struct {
 	Cap       time.Duration
 }
 
+// ResetRule is the password-reset budget: at most threshold mails per address per
+// hour (checked with Reached; there is no delay).
+func ResetRule(threshold int) Rule { return Rule{Threshold: threshold, Window: time.Hour} }
+
 // LoginRule is the login throttle: threshold failures in 15 minutes, then 1 s, 2 s,
 // ... capped at 15 minutes. No hard lockout: a delay always ends.
 func LoginRule(threshold int) Rule {
@@ -64,7 +68,7 @@ func NewAttempts(client *ent.Client, opts ...AttemptsOption) *Attempts {
 	// job's) still knows when a row is stale.
 	a := &Attempts{ent: client, now: time.Now, rules: map[Kind]Rule{
 		KindLogin:         LoginRule(0),
-		KindPasswordReset: {Window: time.Hour},
+		KindPasswordReset: ResetRule(0),
 	}}
 	for _, opt := range opts {
 		opt(a)
@@ -159,6 +163,28 @@ func (a *Attempts) Delay(ctx context.Context, kind Kind, email string) (time.Dur
 	}
 	wait = min(wait, rule.Cap)
 	return max(row.LastAttemptAt.Add(wait).Sub(now), 0), nil
+}
+
+// Reached reports whether the address has used up the Rule's threshold within the
+// window. It is the plain count-in-window check for a Kind that is a budget rather
+// than a delay (password reset: at most Threshold mails per Window); the Rule's
+// Base and Cap are not involved. A Kind that is not throttled is never reached.
+func (a *Attempts) Reached(ctx context.Context, kind Kind, email string) (bool, error) {
+	rule, ok := a.rule(kind)
+	if !ok {
+		return false, nil
+	}
+	row, err := a.ent.AuthAttempt.Query().
+		Where(authattempt.Email(NormalizeEmail(email)), authattempt.KindEQ(kind),
+			authattempt.LastAttemptAtGTE(a.now().Add(-rule.Window))).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return row.Failures >= rule.Threshold, nil
 }
 
 // Purge deletes the rows whose last failure is past their Kind's window (a delay is

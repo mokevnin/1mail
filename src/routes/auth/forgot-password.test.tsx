@@ -14,3 +14,13 @@ test('shows the confirmation state after submitting', async () => {
 
   await expect.element(screen.getByText('Check your email')).toBeInTheDocument()
 })
+
+test('shows the localized rate limit message on a 429', async () => {
+  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 3600 }, { status: 429 }))
+  const { screen } = await renderWithRouter(<ForgotPasswordPage />)
+
+  await screen.getByLabelText(/^Email/).fill('user@example.com')
+  await screen.getByRole('button', { name: 'Send reset link' }).click()
+
+  await expect.element(screen.getByText(/Too many requests/)).toBeInTheDocument()
+})
