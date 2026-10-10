@@ -152,7 +152,19 @@ func (j *jobsClient) Shutdown() error {
 type Option func(*options)
 
 type options struct {
-	listener net.Listener
+	listener      net.Listener
+	e2eDKIMLookup bool
+}
+
+// ErrE2EOnly: an end-to-end-only option was passed to an app that is not the e2e profile.
+var ErrE2EOnly = errors.New("app: option is only valid in the " + config.EnvE2E + " environment")
+
+// WithE2EDKIMLookup swaps the DKIM DNS lookup for the development one, which echoes a
+// Sending domain's own stored key, so the end-to-end suite verifies domains without
+// real DNS while the development flag stays off. New refuses it outside the e2e
+// profile, so it cannot be wired into a production configuration.
+func WithE2EDKIMLookup() Option {
+	return func(o *options) { o.e2eDKIMLookup = true }
 }
 
 // WithListener makes the App serve on a listener the caller already opened (a free
@@ -168,8 +180,11 @@ func New(env string, opts ...Option) (*App, error) {
 	for _, opt := range opts {
 		opt(&o)
 	}
+	if o.e2eDKIMLookup && env != config.EnvE2E {
+		return nil, ErrE2EOnly
+	}
 	injector := do.New()
-	register(injector, env, o.listener)
+	register(injector, env, o.listener, o.e2eDKIMLookup)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -283,7 +298,7 @@ func (a *App) Stop(ctx context.Context) error {
 // that keeps `1mail workspace …` quick to start and to shut down.
 func NewOperator(env string) (*App, error) {
 	injector := do.New()
-	register(injector, env, nil)
+	register(injector, env, nil, false)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -353,7 +368,7 @@ func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	return a.shutdownReport
 }
 
-func register(injector do.Injector, env string, ln net.Listener) {
+func register(injector do.Injector, env string, ln net.Listener, e2eDKIM bool) {
 	do.Provide(injector, func(do.Injector) (*config.Config, error) {
 		cfg, err := config.Load(env)
 		if err != nil {
@@ -441,7 +456,7 @@ func register(injector do.Injector, env string, ln net.Listener) {
 		}
 		// Dev trusts seeded domains so the local send gate isn't blocked by real
 		// DNS; prod verifies against published DKIM TXT records (ADR 0010).
-		if cfg.IsDev {
+		if cfg.IsDev || e2eDKIM {
 			client, err := do.Invoke[*entClient](i)
 			if err != nil {
 				return nil, err

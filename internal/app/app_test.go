@@ -459,3 +459,11 @@ func TestAppServesOnACallerProvidedListener(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, http.StatusNotFound, code, "a tracker link round-trips to the running server")
 }
+
+func TestE2EDKIMLookupOptionIsRefusedOutsideTheE2EProfile(t *testing.T) {
+	for _, env := range []string{"production", "development", "test", ""} {
+		a, err := New(env, WithE2EDKIMLookup())
+		require.ErrorIs(t, err, ErrE2EOnly, env)
+		assert.Nil(t, a)
+	}
+}
