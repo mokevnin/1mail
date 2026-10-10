@@ -7,7 +7,7 @@
 // outbox or an in-memory sender.
 //
 // Scenarios are written as domain steps on a [Workspace] (ImportContacts,
-// SendBroadcast, WaitForEmail ...); the HTTP transport stays inside this package, so a
+// SendBroadcast, Inbox.Wait ...); the HTTP transport stays inside this package, so a
 // second transport (MCP) can later replay the same scenarios.
 package e2e
 
@@ -26,7 +26,7 @@ import (
 type Env struct {
 	// BaseURL is the application's public URL (the base of every link in an email).
 	BaseURL string
-	Mailpit *Mailpit
+	mailpit *Mailpit
 
 	accounts *accounts.Accounts
 }
@@ -94,7 +94,7 @@ func Boot() (*Env, func(), error) {
 	}
 	return &Env{
 		BaseURL:  a.Config.AppURL,
-		Mailpit:  mp,
+		mailpit:  mp,
 		accounts: acc,
 	}, stop, nil
 }

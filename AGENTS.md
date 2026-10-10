@@ -88,7 +88,9 @@ mise run test -- ./internal/api/site -run TestSiteContactsRequireAuth
 End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
 `mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
 app in-process. Scenarios are domain steps on `e2e.Workspace` (`env.NewWorkspace(t).Ready()`,
-`ImportContacts`, `SendBroadcast`, `WaitForEmail`).
+`ImportContacts`, `SendBroadcast`). Mail is observed only through the Workspace's `Inbox`: one wait
+(`w.Inbox.Wait(e2e.Match{To, Subject})`) and one absence check (`w.Inbox.RequireNone`); it deletes every
+message it saw on cleanup.
 
 Frontend tests: `mise run test:watch`.
 

@@ -23,7 +23,8 @@ sends through a real SMTP server and observes the result only in that server's i
 - **Mailpit is started by the suite on free ports**, not shared with the dev stack, so the suite never collides with a
   running `mise run dev` and needs no Docker. Mail is matched by a recipient unique to the test. Mailpit's own API
   is read through a thin typed helper: it publishes only Swagger 2.0, which the project's OpenAPI generator does not
-  accept, and the helper needs three endpoints.
+  accept. The helper sits behind each Workspace's Inbox (one wait, one absence check, cleanup of what it saw), so
+  scenarios never call it.
 - **Only the arrange step is outside the API:** creating the User, Workspace and first API token with the product's
   own domain functions. Everything else is an API call. The bootstrap token is not used; it addresses only the
   oldest Workspace.
