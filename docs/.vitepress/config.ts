@@ -15,8 +15,6 @@ export default defineConfig({
   // Internal working notes (agent setup, backlog, ADRs, research) are not part of the public site.
   srcExclude: ['agents/**', 'grill-backlog.md', 'adr/**', 'research/**'],
   ignoreDeadLinks: [/^http:\/\/localhost/],
-  // The docs quote Liquid templates (`{{ ... }}`); keep Vue from interpolating them.
-  vue: { template: { compilerOptions: { delimiters: ['[[vue:', ']]'] } } },
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/guide/introduction' },

@@ -368,7 +368,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 1. `mise run setup` / `mise run dev` — bring up the stack (https://1mail.localhost), mailpit on :8025.
 2. Create an SMTP integration (point it at mailpit) in Settings.
 3. Add a few active contacts.
-4. Create a broadcast → audience "all active" → write an email with `{{ first_name }}` → **Send**.
+4. Create a broadcast → audience "all active" → write an email with <code v-pre>{{ first_name }}</code> → **Send**.
 5. Verify the emails arrive in **mailpit** (http://localhost:8025), merge tags are substituted, and there
    is an unsubscribe link and a pixel.
 6. Open the email / click a link / hit unsubscribe → confirm the **campaign report** shows
