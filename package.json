@@ -71,6 +71,7 @@
     "@vitest/coverage-v8": "^5.0.3",
     "i18next-cli": "^1.75.2",
     "knip": "^6.41.0",
+    "msw": "^3.0.2",
     "npm-check-updates": "^23.1.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
