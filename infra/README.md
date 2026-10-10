@@ -77,8 +77,8 @@ is attached through the app spec, so `DATABASE_URL` is injected as `${db.DATABAS
 
 Plain values go in `production.tfvars` (copy `production.tfvars.example`; gitignored):
 `image_registry` (GHCR owner), `image_repository`, `image_tag`, and optionally `otel_service_name`,
-`app_url` (defaults to `https://getsphericon.com`; the apex is attached in a later step), `region`
-and `name`.
+`domain` (defaults to `getsphericon.com`; `APP_URL` is `https://<domain>`), `api_host_label`
+(`api`), `tracker_host` (empty means `t.<domain>`), `region` and `name`.
 
 Secrets are sensitive variables, passed through the environment so they never touch a file:
 
@@ -131,3 +131,67 @@ Needs the operator's account and is not covered by `mise run check:infra`: the d
 liveness and readiness after apply, the pre-deploy job applied the migrations (including river's
 schema), the database is unreachable from outside the app, secrets are redacted in plan output,
 and destroy followed by re-apply recreates the environment.
+
+## DNS and hostnames
+
+`dns.tf` creates the `getsphericon.com` zone (`domain`) and the four Google Workspace mail records
+(MX `@` `smtp.google.com.` priority 1, the apex SPF TXT, the `google-site-verification` TXT and the
+`google._domainkey` DKIM TXT). The apex SPF is the only one: SES (ticket #204) authenticates
+through its MAIL FROM subdomain and must not add a second apex SPF record.
+
+`app.tf` attaches three domains to the app, each with `zone` set so the platform creates the DNS
+records itself and issues the TLS certificate (no record or certificate is handled by hand), and an
+ingress that routes by authority and path to the one service:
+
+| Host              | Paths               | Service path                        |
+| ----------------- | ------------------- | ----------------------------------- |
+| `<domain>` (apex) | `/`                 | unchanged: SPA, `/site/*`           |
+| `api.<domain>`    | `/`                 | rewritten to the `/api` prefix      |
+| `t.<domain>`      | `/t.js`, `/collect` | unchanged; other paths have no rule |
+
+The provider schema expresses the host match (`match.authority.exact`) together with the rewrite
+(`component.rewrite`), so nothing is missing at the schema level. What the schema cannot show is
+how the platform joins the rewrite to the trimmed path for a `/` prefix (`/api` + `x` versus
+`/api/x`); that, and the tracker rules, are confirmed only by the smoke test below. The apex also
+reaches `/api/*` (the binary is path-based); that is accepted. `APP_URL` is `https://<domain>`;
+there are no new environment variables (the app reads only `APP_URL`).
+
+### Pointing the registrar at DigitalOcean (manual, once)
+
+After the first apply, read the zone's nameservers and set them at the registrar of
+`getsphericon.com` (the zone stays unresolvable, and platform certificates are not issued, until
+then):
+
+```sh
+doctl compute domain get getsphericon.com   # or: dig NS getsphericon.com @1.1.1.1
+```
+
+The values are `ns1.digitalocean.com`, `ns2.digitalocean.com` and `ns3.digitalocean.com`.
+Propagation can take hours.
+
+### Smoke test
+
+Run after the nameservers have propagated and the deployment is active. Replace the domain if
+`domain` was overridden.
+
+- [ ] `curl -sI https://getsphericon.com/` returns `200` over HTTPS with a platform certificate
+      (the SPA); `curl -s https://getsphericon.com/readyz` returns `200`.
+- [ ] `curl -si https://api.getsphericon.com/contacts` returns `401` with
+      `content-type: application/problem+json` (the external API, not the SPA's HTML). A `200`
+      with HTML means the rewrite did not apply; a `404` with problem+json means it produced a wrong
+      path (check `/api` + `/contacts` joining).
+- [ ] `curl -sI https://t.getsphericon.com/t.js` returns `200` with a JavaScript content type.
+- [ ] `curl -si -X POST https://t.getsphericon.com/collect/<path>` without a collect key returns
+      `401` problem+json (reached collect); with a valid `x-collect-key` an event is accepted.
+- [ ] `curl -si https://t.getsphericon.com/` is not the SPA (no rule for other paths).
+- [ ] MX, SPF, `google-site-verification` and `google._domainkey` resolve:
+      `dig +short MX getsphericon.com`, `dig +short TXT getsphericon.com`,
+      `dig +short TXT google._domainkey.getsphericon.com`. Check that the 400-character DKIM
+      value comes back complete (DNS splits long TXT strings; if DigitalOcean rejects it, split it
+      into 255-character quoted strings).
+
+### Pending live verification (DNS and hostnames)
+
+Not covered by `mise run check:infra` and needs the operator's account and registrar: apex over
+HTTPS, the api host rewrite verified live, the tracker host serving `/t.js` and accepting collect,
+platform-issued certificates, the platform-created records, and the Google records resolving.

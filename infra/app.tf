@@ -22,7 +22,7 @@ locals {
   }
 
   plain_env = {
-    APP_URL           = var.app_url
+    APP_URL           = "https://${var.domain}"
     PORT              = tostring(var.app_port)
     OTEL_SERVICE_NAME = var.otel_service_name
     DB_MAX_OPEN_CONNS = tostring(var.db_max_open_conns)
@@ -30,6 +30,9 @@ locals {
   }
 
   registry_credentials = var.registry_credentials != "" ? var.registry_credentials : null
+
+  api_host     = "${var.api_host_label}.${var.domain}"
+  tracker_host = var.tracker_host != "" ? var.tracker_host : "t.${var.domain}"
 }
 
 resource "digitalocean_app" "this" {
@@ -72,6 +75,93 @@ resource "digitalocean_app" "this" {
         value = env.value
         scope = "RUN_TIME"
         type  = "SECRET"
+      }
+    }
+
+    # Hostnames. `zone` makes the platform create and manage the DNS record in the zone of
+    # dns.tf, and it issues a TLS certificate for each name. The apex is the primary domain.
+    domain {
+      name = var.domain
+      type = "PRIMARY"
+      zone = digitalocean_domain.this.name
+    }
+
+    domain {
+      name = local.api_host
+      type = "ALIAS"
+      zone = digitalocean_domain.this.name
+    }
+
+    domain {
+      name = local.tracker_host
+      type = "ALIAS"
+      zone = digitalocean_domain.this.name
+    }
+
+    # Ingress by authority and path (the binary stays path-based: /site, /api, /collect, /t.js).
+    ingress {
+      # api.<domain>/x -> service /api/x. The platform trims the matched prefix ("/") and puts
+      # `rewrite` in its place; preserve_path_prefix must stay unset next to a rewrite. The exact
+      # joining ("/api" + "x" vs "/api/x") is verified by the smoke test, not by the schema.
+      rule {
+        match {
+          authority {
+            exact = local.api_host
+          }
+          path {
+            prefix = "/"
+          }
+        }
+        component {
+          name    = "web"
+          rewrite = "/api"
+        }
+      }
+
+      # The tracker host exposes only the script and the collect endpoint; other paths get no rule.
+      rule {
+        match {
+          authority {
+            exact = local.tracker_host
+          }
+          path {
+            prefix = "/t.js"
+          }
+        }
+        component {
+          name                 = "web"
+          preserve_path_prefix = true
+        }
+      }
+
+      rule {
+        match {
+          authority {
+            exact = local.tracker_host
+          }
+          path {
+            prefix = "/collect"
+          }
+        }
+        component {
+          name                 = "web"
+          preserve_path_prefix = true
+        }
+      }
+
+      # The apex serves the SPA and /site/*.
+      rule {
+        match {
+          authority {
+            exact = var.domain
+          }
+          path {
+            prefix = "/"
+          }
+        }
+        component {
+          name = "web"
+        }
       }
     }
 

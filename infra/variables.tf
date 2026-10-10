@@ -42,10 +42,22 @@ variable "otel_service_name" {
   default     = "sphericon"
 }
 
-variable "app_url" {
-  description = "APP_URL: the public origin used in auth cookies and in links in emails. Point it at the apex once DNS is attached."
+variable "domain" {
+  description = "Apex domain of the deployment. The zone is created in DigitalOcean DNS; point the registrar's nameservers at it once (README.md). APP_URL is https://<domain>."
   type        = string
-  default     = "https://getsphericon.com"
+  default     = "getsphericon.com"
+}
+
+variable "api_host_label" {
+  description = "Label of the external API host: <label>.<domain>, rewritten to the /api prefix of the service."
+  type        = string
+  default     = "api"
+}
+
+variable "tracker_host" {
+  description = "Hostname that serves the tracker script (/t.js) and collect (/collect/*). Empty means t.<domain>."
+  type        = string
+  default     = ""
 }
 
 variable "app_port" {
