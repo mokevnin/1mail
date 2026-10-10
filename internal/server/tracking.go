@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/lo"
 )
@@ -40,13 +41,17 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 // /site/confirmations/{token}), so the SPA stays on the generated client. Confirmation
 // tokens additionally expire (~7 days).
 //
+// Tracking never refuses a recipient (ADR 0018): over the per-IP tracking guard an
+// open still returns the pixel and a click still redirects, only the recording is
+// skipped. Unsubscribe is not rate limited at all; its signed token protects it.
+//
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
-func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Tracker) http.Handler {
+func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Tracker, limiter *ratelimit.Limiter) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /e/o/{token}", func(w http.ResponseWriter, r *http.Request) {
-		if rid, err := tracker.Decode(r.PathValue("token")); err == nil {
+		if rid, err := tracker.Decode(r.PathValue("token")); err == nil && limiter.RecordsTracking(r) {
 			recordOpen(r.Context(), client, bus, rid)
 		}
 		w.Header().Set("Content-Type", "image/gif")
@@ -65,7 +70,9 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
-		recordClick(r.Context(), client, bus, rid, dest)
+		if limiter.RecordsTracking(r) {
+			recordClick(r.Context(), client, bus, rid, dest)
+		}
 		http.Redirect(w, r, dest, http.StatusFound)
 	})
 

@@ -62,7 +62,7 @@
     updated_at: '{{daysAgo 2}}',
   }
 - {
-    id: 1005,
+    id: 1005, # fixture: BroadcastRecipientUnengagedFirst
     broadcast_id: 200,
     contact_id: 105,
     workspace_id: 1,
@@ -72,7 +72,7 @@
     updated_at: '{{daysAgo 3}}',
   }
 - {
-    id: 1006,
+    id: 1006, # fixture: BroadcastRecipientUnengagedSecond
     broadcast_id: 200,
     contact_id: 106,
     workspace_id: 1,
