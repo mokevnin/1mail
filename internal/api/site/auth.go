@@ -8,8 +8,9 @@ import (
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/credentials"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegisterInput) (siteapi.SiteAuthRegisterRes, error) {
@@ -44,13 +45,13 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return &v, nil
 	}
 
-	hash, err := service.HashPassword(password)
+	hash, err := credentials.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
 	u, err := h.accounts.CreateUser(ctx, name, email, hash)
-	if service.IsUniqueViolation(err) {
+	if db.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthRegisterConflict(problemWithErrors(
 			http.StatusConflict,
 			i18n.T("errors.email_exists", nil),

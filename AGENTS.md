@@ -149,10 +149,10 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
      (`internal/server/hooks_ses.go`), signed unsubscribe/confirm tokens
      (`internal/consent`), and `accounts.BootstrapScope` (the bootstrap token).
 - **The raw `*ent.Client` is allowed only in:** `internal/accounts` (User, Membership,
-  Workspace, invitation by token), `internal/api/auth` (credentials, token and key lookup),
+  Workspace incl. slug resolution, invitation by token), `internal/api/auth` (credentials, token and key lookup),
   `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,
   so it works on the bus's raw transaction client and scopes from the token's Workspace),
-  `internal/oauthserver`, `internal/service` (suspension, slug resolution), `internal/events`
+  `internal/oauthserver`, `internal/suspension` (Workspace suspension), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
   subscriber: its envelope carries only a Workspace id, ADR 0022), `ee/retention` (the

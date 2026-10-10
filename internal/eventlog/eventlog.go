@@ -16,9 +16,9 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // Module is the Events ingest and read module.
@@ -50,7 +50,7 @@ type Input struct {
 func (m *Module) Ingest(ctx context.Context, s *ent.Scoped, inputs []Input) error {
 	return m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
 		for _, in := range inputs {
-			contactID, err := service.ResolveContactID(ctx, ts, in.SubjectID, in.Email, in.Phone)
+			contactID, err := contacts.ResolveID(ctx, ts, in.SubjectID, in.Email, in.Phone)
 			if err != nil {
 				return err
 			}

@@ -16,7 +16,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/oauthex"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/oauthcode"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"golang.org/x/oauth2"
 )
 
@@ -253,17 +253,17 @@ func (s *Server) token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prefix, err := service.GenerateTokenPrefix()
+	prefix, err := credentials.GenerateTokenPrefix()
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", "")
 		return
 	}
-	secret, err := service.GenerateTokenSecret()
+	secret, err := credentials.GenerateTokenSecret()
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", "")
 		return
 	}
-	hash, err := service.HashTokenSecret(secret)
+	hash, err := credentials.HashTokenSecret(secret)
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", "")
 		return
@@ -280,7 +280,7 @@ func (s *Server) token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"access_token": service.TokenValue(prefix, secret),
+		"access_token": credentials.TokenValue(prefix, secret),
 		"token_type":   "Bearer",
 		"scope":        strings.Join(grant.Scopes, " "),
 	})

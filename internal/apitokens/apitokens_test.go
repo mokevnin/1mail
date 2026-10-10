@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/internal/apitokens"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -30,10 +30,10 @@ func TestMintStoresAHashedTokenAndReturnsTheValueOnce(t *testing.T) {
 	assert.NotNil(t, got.Token.ExpiresAt)
 	assert.Equal(t, int64(fixtures.AcmeID), got.Token.WorkspaceID)
 
-	parsed := service.ParseToken(got.Value)
+	parsed := credentials.ParseToken(got.Value)
 	require.NotNil(t, parsed, "the value is a well-formed token")
 	assert.Equal(t, got.Token.Prefix, parsed.Prefix)
-	assert.True(t, service.VerifyTokenSecret(parsed.Secret, got.Token.SecretHash))
+	assert.True(t, credentials.VerifyTokenSecret(parsed.Secret, got.Token.SecretHash))
 	assert.NotContains(t, got.Token.SecretHash, parsed.Secret)
 }
 

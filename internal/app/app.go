@@ -46,7 +46,7 @@ import (
 	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/templates"
@@ -335,7 +335,7 @@ func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bo
 	if err != nil {
 		return false, err
 	}
-	id, err := service.WorkspaceIDBySlug(ctx, client.Client, slug)
+	id, err := accounts.WorkspaceIDBySlug(ctx, client.Client, slug)
 	if err != nil {
 		return false, err
 	}
@@ -343,7 +343,7 @@ func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bo
 	if err != nil {
 		return false, err
 	}
-	changed, err := service.SuspendWorkspace(ctx, bus.Bus, id, by, reason)
+	changed, err := suspension.SuspendWorkspace(ctx, bus.Bus, id, by, reason)
 	if err != nil || !changed {
 		return changed, err
 	}
@@ -363,7 +363,7 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	id, err := service.WorkspaceIDBySlug(ctx, client.Client, slug)
+	id, err := accounts.WorkspaceIDBySlug(ctx, client.Client, slug)
 	if err != nil {
 		return false, err
 	}
@@ -371,7 +371,7 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	return service.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
+	return suspension.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
 }
 
 // Accounts is the product's Accounts module from the DI container, for harnesses that

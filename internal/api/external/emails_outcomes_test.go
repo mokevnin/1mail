@@ -11,7 +11,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -65,7 +65,7 @@ func TestExternalEmailsSendIsHeldWhileTheWorkspaceIsSuspended(t *testing.T) {
 	ctx := context.Background()
 	c := env.ExternalScoped(t, "emails:send")
 	tmpl := seedTemplate(t, env.DB, fixtures.AcmeID)
-	suspended, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
+	suspended, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
 	require.NoError(t, err)
 	require.True(t, suspended)
 
