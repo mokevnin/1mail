@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AuditEntriesList implements AuditEntries_list operation.
+//
+// List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope).
+//
+// GET /audit-entries
+func (UnimplementedHandler) AuditEntriesList(ctx context.Context, params AuditEntriesListParams) (r AuditEntriesListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // AuthMeGet implements Auth_meGet operation.
 //
 // GET /auth/me

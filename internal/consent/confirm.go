@@ -25,7 +25,7 @@ func RecordConfirmation(ctx context.Context, bus *events.Bus, target tracking.Co
 	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		// The Workspace comes from the signed confirmation token (no membership or api
 		// token here), so this is a scope source outside the site/external/job list.
-		sc := tx.Scoped(target.WorkspaceID)
+		sc := events.Ingest(tx.Scoped(target.WorkspaceID))
 		exists, err := sc.Confirmation().Query().Where(
 			confirmation.ChannelEQ(confirmation.ChannelEmail),
 			confirmation.DestinationEQ(dest),

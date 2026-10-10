@@ -56,9 +56,15 @@ func (a *ScopedAssign) Set(column string, v any) *ScopedAssign {
 
 // Scoped is the entry point to every Workspace-owned entity, confined to one Workspace.
 // Build it from a client or from a transaction's client: `tx.Client().Scoped(ws)`.
+//
+// A scope may carry the Actor of its writes (Scoped.As, scoped_audit.tmpl): writes of
+// entities that opted into the Audit log are then recorded in their own transaction.
 type Scoped struct {
-	c  *Client
-	ws int64
+	c      *Client
+	ws     int64
+	actor  Actor
+	opener AuditOpener
+	pub    AuditPublisher
 }
 
 // Scoped returns the client confined to the given Workspace.
@@ -102,6 +108,7 @@ func (s *Scoped) verify{{ $n.Name }}(ctx context.Context, ids []int64) error {
 {{ range $n := scopedNodes $ }}
 {{ $N := $n.Name }}
 {{ $P := $n.Package }}
+{{ $A := auditOf $n }}
 
 // {{ $N }}Scoped reaches {{ $N }} entities of one Workspace.
 type {{ $N }}Scoped struct{ s *Scoped }
@@ -119,14 +126,85 @@ func (t *{{ $N }}Scoped) Get(ctx context.Context, id int64) (*{{ $N }}, error) {
 	return t.Query().Where({{ $P }}.ID(id)).Only(ctx)
 }
 
+// {{ $N }}ScopedDeleteOne wraps {{ $N }}DeleteOne.
+type {{ $N }}ScopedDeleteOne struct {
+	s *Scoped
+	b *{{ $N }}DeleteOne
+}
+
 // DeleteOneID deletes the {{ $N }} with the id; a row of another Workspace is not found.
-func (t *{{ $N }}Scoped) DeleteOneID(id int64) *{{ $N }}DeleteOne {
-	return t.s.c.{{ $N }}.DeleteOneID(id).Where({{ $P }}.WorkspaceID(t.s.ws))
+func (t *{{ $N }}Scoped) DeleteOneID(id int64) *{{ $N }}ScopedDeleteOne {
+	return &{{ $N }}ScopedDeleteOne{s: t.s, b: t.s.c.{{ $N }}.DeleteOneID(id).Where({{ $P }}.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *{{ $N }}ScopedDeleteOne) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *{{ $N }}ScopedDeleteOne) Exec(ctx context.Context) error {
+	{{- if $A }}
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.{{ $N }}.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChange{{ $N }}("delete", before, nil))
+		})
+	}
+	{{- end }}
+	return x.b.Exec(ctx)
+}
+
+// {{ $N }}ScopedDelete wraps {{ $N }}Delete.
+type {{ $N }}ScopedDelete struct {
+	s *Scoped
+	b *{{ $N }}Delete
 }
 
 // Delete deletes the {{ $N }} entities of the Workspace that match the predicates.
-func (t *{{ $N }}Scoped) Delete() *{{ $N }}Delete {
-	return t.s.c.{{ $N }}.Delete().Where({{ $P }}.WorkspaceID(t.s.ws))
+func (t *{{ $N }}Scoped) Delete() *{{ $N }}ScopedDelete {
+	return &{{ $N }}ScopedDelete{s: t.s, b: t.s.c.{{ $N }}.Delete().Where({{ $P }}.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *{{ $N }}ScopedDelete) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *{{ $N }}ScopedDelete) Exec(ctx context.Context) (int, error) {
+	{{- if $A }}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.{{ $N }}.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChange{{ $N }}("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
+	{{- end }}
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -155,6 +233,20 @@ func (x *{{ $N }}ScopedCreate) Save(ctx context.Context) (*{{ $N }}, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	{{- if $A }}
+	if x.s.auditing() {
+		var created *{{ $N }}
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChange{{ $N }}("create", nil, created))
+		})
+		return created, err
+	}
+	{{- end }}
 	return x.b.Save(ctx)
 }
 
@@ -197,6 +289,25 @@ func (b *{{ $N }}ScopedCreateBulk) Save(ctx context.Context) ([]*{{ $N }}, error
 	if err != nil {
 		return nil, err
 	}
+	{{- if $A }}
+	if b.s.auditing() {
+		var created []*{{ $N }}
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChange{{ $N }}("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
+	}
+	{{- end }}
 	return raw.Save(ctx)
 }
 
@@ -259,6 +370,8 @@ func (t *{{ $N }}Scoped) conflictOptions(columns []string) []sql.ConflictOption 
 type {{ $N }}ScopedUpsertOne struct {
 	x *{{ $N }}ScopedCreate
 	u *{{ $N }}UpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -282,6 +395,7 @@ func (u *{{ $N }}ScopedUpsertOne) Ignore() *{{ $N }}ScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *{{ $N }}ScopedUpsertOne) DoNothing() *{{ $N }}ScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -296,6 +410,12 @@ func (u *{{ $N }}ScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	{{- if $A }}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
+	{{- end }}
 	return u.u.Exec(ctx)
 }
 
@@ -304,8 +424,37 @@ func (u *{{ $N }}ScopedUpsertOne) ID(ctx context.Context) (int64, error) {
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	{{- if $A }}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
+	{{- end }}
 	return u.u.ID(ctx)
 }
+{{- if $A }}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *{{ $N }}ScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.{{ $N }}.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChange{{ $N }}("create", nil, row))
+	})
+	return id, err
+}
+{{- end }}
 
 // {{ $N }}ScopedUpsertBulk is the "upsert" of several {{ $N }} entities.
 type {{ $N }}ScopedUpsertBulk struct {
@@ -349,6 +498,11 @@ func (u *{{ $N }}ScopedUpsertBulk) Update(set func(*{{ $N }}ScopedUpsert)) *{{ $
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *{{ $N }}ScopedUpsertBulk) Exec(ctx context.Context) error {
+	{{- if $A }}
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
+	{{- end }}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -392,6 +546,24 @@ func (x *{{ $N }}ScopedUpdateOne) Save(ctx context.Context) (*{{ $N }}, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	{{- if $A }}
+	if x.s.auditing() {
+		var updated *{{ $N }}
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.{{ $N }}.Query().Where(x.b.mutation.predicates...).Where({{ $P }}.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChange{{ $N }}("update", before, updated))
+		})
+		return updated, err
+	}
+	{{- end }}
 	return x.b.Save(ctx)
 }
 
@@ -454,6 +626,42 @@ func (x *{{ $N }}ScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
+	{{- if $A }}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.{{ $N }}.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.{{ $N }}.Query().Where({{ $P }}.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*{{ $N }}, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChange{{ $N }}("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
+	{{- end }}
 	return x.b.Save(ctx)
 }
 

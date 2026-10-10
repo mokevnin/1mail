@@ -2,6 +2,8 @@ package site
 
 import (
 	"context"
+	"io"
+	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
@@ -91,6 +93,21 @@ type Handlers struct {
 	tags         *tags.Module
 	automations  *automations.Module
 	oauth        *oauthserver.Service
+	audit        AuditLog
+}
+
+// AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
+// ee/audit. Core knows only this interface: without a license Licensed is false and
+// the page answers 402.
+type AuditLog interface {
+	Licensed() bool
+	// Entries returns up to limit entries matching the filter, newest first, preceding
+	// the cursor entry id (0 = from the newest), and the next page's cursor (0 = last page).
+	Entries(ctx context.Context, s *ent.Scoped, f events.AuditFilter, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
+	// ExportCSV streams the entries matching the filter, newest first, as CSV.
+	ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter, w io.Writer) error
+	// RetentionLicensed reports whether the retention window may be set (ADR 0014).
+	RetentionLicensed() bool
 }
 
 // Deps is everything the /site handlers are built from. The domain modules are
@@ -121,6 +138,7 @@ type Deps struct {
 	Tokens       *authtoken.Signer
 	Tracker      *tracking.Tracker
 	AppURL       string
+	Audit        AuditLog
 }
 
 func NewHandlers(d Deps) *Handlers {
@@ -129,7 +147,7 @@ func NewHandlers(d Deps) *Handlers {
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, domainVerify: d.DomainVerify, quotaRefresh: d.QuotaRefresh, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth,
+		oauth: d.OAuth, audit: d.Audit,
 	}
 }
 
@@ -144,6 +162,21 @@ var _ siteapi.Handler = (*Handlers)(nil)
 func (h *Handlers) scopedFor(ctx context.Context, slug string) (*ent.Scoped, error) {
 	s, _, err := h.scopedWithRoleFor(ctx, slug)
 	return s, err
+}
+
+// actor is the signed-in User as the actor of an Audit entry (ADR 0022), with the
+// display name snapshotted. A name that cannot be loaded is left empty: the entry is
+// still worth recording.
+func (h *Handlers) actor(ctx context.Context) events.Actor {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		return events.Actor{}
+	}
+	actor := events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(a.UserID, 10)}
+	if u, err := h.accounts.User(ctx, a.UserID); err == nil {
+		actor.Name = u.Name
+	}
+	return actor
 }
 
 // scopedWithRoleFor is scopedFor plus the caller's role, for owner/admin-gated

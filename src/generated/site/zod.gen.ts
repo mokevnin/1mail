@@ -108,6 +108,41 @@ export const zSiteApplyTagInput = z.object({
 });
 
 /**
+ * Who performed an audited change
+ */
+export const zSiteAuditActorKind = z.enum([
+  'user',
+  'api_token',
+  'operator',
+  'system'
+]);
+
+/**
+ * The actor of an Audit entry
+ */
+export const zSiteAuditActor = z.object({
+  kind: zSiteAuditActorKind,
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * How long the Audit log is kept; the Enterprise advanced-retention control
+ */
+export const zSiteAuditRetention = z.object({
+  retentionDays: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()
+});
+
+/**
+ * What an audited change was done to
+ */
+export const zSiteAuditTarget = z.object({
+  type: z.string(),
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
  * Automation lifecycle status
  */
 export const zSiteAutomationStatus = z.enum(['draft', 'active']);
@@ -824,6 +859,29 @@ export const zSiteApiTokenResource = z.object({
 });
 
 /**
+ * One immutable Audit entry (Enterprise)
+ */
+export const zSiteAuditEntryResource = z.object({
+  id: zEntityId,
+  occurredAt: zTimestamp,
+  actor: zSiteAuditActor,
+  action: z.string(),
+  target: zSiteAuditTarget,
+  diff: z.exactOptional(z.record(z.string(), z.unknown()).nullable()),
+  requestId: z.exactOptional(z.string().nullable()),
+  ip: z.exactOptional(z.string().nullable()),
+  userAgent: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * A page of Audit entries, newest first
+ */
+export const zSiteAuditEntryList = z.object({
+  items: z.array(zSiteAuditEntryResource),
+  nextCursor: z.exactOptional(z.string().nullable())
+});
+
+/**
  * Automation resource used by the site UI
  */
 export const zSiteAutomationResource = z.object({
@@ -1137,6 +1195,51 @@ export const zSiteApiTokenResourceKeySlug = z.string();
 export const zSiteApiTokenResourceParentKey = z.string();
 
 /**
+ * Only entries with exactly this action, e.g. membership.update
+ */
+export const zSiteAuditFilterAction = z.string();
+
+/**
+ * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
+ */
+export const zSiteAuditFilterActorId = z.string();
+
+/**
+ * Only entries by this kind of actor
+ */
+export const zSiteAuditFilterActorKind = zSiteAuditActorKind;
+
+/**
+ * Only entries at or after this time
+ */
+export const zSiteAuditFilterFrom = zTimestamp;
+
+/**
+ * Only entries from this client address
+ */
+export const zSiteAuditFilterIp = z.string();
+
+/**
+ * Only entries made under this request id
+ */
+export const zSiteAuditFilterRequestId = z.string();
+
+/**
+ * Only entries about the target with this id
+ */
+export const zSiteAuditFilterTargetId = z.string();
+
+/**
+ * Only entries about this target type, e.g. integration
+ */
+export const zSiteAuditFilterTargetType = z.string();
+
+/**
+ * Only entries strictly before this time
+ */
+export const zSiteAuditFilterTo = zTimestamp;
+
+/**
  * Unique identifier
  */
 export const zSiteAutomationResourceKeyId = zEntityId;
@@ -1431,6 +1534,70 @@ export const zSiteAnalyticsOverviewQuery = z.object({
  * The request has succeeded.
  */
 export const zSiteAnalyticsOverviewResponse = zSiteAnalyticsOverview;
+
+export const zSiteAuditListPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteAuditListQuery = z.object({
+  from: z.exactOptional(zTimestamp),
+  to: z.exactOptional(zTimestamp),
+  actorKind: z.exactOptional(zSiteAuditActorKind),
+  actorId: z.exactOptional(z.string()),
+  action: z.exactOptional(z.string()),
+  targetType: z.exactOptional(z.string()),
+  targetId: z.exactOptional(z.string()),
+  ip: z.exactOptional(z.string()),
+  requestId: z.exactOptional(z.string()),
+  cursor: z.exactOptional(z.string()),
+  limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditListResponse = zSiteAuditEntryList;
+
+export const zSiteAuditExportPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteAuditExportQuery = z.object({
+  from: z.exactOptional(zTimestamp),
+  to: z.exactOptional(zTimestamp),
+  actorKind: z.exactOptional(zSiteAuditActorKind),
+  actorId: z.exactOptional(z.string()),
+  action: z.exactOptional(z.string()),
+  targetType: z.exactOptional(z.string()),
+  targetId: z.exactOptional(z.string()),
+  ip: z.exactOptional(z.string()),
+  requestId: z.exactOptional(z.string())
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditExportResponse = z.string();
+
+export const zSiteAuditGetRetentionPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditGetRetentionResponse = zSiteAuditRetention;
+
+export const zSiteAuditSetRetentionBody = zSiteAuditRetention;
+
+export const zSiteAuditSetRetentionPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditSetRetentionResponse = zSiteAuditRetention;
 
 export const zSiteAutomationsListPath = z.object({
   slug: z.string()

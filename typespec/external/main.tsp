@@ -21,6 +21,7 @@ import "./resources/consent.tsp";
 import "./resources/templates.tsp";
 import "./resources/webhooks.tsp";
 import "./resources/auth.tsp";
+import "./resources/audit.tsp";
 import "./mcp.tsp";
 
 using TypeSpec.Http;

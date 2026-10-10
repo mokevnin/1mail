@@ -7,12 +7,14 @@ package tags
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/tag"
+	"github.com/mokevnin/1mail/internal/events"
 )
 
 // Domain errors. Callers match with errors.Is.
@@ -58,18 +60,20 @@ func (m *Module) Apply(ctx context.Context, s *ent.Scoped, contactID int64, name
 	if err := requireContact(ctx, s, contactID); err != nil {
 		return nil, err
 	}
+	// DO NOTHING, not Ignore: an insert is the audited create of the Tag (ADR 0022),
+	// a conflict writes nothing and reports sql.ErrNoRows.
 	if err := s.Tag().Create().
 		SetName(name).
 		OnConflictColumns(tag.FieldName, tag.FieldWorkspaceID).
-		Ignore().
-		Exec(ctx); err != nil {
+		DoNothing().
+		Exec(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 	t, err := s.Tag().Query().Where(tag.Name(name)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.Contact().UpdateOneID(contactID).AddTagIDs(t.ID).Exec(ctx); err != nil {
+	if err := events.Unaudited(s).Contact().UpdateOneID(contactID).AddTagIDs(t.ID).Exec(ctx); err != nil {
 		return nil, err
 	}
 	return t, nil
@@ -88,7 +92,7 @@ func (m *Module) Remove(ctx context.Context, s *ent.Scoped, contactID int64, nam
 	if err != nil {
 		return err
 	}
-	return s.Contact().UpdateOneID(contactID).RemoveTagIDs(t.ID).Exec(ctx)
+	return events.Unaudited(s).Contact().UpdateOneID(contactID).RemoveTagIDs(t.ID).Exec(ctx)
 }
 
 func requireContact(ctx context.Context, s *ent.Scoped, contactID int64) error {

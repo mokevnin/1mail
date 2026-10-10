@@ -3,11 +3,13 @@ package site
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
@@ -102,6 +104,11 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 		return &v, nil
 	}
 
+	if h.auditEntryUnlicensed(req.EventTypes) {
+		v := siteapi.SiteWebhooksCreateUnprocessableEntity(auditEntryProblem())
+		return &v, nil
+	}
+
 	secret, err := service.GenerateWebhookSecret()
 	if err != nil {
 		return nil, err
@@ -175,6 +182,11 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 		return &v, nil
 	}
 
+	if h.auditEntryUnlicensed(req.EventTypes) {
+		v := siteapi.SiteWebhooksUpdateUnprocessableEntity(auditEntryProblem())
+		return &v, nil
+	}
+
 	upd := scoped.WebhookEndpoint().UpdateOneID(id)
 	if v, ok := req.URL.Get(); ok {
 		if !service.ValidWebhookURL(v) {
@@ -230,4 +242,15 @@ func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWe
 		return nil, err
 	}
 	return &siteapi.SiteWebhooksDeleteNoContent{}, nil
+}
+
+// auditEntryUnlicensed reports whether types selects audit.entry on an instance
+// without an Enterprise license (ADR 0022: forwarding is EE only).
+func (h *Handlers) auditEntryUnlicensed(types []string) bool {
+	return slices.Contains(types, events.NameAuditEntry) && (h.audit == nil || !h.audit.Licensed())
+}
+
+func auditEntryProblem() siteapi.ProblemDetails {
+	const detail = "audit.entry needs an Enterprise license"
+	return problemWithErrors(http.StatusUnprocessableEntity, detail, map[string][]string{"eventTypes": {detail}})
 }

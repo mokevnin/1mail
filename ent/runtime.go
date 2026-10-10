@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/authattempt"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
@@ -70,6 +71,37 @@ func init() {
 	apitokenDescScopes := apitokenFields[4].Descriptor()
 	// apitoken.DefaultScopes holds the default value on creation for the scopes field.
 	apitoken.DefaultScopes = apitokenDescScopes.Default.([]string)
+	auditentryMixin := schema.AuditEntry{}.Mixin()
+	auditentryMixinFields0 := auditentryMixin[0].Fields()
+	_ = auditentryMixinFields0
+	auditentryFields := schema.AuditEntry{}.Fields()
+	_ = auditentryFields
+	// auditentryDescCreatedAt is the schema descriptor for created_at field.
+	auditentryDescCreatedAt := auditentryMixinFields0[0].Descriptor()
+	// auditentry.DefaultCreatedAt holds the default value on creation for the created_at field.
+	auditentry.DefaultCreatedAt = auditentryDescCreatedAt.Default.(func() time.Time)
+	// auditentryDescUpdatedAt is the schema descriptor for updated_at field.
+	auditentryDescUpdatedAt := auditentryMixinFields0[1].Descriptor()
+	// auditentry.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	auditentry.DefaultUpdatedAt = auditentryDescUpdatedAt.Default.(func() time.Time)
+	// auditentry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	auditentry.UpdateDefaultUpdatedAt = auditentryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// auditentryDescEntryKey is the schema descriptor for entry_key field.
+	auditentryDescEntryKey := auditentryFields[1].Descriptor()
+	// auditentry.EntryKeyValidator is a validator for the "entry_key" field. It is called by the builders before save.
+	auditentry.EntryKeyValidator = auditentryDescEntryKey.Validators[0].(func(string) error)
+	// auditentryDescActorKind is the schema descriptor for actor_kind field.
+	auditentryDescActorKind := auditentryFields[3].Descriptor()
+	// auditentry.ActorKindValidator is a validator for the "actor_kind" field. It is called by the builders before save.
+	auditentry.ActorKindValidator = auditentryDescActorKind.Validators[0].(func(string) error)
+	// auditentryDescAction is the schema descriptor for action field.
+	auditentryDescAction := auditentryFields[6].Descriptor()
+	// auditentry.ActionValidator is a validator for the "action" field. It is called by the builders before save.
+	auditentry.ActionValidator = auditentryDescAction.Validators[0].(func(string) error)
+	// auditentryDescTargetType is the schema descriptor for target_type field.
+	auditentryDescTargetType := auditentryFields[7].Descriptor()
+	// auditentry.TargetTypeValidator is a validator for the "target_type" field. It is called by the builders before save.
+	auditentry.TargetTypeValidator = auditentryDescTargetType.Validators[0].(func(string) error)
 	authattemptMixin := schema.AuthAttempt{}.Mixin()
 	authattemptMixinFields0 := authattemptMixin[0].Fields()
 	_ = authattemptMixinFields0
@@ -720,4 +752,8 @@ func init() {
 	workspaceDescPostalAddress := workspaceFields[6].Descriptor()
 	// workspace.DefaultPostalAddress holds the default value on creation for the postal_address field.
 	workspace.DefaultPostalAddress = workspaceDescPostalAddress.Default.(string)
+	// workspaceDescRetentionDays is the schema descriptor for retention_days field.
+	workspaceDescRetentionDays := workspaceFields[7].Descriptor()
+	// workspace.RetentionDaysValidator is a validator for the "retention_days" field. It is called by the builders before save.
+	workspace.RetentionDaysValidator = workspaceDescRetentionDays.Validators[0].(func(int) error)
 }

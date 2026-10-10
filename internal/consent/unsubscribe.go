@@ -33,7 +33,7 @@ func RecordUnsubscribe(ctx context.Context, bus *events.Bus, target tracking.Uns
 	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		// The Workspace comes from the signed unsubscribe token (no membership or api
 		// token here), so this is a scope source outside the site/external/job list.
-		sc := tx.Scoped(target.WorkspaceID)
+		sc := events.Ingest(tx.Scoped(target.WorkspaceID))
 		exists, err := sc.Unsubscribe().Query().Where(
 			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
 			unsubscribe.DestinationEQ(dest),

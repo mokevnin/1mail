@@ -3,6 +3,7 @@ package external
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
@@ -10,6 +11,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
@@ -32,6 +34,19 @@ func webhookResource(e *ent.WebhookEndpoint) externalapi.WebhookResource {
 func urlProblem() externalapi.ProblemDetails {
 	p := problem(http.StatusUnprocessableEntity, "url must be an absolute http or https URL")
 	p.Errors = externalapi.NewOptProblemDetailsErrors(externalapi.ProblemDetailsErrors{"url": {"must be an absolute http or https URL"}})
+	return p
+}
+
+// auditEntryUnlicensed reports whether types selects audit.entry on an instance
+// without an Enterprise license (ADR 0022: forwarding is EE only).
+func (h *Handlers) auditEntryUnlicensed(types []string) bool {
+	return slices.Contains(types, events.NameAuditEntry) && (h.audit == nil || !h.audit.Licensed())
+}
+
+func auditEntryProblem() externalapi.ProblemDetails {
+	const detail = "audit.entry needs an Enterprise license"
+	p := problem(http.StatusUnprocessableEntity, detail)
+	p.Errors = externalapi.NewOptProblemDetailsErrors(externalapi.ProblemDetailsErrors{"eventTypes": {detail}})
 	return p
 }
 
@@ -73,6 +88,11 @@ func (h *Handlers) WebhooksCreate(ctx context.Context, req *externalapi.CreateWe
 	}
 	if !service.ValidWebhookURL(req.URL) {
 		res := externalapi.WebhooksCreateUnprocessableEntity(urlProblem())
+		return &res, nil
+	}
+
+	if h.auditEntryUnlicensed(req.EventTypes) {
+		res := externalapi.WebhooksCreateUnprocessableEntity(auditEntryProblem())
 		return &res, nil
 	}
 
@@ -139,6 +159,11 @@ func (h *Handlers) WebhooksUpdate(ctx context.Context, req *externalapi.UpdateWe
 	}
 	if v, ok := req.URL.Get(); ok && !service.ValidWebhookURL(v) {
 		res := externalapi.WebhooksUpdateUnprocessableEntity(urlProblem())
+		return &res, nil
+	}
+
+	if h.auditEntryUnlicensed(req.EventTypes) {
+		res := externalapi.WebhooksUpdateUnprocessableEntity(auditEntryProblem())
 		return &res, nil
 	}
 

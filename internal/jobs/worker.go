@@ -48,6 +48,13 @@ type Client struct {
 	appURL string
 }
 
+// Extension plugs extra workers and periodic jobs into the client without core
+// importing them: the composition root hands in the Enterprise Edition's (ADR 0014).
+type Extension struct {
+	Workers      func(*river.Workers)
+	PeriodicJobs []*river.PeriodicJob
+}
+
 // Retention groups the data-retention settings of the prune jobs.
 type Retention struct {
 	// OutboxFloor is the minimum age of a pruned outbox row.
@@ -60,8 +67,9 @@ type Retention struct {
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change). db is the raw handle the instance-wide
-// outbox prune runs on; retention carries the prune settings.
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, catalog *messaging.Catalog, appURL string, retention Retention) (*Client, error) {
+// outbox prune runs on; retention carries the prune settings. ext plugs in the
+// Enterprise Edition's workers and periodic jobs.
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, catalog *messaging.Catalog, appURL string, retention Retention, ext ...Extension) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -87,8 +95,16 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
 	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
 
+	var extraPeriodic []*river.PeriodicJob
+	for _, e := range ext {
+		if e.Workers != nil {
+			e.Workers(workers)
+		}
+		extraPeriodic = append(extraPeriodic, e.PeriodicJobs...)
+	}
+
 	logger := slog.Default()
-	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))
+	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger, extraPeriodic...))
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +119,9 @@ const (
 	discardedJobRetention = 14 * 24 * time.Hour
 )
 
-func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
+// newRiverConfig builds the river config; extra are the Edition's periodic jobs, added to
+// core's.
+func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river.PeriodicJob) *river.Config {
 	return &river.Config{
 		CompletedJobRetentionPeriod: completedJobRetention,
 		CancelledJobRetentionPeriod: cancelledJobRetention,
@@ -121,7 +139,7 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
 		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
 		// Re-validate every Sending domain's DKIM DNS periodically so a record
 		// that disappears flips the domain back to unverified (ADR 0010).
-		PeriodicJobs: []*river.PeriodicJob{
+		PeriodicJobs: append([]*river.PeriodicJob{
 			river.NewPeriodicJob(
 				river.PeriodicInterval(15*time.Minute),
 				func() (river.JobArgs, *river.InsertOpts) {
@@ -160,7 +178,7 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
 				},
 				nil,
 			),
-		},
+		}, extra...),
 	}
 }
 

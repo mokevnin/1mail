@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
@@ -112,36 +113,12 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	a := auth.GetSiteAuth(ctx)
 
 	// Upsert on the (workspace, email) unique key: re-inviting reissues the token
-	// and expiry and clears any prior acceptance.
-	existing, err := s.Invitation().Query().
-		Where(invitation.Email(email)).
-		Only(ctx)
-	var inv *ent.Invitation
-	switch {
-	case ent.IsNotFound(err):
-		inv, err = s.Invitation().Create().
-			SetEmail(email).
-			SetRole(role).
-			SetTokenHash(tokenHash).
-			SetExpiresAt(expiresAt).
-			SetInvitedBy(a.UserID).
-			Save(ctx)
-		if err != nil {
-			return nil, err
-		}
-	case err != nil:
+	// and expiry and clears any prior acceptance. Recorded as an Audit entry.
+	inv, err := h.accounts.Invite(ctx, s, h.actor(ctx), accounts.InviteInput{
+		Email: email, Role: role, TokenHash: tokenHash, ExpiresAt: expiresAt, InvitedBy: a.UserID,
+	})
+	if err != nil {
 		return nil, err
-	default:
-		inv, err = s.Invitation().UpdateOneID(existing.ID).
-			SetRole(role).
-			SetTokenHash(tokenHash).
-			SetExpiresAt(expiresAt).
-			SetInvitedBy(a.UserID).
-			ClearAcceptedAt().
-			Save(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	inviteURL := strings.TrimRight(h.appURL, "/") + "/invitations/" + token
@@ -188,13 +165,11 @@ func (h *Handlers) SiteInvitationsDelete(ctx context.Context, params siteapi.Sit
 		return &v, nil
 	}
 
-	n, err := s.Invitation().Delete().
-		Where(invitation.ID(id)).
-		Exec(ctx)
+	found, err := h.accounts.RevokeInvitation(ctx, s, h.actor(ctx), id)
 	if err != nil {
 		return nil, err
 	}
-	if n == 0 {
+	if !found {
 		v := siteapi.SiteInvitationsDeleteNotFound(problem(http.StatusNotFound, "invitation not found"))
 		return &v, nil
 	}

@@ -19,7 +19,7 @@ import (
 func TestNotifyWorkspaceSuspendedEmailsOwners(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.DB, fixtures.AcmeID, "system", "complaint rate above 0.3%")
+	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaint rate above 0.3%")
 	require.NoError(t, err)
 
 	require.NoError(t, jobs.NotifyWorkspaceSuspended(ctx, env.DB, env.SystemMail, fixtures.AcmeID))

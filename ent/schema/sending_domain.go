@@ -26,6 +26,7 @@ type SendingDomain struct {
 func (SendingDomain) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "sending_domains"},
+		Audited{Action: "sending_domain", NameField: "domain"},
 	}
 }
 
@@ -46,7 +47,8 @@ func (SendingDomain) Fields() []ent.Field {
 			NotEmpty(),
 		// Tink-encrypted PKCS#8 PEM private key (internal/secrets.Cipher).
 		field.String("dkim_private_key_encrypted").
-			Sensitive(),
+			Sensitive().
+			Annotations(Sensitive{}),
 		// The DKIM TXT value ("v=DKIM1; k=rsa; p=<base64 DER>"); safe to expose.
 		field.String("dkim_public_key").
 			NotEmpty(),

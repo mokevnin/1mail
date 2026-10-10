@@ -5,6 +5,7 @@ package siteapi
 import (
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/ogen-go/ogen/conv"
@@ -141,6 +142,1371 @@ func decodeSiteAnalyticsOverviewParams(args [1]string, argsEscaped bool, r *http
 		return params, &ogenerrors.DecodeParamError{
 			Name: "range",
 			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteAuditExportParams is parameters of SiteAudit_export operation.
+type SiteAuditExportParams struct {
+	Slug string
+	// Only entries at or after this time.
+	From OptTimestamp `json:",omitempty,omitzero"`
+	// Only entries strictly before this time.
+	To OptTimestamp `json:",omitempty,omitzero"`
+	// Only entries by this kind of actor.
+	ActorKind OptSiteAuditActorKind `json:",omitempty,omitzero"`
+	// Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind.
+	ActorId OptString `json:",omitempty,omitzero"`
+	// Only entries with exactly this action, e.g. membership.update.
+	Action OptString `json:",omitempty,omitzero"`
+	// Only entries about this target type, e.g. integration.
+	TargetType OptString `json:",omitempty,omitzero"`
+	// Only entries about the target with this id.
+	TargetId OptString `json:",omitempty,omitzero"`
+	// Only entries from this client address.
+	IP OptString `json:",omitempty,omitzero"`
+	// Only entries made under this request id.
+	RequestId OptString `json:",omitempty,omitzero"`
+}
+
+func unpackSiteAuditExportParams(packed middleware.Parameters) (params SiteAuditExportParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "from",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.From = v.(OptTimestamp)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "to",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.To = v.(OptTimestamp)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "actorKind",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ActorKind = v.(OptSiteAuditActorKind)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "actorId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ActorId = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "action",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Action = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "targetType",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TargetType = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "targetId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TargetId = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "ip",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.IP = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "requestId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.RequestId = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeSiteAuditExportParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAuditExportParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: from.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "from",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotFromVal Timestamp
+				if err := func() error {
+					var paramsDotFromValVal time.Time
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToDateTime(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotFromValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotFromVal = Timestamp(paramsDotFromValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.From.SetTo(paramsDotFromVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "from",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: to.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "to",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotToVal Timestamp
+				if err := func() error {
+					var paramsDotToValVal time.Time
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToDateTime(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotToValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotToVal = Timestamp(paramsDotToValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.To.SetTo(paramsDotToVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "to",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: actorKind.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "actorKind",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActorKindVal SiteAuditActorKind
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActorKindVal = SiteAuditActorKind(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ActorKind.SetTo(paramsDotActorKindVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ActorKind.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "actorKind",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: actorId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "actorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActorIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActorIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ActorId.SetTo(paramsDotActorIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "actorId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: action.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActionVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActionVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Action.SetTo(paramsDotActionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "action",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: targetType.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "targetType",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTargetTypeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTargetTypeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TargetType.SetTo(paramsDotTargetTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "targetType",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: targetId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "targetId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTargetIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTargetIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TargetId.SetTo(paramsDotTargetIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "targetId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: ip.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "ip",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIPVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIPVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IP.SetTo(paramsDotIPVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "ip",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: requestId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "requestId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRequestIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRequestIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.RequestId.SetTo(paramsDotRequestIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "requestId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteAuditGetRetentionParams is parameters of SiteAudit_getRetention operation.
+type SiteAuditGetRetentionParams struct {
+	Slug string
+}
+
+func unpackSiteAuditGetRetentionParams(packed middleware.Parameters) (params SiteAuditGetRetentionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteAuditGetRetentionParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAuditGetRetentionParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteAuditListParams is parameters of SiteAudit_list operation.
+type SiteAuditListParams struct {
+	Slug string
+	// Only entries at or after this time.
+	From OptTimestamp `json:",omitempty,omitzero"`
+	// Only entries strictly before this time.
+	To OptTimestamp `json:",omitempty,omitzero"`
+	// Only entries by this kind of actor.
+	ActorKind OptSiteAuditActorKind `json:",omitempty,omitzero"`
+	// Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind.
+	ActorId OptString `json:",omitempty,omitzero"`
+	// Only entries with exactly this action, e.g. membership.update.
+	Action OptString `json:",omitempty,omitzero"`
+	// Only entries about this target type, e.g. integration.
+	TargetType OptString `json:",omitempty,omitzero"`
+	// Only entries about the target with this id.
+	TargetId OptString `json:",omitempty,omitzero"`
+	// Only entries from this client address.
+	IP OptString `json:",omitempty,omitzero"`
+	// Only entries made under this request id.
+	RequestId OptString `json:",omitempty,omitzero"`
+	// Cursor from a previous page.
+	Cursor OptString `json:",omitempty,omitzero"`
+	// Page size.
+	Limit OptInt32 `json:",omitempty,omitzero"`
+}
+
+func unpackSiteAuditListParams(packed middleware.Parameters) (params SiteAuditListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "from",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.From = v.(OptTimestamp)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "to",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.To = v.(OptTimestamp)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "actorKind",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ActorKind = v.(OptSiteAuditActorKind)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "actorId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ActorId = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "action",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Action = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "targetType",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TargetType = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "targetId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TargetId = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "ip",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.IP = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "requestId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.RequestId = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "cursor",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cursor = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt32)
+		}
+	}
+	return params
+}
+
+func decodeSiteAuditListParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAuditListParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: from.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "from",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotFromVal Timestamp
+				if err := func() error {
+					var paramsDotFromValVal time.Time
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToDateTime(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotFromValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotFromVal = Timestamp(paramsDotFromValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.From.SetTo(paramsDotFromVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "from",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: to.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "to",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotToVal Timestamp
+				if err := func() error {
+					var paramsDotToValVal time.Time
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToDateTime(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotToValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotToVal = Timestamp(paramsDotToValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.To.SetTo(paramsDotToVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "to",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: actorKind.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "actorKind",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActorKindVal SiteAuditActorKind
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActorKindVal = SiteAuditActorKind(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ActorKind.SetTo(paramsDotActorKindVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ActorKind.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "actorKind",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: actorId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "actorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActorIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActorIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ActorId.SetTo(paramsDotActorIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "actorId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: action.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActionVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActionVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Action.SetTo(paramsDotActionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "action",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: targetType.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "targetType",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTargetTypeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTargetTypeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TargetType.SetTo(paramsDotTargetTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "targetType",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: targetId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "targetId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTargetIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTargetIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TargetId.SetTo(paramsDotTargetIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "targetId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: ip.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "ip",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIPVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIPVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IP.SetTo(paramsDotIPVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "ip",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: requestId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "requestId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRequestIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRequestIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.RequestId.SetTo(paramsDotRequestIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "requestId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: cursor.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "cursor",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCursorVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCursorVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cursor.SetTo(paramsDotCursorVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "cursor",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int32(25)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteAuditSetRetentionParams is parameters of SiteAudit_setRetention operation.
+type SiteAuditSetRetentionParams struct {
+	Slug string
+}
+
+func unpackSiteAuditSetRetentionParams(packed middleware.Parameters) (params SiteAuditSetRetentionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteAuditSetRetentionParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAuditSetRetentionParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
 			Err:  err,
 		}
 	}

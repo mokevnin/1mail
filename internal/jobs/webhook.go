@@ -8,6 +8,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/webhook"
@@ -82,10 +83,11 @@ func (c *Client) Dispatch(ctx context.Context, s *ent.Scoped, eventName, deliver
 }
 
 // matchesEvent reports whether an endpoint with the given filter receives the
-// event. An empty filter means "all events".
+// event. An empty filter means "all customer-facing events": an unprojected event
+// (an Audit entry, ADR 0022) must be named explicitly.
 func matchesEvent(filter []string, name string) bool {
 	if len(filter) == 0 {
-		return true
+		return !events.IsUnprojected(name)
 	}
 	return slices.Contains(filter, name)
 }

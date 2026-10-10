@@ -53,6 +53,7 @@ const SCOPE_OPTIONS = [
   'mcp:send',
   'tokens:read',
   'tokens:write',
+  'audit:read',
 ]
 
 export function ApiKeysSection({ slug }: { slug: string }) {

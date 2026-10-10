@@ -112,6 +112,7 @@ var registry = map[string]func() DomainEvent{
 	NameEmailComplained:    func() DomainEvent { return &EmailDeliveryFailure{} },
 	NameMarketingConfirmed: func() DomainEvent { return &MarketingConfirmed{} },
 	NameCollected:          func() DomainEvent { return &CollectedEvent{} },
+	NameAuditEntry:         func() DomainEvent { return &AuditEntry{} },
 }
 
 // Decode reconstructs the typed event from an envelope.

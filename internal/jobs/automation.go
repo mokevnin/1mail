@@ -173,11 +173,13 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 
 	case automations.StepApplyTag, automations.StepRemoveTag:
 		// A tag step changes the Contact's Tags and moves straight on; it sends nothing.
+		// The change is the `system` actor's (ADR 0022): a Tag the step creates is audited.
+		sys := mod.AsSystem(scoped)
 		var err error
 		if s.Type == automations.StepApplyTag {
-			_, err = tags.New().Apply(ctx, scoped, run.ContactID, s.Tag)
+			_, err = tags.New().Apply(ctx, sys, run.ContactID, s.Tag)
 		} else {
-			err = tags.New().Remove(ctx, scoped, run.ContactID, s.Tag)
+			err = tags.New().Remove(ctx, sys, run.ContactID, s.Tag)
 		}
 		if err != nil {
 			return StepResult{}, err

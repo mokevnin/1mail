@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
@@ -14,6 +15,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
@@ -67,10 +69,13 @@ func TokenScoped(ctx context.Context) *ent.Scoped {
 // ExternalSecurityHandler implements externalapi.SecurityHandler (Bearer token auth).
 type ExternalSecurityHandler struct {
 	ent *ent.Client
+	bus *events.Bus
 }
 
-func NewExternalSecurityHandler(client *ent.Client) *ExternalSecurityHandler {
-	return &ExternalSecurityHandler{ent: client}
+// NewExternalSecurityHandler builds the Bearer-token handler. The bus opens the
+// transactions of audited writes made under the token (ADR 0022).
+func NewExternalSecurityHandler(client *ent.Client, bus *events.Bus) *ExternalSecurityHandler {
+	return &ExternalSecurityHandler{ent: client, bus: bus}
 }
 
 var _ externalapi.SecurityHandler = (*ExternalSecurityHandler)(nil)
@@ -150,7 +155,11 @@ func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalap
 		WorkspaceID: token.WorkspaceID,
 		Name:        token.Name,
 		Scopes:      token.Scopes,
-		Scoped:      h.ent.Scoped(token.WorkspaceID),
+		Scoped: h.bus.Act(h.ent.Scoped(token.WorkspaceID), events.Actor{
+			Kind: events.ActorAPIToken,
+			ID:   strconv.FormatInt(token.ID, 10),
+			Name: token.Name,
+		}),
 	}
 	return WithTokenAuth(ctx, auth), nil
 }
@@ -208,7 +217,7 @@ func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collect
 	if err != nil {
 		return ctx, err
 	}
-	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil
+	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: events.Ingest(h.ent.Scoped(ws.ID))}), nil
 }
 
 func (h *CollectSecurityHandler) workspaceByKey(ctx context.Context, key string) (*ent.Workspace, error) {

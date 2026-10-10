@@ -95,6 +95,11 @@ func PostalAddress(v string) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldPostalAddress, v))
 }
 
+// RetentionDays applies equality check predicate on the "retention_days" field. It's identical to RetentionDaysEQ.
+func RetentionDays(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldRetentionDays, v))
+}
+
 // SuspendedAt applies equality check predicate on the "suspended_at" field. It's identical to SuspendedAtEQ.
 func SuspendedAt(v time.Time) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldSuspendedAt, v))
@@ -533,6 +538,56 @@ func PostalAddressEqualFold(v string) predicate.Workspace {
 // PostalAddressContainsFold applies the ContainsFold predicate on the "postal_address" field.
 func PostalAddressContainsFold(v string) predicate.Workspace {
 	return predicate.Workspace(sql.FieldContainsFold(FieldPostalAddress, v))
+}
+
+// RetentionDaysEQ applies the EQ predicate on the "retention_days" field.
+func RetentionDaysEQ(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldRetentionDays, v))
+}
+
+// RetentionDaysNEQ applies the NEQ predicate on the "retention_days" field.
+func RetentionDaysNEQ(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNEQ(FieldRetentionDays, v))
+}
+
+// RetentionDaysIn applies the In predicate on the "retention_days" field.
+func RetentionDaysIn(vs ...int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldIn(FieldRetentionDays, vs...))
+}
+
+// RetentionDaysNotIn applies the NotIn predicate on the "retention_days" field.
+func RetentionDaysNotIn(vs ...int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotIn(FieldRetentionDays, vs...))
+}
+
+// RetentionDaysGT applies the GT predicate on the "retention_days" field.
+func RetentionDaysGT(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGT(FieldRetentionDays, v))
+}
+
+// RetentionDaysGTE applies the GTE predicate on the "retention_days" field.
+func RetentionDaysGTE(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGTE(FieldRetentionDays, v))
+}
+
+// RetentionDaysLT applies the LT predicate on the "retention_days" field.
+func RetentionDaysLT(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLT(FieldRetentionDays, v))
+}
+
+// RetentionDaysLTE applies the LTE predicate on the "retention_days" field.
+func RetentionDaysLTE(v int) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLTE(FieldRetentionDays, v))
+}
+
+// RetentionDaysIsNil applies the IsNil predicate on the "retention_days" field.
+func RetentionDaysIsNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldIsNull(FieldRetentionDays))
+}
+
+// RetentionDaysNotNil applies the NotNil predicate on the "retention_days" field.
+func RetentionDaysNotNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotNull(FieldRetentionDays))
 }
 
 // SuspendedAtEQ applies the EQ predicate on the "suspended_at" field.
@@ -1233,6 +1288,29 @@ func HasInvitations() predicate.Workspace {
 func HasInvitationsWith(preds ...predicate.Invitation) predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {
 		step := newInvitationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAuditEntries applies the HasEdge predicate on the "audit_entries" edge.
+func HasAuditEntries() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AuditEntriesTable, AuditEntriesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAuditEntriesWith applies the HasEdge predicate on the "audit_entries" edge with a given conditions (other predicates).
+func HasAuditEntriesWith(preds ...predicate.AuditEntry) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newAuditEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

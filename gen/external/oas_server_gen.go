@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AuditEntriesList implements AuditEntries_list operation.
+	//
+	// List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope).
+	//
+	// GET /audit-entries
+	AuditEntriesList(ctx context.Context, params AuditEntriesListParams) (AuditEntriesListRes, error)
 	// AuthMeGet implements Auth_meGet operation.
 	//
 	// GET /auth/me

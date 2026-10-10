@@ -170,6 +170,12 @@ func WithFreezers(f ...Freezer) Option {
 	return func(m *Module) { m.freezers = append(m.freezers, f...) }
 }
 
+// AsSystem returns s acting as the `system` actor (ADR 0022), for a job or automation
+// step that changes an audited entity in the normal course of work.
+func (m *Module) AsSystem(s *ent.Scoped) *ent.Scoped {
+	return m.bus.Act(s, events.Actor{Kind: events.ActorSystem})
+}
+
 // New builds the module. tracker may be nil only if no marketing Request is sent.
 func New(bus *events.Bus, senders Senders, tracker *tracking.Tracker, opts ...Option) *Module {
 	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease, now: time.Now}

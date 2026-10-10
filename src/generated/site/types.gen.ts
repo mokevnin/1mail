@@ -604,6 +604,122 @@ export type SiteApplyTagInput = {
 };
 
 /**
+ * The actor of an Audit entry
+ */
+export type SiteAuditActor = {
+  /**
+   * The kind of actor; an operator is shown to the customer as "1mail staff"
+   */
+  kind: SiteAuditActorKind;
+  /**
+   * The actor's id (a User id or an API token id); absent for the system
+   */
+  id?: string | null;
+  /**
+   * Display name snapshot taken when the entry was written
+   */
+  name?: string | null;
+};
+
+/**
+ * Who performed an audited change
+ */
+export const SiteAuditActorKind = {
+  USER: 'user',
+  API_TOKEN: 'api_token',
+  OPERATOR: 'operator',
+  SYSTEM: 'system'
+} as const;
+
+/**
+ * Who performed an audited change
+ */
+export type SiteAuditActorKind = typeof SiteAuditActorKind[keyof typeof SiteAuditActorKind];
+
+/**
+ * A page of Audit entries, newest first
+ */
+export type SiteAuditEntryList = {
+  items: Array<SiteAuditEntryResource>;
+  /**
+   * Pass as `cursor` for the next page; absent on the last page
+   */
+  nextCursor?: string | null;
+};
+
+/**
+ * One immutable Audit entry (Enterprise)
+ */
+export type SiteAuditEntryResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  /**
+   * When the change happened
+   */
+  occurredAt: Timestamp;
+  /**
+   * Who did it
+   */
+  actor: SiteAuditActor;
+  /**
+   * What was done, as `<entity>.<verb>`
+   */
+  action: string;
+  /**
+   * What it was done to
+   */
+  target: SiteAuditTarget;
+  /**
+   * Before/after of the changed fields; secrets appear as changed only
+   */
+  diff?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Request id of the change
+   */
+  requestId?: string | null;
+  /**
+   * Client address of the change
+   */
+  ip?: string | null;
+  /**
+   * Client user agent of the change
+   */
+  userAgent?: string | null;
+};
+
+/**
+ * How long the Audit log is kept; the Enterprise advanced-retention control
+ */
+export type SiteAuditRetention = {
+  /**
+   * Entries older than this many days are pruned; null keeps them forever
+   */
+  retentionDays: number | null;
+};
+
+/**
+ * What an audited change was done to
+ */
+export type SiteAuditTarget = {
+  /**
+   * Entity type, e.g. membership
+   */
+  type: string;
+  /**
+   * The target's id
+   */
+  id?: string | null;
+  /**
+   * Name snapshot taken when the entry was written; absent for a Contact
+   */
+  name?: string | null;
+};
+
+/**
  * Automation resource used by the site UI
  */
 export type SiteAutomationResource = {
@@ -2253,6 +2369,51 @@ export type SiteApiTokenResourceKeySlug = string;
 export type SiteApiTokenResourceParentKey = string;
 
 /**
+ * Only entries with exactly this action, e.g. membership.update
+ */
+export type SiteAuditFilterAction = string;
+
+/**
+ * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
+ */
+export type SiteAuditFilterActorId = string;
+
+/**
+ * Only entries by this kind of actor
+ */
+export type SiteAuditFilterActorKind = SiteAuditActorKind;
+
+/**
+ * Only entries at or after this time
+ */
+export type SiteAuditFilterFrom = Timestamp;
+
+/**
+ * Only entries from this client address
+ */
+export type SiteAuditFilterIp = string;
+
+/**
+ * Only entries made under this request id
+ */
+export type SiteAuditFilterRequestId = string;
+
+/**
+ * Only entries about the target with this id
+ */
+export type SiteAuditFilterTargetId = string;
+
+/**
+ * Only entries about this target type, e.g. integration
+ */
+export type SiteAuditFilterTargetType = string;
+
+/**
+ * Only entries strictly before this time
+ */
+export type SiteAuditFilterTo = Timestamp;
+
+/**
  * Unique identifier
  */
 export type SiteAutomationResourceKeyId = EntityId;
@@ -2950,6 +3111,236 @@ export type SiteAnalyticsOverviewResponses = {
 };
 
 export type SiteAnalyticsOverviewResponse = SiteAnalyticsOverviewResponses[keyof SiteAnalyticsOverviewResponses];
+
+export type SiteAuditListData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: {
+    /**
+     * Only entries at or after this time
+     */
+    from?: Timestamp;
+    /**
+     * Only entries strictly before this time
+     */
+    to?: Timestamp;
+    /**
+     * Only entries by this kind of actor
+     */
+    actorKind?: SiteAuditActorKind;
+    /**
+     * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
+     */
+    actorId?: string;
+    /**
+     * Only entries with exactly this action, e.g. membership.update
+     */
+    action?: string;
+    /**
+     * Only entries about this target type, e.g. integration
+     */
+    targetType?: string;
+    /**
+     * Only entries about the target with this id
+     */
+    targetId?: string;
+    /**
+     * Only entries from this client address
+     */
+    ip?: string;
+    /**
+     * Only entries made under this request id
+     */
+    requestId?: string;
+    /**
+     * Cursor from a previous page
+     */
+    cursor?: string;
+    /**
+     * Page size
+     */
+    limit?: number;
+  };
+  url: '/workspaces/{slug}/audit-entries';
+};
+
+export type SiteAuditListErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditListError = SiteAuditListErrors[keyof SiteAuditListErrors];
+
+export type SiteAuditListResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditEntryList;
+};
+
+export type SiteAuditListResponse = SiteAuditListResponses[keyof SiteAuditListResponses];
+
+export type SiteAuditExportData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: {
+    /**
+     * Only entries at or after this time
+     */
+    from?: Timestamp;
+    /**
+     * Only entries strictly before this time
+     */
+    to?: Timestamp;
+    /**
+     * Only entries by this kind of actor
+     */
+    actorKind?: SiteAuditActorKind;
+    /**
+     * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
+     */
+    actorId?: string;
+    /**
+     * Only entries with exactly this action, e.g. membership.update
+     */
+    action?: string;
+    /**
+     * Only entries about this target type, e.g. integration
+     */
+    targetType?: string;
+    /**
+     * Only entries about the target with this id
+     */
+    targetId?: string;
+    /**
+     * Only entries from this client address
+     */
+    ip?: string;
+    /**
+     * Only entries made under this request id
+     */
+    requestId?: string;
+  };
+  url: '/workspaces/{slug}/audit-entries/export';
+};
+
+export type SiteAuditExportErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditExportError = SiteAuditExportErrors[keyof SiteAuditExportErrors];
+
+export type SiteAuditExportResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: string;
+};
+
+export type SiteAuditExportResponse = SiteAuditExportResponses[keyof SiteAuditExportResponses];
+
+export type SiteAuditGetRetentionData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/audit-entries/retention';
+};
+
+export type SiteAuditGetRetentionErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditGetRetentionError = SiteAuditGetRetentionErrors[keyof SiteAuditGetRetentionErrors];
+
+export type SiteAuditGetRetentionResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditRetention;
+};
+
+export type SiteAuditGetRetentionResponse = SiteAuditGetRetentionResponses[keyof SiteAuditGetRetentionResponses];
+
+export type SiteAuditSetRetentionData = {
+  body: SiteAuditRetention;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/audit-entries/retention';
+};
+
+export type SiteAuditSetRetentionErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteAuditSetRetentionError = SiteAuditSetRetentionErrors[keyof SiteAuditSetRetentionErrors];
+
+export type SiteAuditSetRetentionResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditRetention;
+};
+
+export type SiteAuditSetRetentionResponse = SiteAuditSetRetentionResponses[keyof SiteAuditSetRetentionResponses];
 
 export type SiteAutomationsListData = {
   body?: never;

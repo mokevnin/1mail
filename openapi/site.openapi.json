@@ -51,6 +51,9 @@
       "name": "Site OAuth"
     },
     {
+      "name": "Site Audit"
+    },
+    {
       "name": "Site Contacts"
     },
     {
@@ -1087,6 +1090,354 @@
           }
         },
         "tags": ["Site Analytics"]
+      }
+    },
+    "/workspaces/{slug}/audit-entries": {
+      "get": {
+        "operationId": "SiteAudit_list",
+        "description": "List the workspace's Audit log, newest first (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.requestId"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Cursor from a previous page",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAuditEntryList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"]
+      }
+    },
+    "/workspaces/{slug}/audit-entries/export": {
+      "get": {
+        "operationId": "SiteAudit_export",
+        "description": "Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/SiteAuditFilter.requestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "headers": {
+              "content-disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"]
+      }
+    },
+    "/workspaces/{slug}/audit-entries/retention": {
+      "get": {
+        "operationId": "SiteAudit_getRetention",
+        "description": "Read the Audit log retention window (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAuditRetention"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"]
+      },
+      "put": {
+        "operationId": "SiteAudit_setRetention",
+        "description": "Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAuditRetention"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteAuditRetention"
+              }
+            }
+          }
+        }
       }
     },
     "/workspaces/{slug}/automations": {
@@ -5170,6 +5521,96 @@
           "type": "string"
         }
       },
+      "SiteAuditFilter.action": {
+        "name": "action",
+        "in": "query",
+        "required": false,
+        "description": "Only entries with exactly this action, e.g. membership.update",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.actorId": {
+        "name": "actorId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.actorKind": {
+        "name": "actorKind",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by this kind of actor",
+        "schema": {
+          "$ref": "#/components/schemas/SiteAuditActorKind"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.from": {
+        "name": "from",
+        "in": "query",
+        "required": false,
+        "description": "Only entries at or after this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.ip": {
+        "name": "ip",
+        "in": "query",
+        "required": false,
+        "description": "Only entries from this client address",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.requestId": {
+        "name": "requestId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries made under this request id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.targetId": {
+        "name": "targetId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about the target with this id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.targetType": {
+        "name": "targetType",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about this target type, e.g. integration",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "SiteAuditFilter.to": {
+        "name": "to",
+        "in": "query",
+        "required": false,
+        "description": "Only entries strictly before this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
       "SiteAutomationResourceKey.id": {
         "name": "id",
         "in": "path",
@@ -6367,6 +6808,152 @@
           }
         },
         "description": "Site request body for applying a tag to a contact"
+      },
+      "SiteAuditActor": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteAuditActorKind"
+              }
+            ],
+            "description": "The kind of actor; an operator is shown to the customer as \"1mail staff\""
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The actor's id (a User id or an API token id); absent for the system"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name snapshot taken when the entry was written"
+          }
+        },
+        "description": "The actor of an Audit entry"
+      },
+      "SiteAuditActorKind": {
+        "type": "string",
+        "enum": ["user", "api_token", "operator", "system"],
+        "description": "Who performed an audited change"
+      },
+      "SiteAuditEntryList": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteAuditEntryResource"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as `cursor` for the next page; absent on the last page"
+          }
+        },
+        "description": "A page of Audit entries, newest first"
+      },
+      "SiteAuditEntryResource": {
+        "type": "object",
+        "required": ["id", "occurredAt", "actor", "action", "target"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "occurredAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the change happened"
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteAuditActor"
+              }
+            ],
+            "description": "Who did it"
+          },
+          "action": {
+            "type": "string",
+            "description": "What was done, as `<entity>.<verb>`"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteAuditTarget"
+              }
+            ],
+            "description": "What it was done to"
+          },
+          "diff": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Before/after of the changed fields; secrets appear as changed only"
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Request id of the change"
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client address of the change"
+          },
+          "userAgent": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client user agent of the change"
+          }
+        },
+        "description": "One immutable Audit entry (Enterprise)"
+      },
+      "SiteAuditRetention": {
+        "type": "object",
+        "required": ["retentionDays"],
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Entries older than this many days are pruned; null keeps them forever"
+          }
+        },
+        "description": "How long the Audit log is kept; the Enterprise advanced-retention control"
+      },
+      "SiteAuditTarget": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Entity type, e.g. membership"
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The target's id"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name snapshot taken when the entry was written; absent for a Contact"
+          }
+        },
+        "description": "What an audited change was done to"
       },
       "SiteAutomationResource": {
         "type": "object",

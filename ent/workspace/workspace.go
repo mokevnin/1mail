@@ -30,6 +30,8 @@ const (
 	FieldRequireConfirmedOptIn = "require_confirmed_opt_in"
 	// FieldPostalAddress holds the string denoting the postal_address field in the database.
 	FieldPostalAddress = "postal_address"
+	// FieldRetentionDays holds the string denoting the retention_days field in the database.
+	FieldRetentionDays = "retention_days"
 	// FieldSuspendedAt holds the string denoting the suspended_at field in the database.
 	FieldSuspendedAt = "suspended_at"
 	// FieldSuspendedBy holds the string denoting the suspended_by field in the database.
@@ -80,6 +82,8 @@ const (
 	EdgeMemberships = "memberships"
 	// EdgeInvitations holds the string denoting the invitations edge name in mutations.
 	EdgeInvitations = "invitations"
+	// EdgeAuditEntries holds the string denoting the audit_entries edge name in mutations.
+	EdgeAuditEntries = "audit_entries"
 	// Table holds the table name of the workspace in the database.
 	Table = "workspaces"
 	// ContactsTable is the table that holds the contacts relation/edge.
@@ -236,6 +240,13 @@ const (
 	InvitationsInverseTable = "invitations"
 	// InvitationsColumn is the table column denoting the invitations relation/edge.
 	InvitationsColumn = "workspace_id"
+	// AuditEntriesTable is the table that holds the audit_entries relation/edge.
+	AuditEntriesTable = "audit_entries"
+	// AuditEntriesInverseTable is the table name for the AuditEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "auditentry" package.
+	AuditEntriesInverseTable = "audit_entries"
+	// AuditEntriesColumn is the table column denoting the audit_entries relation/edge.
+	AuditEntriesColumn = "workspace_id"
 )
 
 // Columns holds all SQL columns for workspace fields.
@@ -249,6 +260,7 @@ var Columns = []string{
 	FieldIngestKey,
 	FieldRequireConfirmedOptIn,
 	FieldPostalAddress,
+	FieldRetentionDays,
 	FieldSuspendedAt,
 	FieldSuspendedBy,
 	FieldSuspensionReason,
@@ -283,6 +295,8 @@ var (
 	DefaultRequireConfirmedOptIn bool
 	// DefaultPostalAddress holds the default value on creation for the "postal_address" field.
 	DefaultPostalAddress string
+	// RetentionDaysValidator is a validator for the "retention_days" field. It is called by the builders before save.
+	RetentionDaysValidator func(int) error
 )
 
 // OrderOption defines the ordering options for the Workspace queries.
@@ -331,6 +345,11 @@ func ByRequireConfirmedOptIn(opts ...sql.OrderTermOption) OrderOption {
 // ByPostalAddress orders the results by the postal_address field.
 func ByPostalAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPostalAddress, opts...).ToFunc()
+}
+
+// ByRetentionDays orders the results by the retention_days field.
+func ByRetentionDays(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRetentionDays, opts...).ToFunc()
 }
 
 // BySuspendedAt orders the results by the suspended_at field.
@@ -655,6 +674,20 @@ func ByInvitations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newInvitationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAuditEntriesCount orders the results by audit_entries count.
+func ByAuditEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAuditEntriesStep(), opts...)
+	}
+}
+
+// ByAuditEntries orders the results by audit_entries terms.
+func ByAuditEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAuditEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newContactsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -807,5 +840,12 @@ func newInvitationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(InvitationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, InvitationsTable, InvitationsColumn),
+	)
+}
+func newAuditEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AuditEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AuditEntriesTable, AuditEntriesColumn),
 	)
 }

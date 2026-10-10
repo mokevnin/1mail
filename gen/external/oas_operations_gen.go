@@ -6,6 +6,7 @@ package externalapi
 type OperationName = string
 
 const (
+	AuditEntriesListOperation       OperationName = "AuditEntriesList"
 	AuthMeGetOperation              OperationName = "AuthMeGet"
 	AuthTokensBootstrapOperation    OperationName = "AuthTokensBootstrap"
 	AuthTokensCreateOperation       OperationName = "AuthTokensCreate"
