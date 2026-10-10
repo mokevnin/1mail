@@ -1,43 +1,47 @@
 package testhelper
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
-	"github.com/riverqueue/river/rivertype"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	"github.com/stretchr/testify/require"
 )
 
-// The river queue is a library table, not an ent entity, and tests run jobs inline,
-// so a test that needs a job to be waiting in the queue puts one there and reads it
-// back through these helpers instead of querying the table itself. Both ride the
-// test's transaction.
+// Tests run jobs inline, so a test that needs a job to be waiting in the queue puts
+// one there and reads it back through these helpers. They use river's own insert-only
+// client over the test's connection (the same txdb connection the ent client rides),
+// so nothing here touches the river table directly.
 
-// EnqueueJob puts one available job of kind with args into the queue.
-func (env *TestEnv) EnqueueJob(t *testing.T, kind string, args any) {
+// maxQueuedJobs bounds a JobsOf read; a test queues a handful.
+const maxQueuedJobs = 1000
+
+func (env *TestEnv) riverClient(t *testing.T) *river.Client[*sql.Tx] {
 	t.Helper()
-	body, err := json.Marshal(args)
+	rc, err := river.NewClient(riverdatabasesql.New(env.SQLDB), &river.Config{})
 	require.NoError(t, err)
-	_, err = env.SQLDB.ExecContext(t.Context(),
-		`INSERT INTO river_job (kind, args, state, max_attempts, queue) VALUES ($1, $2, $3, 3, 'default')`,
-		kind, body, string(rivertype.JobStateAvailable))
+	return rc
+}
+
+// EnqueueJob puts one available job of args into the queue.
+func (env *TestEnv) EnqueueJob(t *testing.T, args river.JobArgs) {
+	t.Helper()
+	_, err := env.riverClient(t).Insert(t.Context(), args, nil)
 	require.NoError(t, err)
 }
 
 // JobsOf returns the args of the queued jobs of kind, oldest first.
 func (env *TestEnv) JobsOf(t *testing.T, kind string) []map[string]any {
 	t.Helper()
-	rows, err := env.SQLDB.QueryContext(t.Context(), `SELECT args FROM river_job WHERE kind = $1 ORDER BY id`, kind)
+	res, err := env.riverClient(t).JobList(t.Context(), river.NewJobListParams().Kinds(kind).OrderBy(river.JobListOrderByID, river.SortOrderAsc).First(maxQueuedJobs))
 	require.NoError(t, err)
-	defer func() { _ = rows.Close() }()
 	var out []map[string]any
-	for rows.Next() {
-		var raw []byte
-		require.NoError(t, rows.Scan(&raw))
+	for _, job := range res.Jobs {
 		var args map[string]any
-		require.NoError(t, json.Unmarshal(raw, &args))
+		require.NoError(t, json.Unmarshal(job.EncodedArgs, &args))
 		out = append(out, args)
 	}
-	require.NoError(t, rows.Err())
 	return out
 }

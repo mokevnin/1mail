@@ -42,6 +42,20 @@ func (c *ConverterImpl) AutomationToResource(source *ent.Automation) external.Au
 	}
 	return externalapiAutomationResource
 }
+func (c *ConverterImpl) BroadcastRecipientToExport(source *ent.BroadcastRecipient) external.ContactExportBroadcastRecipient {
+	var externalapiContactExportBroadcastRecipient external.ContactExportBroadcastRecipient
+	if source != nil {
+		externalapiContactExportBroadcastRecipient.ID = entityID((*source).ID)
+		externalapiContactExportBroadcastRecipient.BroadcastId = entityID((*source).BroadcastID)
+		externalapiContactExportBroadcastRecipient.Status = string((*source).Status)
+		externalapiContactExportBroadcastRecipient.Error = optNilString((*source).Error)
+		externalapiContactExportBroadcastRecipient.SentAt = optNilTimestamp((*source).SentAt)
+		externalapiContactExportBroadcastRecipient.OpenedAt = optNilTimestamp((*source).OpenedAt)
+		externalapiContactExportBroadcastRecipient.ClickedAt = optNilTimestamp((*source).ClickedAt)
+		externalapiContactExportBroadcastRecipient.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportBroadcastRecipient
+}
 func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) external.BroadcastResource {
 	var externalapiBroadcastResource external.BroadcastResource
 	if source != nil {
@@ -59,6 +73,33 @@ func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) external.Broa
 		externalapiBroadcastResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
 	return externalapiBroadcastResource
+}
+func (c *ConverterImpl) ConfirmationToExport(source *ent.Confirmation) external.ContactExportConfirmation {
+	var externalapiContactExportConfirmation external.ContactExportConfirmation
+	if source != nil {
+		externalapiContactExportConfirmation.ID = entityID((*source).ID)
+		externalapiContactExportConfirmation.Channel = string((*source).Channel)
+		externalapiContactExportConfirmation.Destination = (*source).Destination
+		externalapiContactExportConfirmation.Provenance = string((*source).Provenance)
+		externalapiContactExportConfirmation.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportConfirmation
+}
+func (c *ConverterImpl) ContactToExport(source *ent.Contact) external.ContactExportContact {
+	var externalapiContactExportContact external.ContactExportContact
+	if source != nil {
+		externalapiContactExportContact.ID = entityID((*source).ID)
+		externalapiContactExportContact.SubjectId = optNilString((*source).SubjectID)
+		externalapiContactExportContact.Email = optNilString((*source).Email)
+		externalapiContactExportContact.Phone = optNilString((*source).Phone)
+		externalapiContactExportContact.FirstName = optNilString((*source).FirstName)
+		externalapiContactExportContact.LastName = optNilString((*source).LastName)
+		externalapiContactExportContact.TimeZone = optNilString((*source).TimeZone)
+		externalapiContactExportContact.CustomFields = exportJSON((*source).CustomFields)
+		externalapiContactExportContact.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiContactExportContact.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiContactExportContact
 }
 func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactResource {
 	var externalapiContactResource external.ContactResource
@@ -100,6 +141,44 @@ func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) exter
 	}
 	return externalapiTemplateResource
 }
+func (c *ConverterImpl) EventToExport(source *ent.Event) external.ContactExportEvent {
+	var externalapiContactExportEvent external.ContactExportEvent
+	if source != nil {
+		externalapiContactExportEvent.ID = entityID((*source).ID)
+		externalapiContactExportEvent.SourceId = optNilString((*source).SourceID)
+		externalapiContactExportEvent.VisitorId = optNilString((*source).VisitorID)
+		externalapiContactExportEvent.SubjectId = (*source).SubjectID
+		externalapiContactExportEvent.Email = optNilString((*source).Email)
+		externalapiContactExportEvent.Phone = optNilString((*source).Phone)
+		externalapiContactExportEvent.Action = (*source).Action
+		externalapiContactExportEvent.Properties = exportJSON((*source).Properties)
+		externalapiContactExportEvent.OccurredAt = optNilTimestamp((*source).OccurredAt)
+		externalapiContactExportEvent.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportEvent
+}
+func (c *ConverterImpl) OutboundMessageToExport(source *ent.OutboundMessage) external.ContactExportOutboundMessage {
+	var externalapiContactExportOutboundMessage external.ContactExportOutboundMessage
+	if source != nil {
+		externalapiContactExportOutboundMessage.ID = entityID((*source).ID)
+		externalapiContactExportOutboundMessage.Kind = string((*source).Kind)
+		externalapiContactExportOutboundMessage.Channel = string((*source).Channel)
+		externalapiContactExportOutboundMessage.Destination = (*source).Destination
+		externalapiContactExportOutboundMessage.SendingSource = optNilString((*source).SendingSource)
+		externalapiContactExportOutboundMessage.SendingDomain = optNilString((*source).SendingDomain)
+		externalapiContactExportOutboundMessage.ProviderMessageId = optNilString((*source).ProviderMessageID)
+		externalapiContactExportOutboundMessage.Status = string((*source).Status)
+		externalapiContactExportOutboundMessage.Reason = optNilString((*source).Reason)
+		externalapiContactExportOutboundMessage.ClaimedAt = timestamp((*source).ClaimedAt)
+		externalapiContactExportOutboundMessage.SentAt = optNilTimestamp((*source).SentAt)
+		externalapiContactExportOutboundMessage.BroadcastId = optNilEntityID((*source).BroadcastID)
+		externalapiContactExportOutboundMessage.AutomationId = optNilEntityID((*source).AutomationID)
+		externalapiContactExportOutboundMessage.AutomationStep = optNilInt32((*source).AutomationStep)
+		externalapiContactExportOutboundMessage.TemplateId = optNilEntityID((*source).TemplateID)
+		externalapiContactExportOutboundMessage.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportOutboundMessage
+}
 func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentResource {
 	var externalapiSegmentResource external.SegmentResource
 	if source != nil {
@@ -122,6 +201,26 @@ func (c *ConverterImpl) SendingDomainToResource(source *ent.SendingDomain) exter
 	}
 	return externalapiSendingDomainResource
 }
+func (c *ConverterImpl) SuppressionToExport(source *ent.Suppression) external.ContactExportSuppression {
+	var externalapiContactExportSuppression external.ContactExportSuppression
+	if source != nil {
+		externalapiContactExportSuppression.ID = entityID((*source).ID)
+		externalapiContactExportSuppression.Channel = string((*source).Channel)
+		externalapiContactExportSuppression.Destination = (*source).Destination
+		externalapiContactExportSuppression.Reason = string((*source).Reason)
+		externalapiContactExportSuppression.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportSuppression
+}
+func (c *ConverterImpl) TagToExport(source *ent.Tag) external.ContactExportTag {
+	var externalapiContactExportTag external.ContactExportTag
+	if source != nil {
+		externalapiContactExportTag.ID = entityID((*source).ID)
+		externalapiContactExportTag.Name = (*source).Name
+		externalapiContactExportTag.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportTag
+}
 func (c *ConverterImpl) TagToResource(source *ent.Tag) external.TagResource {
 	var externalapiTagResource external.TagResource
 	if source != nil {
@@ -130,4 +229,25 @@ func (c *ConverterImpl) TagToResource(source *ent.Tag) external.TagResource {
 		externalapiTagResource.CreatedAt = timestamp((*source).CreatedAt)
 	}
 	return externalapiTagResource
+}
+func (c *ConverterImpl) UnsubscribeToExport(source *ent.Unsubscribe) external.ContactExportUnsubscribe {
+	var externalapiContactExportUnsubscribe external.ContactExportUnsubscribe
+	if source != nil {
+		externalapiContactExportUnsubscribe.ID = entityID((*source).ID)
+		externalapiContactExportUnsubscribe.Channel = string((*source).Channel)
+		externalapiContactExportUnsubscribe.Destination = (*source).Destination
+		externalapiContactExportUnsubscribe.SendingSource = (*source).SendingSource
+		externalapiContactExportUnsubscribe.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportUnsubscribe
+}
+func (c *ConverterImpl) VisitorToExport(source *ent.Visitor) external.ContactExportVisitor {
+	var externalapiContactExportVisitor external.ContactExportVisitor
+	if source != nil {
+		externalapiContactExportVisitor.ID = entityID((*source).ID)
+		externalapiContactExportVisitor.VisitorId = (*source).VisitorID
+		externalapiContactExportVisitor.LastSeenAt = timestamp((*source).LastSeenAt)
+		externalapiContactExportVisitor.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiContactExportVisitor
 }

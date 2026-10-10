@@ -4,34 +4,59 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/go-faster/jx"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/tag"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/ent/visitor"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-func readExport(t *testing.T, res externalapi.ContactsExportRes) (map[string]json.RawMessage, string) {
+// readExport reads the streamed body to the end and decodes it as the contract's
+// ContactExportDocument, so a missing member or a malformed value fails here. It
+// also returns the raw body for the checks a typed decode cannot make.
+func readExport(t *testing.T, res externalapi.ContactsExportRes) (externalapi.ContactExportDocument, []byte, string) {
 	t.Helper()
-	ok, isOK := res.(*externalapi.ContactsExportOKHeaders)
+	ok, isOK := res.(*externalapi.ContactsExportOKApplicationOctetStreamHeaders)
 	require.Truef(t, isOK, "got %T", res)
 	raw, err := io.ReadAll(ok.Response)
 	require.NoError(t, err)
-	var doc map[string]json.RawMessage
-	require.NoError(t, json.Unmarshal(raw, &doc), string(raw))
-	return doc, ok.ContentDisposition
+	var doc externalapi.ContactExportDocument
+	require.NoError(t, doc.Decode(jx.DecodeBytes(raw)), string(raw))
+	require.NoError(t, doc.Validate())
+	return doc, raw, ok.ContentDisposition
 }
 
-func list(t *testing.T, doc map[string]json.RawMessage, key string) []map[string]any {
+func jsonOf(t *testing.T, v any) string {
 	t.Helper()
-	var rows []map[string]any
-	require.NoError(t, json.Unmarshal(doc[key], &rows), key)
-	require.NotNil(t, rows, key+" is an array, never null")
-	return rows
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return string(b)
+}
+
+// camel turns a snake_case column name into the contract's camelCase key.
+func camel(column string) string {
+	parts := strings.Split(column, "_")
+	for i := 1; i < len(parts); i++ {
+		parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
+	}
+	return strings.Join(parts, "")
 }
 
 func TestExternalContactsExportByIDReturnsTheFullBundle(t *testing.T) {
@@ -42,36 +67,70 @@ func TestExternalContactsExportByIDReturnsTheFullBundle(t *testing.T) {
 		ID: externalapi.NewOptEntityId(entityIDString(fixtures.ContactExportSubjectID)),
 	})
 	require.NoError(t, err)
-	doc, disposition := readExport(t, res)
+	doc, _, disposition := readExport(t, res)
 
 	assert.Contains(t, disposition, "attachment")
-	var contact map[string]any
-	require.NoError(t, json.Unmarshal(doc["contact"], &contact))
-	assert.Equal(t, fixtures.ContactExportSubjectEmail, contact["email"])
-	assert.Equal(t, "user:export-subject", contact["subject_id"])
-	assert.Equal(t, map[string]any{"plan": "pro", "seats": float64(4)}, contact["custom_fields"])
+	assert.Equal(t, fixtures.ContactExportSubjectEmail, doc.Contact.Email.Value)
+	assert.Equal(t, "user:export-subject", doc.Contact.SubjectId.Value)
+	assert.Equal(t, "Eva", doc.Contact.FirstName.Value)
+	assert.JSONEq(t, `{"plan":"pro","seats":4}`, jsonOf(t, doc.Contact.CustomFields.Value))
 
-	tags := list(t, doc, "tags")
-	assert.ElementsMatch(t, []any{"vip", "newsletter"}, []any{tags[0]["name"], tags[1]["name"]})
-	assert.Len(t, tags, 2)
-	assert.Len(t, list(t, doc, "visitors"), 2)
+	tagNames := lo.Map(doc.Tags, func(tg externalapi.ContactExportTag, _ int) string { return tg.Name })
+	assert.ElementsMatch(t, []string{"vip", "newsletter"}, tagNames)
+	assert.Len(t, doc.Visitors, 2)
 
-	actions := []any{}
-	for _, e := range list(t, doc, "events") {
-		actions = append(actions, e["action"])
+	actions := lo.Map(doc.Events, func(e externalapi.ContactExportEvent, _ int) string { return e.Action })
+	assert.ElementsMatch(t, []string{"export_subject_custom", "email.sent", "marketing.confirmed"}, actions)
+
+	assert.Len(t, doc.Unsubscribes, 1)
+	assert.Len(t, doc.Suppressions, 1)
+	assert.Len(t, doc.Confirmations, 1)
+	assert.Len(t, doc.OutboundMessages, 2, "includes the send to the address that has no Contact link")
+	assert.Len(t, doc.BroadcastRecipients, 1)
+}
+
+// The document is the contract's typed projection, not the stored rows. Goverter
+// guarantees every DTO field has a source; it cannot notice a stored column that
+// has no DTO field, which for an Art. 15 export would be silently withheld data. So
+// every column of each exported entity is either a field of its DTO or named here as
+// deliberately left out: the tenant id (every row is the caller's), the contact
+// back-reference (the document is that contact), internal links and keys, and
+// updated_at on rows that are written once.
+func TestExternalContactsExportMembersCoverEveryStoredColumn(t *testing.T) {
+	covered := func(dto reflect.Type, columns []string, left ...string) {
+		t.Helper()
+		keys := lo.Map(reflect.VisibleFields(dto), func(f reflect.StructField, _ int) string {
+			return strings.Split(f.Tag.Get("json"), ",")[0]
+		})
+		want := lo.Map(lo.Without(columns, left...), func(col string, _ int) string { return camel(col) })
+		assert.ElementsMatch(t, want, keys, dto.Name())
 	}
-	assert.ElementsMatch(t, []any{"export_subject_custom", "email.sent", "marketing.confirmed"}, actions)
+	covered(reflect.TypeFor[externalapi.ContactExportContact](), contact.Columns, "workspace_id")
+	covered(reflect.TypeFor[externalapi.ContactExportTag](), tag.Columns, "workspace_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportVisitor](), visitor.Columns, "workspace_id", "contact_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportEvent](), event.Columns, "workspace_id", "contact_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportUnsubscribe](), unsubscribe.Columns, "workspace_id", "contact_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportSuppression](), suppression.Columns, "workspace_id", "contact_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportConfirmation](), confirmation.Columns, "workspace_id", "contact_id", "updated_at")
+	covered(reflect.TypeFor[externalapi.ContactExportOutboundMessage](), outboundmessage.Columns,
+		"workspace_id", "contact_id", "updated_at", "idempotency_key", "broadcast_recipient_id", "automation_run_id")
+	covered(reflect.TypeFor[externalapi.ContactExportBroadcastRecipient](), broadcastrecipient.Columns,
+		"workspace_id", "contact_id", "updated_at", "outbound_message_id")
+}
 
-	assert.Len(t, list(t, doc, "unsubscribes"), 1)
-	assert.Len(t, list(t, doc, "suppressions"), 1)
-	assert.Len(t, list(t, doc, "confirmations"), 1)
-	assert.Len(t, list(t, doc, "outbound_messages"), 2, "includes the send to the address that has no Contact link")
-	assert.Len(t, list(t, doc, "broadcast_recipients"), 1)
+// No tenant id and no rendered message content reach the document.
+func TestExternalContactsExportLeaksNoInternals(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.ExternalScoped(t, "contacts:read")
 
-	for _, m := range list(t, doc, "outbound_messages") {
-		for _, body := range []string{"body", "html", "text", "rendered_body", "subject"} {
-			assert.NotContains(t, m, body, "rendered message content is not exported")
-		}
+	res, err := c.ContactsExport(context.Background(), externalapi.ContactsExportParams{
+		ID: externalapi.NewOptEntityId(entityIDString(fixtures.ContactExportSubjectID)),
+	})
+	require.NoError(t, err)
+	_, raw, _ := readExport(t, res)
+
+	for _, leaked := range []string{"workspaceId", "workspace_id", `"body"`, `"html"`, "renderedBody"} {
+		assert.NotContains(t, string(raw), leaked)
 	}
 }
 
@@ -83,12 +142,10 @@ func TestExternalContactsExportByEmailMatchesByID(t *testing.T) {
 		Email: externalapi.NewOptEmailAddress("Export.Subject@Example.com"),
 	})
 	require.NoError(t, err)
-	doc, _ := readExport(t, res)
+	doc, _, _ := readExport(t, res)
 
-	var contact map[string]any
-	require.NoError(t, json.Unmarshal(doc["contact"], &contact))
-	assert.EqualValues(t, fixtures.ContactExportSubjectID, contact["id"])
-	assert.Len(t, list(t, doc, "events"), 3)
+	assert.Equal(t, entityIDString(fixtures.ContactExportSubjectID), doc.Contact.ID)
+	assert.Len(t, doc.Events, 3)
 }
 
 func TestExternalContactsExportEmptyMembersAreArrays(t *testing.T) {
@@ -99,10 +156,12 @@ func TestExternalContactsExportEmptyMembersAreArrays(t *testing.T) {
 		ID: externalapi.NewOptEntityId(entityIDString(fixtures.ContactBobID)),
 	})
 	require.NoError(t, err)
-	doc, _ := readExport(t, res)
-	assert.Empty(t, list(t, doc, "visitors"))
-	assert.Empty(t, list(t, doc, "tags"))
-	assert.Len(t, list(t, doc, "unsubscribes"), 1, "bob's broadcasts opt-out belongs to his Destination")
+	doc, raw, _ := readExport(t, res)
+	assert.Empty(t, doc.Visitors)
+	assert.Empty(t, doc.Tags)
+	assert.Contains(t, string(raw), `"visitors":[]`, "an empty member is an array, never null")
+	assert.Contains(t, string(raw), `"tags":[]`)
+	assert.Len(t, doc.Unsubscribes, 1, "bob's broadcasts opt-out belongs to his Destination")
 }
 
 func TestExternalContactsExportStreamsLargeContacts(t *testing.T) {
@@ -121,14 +180,11 @@ func TestExternalContactsExportStreamsLargeContacts(t *testing.T) {
 		ID: externalapi.NewOptEntityId(entityIDString(fixtures.ContactExportSubjectID)),
 	})
 	require.NoError(t, err)
-	ok, isOK := res.(*externalapi.ContactsExportOKHeaders)
-	require.True(t, isOK)
 
 	// The document stays one valid JSON value across the keyset pages and holds
 	// every Event of the Contact.
-	var doc map[string]json.RawMessage
-	require.NoError(t, json.NewDecoder(ok.Response).Decode(&doc))
-	assert.Len(t, list(t, doc, "events"), extra+3)
+	doc, _, _ := readExport(t, res)
+	assert.Len(t, doc.Events, extra+3)
 }
 
 func TestExternalContactsExportNeedsTheReadScope(t *testing.T) {

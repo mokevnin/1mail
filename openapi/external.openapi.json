@@ -2917,7 +2917,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)",
+            "description": "Attachment download of everything held about one contact (subject access, GDPR Art. 15/20): the ContactExportDocument JSON, streamed",
             "headers": {
               "Content-Disposition": {
                 "required": true,
@@ -2931,6 +2931,11 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactExportDocument"
                 }
               }
             }
@@ -7238,6 +7243,584 @@
         "type": "string",
         "enum": ["created", "updated", "failed"],
         "description": "Outcome of one item of a contacts batch"
+      },
+      "ContactExportBroadcastRecipient": {
+        "type": "object",
+        "required": ["id", "broadcastId", "status", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "broadcastId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The broadcast"
+          },
+          "status": {
+            "type": "string",
+            "description": "Delivery status"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why delivery failed"
+          },
+          "sentAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the broadcast was sent to the contact"
+          },
+          "openedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the contact opened it"
+          },
+          "clickedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the contact clicked it"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "The contact's delivery record in one broadcast"
+      },
+      "ContactExportConfirmation": {
+        "type": "object",
+        "required": ["id", "channel", "destination", "provenance", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Channel the confirmation applies to"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Address the confirmation applies to"
+          },
+          "provenance": {
+            "type": "string",
+            "description": "How the confirmation was obtained"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A recorded confirmation of a channel destination"
+      },
+      "ContactExportContact": {
+        "type": "object",
+        "required": ["id", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical subject identifier"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Given name"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Family name"
+          },
+          "timeZone": {
+            "type": "string",
+            "nullable": true,
+            "description": "IANA time zone identifier"
+          },
+          "customFields": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactExportJson"
+              }
+            ],
+            "nullable": true,
+            "description": "Typed custom field values keyed by the field's machine key"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "The contact itself"
+      },
+      "ContactExportDocument": {
+        "type": "object",
+        "required": [
+          "contact",
+          "tags",
+          "visitors",
+          "unsubscribes",
+          "suppressions",
+          "confirmations",
+          "events",
+          "outboundMessages",
+          "broadcastRecipients"
+        ],
+        "properties": {
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactExportContact"
+              }
+            ],
+            "description": "The contact"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportTag"
+            },
+            "description": "Tags the contact carries"
+          },
+          "visitors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportVisitor"
+            },
+            "description": "Visitors bound to the contact"
+          },
+          "unsubscribes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportUnsubscribe"
+            },
+            "description": "Opt-outs for the contact's addresses"
+          },
+          "suppressions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportSuppression"
+            },
+            "description": "Suppressions for the contact's addresses"
+          },
+          "confirmations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportConfirmation"
+            },
+            "description": "Confirmations for the contact's addresses"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportEvent"
+            },
+            "description": "All events of the contact and its visitors"
+          },
+          "outboundMessages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportOutboundMessage"
+            },
+            "description": "Delivery metadata of messages sent to the contact's addresses"
+          },
+          "broadcastRecipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactExportBroadcastRecipient"
+            },
+            "description": "The contact's recipient rows in broadcasts"
+          }
+        },
+        "description": "Everything held about one contact (subject access, GDPR Art. 15/20). The\ndownload is this document streamed member by member; rendered message bodies\nare never part of it."
+      },
+      "ContactExportEvent": {
+        "type": "object",
+        "required": ["id", "subjectId", "action", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source identifier"
+          },
+          "visitorId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Visitor id the event was tracked under"
+          },
+          "subjectId": {
+            "type": "string",
+            "description": "Canonical subject identifier"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email address associated with the event"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number associated with the event"
+          },
+          "action": {
+            "type": "string",
+            "description": "Event action"
+          },
+          "properties": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactExportJson"
+              }
+            ],
+            "nullable": true,
+            "description": "Event properties"
+          },
+          "occurredAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "Event occurrence timestamp"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "An event tracked for the contact or its visitors"
+      },
+      "ContactExportJson": {
+        "type": "object",
+        "additionalProperties": {},
+        "description": "An arbitrary JSON object: typed custom field values or event properties"
+      },
+      "ContactExportOutboundMessage": {
+        "type": "object",
+        "required": ["id", "kind", "channel", "destination", "status", "claimedAt", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "kind": {
+            "type": "string",
+            "description": "What kind of send produced the message"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Channel the message was sent over"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Address the message was sent to"
+          },
+          "sendingSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sending source"
+          },
+          "sendingDomain": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sending domain"
+          },
+          "providerMessageId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The provider's message id"
+          },
+          "status": {
+            "type": "string",
+            "description": "Delivery status"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why delivery failed or was skipped"
+          },
+          "claimedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the send was claimed"
+          },
+          "sentAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the message was sent"
+          },
+          "broadcastId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Broadcast that produced the message"
+          },
+          "automationId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Automation that produced the message"
+          },
+          "automationStep": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Step of the automation that produced the message"
+          },
+          "templateId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Template the message was rendered from"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "Delivery metadata of one outbound message; the rendered message is not included"
+      },
+      "ContactExportSuppression": {
+        "type": "object",
+        "required": ["id", "channel", "destination", "reason", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Channel the suppression applies to"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Address the suppression applies to"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the destination is suppressed"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A suppression of a channel destination"
+      },
+      "ContactExportTag": {
+        "type": "object",
+        "required": ["id", "name", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "The label"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A tag the contact carries"
+      },
+      "ContactExportUnsubscribe": {
+        "type": "object",
+        "required": ["id", "channel", "destination", "sendingSource", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Channel the opt-out applies to"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Address the opt-out applies to"
+          },
+          "sendingSource": {
+            "type": "string",
+            "description": "The sending source (kind of mail) opted out of"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "An opt-out of a channel destination"
+      },
+      "ContactExportVisitor": {
+        "type": "object",
+        "required": ["id", "visitorId", "lastSeenAt", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "visitorId": {
+            "type": "string",
+            "description": "The visitor id the tracker assigned"
+          },
+          "lastSeenAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the visitor was last seen"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "An anonymous device (visitor) bound to the contact"
       },
       "ContactResource": {
         "type": "object",

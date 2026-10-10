@@ -6,6 +6,7 @@ import "../common/scalars.tsp";
 import "../common/pagination.tsp";
 import "../common/errors.tsp";
 import "../common/crud.tsp";
+import "../common/contact-export.tsp";
 import "./resources/consent.tsp";
 import "./resources/contacts.tsp";
 import "./resources/custom-fields.tsp";
