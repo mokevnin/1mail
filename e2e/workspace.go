@@ -263,14 +263,45 @@ func (w *Workspace) OwnerMembershipIDs() []int64 {
 // and returns the error of each attempt.
 func (w *Workspace) DemoteConcurrently(ids ...int64) []error {
 	w.t.Helper()
-	errs := make([]error, len(ids))
+	return w.concurrently(len(ids), func(i int) error {
+		_, err := w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
+			membership.RoleOwner, ids[i], membership.RoleMember)
+		return err
+	})
+}
+
+// RemoveConcurrently removes each Membership, all at once, as an owner would, and returns
+// the error of each attempt.
+func (w *Workspace) RemoveConcurrently(ids ...int64) []error {
+	w.t.Helper()
+	return w.concurrently(len(ids), func(i int) error {
+		return w.env.accounts.RemoveMembership(w.t.Context(), w.scoped, membership.RoleOwner, ids[i])
+	})
+}
+
+// DemoteAndRemoveConcurrently demotes the first Membership and removes the second at the
+// same moment, and returns the error of each attempt.
+func (w *Workspace) DemoteAndRemoveConcurrently(demote, remove int64) []error {
+	w.t.Helper()
+	return w.concurrently(2, func(i int) error {
+		if i == 0 {
+			_, err := w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
+				membership.RoleOwner, demote, membership.RoleMember)
+			return err
+		}
+		return w.env.accounts.RemoveMembership(w.t.Context(), w.scoped, membership.RoleOwner, remove)
+	})
+}
+
+// concurrently releases n attempts at the same moment and returns each one's error.
+func (w *Workspace) concurrently(n int, attempt func(i int) error) []error {
+	errs := make([]error, n)
 	start := make(chan struct{})
 	var wg sync.WaitGroup
-	for i, id := range ids {
+	for i := range n {
 		wg.Go(func() {
 			<-start
-			_, errs[i] = w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
-				membership.RoleOwner, id, membership.RoleMember)
+			errs[i] = attempt(i)
 		})
 	}
 	close(start)
