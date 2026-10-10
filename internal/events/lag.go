@@ -16,15 +16,19 @@ import (
 // watermill offsets adapter keeps; a group with no offsets row yet has not
 // consumed anything, so its cursor is the start of the table. The outbox has no
 // published flag, so "past the cursor" is the only definition of pending.
-const lagQuery = `
+//
+// created_at is timestamptz (InitSchema converts watermill's plain TIMESTAMP), so
+// now() - created_at is an absolute interval, independent of any session TimeZone.
+// Table names come from the same helpers as the prune and the DDL.
+var lagQuery = fmt.Sprintf(`
 SELECT g.consumer_group,
-       COALESCE(EXTRACT(EPOCH FROM (LOCALTIMESTAMP - MIN(e.created_at))), 0)::float8
+       COALESCE(EXTRACT(EPOCH FROM (now() - MIN(e.created_at))), 0)::float8
 FROM unnest($1::text[]) AS g(consumer_group)
-LEFT JOIN watermill_offsets_domain_events o ON o.consumer_group = g.consumer_group
-LEFT JOIN watermill_domain_events e
+LEFT JOIN %[2]s o ON o.consumer_group = g.consumer_group
+LEFT JOIN %[1]s e
        ON (e.transaction_id, e."offset")
         > (COALESCE(o.last_processed_transaction_id, '0'::xid8), COALESCE(o.offset_acked, 0))
-GROUP BY g.consumer_group`
+GROUP BY g.consumer_group`, outboxTable(), offsetsTable())
 
 // RegisterLagGauge exports outbox.lag (seconds, one sample per consumer group in
 // ConsumerGroups) on the global meter provider. The label is the group name only:

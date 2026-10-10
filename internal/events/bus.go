@@ -187,5 +187,26 @@ func InitSchema(ctx context.Context, db *sql.DB) error {
 			return fmt.Errorf("init domain-events outbox schema: %w", err)
 		}
 	}
+	return timestamptzCreatedAt(ctx, db)
+}
+
+// timestamptzCreatedAt converts the outbox created_at from watermill's plain
+// TIMESTAMP (wall time of whichever session wrote it) to timestamptz, so the age
+// computations (lag gauge, prune floor) are absolute and independent of session
+// TimeZone. The column default CURRENT_TIMESTAMP is timestamptz already, so inserts
+// are unchanged. Checked first so a converted table is not locked on every boot.
+func timestamptzCreatedAt(ctx context.Context, db *sql.DB) error {
+	var typ string
+	if err := db.QueryRowContext(ctx,
+		`SELECT atttypid::regtype::text FROM pg_attribute WHERE attrelid = $1::regclass AND attname = 'created_at'`,
+		outboxTable()).Scan(&typ); err != nil {
+		return fmt.Errorf("inspect outbox created_at: %w", err)
+	}
+	if typ == "timestamp with time zone" {
+		return nil
+	}
+	if _, err := db.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN created_at TYPE timestamptz`, outboxTable())); err != nil {
+		return fmt.Errorf("convert outbox created_at to timestamptz: %w", err)
+	}
 	return nil
 }

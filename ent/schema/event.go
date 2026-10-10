@@ -8,6 +8,13 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
+// ExpirableEventPredicate selects the Events that expire by age (ADR 0019): every
+// Event except the evidentiary ones (consent proof, complaints, unsubscribes and
+// permanent bounces). A bounce with no bounceKind counts as transient. It is the
+// single source of truth for both the partial index below and the retention
+// delete (internal/events.PruneEvents), so the delete can always use the index.
+const ExpirableEventPredicate = `action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')`
+
 type Event struct {
 	ent.Schema
 }
@@ -78,10 +85,10 @@ func (Event) Indexes() []ent.Index {
 		index.Fields("workspace_id", "visitor_id"),
 		// Backs the Event retention delete (ADR 0019): created_at is the age
 		// column (never null, unlike occurred_at). Partial: evidentiary Events are
-		// never deleted by age, so they stay out of the index. The predicate must
-		// match events.analyticalPredicate (internal/events/retention.go).
+		// never deleted by age, so they stay out of the index. The predicate is shared
+		// with the retention delete (ExpirableEventPredicate).
 		index.Fields("created_at").
 			StorageKey("events_created_at_analytical_idx").
-			Annotations(entsql.IndexWhere(`action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')`)),
+			Annotations(entsql.IndexWhere(ExpirableEventPredicate)),
 	}
 }

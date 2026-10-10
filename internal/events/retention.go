@@ -5,15 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
-)
 
-// analyticalPredicate selects the Events that expire by age (ADR 0019): every
-// Event except the evidentiary ones (consent proof, complaints, unsubscribes and
-// permanent bounces). A bounce with no bounceKind counts as transient, like
-// suppressionReason does. The partial index events_created_at_analytical_idx
-// (ent/schema/event.go) carries the same expression, so the batched delete walks
-// only expirable rows; keep the two in step.
-const analyticalPredicate = `action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')`
+	"github.com/mokevnin/1mail/ent/schema"
+)
 
 // PruneEvents deletes analytical Events created more than retention ago, in
 // batches of batchSize, and returns how many it removed. Age is created_at (the
@@ -30,7 +24,7 @@ func PruneEvents(ctx context.Context, db *sql.DB, retention time.Duration, batch
 			SELECT id FROM events
 			WHERE created_at < now() - make_interval(secs => $1) AND %s
 			ORDER BY created_at
-			LIMIT $2)`, analyticalPredicate)
+			LIMIT $2)`, schema.ExpirableEventPredicate)
 	var total int64
 	for {
 		r, err := db.ExecContext(ctx, del, retention.Seconds(), batchSize)

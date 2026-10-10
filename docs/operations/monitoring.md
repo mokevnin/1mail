@@ -80,15 +80,18 @@ Queues are `default`, `broadcasts` and `webhooks`. Snoozed jobs count as `ok`.
 
 ### Database pools
 
-| Metric               | Type  | Labels | Meaning                                                             |
-| -------------------- | ----- | ------ | ------------------------------------------------------------------- |
-| `db_pool_open`       | gauge | `pool` | Connections open (in use plus idle).                                |
-| `db_pool_in_use`     | gauge | `pool` | Connections in use.                                                 |
-| `db_pool_idle`       | gauge | `pool` | Idle connections.                                                   |
-| `db_pool_max`        | gauge | `pool` | Configured maximum (`DB_MAX_OPEN_CONNS`, `PGX_MAX_CONNS`).          |
-| `db_pool_wait_count` | gauge | `pool` | Cumulative waits for a connection; use `increase()`, not the value. |
+| Metric                        | Type  | Labels | Meaning                                                                                                                                                                   |
+| ----------------------------- | ----- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db_pool_open`                | gauge | `pool` | Connections open (in use plus idle).                                                                                                                                      |
+| `db_pool_in_use`              | gauge | `pool` | Connections in use.                                                                                                                                                       |
+| `db_pool_idle`                | gauge | `pool` | Idle connections.                                                                                                                                                         |
+| `db_pool_max`                 | gauge | `pool` | Configured maximum (`DB_MAX_OPEN_CONNS`, `PGX_MAX_CONNS`).                                                                                                                |
+| `db_pool_wait_count`          | gauge | `pool` | `sql` pool only: cumulative requests that waited for a connection (`sql.DBStats.WaitCount`); use `increase()`.                                                            |
+| `db_pool_empty_acquire_count` | gauge | `pool` | `pgx` pool only: cumulative acquires that found the pool empty and waited for a connection to be released or opened (`pgxpool.Stat.EmptyAcquireCount`); use `increase()`. |
 
-`pool` is `sql` (requests, ent, event consumers) or `pgx` (the job queue).
+`pool` is `sql` (requests, ent, event consumers) or `pgx` (the job queue). The two wait counters are
+driver-native and not identical: pgx also counts an acquire that waited only while a new connection was
+opened, so it can rise while the pool is below its maximum.
 
 ### Email
 

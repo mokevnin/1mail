@@ -63,3 +63,9 @@ pursue or support legal action against you for research that stays in scope, avo
 violations, data destruction and service disruption, accesses only the data needed to
 demonstrate the issue, and follows the disclosure process above. Test against your own
 instance, never against other people's workspaces or data.
+
+## Maintainer checklist
+
+- [ ] Private vulnerability reporting is enabled in the repository under **Settings > Code
+      security** (**Private vulnerability reporting**). The reporting channel above does not work
+      until a maintainer turns it on; it is a manual setting and is never changed by automation.

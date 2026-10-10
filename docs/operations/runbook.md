@@ -210,11 +210,13 @@ exceed `DB_MAX_OPEN_CONNS`.
 ## OneMailDBPoolWaits
 
 **Means.** More than 100 times in 15 minutes a request or worker had to wait for a free
-connection. Unlike saturation this catches short, repeated stalls.
+connection (`db_pool_wait_count` for the `sql` pool, `db_pool_empty_acquire_count` for the `pgx`
+pool). Unlike saturation this catches short, repeated stalls.
 
 **Check and fix.** The same as [`OneMailDBPoolSaturated`](#onemaildbpoolsaturated). Waiting
 that continues while `db_pool_in_use` is well below `db_pool_max` points at slow connection
-establishment (network, TLS, a pooler) instead of a too-small pool.
+establishment (network, TLS, a pooler) instead of a too-small pool. On the `pgx` pool an acquire
+that only waited for a new connection to open also counts, so a cold or restarted pool can trip it.
 
 ## OneMailEmailSendErrorsHigh
 
