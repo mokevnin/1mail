@@ -20,3 +20,11 @@ type OperatorWorkspacesGetRes interface {
 type OperatorWorkspacesListRes interface {
 	operatorWorkspacesListRes()
 }
+
+type OperatorWorkspacesSuspendRes interface {
+	operatorWorkspacesSuspendRes()
+}
+
+type OperatorWorkspacesUnsuspendRes interface {
+	operatorWorkspacesUnsuspendRes()
+}

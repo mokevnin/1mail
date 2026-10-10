@@ -10,6 +10,7 @@ import { operatorWorkspacesGetOptions } from '../generated/operator/@tanstack/re
 import type { OperatorSuspension } from '../generated/operator/types.gen.ts'
 import { consoleHomeRoute, consoleWorkspaceRoute } from '../router.tsx'
 import { formatDateTime } from '../utils/datetime.ts'
+import { SuspensionActions } from './SuspensionActions.tsx'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -22,7 +23,13 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function SuspensionCard({ suspension }: { suspension: OperatorSuspension | null | undefined }) {
+function SuspensionCard({
+  workspaceId,
+  suspension,
+}: {
+  workspaceId: string
+  suspension: OperatorSuspension | null | undefined
+}) {
   const { t } = useTranslation()
 
   return (
@@ -58,6 +65,9 @@ function SuspensionCard({ suspension }: { suspension: OperatorSuspension | null 
           {t(($) => $.console.workspace.notSuspended)}
         </Text>
       )}
+      <Group mt="md">
+        <SuspensionActions workspaceId={workspaceId} suspended={Boolean(suspension)} />
+      </Group>
     </Card>
   )
 }
@@ -104,7 +114,7 @@ export function ConsoleWorkspacePage() {
               </Field>
             </Stack>
           </Card>
-          <SuspensionCard suspension={workspace.suspension} />
+          <SuspensionCard workspaceId={workspace.id} suspension={workspace.suspension} />
         </>
       ) : null}
     </Stack>

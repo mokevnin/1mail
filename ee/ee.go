@@ -19,6 +19,7 @@ import (
 	operatorapi "github.com/mokevnin/sphericon/gen/operator"
 	"github.com/mokevnin/sphericon/internal/events"
 	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/messaging"
 	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
@@ -36,7 +37,7 @@ type Edition struct {
 	// refuses without the `operator` license.
 	Operators *operator.Module
 
-	operatorSurface *operator.Surface
+	operatorSessions *operator.Sessions
 }
 
 // New builds the Edition for a license. Subscribers are always registered and each
@@ -55,20 +56,24 @@ func New(client *ent.Client, lic *licensekey.License, cipher *secrets.Cipher, si
 		if err := operatorCfg.Validate(siteSecret); err != nil {
 			return nil, err
 		}
-		e.operatorSurface = operator.NewSurface(e.Operators, operator.NewSessions(client, lic, operatorCfg))
+		e.operatorSessions = operator.NewSessions(client, lic, operatorCfg)
 	}
 	return e, nil
 }
 
 // Operator is the /operator API (ADR 0026) for the composition root to mount, or nil
 // without the `operator` license, in which case the whole surface answers 404.
-func (e *Edition) Operator() interface {
+//
+// The surface suspends Workspaces through the core mechanism, so it takes the event bus
+// and the system (platform) sender that tells the owner. The bus is built after the
+// Edition (it carries the Edition's consumers), hence they come here and not to New.
+func (e *Edition) Operator(bus *events.Bus, sender messaging.EmailSender) interface {
 	Server(opts ...operatorapi.ServerOption) (http.Handler, error)
 } {
-	if e.operatorSurface == nil {
+	if e.operatorSessions == nil {
 		return nil
 	}
-	return e.operatorSurface
+	return operator.NewSurface(e.Operators, e.operatorSessions, bus, sender)
 }
 
 // Jobs is the Edition's river extension: the advanced-retention prune job (ADR 0014),

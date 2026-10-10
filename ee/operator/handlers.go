@@ -10,7 +10,9 @@ import (
 	"github.com/mokevnin/sphericon/ent"
 	"github.com/mokevnin/sphericon/ent/workspace"
 	operatorapi "github.com/mokevnin/sphericon/gen/operator"
+	"github.com/mokevnin/sphericon/internal/events"
 	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/messaging"
 	"github.com/mokevnin/sphericon/internal/pagination"
 	"github.com/mokevnin/sphericon/internal/ratelimit"
 )
@@ -23,8 +25,8 @@ type Surface struct {
 }
 
 // NewSurface builds the surface.
-func NewSurface(m *Module, s *Sessions) *Surface {
-	return &Surface{handlers: &Handlers{module: m, sessions: s}, security: &SecurityHandler{sessions: s}}
+func NewSurface(m *Module, s *Sessions, bus *events.Bus, sender messaging.EmailSender) *Surface {
+	return &Surface{handlers: &Handlers{module: m, sessions: s, bus: bus, sender: sender}, security: &SecurityHandler{sessions: s}}
 }
 
 // Server builds the ogen server under the /operator prefix. opts carry what the
@@ -38,6 +40,8 @@ func (s *Surface) Server(opts ...operatorapi.ServerOption) (http.Handler, error)
 type Handlers struct {
 	module   *Module
 	sessions *Sessions
+	bus      *events.Bus
+	sender   messaging.EmailSender // the system (platform) sender that tells a suspended Workspace's owner
 }
 
 var _ operatorapi.Handler = (*Handlers)(nil)
@@ -170,12 +174,65 @@ func (h *Handlers) OperatorWorkspacesGet(ctx context.Context, params operatorapi
 }
 
 func workspaceNotFound() *operatorapi.OperatorWorkspacesGetNotFound {
-	p := operatorapi.OperatorWorkspacesGetNotFound(operatorapi.ProblemDetails{
+	p := operatorapi.OperatorWorkspacesGetNotFound(notFoundProblem())
+	return &p
+}
+
+func notFoundProblem() operatorapi.ProblemDetails {
+	return operatorapi.ProblemDetails{
 		Status: operatorapi.NewOptInt32(http.StatusNotFound),
 		Title:  operatorapi.NewOptString(http.StatusText(http.StatusNotFound)),
 		Detail: operatorapi.NewOptString(i18n.T("errors.workspace_not_found", nil)),
-	})
-	return &p
+	}
+}
+
+func change(w *ent.Workspace, changed bool) *operatorapi.OperatorSuspensionChange {
+	return &operatorapi.OperatorSuspensionChange{Changed: changed, Workspace: workspaceResource(w)}
+}
+
+// OperatorWorkspacesSuspend freezes a Workspace's outbound sending as the signed-in
+// Operator, whose id the audit trail keeps while customers see "sphericon staff".
+func (h *Handlers) OperatorWorkspacesSuspend(ctx context.Context, req *operatorapi.OperatorSuspendInput, params operatorapi.OperatorWorkspacesSuspendParams) (operatorapi.OperatorWorkspacesSuspendRes, error) {
+	id, err := strconv.ParseInt(string(params.WorkspaceId), 10, 64)
+	if err != nil {
+		p := operatorapi.OperatorWorkspacesSuspendNotFound(notFoundProblem())
+		return &p, nil
+	}
+	w, changed, err := h.module.SuspendWorkspace(ctx, h.bus, h.sender, id, Current(ctx), req.Reason)
+	if errors.Is(err, ErrReasonRequired) {
+		p := operatorapi.OperatorWorkspacesSuspendUnprocessableEntity{
+			Status: operatorapi.NewOptInt32(http.StatusUnprocessableEntity),
+			Title:  operatorapi.NewOptString(http.StatusText(http.StatusUnprocessableEntity)),
+			Detail: operatorapi.NewOptString(i18n.T("errors.suspension_reason_required", nil)),
+		}
+		return &p, nil
+	}
+	if ent.IsNotFound(err) {
+		p := operatorapi.OperatorWorkspacesSuspendNotFound(notFoundProblem())
+		return &p, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return change(w, changed), nil
+}
+
+// OperatorWorkspacesUnsuspend lifts a Workspace's suspension as the signed-in Operator.
+func (h *Handlers) OperatorWorkspacesUnsuspend(ctx context.Context, params operatorapi.OperatorWorkspacesUnsuspendParams) (operatorapi.OperatorWorkspacesUnsuspendRes, error) {
+	id, err := strconv.ParseInt(string(params.WorkspaceId), 10, 64)
+	if err != nil {
+		p := operatorapi.OperatorWorkspacesUnsuspendNotFound(notFoundProblem())
+		return &p, nil
+	}
+	w, changed, err := h.module.UnsuspendWorkspace(ctx, h.bus, id, Current(ctx))
+	if ent.IsNotFound(err) {
+		p := operatorapi.OperatorWorkspacesUnsuspendNotFound(notFoundProblem())
+		return &p, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return change(w, changed), nil
 }
 
 // workspaceResource is the console's view of a Workspace: metadata and suspension

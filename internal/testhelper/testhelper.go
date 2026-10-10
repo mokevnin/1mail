@@ -315,7 +315,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	mcpHandler, err := mcpserver.New(sphericon.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	secondFactor := secondfactor.New(client, bus, cipher, st.now)
-	operatorHandler, err := server.NewOperatorAPI(edition.Operator())
+	operatorHandler, err := server.NewOperatorAPI(edition.Operator(bus, systemMail))
 	require.NoError(t, err, "build operator API")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Webhooks: webhooksModule, Outbound: sender,

@@ -56,6 +56,13 @@ export const zOperatorSecondFactorInput = z.object({
 });
 
 /**
+ * Why a Workspace is being suspended; the owner is told
+ */
+export const zOperatorSuspendInput = z.object({
+  reason: z.string().min(1)
+});
+
+/**
  * Who set a Workspace suspension (ADR 0026)
  */
 export const zOperatorSuspensionActorKind = z.enum([
@@ -154,10 +161,13 @@ export const zOperatorWorkspaceResource = z.object({
 });
 
 /**
- * RFC 7807 validation response
+ * The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether
+ * anything changed (suspending a suspended Workspace and unsuspending an active one
+ * change nothing).
  */
-export const zUnprocessableEntityProblem = z.object({
-  body: zProblemDetails
+export const zOperatorSuspensionChange = z.object({
+  changed: z.boolean(),
+  workspace: zOperatorWorkspaceResource
 });
 
 /**
@@ -224,3 +234,23 @@ export const zOperatorWorkspacesGetPath = z.object({
  * The request has succeeded.
  */
 export const zOperatorWorkspacesGetResponse = zOperatorWorkspaceResource;
+
+export const zOperatorWorkspacesSuspendBody = zOperatorSuspendInput;
+
+export const zOperatorWorkspacesSuspendPath = z.object({
+  workspaceId: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zOperatorWorkspacesSuspendResponse = zOperatorSuspensionChange;
+
+export const zOperatorWorkspacesUnsuspendPath = z.object({
+  workspaceId: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zOperatorWorkspacesUnsuspendResponse = zOperatorSuspensionChange;

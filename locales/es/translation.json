@@ -295,9 +295,32 @@
       "noReason": "Sin motivo indicado",
       "notSuspended": "El envío no está suspendido.",
       "reason": "Motivo",
+      "suspend": {
+        "button": "Suspender el envío",
+        "cancel": "Cancelar",
+        "confirm": "Suspender el envío",
+        "done": "Envío suspendido. Se ha avisado al propietario del espacio de trabajo.",
+        "error": "No se pudo suspender el espacio de trabajo",
+        "reasonDescription": "El propietario del espacio de trabajo verá este motivo.",
+        "reasonLabel": "Motivo",
+        "reasonRequired": "Se requiere un motivo",
+        "title": "Suspender el envío",
+        "unchanged": "Sin cambios: el envío ya estaba suspendido.",
+        "warning": "Todo el envío saliente de este espacio de trabajo se detiene hasta que levantes la suspensión. El inicio de sesión, el panel, las lecturas de la API y el seguimiento siguen funcionando."
+      },
       "suspendedAt": "Suspendido el",
       "suspendedBy": "Suspendido por",
-      "suspensionTitle": "Suspensión"
+      "suspensionTitle": "Suspensión",
+      "unchangedTitle": "Sin cambios",
+      "unsuspend": {
+        "button": "Levantar la suspensión",
+        "confirm": "Levantar la suspensión",
+        "description": "Los envíos retenidos se reanudan. Los clientes verán esto registrado como personal de sphericon.",
+        "done": "Suspensión levantada. Los envíos retenidos se reanudan.",
+        "error": "No se pudo levantar la suspensión",
+        "title": "¿Levantar la suspensión?",
+        "unchanged": "Sin cambios: el envío no estaba suspendido."
+      }
     },
     "workspaces": {
       "active": "Activo",

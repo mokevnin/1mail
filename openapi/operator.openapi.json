@@ -367,6 +367,124 @@
         },
         "tags": ["Operator Workspaces"]
       }
+    },
+    "/workspaces/{workspaceId}/suspend": {
+      "post": {
+        "operationId": "OperatorWorkspaces_suspend",
+        "description": "Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the\nsigned-in Operator. Idempotent: an already-suspended Workspace is left as it was.",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorSuspensionChange"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Operator Workspaces"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorSuspendInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/unsuspend": {
+      "post": {
+        "operationId": "OperatorWorkspaces_unsuspend",
+        "description": "Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is\nnot suspended is left as it was.",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorSuspensionChange"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Operator Workspaces"]
+      }
     }
   },
   "security": [
@@ -555,6 +673,18 @@
         },
         "description": "The second login step: the challenge from the password step and a TOTP code"
       },
+      "OperatorSuspendInput": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The reason, required: the Workspace owner is told why sending stopped"
+          }
+        },
+        "description": "Why a Workspace is being suspended; the owner is told"
+      },
       "OperatorSuspension": {
         "type": "object",
         "required": ["at", "actor"],
@@ -602,6 +732,19 @@
         "type": "string",
         "enum": ["system", "cli", "operator"],
         "description": "Who set a Workspace suspension (ADR 0026)"
+      },
+      "OperatorSuspensionChange": {
+        "type": "object",
+        "required": ["changed", "workspace"],
+        "properties": {
+          "changed": {
+            "type": "boolean"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/OperatorWorkspaceResource"
+          }
+        },
+        "description": "The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether\nanything changed (suspending a suspended Workspace and unsuspending an active one\nchange nothing)."
       },
       "OperatorWorkspaceResource": {
         "type": "object",
@@ -724,16 +867,6 @@
       "Timestamp": {
         "type": "string",
         "format": "date-time"
-      },
-      "UnprocessableEntityProblem": {
-        "type": "object",
-        "required": ["body"],
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/ProblemDetails"
-          }
-        },
-        "description": "RFC 7807 validation response"
       }
     },
     "securitySchemes": {

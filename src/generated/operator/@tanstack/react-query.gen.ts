@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { operatorAuthLogin, operatorAuthLogout, operatorAuthSecondFactor, operatorMeGet, operatorWorkspacesGet, operatorWorkspacesList, type Options } from '../sdk.gen.ts';
-import type { OperatorAuthLoginData, OperatorAuthLoginError, OperatorAuthLoginResponse, OperatorAuthLogoutData, OperatorAuthLogoutResponse, OperatorAuthSecondFactorData, OperatorAuthSecondFactorError, OperatorAuthSecondFactorResponse, OperatorMeGetData, OperatorMeGetError, OperatorMeGetResponse, OperatorWorkspacesGetData, OperatorWorkspacesGetError, OperatorWorkspacesGetResponse, OperatorWorkspacesListData, OperatorWorkspacesListError, OperatorWorkspacesListResponse } from '../types.gen.ts';
+import { operatorAuthLogin, operatorAuthLogout, operatorAuthSecondFactor, operatorMeGet, operatorWorkspacesGet, operatorWorkspacesList, operatorWorkspacesSuspend, operatorWorkspacesUnsuspend, type Options } from '../sdk.gen.ts';
+import type { OperatorAuthLoginData, OperatorAuthLoginError, OperatorAuthLoginResponse, OperatorAuthLogoutData, OperatorAuthLogoutResponse, OperatorAuthSecondFactorData, OperatorAuthSecondFactorError, OperatorAuthSecondFactorResponse, OperatorMeGetData, OperatorMeGetError, OperatorMeGetResponse, OperatorWorkspacesGetData, OperatorWorkspacesGetError, OperatorWorkspacesGetResponse, OperatorWorkspacesListData, OperatorWorkspacesListError, OperatorWorkspacesListResponse, OperatorWorkspacesSuspendData, OperatorWorkspacesSuspendError, OperatorWorkspacesSuspendResponse, OperatorWorkspacesUnsuspendData, OperatorWorkspacesUnsuspendError, OperatorWorkspacesUnsuspendResponse } from '../types.gen.ts';
 
 /**
  * Check the password. Answers a challenge (or, at first login, a TOTP enrolment)
@@ -207,3 +207,39 @@ export const operatorWorkspacesGetOptions = (options: Options<OperatorWorkspaces
   },
   queryKey: operatorWorkspacesGetQueryKey(options)
 });
+
+/**
+ * Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the
+ * signed-in Operator. Idempotent: an already-suspended Workspace is left as it was.
+ */
+export const operatorWorkspacesSuspendMutation = (options?: Partial<Options<OperatorWorkspacesSuspendData>>): UseMutationOptions<OperatorWorkspacesSuspendResponse, OperatorWorkspacesSuspendError, Options<OperatorWorkspacesSuspendData>> => {
+  const mutationOptions: UseMutationOptions<OperatorWorkspacesSuspendResponse, OperatorWorkspacesSuspendError, Options<OperatorWorkspacesSuspendData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await operatorWorkspacesSuspend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
+};
+
+/**
+ * Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is
+ * not suspended is left as it was.
+ */
+export const operatorWorkspacesUnsuspendMutation = (options?: Partial<Options<OperatorWorkspacesUnsuspendData>>): UseMutationOptions<OperatorWorkspacesUnsuspendResponse, OperatorWorkspacesUnsuspendError, Options<OperatorWorkspacesUnsuspendData>> => {
+  const mutationOptions: UseMutationOptions<OperatorWorkspacesUnsuspendResponse, OperatorWorkspacesUnsuspendError, Options<OperatorWorkspacesUnsuspendData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await operatorWorkspacesUnsuspend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
+};

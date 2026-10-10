@@ -296,6 +296,23 @@ func (s *OperatorSecondFactorInput) SetCode(val string) {
 	s.Code = val
 }
 
+// Why a Workspace is being suspended; the owner is told.
+// Ref: #/components/schemas/OperatorSuspendInput
+type OperatorSuspendInput struct {
+	// The reason, required: the Workspace owner is told why sending stopped.
+	Reason string `json:"reason"`
+}
+
+// GetReason returns the value of Reason.
+func (s *OperatorSuspendInput) GetReason() string {
+	return s.Reason
+}
+
+// SetReason sets the value of Reason.
+func (s *OperatorSuspendInput) SetReason(val string) {
+	s.Reason = val
+}
+
 // A Workspace's suspension state (ADR 0007).
 // Ref: #/components/schemas/OperatorSuspension
 type OperatorSuspension struct {
@@ -414,6 +431,37 @@ func (s *OperatorSuspensionActorKind) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether anything changed
+// (suspending a suspended Workspace and unsuspending an active one change nothing).
+// Ref: #/components/schemas/OperatorSuspensionChange
+type OperatorSuspensionChange struct {
+	Changed   bool                      `json:"changed"`
+	Workspace OperatorWorkspaceResource `json:"workspace"`
+}
+
+// GetChanged returns the value of Changed.
+func (s *OperatorSuspensionChange) GetChanged() bool {
+	return s.Changed
+}
+
+// GetWorkspace returns the value of Workspace.
+func (s *OperatorSuspensionChange) GetWorkspace() OperatorWorkspaceResource {
+	return s.Workspace
+}
+
+// SetChanged sets the value of Changed.
+func (s *OperatorSuspensionChange) SetChanged(val bool) {
+	s.Changed = val
+}
+
+// SetWorkspace sets the value of Workspace.
+func (s *OperatorSuspensionChange) SetWorkspace(val OperatorWorkspaceResource) {
+	s.Workspace = val
+}
+
+func (*OperatorSuspensionChange) operatorWorkspacesSuspendRes()   {}
+func (*OperatorSuspensionChange) operatorWorkspacesUnsuspendRes() {}
 
 // A Workspace as the Operator console sees it: metadata only, never Contacts, content or Events (ADR
 // 0026).
@@ -554,6 +602,26 @@ func (s *OperatorWorkspacesListOK) SetTotalPages(val int32) {
 }
 
 func (*OperatorWorkspacesListOK) operatorWorkspacesListRes() {}
+
+type OperatorWorkspacesSuspendNotFound ProblemDetails
+
+func (*OperatorWorkspacesSuspendNotFound) operatorWorkspacesSuspendRes() {}
+
+type OperatorWorkspacesSuspendUnauthorized ProblemDetails
+
+func (*OperatorWorkspacesSuspendUnauthorized) operatorWorkspacesSuspendRes() {}
+
+type OperatorWorkspacesSuspendUnprocessableEntity ProblemDetails
+
+func (*OperatorWorkspacesSuspendUnprocessableEntity) operatorWorkspacesSuspendRes() {}
+
+type OperatorWorkspacesUnsuspendNotFound ProblemDetails
+
+func (*OperatorWorkspacesUnsuspendNotFound) operatorWorkspacesUnsuspendRes() {}
+
+type OperatorWorkspacesUnsuspendUnauthorized ProblemDetails
+
+func (*OperatorWorkspacesUnsuspendUnauthorized) operatorWorkspacesUnsuspendRes() {}
 
 // NewOptInt32 returns new OptInt32 with value set to v.
 func NewOptInt32(v int32) OptInt32 {

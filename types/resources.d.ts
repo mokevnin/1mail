@@ -285,9 +285,32 @@ export default interface Resources {
         "noReason": "No reason given",
         "notSuspended": "Sending is not suspended.",
         "reason": "Reason",
+        "suspend": {
+          "button": "Suspend sending",
+          "cancel": "Cancel",
+          "confirm": "Suspend sending",
+          "done": "Sending suspended. The workspace owner has been notified.",
+          "error": "Could not suspend the workspace",
+          "reasonDescription": "The workspace owner is told this reason.",
+          "reasonLabel": "Reason",
+          "reasonRequired": "A reason is required",
+          "title": "Suspend sending",
+          "unchanged": "Nothing changed: sending was already suspended.",
+          "warning": "All outbound sending from this workspace stops until you lift the suspension. Sign-in, the dashboard, API reads and tracking keep working."
+        },
         "suspendedAt": "Suspended at",
         "suspendedBy": "Suspended by",
-        "suspensionTitle": "Suspension"
+        "suspensionTitle": "Suspension",
+        "unchangedTitle": "No change",
+        "unsuspend": {
+          "button": "Lift suspension",
+          "confirm": "Lift suspension",
+          "description": "Held sends resume. Customers will see this recorded as sphericon staff.",
+          "done": "Suspension lifted. Held sends resume.",
+          "error": "Could not lift the suspension",
+          "title": "Lift the suspension?",
+          "unchanged": "Nothing changed: sending was not suspended."
+        }
       },
       "workspaces": {
         "active": "Active",

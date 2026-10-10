@@ -69,3 +69,23 @@ func (UnimplementedHandler) OperatorWorkspacesGet(ctx context.Context, params Op
 func (UnimplementedHandler) OperatorWorkspacesList(ctx context.Context, params OperatorWorkspacesListParams) (r OperatorWorkspacesListRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// OperatorWorkspacesSuspend implements OperatorWorkspaces_suspend operation.
+//
+// Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the signed-in Operator.
+// Idempotent: an already-suspended Workspace is left as it was.
+//
+// POST /workspaces/{workspaceId}/suspend
+func (UnimplementedHandler) OperatorWorkspacesSuspend(ctx context.Context, req *OperatorSuspendInput, params OperatorWorkspacesSuspendParams) (r OperatorWorkspacesSuspendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// OperatorWorkspacesUnsuspend implements OperatorWorkspaces_unsuspend operation.
+//
+// Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is not suspended is
+// left as it was.
+//
+// POST /workspaces/{workspaceId}/unsuspend
+func (UnimplementedHandler) OperatorWorkspacesUnsuspend(ctx context.Context, params OperatorWorkspacesUnsuspendParams) (r OperatorWorkspacesUnsuspendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

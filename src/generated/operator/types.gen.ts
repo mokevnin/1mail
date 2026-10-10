@@ -119,6 +119,16 @@ export type OperatorSecondFactorInput = {
 };
 
 /**
+ * Why a Workspace is being suspended; the owner is told
+ */
+export type OperatorSuspendInput = {
+  /**
+   * The reason, required: the Workspace owner is told why sending stopped
+   */
+  reason: string;
+};
+
+/**
  * A Workspace's suspension state (ADR 0007)
  */
 export type OperatorSuspension = {
@@ -160,6 +170,16 @@ export const OperatorSuspensionActorKind = {
  * Who set a Workspace suspension (ADR 0026)
  */
 export type OperatorSuspensionActorKind = typeof OperatorSuspensionActorKind[keyof typeof OperatorSuspensionActorKind];
+
+/**
+ * The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether
+ * anything changed (suspending a suspended Workspace and unsuspending an active one
+ * change nothing).
+ */
+export type OperatorSuspensionChange = {
+  changed: boolean;
+  workspace: OperatorWorkspaceResource;
+};
 
 /**
  * A Workspace as the Operator console sees it: metadata only, never Contacts,
@@ -252,13 +272,6 @@ export type ProblemDetails = {
 export type TimeZoneName = string;
 
 export type Timestamp = string;
-
-/**
- * RFC 7807 validation response
- */
-export type UnprocessableEntityProblem = {
-  body: ProblemDetails;
-};
 
 /**
  * Only Workspaces whose slug contains this text (case-insensitive)
@@ -463,3 +476,69 @@ export type OperatorWorkspacesGetResponses = {
 };
 
 export type OperatorWorkspacesGetResponse = OperatorWorkspacesGetResponses[keyof OperatorWorkspacesGetResponses];
+
+export type OperatorWorkspacesSuspendData = {
+  body: OperatorSuspendInput;
+  path: {
+    workspaceId: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{workspaceId}/suspend';
+};
+
+export type OperatorWorkspacesSuspendErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type OperatorWorkspacesSuspendError = OperatorWorkspacesSuspendErrors[keyof OperatorWorkspacesSuspendErrors];
+
+export type OperatorWorkspacesSuspendResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: OperatorSuspensionChange;
+};
+
+export type OperatorWorkspacesSuspendResponse = OperatorWorkspacesSuspendResponses[keyof OperatorWorkspacesSuspendResponses];
+
+export type OperatorWorkspacesUnsuspendData = {
+  body?: never;
+  path: {
+    workspaceId: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{workspaceId}/unsuspend';
+};
+
+export type OperatorWorkspacesUnsuspendErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type OperatorWorkspacesUnsuspendError = OperatorWorkspacesUnsuspendErrors[keyof OperatorWorkspacesUnsuspendErrors];
+
+export type OperatorWorkspacesUnsuspendResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: OperatorSuspensionChange;
+};
+
+export type OperatorWorkspacesUnsuspendResponse = OperatorWorkspacesUnsuspendResponses[keyof OperatorWorkspacesUnsuspendResponses];

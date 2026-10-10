@@ -1055,7 +1055,15 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		operatorAPI, err := server.NewOperatorAPI(edition.Operator())
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		sys, err := do.Invoke[*systemSender](i)
+		if err != nil {
+			return nil, err
+		}
+		operatorAPI, err := server.NewOperatorAPI(edition.Operator(bus.Bus, sys.EmailSender))
 		if err != nil {
 			return nil, err
 		}

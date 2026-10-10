@@ -3,7 +3,7 @@
 
 import { http, type HttpHandler, HttpResponse, type HttpResponseResolver, type RequestHandlerOptions as RequestHandlerOptions2 } from 'msw';
 
-import type { ClientOptions, OperatorAuthLoginData, OperatorAuthLoginResponses, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorResponses, OperatorMeGetResponses, OperatorWorkspacesGetResponses, OperatorWorkspacesListResponses } from './types.gen.ts';
+import type { ClientOptions, OperatorAuthLoginData, OperatorAuthLoginResponses, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorResponses, OperatorMeGetResponses, OperatorWorkspacesGetResponses, OperatorWorkspacesListResponses, OperatorWorkspacesSuspendData, OperatorWorkspacesSuspendResponses, OperatorWorkspacesUnsuspendResponses } from './types.gen.ts';
 
 export type RequestHandlerOptions = RequestHandlerOptions2 & {
   baseUrl?: ClientOptions['baseUrl'];
@@ -176,6 +176,68 @@ export function handleOperatorWorkspacesGet(response?: HandleOperatorWorkspacesG
   }, options);
 }
 
+export type HandleOperatorWorkspacesSuspendResponse = {
+  body: OperatorWorkspacesSuspendResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /workspaces/{workspaceId}/suspend` operation.
+ */
+export function handleOperatorWorkspacesSuspend(response?: HandleOperatorWorkspacesSuspendResponse | HttpResponseResolver<{
+  workspaceId: string;
+}, OperatorWorkspacesSuspendData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<{
+    workspaceId: string;
+  }, OperatorWorkspacesSuspendData['body']>(`${options?.baseUrl ?? '*'}/workspaces/:workspaceId/suspend`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleOperatorWorkspacesUnsuspendResponse = {
+  body: OperatorWorkspacesUnsuspendResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /workspaces/{workspaceId}/unsuspend` operation.
+ */
+export function handleOperatorWorkspacesUnsuspend(response?: HandleOperatorWorkspacesUnsuspendResponse | HttpResponseResolver<{
+  workspaceId: string;
+}, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<{
+    workspaceId: string;
+  }, never>(`${options?.baseUrl ?? '*'}/workspaces/:workspaceId/unsuspend`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
 export type MswHandlerFactories = {
   /**
    * Handler for the `POST /auth/login` operation.
@@ -201,6 +263,14 @@ export type MswHandlerFactories = {
    * Handler for the `GET /workspaces/{workspaceId}` operation.
    */
   operatorWorkspacesGet: typeof handleOperatorWorkspacesGet;
+  /**
+   * Handler for the `POST /workspaces/{workspaceId}/suspend` operation.
+   */
+  operatorWorkspacesSuspend: typeof handleOperatorWorkspacesSuspend;
+  /**
+   * Handler for the `POST /workspaces/{workspaceId}/unsuspend` operation.
+   */
+  operatorWorkspacesUnsuspend: typeof handleOperatorWorkspacesUnsuspend;
 };
 
 export type CreateMswHandlersResult = {
@@ -223,7 +293,9 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
     operatorAuthSecondFactor: wrap(handleOperatorAuthSecondFactor),
     operatorMeGet: wrap(handleOperatorMeGet),
     operatorWorkspacesList: wrap(handleOperatorWorkspacesList),
-    operatorWorkspacesGet: wrap(handleOperatorWorkspacesGet)
+    operatorWorkspacesGet: wrap(handleOperatorWorkspacesGet),
+    operatorWorkspacesSuspend: wrap(handleOperatorWorkspacesSuspend),
+    operatorWorkspacesUnsuspend: wrap(handleOperatorWorkspacesUnsuspend)
   };
   const all: CreateMswHandlersResult['all'] = (options = {}) => {
     type OverrideValue<R> = R | [
@@ -235,6 +307,8 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
     }
     const overrides = options.pick ?? {};
     return [
+      invoke(pick.operatorWorkspacesSuspend, overrides.operatorWorkspacesSuspend),
+      invoke(pick.operatorWorkspacesUnsuspend, overrides.operatorWorkspacesUnsuspend),
       invoke(pick.operatorAuthLogin, overrides.operatorAuthLogin),
       invoke(pick.operatorAuthLogout, overrides.operatorAuthLogout),
       invoke(pick.operatorAuthSecondFactor, overrides.operatorAuthSecondFactor),

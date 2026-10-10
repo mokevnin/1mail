@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses, OperatorWorkspacesGetData, OperatorWorkspacesGetErrors, OperatorWorkspacesGetResponses, OperatorWorkspacesListData, OperatorWorkspacesListErrors, OperatorWorkspacesListResponses } from './types.gen.ts';
-import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody, zOperatorWorkspacesGetPath, zOperatorWorkspacesListQuery } from './zod.gen.ts';
+import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses, OperatorWorkspacesGetData, OperatorWorkspacesGetErrors, OperatorWorkspacesGetResponses, OperatorWorkspacesListData, OperatorWorkspacesListErrors, OperatorWorkspacesListResponses, OperatorWorkspacesSuspendData, OperatorWorkspacesSuspendErrors, OperatorWorkspacesSuspendResponses, OperatorWorkspacesUnsuspendData, OperatorWorkspacesUnsuspendErrors, OperatorWorkspacesUnsuspendResponses } from './types.gen.ts';
+import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody, zOperatorWorkspacesGetPath, zOperatorWorkspacesListQuery, zOperatorWorkspacesSuspendBody, zOperatorWorkspacesSuspendPath, zOperatorWorkspacesUnsuspendPath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
   /**
@@ -124,5 +124,47 @@ export const operatorWorkspacesGet = <ThrowOnError extends boolean = false>(opti
       type: 'apiKey'
     }],
   url: '/workspaces/{workspaceId}',
+  ...options
+});
+
+/**
+ * Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the
+ * signed-in Operator. Idempotent: an already-suspended Workspace is left as it was.
+ */
+export const operatorWorkspacesSuspend = <ThrowOnError extends boolean = false>(options: Options<OperatorWorkspacesSuspendData, ThrowOnError>): RequestResult<OperatorWorkspacesSuspendResponses, OperatorWorkspacesSuspendErrors, ThrowOnError> => (options.client ?? client).post<OperatorWorkspacesSuspendResponses, OperatorWorkspacesSuspendErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zOperatorWorkspacesSuspendBody,
+    path: zOperatorWorkspacesSuspendPath,
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'OPERATOR_JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{workspaceId}/suspend',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is
+ * not suspended is left as it was.
+ */
+export const operatorWorkspacesUnsuspend = <ThrowOnError extends boolean = false>(options: Options<OperatorWorkspacesUnsuspendData, ThrowOnError>): RequestResult<OperatorWorkspacesUnsuspendResponses, OperatorWorkspacesUnsuspendErrors, ThrowOnError> => (options.client ?? client).post<OperatorWorkspacesUnsuspendResponses, OperatorWorkspacesUnsuspendErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: zOperatorWorkspacesUnsuspendPath,
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'OPERATOR_JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{workspaceId}/unsuspend',
   ...options
 });

@@ -25,6 +25,7 @@
   "errors.invalid_credentials": "неверный email или пароль",
   "errors.login_challenge_invalid": "шаг входа устарел, войдите снова",
   "errors.workspace_not_found": "рабочее пространство не найдено",
+  "errors.suspension_reason_required": "для приостановки рабочего пространства нужна причина",
   "errors.phone_exists": "телефон уже существует",
   "errors.subject_id_exists": "идентификатор пользователя уже существует",
   "errors.reset_link_invalid": "ссылка для сброса пароля недействительна или устарела",

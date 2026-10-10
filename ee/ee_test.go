@@ -32,7 +32,7 @@ func TestTheOperatorSecretIsRequiredOnlyWithTheOperatorLicense(t *testing.T) {
 
 	e, err := ee.New(nil, licenseFor(t, licensekey.FeatureAudit), nil, siteSecret, unset)
 	require.NoError(t, err, "an instance without the operator license needs no operator secret")
-	assert.Nil(t, e.Operator(), "and has no operator surface")
+	assert.Nil(t, e.Operator(nil, nil), "and has no operator surface")
 
 	_, err = ee.New(nil, licenseFor(t, licensekey.FeatureOperator), nil, siteSecret, unset)
 	require.Error(t, err)
@@ -49,5 +49,5 @@ func TestTheOperatorSecretMustDifferFromTheSiteSecretAndBeLongEnough(t *testing.
 
 	e, err := ee.New(nil, lic, nil, siteSecret, operator.Config{Secret: rand.Text() + rand.Text(), SessionTTL: time.Hour})
 	require.NoError(t, err)
-	assert.NotNil(t, e.Operator())
+	assert.NotNil(t, e.Operator(nil, nil))
 }

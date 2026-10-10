@@ -51,6 +51,21 @@ model OperatorWorkspaceSearch {
   @query slug?: string;
 }
 
+/** Why a Workspace is being suspended; the owner is told */
+model OperatorSuspendInput {
+  /** The reason, required: the Workspace owner is told why sending stopped */
+  @minLength(1)
+  reason: string;
+}
+
+/** The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether
+ * anything changed (suspending a suspended Workspace and unsuspending an active one
+ * change nothing). */
+model OperatorSuspensionChange {
+  changed: boolean;
+  workspace: OperatorWorkspaceResource;
+}
+
 @tag("Operator Workspaces")
 @route("/workspaces")
 namespace OperatorWorkspaces {
@@ -65,6 +80,25 @@ namespace OperatorWorkspaces {
   @get
   op get(@path workspaceId: EntityId):
     | OperatorWorkspaceResource
+    | UnauthorizedProblem
+    | NotFoundProblem;
+
+  /** Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the
+   * signed-in Operator. Idempotent: an already-suspended Workspace is left as it was. */
+  @route("/{workspaceId}/suspend")
+  @post
+  op suspend(@path workspaceId: EntityId, @body body: OperatorSuspendInput):
+    | OperatorSuspensionChange
+    | UnauthorizedProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
+
+  /** Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is
+   * not suspended is left as it was. */
+  @route("/{workspaceId}/unsuspend")
+  @post
+  op unsuspend(@path workspaceId: EntityId):
+    | OperatorSuspensionChange
     | UnauthorizedProblem
     | NotFoundProblem;
 }

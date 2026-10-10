@@ -47,6 +47,20 @@ type Handler interface {
 	//
 	// GET /workspaces
 	OperatorWorkspacesList(ctx context.Context, params OperatorWorkspacesListParams) (OperatorWorkspacesListRes, error)
+	// OperatorWorkspacesSuspend implements OperatorWorkspaces_suspend operation.
+	//
+	// Suspend a Workspace's outbound sending (ADR 0007) with a required reason, as the signed-in Operator.
+	// Idempotent: an already-suspended Workspace is left as it was.
+	//
+	// POST /workspaces/{workspaceId}/suspend
+	OperatorWorkspacesSuspend(ctx context.Context, req *OperatorSuspendInput, params OperatorWorkspacesSuspendParams) (OperatorWorkspacesSuspendRes, error)
+	// OperatorWorkspacesUnsuspend implements OperatorWorkspaces_unsuspend operation.
+	//
+	// Lift a Workspace's suspension; held sends resume. Idempotent: a Workspace that is not suspended is
+	// left as it was.
+	//
+	// POST /workspaces/{workspaceId}/unsuspend
+	OperatorWorkspacesUnsuspend(ctx context.Context, params OperatorWorkspacesUnsuspendParams) (OperatorWorkspacesUnsuspendRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and
