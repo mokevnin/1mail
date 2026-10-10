@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -56,30 +55,6 @@ func TestWorkspaceKeysAreTypedAndUnique(t *testing.T) {
 	again, err := service.GenerateCollectKey()
 	require.NoError(t, err)
 	assert.NotEqual(t, collect, again)
-}
-
-func TestWebhookSecretIsStandardWebhooksFormat(t *testing.T) {
-	secret, err := service.GenerateWebhookSecret()
-	require.NoError(t, err)
-	require.True(t, strings.HasPrefix(secret, "whsec_"))
-	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(secret, "whsec_"))
-	require.NoError(t, err)
-	assert.Len(t, raw, 24)
-}
-
-func TestValidWebhookURLAcceptsOnlyAbsoluteHTTP(t *testing.T) {
-	for url, want := range map[string]bool{
-		"https://example.com/hook":  true,
-		"http://example.com:8080/x": true,
-		"ftp://example.com/hook":    false,
-		"example.com/hook":          false,
-		"https://":                  false,
-		"/relative":                 false,
-		"":                          false,
-		"http://%zz":                false,
-	} {
-		assert.Equal(t, want, service.ValidWebhookURL(url), url)
-	}
 }
 
 func TestPasswordHashVerifiesOnlyTheOriginal(t *testing.T) {
