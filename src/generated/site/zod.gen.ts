@@ -1107,6 +1107,7 @@ export const zSiteMembershipResource = z.object({
   email: zEmailAddress,
   name: z.string(),
   role: zSiteMembershipRole,
+  secondFactorEnabled: z.boolean(),
   createdAt: zTimestamp
 });
 
@@ -2162,6 +2163,16 @@ export const zSiteMembershipsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteMembershipsUpdateResponse = zSiteMembershipResource;
+
+export const zSiteMembershipsResetSecondFactorPath = z.object({
+  slug: z.string(),
+  id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteMembershipsResetSecondFactorResponse = z.void();
 
 export const zSiteWorkspacesSetSecondFactorRequirementBody = zSiteSecondFactorRequirementInput;
 

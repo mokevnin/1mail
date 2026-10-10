@@ -47,6 +47,7 @@ const (
 	// The Second factor (ADR 0020).
 	ActionUserSecondFactorEnroll      = "user.second_factor_enroll"
 	ActionUserSecondFactorDisable     = "user.second_factor_disable"
+	ActionUserSecondFactorReset       = "user.second_factor_reset"
 	ActionUserRecoveryCodesRegenerate = "user.recovery_codes_regenerate"
 	ActionUserRecoveryCodeUse         = "user.recovery_code_use"
 	ActionWorkspaceUpdate             = "workspace.update"
@@ -66,6 +67,7 @@ var ExplicitAuditActions = []string{
 	ActionUserPasswordChange,
 	ActionUserSecondFactorEnroll,
 	ActionUserSecondFactorDisable,
+	ActionUserSecondFactorReset,
 	ActionUserRecoveryCodesRegenerate,
 	ActionUserRecoveryCodeUse,
 	ActionWorkspaceUpdate,

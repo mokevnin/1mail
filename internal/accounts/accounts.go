@@ -359,15 +359,34 @@ func (a *Accounts) RecordLogin(ctx context.Context, u *ent.User) error {
 // RecordUserAction publishes one Audit entry per Workspace the User holds a
 // Membership in, and none anywhere else. The User is the actor and the target.
 func RecordUserAction(ctx context.Context, tx *ent.Client, pub events.Publisher, u *ent.User, action string, diff map[string]any) error {
+	actor := events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(u.ID, 10), Name: u.Name}
+	return RecordActionOnUser(ctx, tx, pub, actor, u, action, diff)
+}
+
+// RecordActionOnUser publishes action by actor on the User u into the log of every
+// Workspace u holds a Membership in (an operator acting on a User), and none
+// anywhere else.
+func RecordActionOnUser(ctx context.Context, tx *ent.Client, pub events.Publisher, actor events.Actor, u *ent.User, action string, diff map[string]any) error {
 	memberships, err := tx.Membership.Query().Where(membership.UserID(u.ID)).All(ctx)
 	if err != nil {
 		return err
 	}
+	ids := make([]int64, len(memberships))
+	for i, m := range memberships {
+		ids[i] = m.WorkspaceID
+	}
+	return RecordActionOnUserIn(ctx, pub, actor, u, action, diff, ids...)
+}
+
+// RecordActionOnUserIn publishes action by actor on the User u into the logs of the
+// given Workspaces only: an Owner or Admin acting on a member is recorded where they
+// hold that authority, not in the member's other Workspaces.
+func RecordActionOnUserIn(ctx context.Context, pub events.Publisher, actor events.Actor, u *ent.User, action string, diff map[string]any, workspaceIDs ...int64) error {
 	id := strconv.FormatInt(u.ID, 10)
-	for _, m := range memberships {
+	for _, ws := range workspaceIDs {
 		if err := events.RecordAudit(ctx, pub, &events.AuditEntry{
-			WorkspaceID: m.WorkspaceID,
-			Actor:       events.Actor{Kind: events.ActorUser, ID: id, Name: u.Name},
+			WorkspaceID: ws,
+			Actor:       actor,
 			Action:      action,
 			TargetType:  "user",
 			TargetID:    id,

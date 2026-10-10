@@ -4029,6 +4029,56 @@
         "tags": ["Site Memberships"]
       }
     },
+    "/workspaces/{slug}/memberships/{id}/reset-second-factor": {
+      "post": {
+        "operationId": "SiteMemberships_resetSecondFactor",
+        "description": "Reset the member's Second factor (owner/admin only; owner-only for an owner):\nclears the factor and its Recovery codes and ends every session of theirs. The\nacting session is untouched. 422 when the member has no Second factor or is the\ncaller (who disables their own with a password and a code).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Memberships"]
+      }
+    },
     "/workspaces/{slug}/second-factor-requirement": {
       "put": {
         "operationId": "SiteWorkspaces_setSecondFactorRequirement",
@@ -8564,7 +8614,7 @@
       },
       "SiteMembershipResource": {
         "type": "object",
-        "required": ["id", "userId", "email", "name", "role", "createdAt"],
+        "required": ["id", "userId", "email", "name", "role", "secondFactorEnabled", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -8601,6 +8651,10 @@
               }
             ],
             "description": "The member's role in this workspace"
+          },
+          "secondFactorEnabled": {
+            "type": "boolean",
+            "description": "Whether the member has an active Second factor (ADR 0020)"
           },
           "createdAt": {
             "allOf": [

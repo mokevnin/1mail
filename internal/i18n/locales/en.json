@@ -36,6 +36,7 @@
   "errors.second_factor_already_active": "a second factor is already active",
   "errors.second_factor_no_pending": "start enrollment first",
   "errors.second_factor_not_active": "no second factor is active",
+  "errors.second_factor_reset_self": "reset your own second factor by disabling it in your account",
   "errors.new_email_required": "new email is required",
   "errors.new_email_must_differ": "new email must differ from the current one",
   "errors.url_invalid": "invalid url",

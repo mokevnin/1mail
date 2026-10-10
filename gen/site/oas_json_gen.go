@@ -16326,18 +16326,23 @@ func (s *SiteMembershipResource) encodeFields(e *jx.Encoder) {
 		s.Role.Encode(e)
 	}
 	{
+		e.FieldStart("secondFactorEnabled")
+		e.Bool(s.SecondFactorEnabled)
+	}
+	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteMembershipResource = [6]string{
+var jsonFieldsNameOfSiteMembershipResource = [7]string{
 	0: "id",
 	1: "userId",
 	2: "email",
 	3: "name",
 	4: "role",
-	5: "createdAt",
+	5: "secondFactorEnabled",
+	6: "createdAt",
 }
 
 // Decode decodes SiteMembershipResource from json.
@@ -16401,8 +16406,20 @@ func (s *SiteMembershipResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"role\"")
 			}
-		case "createdAt":
+		case "secondFactorEnabled":
 			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.SecondFactorEnabled = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"secondFactorEnabled\"")
+			}
+		case "createdAt":
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -16421,7 +16438,7 @@ func (s *SiteMembershipResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00111111,
+		0b01111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -16669,6 +16686,120 @@ func (s SiteMembershipsListOKApplicationJSON) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteMembershipsListOKApplicationJSON) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteMembershipsResetSecondFactorForbidden as json.
+func (s *SiteMembershipsResetSecondFactorForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteMembershipsResetSecondFactorForbidden from json.
+func (s *SiteMembershipsResetSecondFactorForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteMembershipsResetSecondFactorForbidden to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteMembershipsResetSecondFactorForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteMembershipsResetSecondFactorForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteMembershipsResetSecondFactorForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteMembershipsResetSecondFactorNotFound as json.
+func (s *SiteMembershipsResetSecondFactorNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteMembershipsResetSecondFactorNotFound from json.
+func (s *SiteMembershipsResetSecondFactorNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteMembershipsResetSecondFactorNotFound to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteMembershipsResetSecondFactorNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteMembershipsResetSecondFactorNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteMembershipsResetSecondFactorNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteMembershipsResetSecondFactorUnprocessableEntity as json.
+func (s *SiteMembershipsResetSecondFactorUnprocessableEntity) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteMembershipsResetSecondFactorUnprocessableEntity from json.
+func (s *SiteMembershipsResetSecondFactorUnprocessableEntity) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteMembershipsResetSecondFactorUnprocessableEntity to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteMembershipsResetSecondFactorUnprocessableEntity(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteMembershipsResetSecondFactorUnprocessableEntity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteMembershipsResetSecondFactorUnprocessableEntity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

@@ -36,6 +36,7 @@
   "errors.second_factor_already_active": "ya hay un segundo factor activo",
   "errors.second_factor_no_pending": "primero inicia la activación",
   "errors.second_factor_not_active": "no hay ningún segundo factor activo",
+  "errors.second_factor_reset_self": "desactiva tu propio segundo factor en la configuración de tu cuenta",
   "errors.new_email_required": "el nuevo email es obligatorio",
   "errors.new_email_must_differ": "el nuevo email debe ser diferente del actual",
   "errors.url_invalid": "URL no válida",

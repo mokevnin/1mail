@@ -7,8 +7,11 @@ import type {
   SiteInvitationsListData,
   SiteMembershipResource,
   SiteMembershipsDeleteData,
+  SiteMembershipRole,
   SiteMembershipsListData,
+  SiteMembershipsResetSecondFactorData,
   SiteMembershipsUpdateData,
+  SiteUserGetMeData,
 } from '../../generated/site/types.gen.ts'
 import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
@@ -22,6 +25,7 @@ const member: SiteMembershipResource = {
   email: 'ann@example.com',
   name: 'Ann',
   role: 'member',
+  secondFactorEnabled: false,
   createdAt: '2026-01-01T00:00:00Z',
 }
 
@@ -166,4 +170,60 @@ test('shows an error alert when members fail to load', async () => {
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Failed to load members').first()).toBeInTheDocument()
+})
+
+// The signed-in User (id 10) with the given role, next to Sam, who has a Second factor.
+function teamWithSam(role: SiteMembershipRole) {
+  const me = {
+    id: '10',
+    name: 'Ann',
+    email: 'ann@example.com',
+    emailVerified: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  }
+  const sam: SiteMembershipResource = {
+    ...member,
+    id: '2',
+    userId: '11',
+    email: 'sam@example.com',
+    name: 'Sam',
+    secondFactorEnabled: true,
+  }
+  return [
+    route<SiteUserGetMeData>('GET', '/me', {}, () => jsonResponse(me)),
+    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', { slug: SLUG }, () =>
+      jsonResponse([{ ...member, role }, sam]),
+    ),
+    invites([]),
+  ]
+}
+
+test('an owner resets a member Second factor after confirmation', async () => {
+  let reset = false
+  mockClientRoutes([
+    ...teamWithSam('owner'),
+    route<SiteMembershipsResetSecondFactorData>(
+      'POST',
+      '/workspaces/{slug}/memberships/{id}/reset-second-factor',
+      { slug: SLUG, id: '2' },
+      () => {
+        reset = true
+        return new Response(null, { status: 204 })
+      },
+    ),
+  ])
+  const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
+
+  await screen.getByRole('button', { name: 'Reset 2FA' }).click()
+  await screen.getByRole('dialog').getByRole('button', { name: 'Reset' }).click()
+
+  await expect.poll(() => reset).toBe(true)
+})
+
+test('a member is not offered a Second factor reset', async () => {
+  mockClientRoutes(teamWithSam('member'))
+  const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
+
+  await expect.element(screen.getByText('sam@example.com')).toBeInTheDocument()
+  await expect.element(screen.getByRole('button', { name: 'Reset 2FA' })).not.toBeInTheDocument()
 })

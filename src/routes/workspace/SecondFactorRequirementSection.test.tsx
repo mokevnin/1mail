@@ -36,6 +36,7 @@ function roleRoutes(role: SiteMembershipRole) {
     email: 'me@example.com',
     name: 'Me',
     role,
+    secondFactorEnabled: false,
     createdAt: NOW,
   }
   return [

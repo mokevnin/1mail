@@ -1601,6 +1601,10 @@ export type SiteMembershipResource = {
    */
   role: SiteMembershipRole;
   /**
+   * Whether the member has an active Second factor (ADR 0020)
+   */
+  secondFactorEnabled: boolean;
+  /**
    * When the member joined
    */
   createdAt: Timestamp;
@@ -5249,6 +5253,48 @@ export type SiteMembershipsUpdateResponses = {
 };
 
 export type SiteMembershipsUpdateResponse = SiteMembershipsUpdateResponses[keyof SiteMembershipsUpdateResponses];
+
+export type SiteMembershipsResetSecondFactorData = {
+  body?: never;
+  path: {
+    /**
+     * URL-safe unique slug; the route key for nested workspace resources
+     */
+    slug: string;
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/memberships/{id}/reset-second-factor';
+};
+
+export type SiteMembershipsResetSecondFactorErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteMembershipsResetSecondFactorError = SiteMembershipsResetSecondFactorErrors[keyof SiteMembershipsResetSecondFactorErrors];
+
+export type SiteMembershipsResetSecondFactorResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteMembershipsResetSecondFactorResponse = SiteMembershipsResetSecondFactorResponses[keyof SiteMembershipsResetSecondFactorResponses];
 
 export type SiteWorkspacesSetSecondFactorRequirementData = {
   body: SiteSecondFactorRequirementInput;
