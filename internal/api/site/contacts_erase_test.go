@@ -9,6 +9,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -43,4 +44,19 @@ func TestSiteContactsDeleteByOwnerErases(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, msg.Destination, "the delivery record no longer carries the address")
 	assert.Nil(t, msg.ContactID)
+}
+
+// The contact.erased signal names the User who erased.
+func TestSiteContactsEraseRecordsTheUserOperator(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+
+	res, err := c.SiteContactsDelete(context.Background(), siteapi.SiteContactsDeleteParams{Slug: fixtures.AcmeSlug, ID: idStr(fixtures.ContactLiamID)})
+	require.NoError(t, err)
+	require.IsType(t, &siteapi.SiteContactsDeleteNoContent{}, res)
+
+	msgs := env.Outbox(t, events.NameContactErased)
+	require.Len(t, msgs, 1)
+	assert.Equal(t, "user", msgs[0].Data["operatorKind"])
+	assert.NotZero(t, msgs[0].Data["operatorId"])
 }

@@ -27,7 +27,13 @@ import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 // The domain events an endpoint can subscribe to. An empty selection means all.
-const EVENT_OPTIONS = ['contact.created', 'email.opened', 'email.clicked', 'email.unsubscribed']
+const EVENT_OPTIONS = [
+  'contact.created',
+  'contact.erased',
+  'email.opened',
+  'email.clicked',
+  'email.unsubscribed',
+]
 
 export function WebhooksSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
