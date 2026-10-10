@@ -178,3 +178,46 @@ func TestTurningTheRequirementOnEmailsEveryUserWithoutASecondFactor(t *testing.T
 	setRequirement(t, sam, fixtures.UmbrellaSlug, true)
 	assert.Len(t, env.SystemMail.Messages(), 2, "switching it on while it is on mails no one")
 }
+
+// Story 35: an Owner or Admin withheld by the requirement can still turn it off;
+// every other operation of the Workspace stays withheld, and the role check holds.
+func TestAWithheldOwnerCanStillTurnTheRequirementOff(t *testing.T) {
+	env := requirementEnv(t, ninaGraceEnds.Add(time.Hour))
+
+	nina := setRequirement(t, env.SiteActor(t, fixtures.UmbrellaMemberNinaEmail), fixtures.UmbrellaSlug, false)
+	assert.IsType(t, &siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden{}, nina, "a withheld member still may not")
+
+	code, _ := siteGet(t, env, fixtures.UmbrellaOwnerRitaEmail, "/site/workspaces/umbrella/tags")
+	require.Equal(t, http.StatusForbidden, code, "Rita is withheld")
+
+	res := setRequirement(t, env.SiteActor(t, fixtures.UmbrellaOwnerRitaEmail), fixtures.UmbrellaSlug, false)
+	require.IsType(t, &siteapi.SiteWorkspaceResource{}, res)
+	assert.False(t, res.(*siteapi.SiteWorkspaceResource).SecondFactorRequiredAt.Set)
+
+	code, _ = siteGet(t, env, fixtures.UmbrellaOwnerRitaEmail, "/site/workspaces/umbrella/tags")
+	assert.Equal(t, http.StatusOK, code, "without the requirement Umbrella is reachable again")
+}
+
+// The exemption is for turning the requirement off only.
+func TestAWithheldOwnerCannotSwitchTheRequirementOn(t *testing.T) {
+	env := requirementEnv(t, ritaGraceEnds.Add(time.Hour))
+	res := setRequirement(t, env.SiteActor(t, fixtures.UmbrellaOwnerRitaEmail), fixtures.UmbrellaSlug, true)
+	require.IsType(t, &siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden{}, res)
+	assert.Equal(t, siteapi.ProblemCodeSecondFactorRequired,
+		res.(*siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden).Code.Value)
+}
+
+func TestOneSecondFactorSatisfiesEveryRequiringWorkspace(t *testing.T) {
+	c := &requirementClock{t: time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC)}
+	env := testhelper.Setup(t, testhelper.WithClock(c.now))
+	require.IsType(t, &siteapi.SiteWorkspaceResource{},
+		setRequirement(t, env.SiteActor(t, fixtures.OwnerJaneEmail), fixtures.GlobexSlug, true))
+	c.t = c.t.Add(8 * 24 * time.Hour)
+
+	for _, path := range []string{"/site/workspaces/globex/tags", "/site/workspaces/umbrella/tags"} {
+		code, _ := siteGet(t, env, fixtures.SecondFactorSamEmail, path)
+		assert.Equal(t, http.StatusOK, code, path)
+	}
+	code, _ := siteGet(t, env, fixtures.OwnerJaneEmail, "/site/workspaces/globex/tags")
+	assert.Equal(t, http.StatusForbidden, code, "Jane has no Second factor: Globex is withheld from her")
+}

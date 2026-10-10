@@ -42,6 +42,7 @@
   "errors.second_factor_no_pending": "сначала начните подключение",
   "errors.second_factor_not_active": "второй фактор не включён",
   "errors.second_factor_reset_self": "свой второй фактор отключите в настройках аккаунта",
+  "errors.second_factor_required": "это рабочее пространство требует второй фактор",
   "errors.new_email_required": "укажите новый email",
   "errors.new_email_must_differ": "новый email должен отличаться от текущего",
   "errors.url_invalid": "некорректный URL",

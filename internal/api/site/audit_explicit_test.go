@@ -224,11 +224,11 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = owner.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{                                // user.password_change
 		CurrentPassword: siteapi.NewOptString(fixtures.OwnerJohnPassword), NewPassword: siteapi.NewOptString("another-pass-1")})
 	require.NoError(t, err)
-	started, err := owner.SiteSecondFactorStartEnrollment(ctx)
+	started, err := owner.SiteSecondFactorStartEnrollment(ctx, &siteapi.SiteSecondFactorStartInput{CurrentPassword: "another-pass-1"})
 	require.NoError(t, err)
 	code, err := totp.GenerateCode(started.(*siteapi.SiteSecondFactorEnrollment).Secret, time.Now())
 	require.NoError(t, err)
-	_, err = owner.SiteSecondFactorConfirmEnrollment(ctx, &siteapi.SiteSecondFactorConfirmInput{Code: code}) // user.second_factor_enroll
+	_, err = owner.SiteSecondFactorConfirmEnrollment(ctx, &siteapi.SiteSecondFactorConfirmInput{CurrentPassword: "another-pass-1", Code: code}) // user.second_factor_enroll
 	require.NoError(t, err)
 	regenerated, err := owner.SiteSecondFactorRegenerateRecoveryCodes(ctx, // user.recovery_codes_regenerate
 		&siteapi.SiteRecoveryCodesInput{CurrentPassword: "another-pass-1"})
@@ -253,6 +253,9 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = owner.SiteAuditExport(ctx, siteapi.SiteAuditExportParams{Slug: fixtures.AcmeSlug}) // audit_log.export
+	require.NoError(t, err)
+
+	_, err = owner.SiteUserSignOutEverywhere(ctx) // user.sign_out_everywhere
 	require.NoError(t, err)
 
 	var seen []string

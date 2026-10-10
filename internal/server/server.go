@@ -25,7 +25,6 @@ import (
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/ratelimit"
-	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/cors"
@@ -142,15 +141,12 @@ func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Reque
 		ratelimit.WriteProblem(w)
 		return
 	}
-	if errors.Is(err, secondfactor.ErrRequired) {
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"status": http.StatusForbidden,
-			"title":  http.StatusText(http.StatusForbidden),
-			"detail": "this workspace requires a second factor",
-			"code":   siteapi.ProblemCodeSecondFactorRequired,
-		})
+	// A handler error that knows its own problem (the site's
+	// second_factor_required, ADR 0020) is rendered as it says.
+	var known problemError
+	if errors.As(err, &known) {
+		status, code, detail := known.Problem()
+		writeCodedProblem(w, status, code, detail)
 		return
 	}
 	code := http.StatusInternalServerError
@@ -176,14 +172,32 @@ func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Reque
 	_ = json.NewEncoder(w).Encode(prob)
 }
 
-func writeProblem(w http.ResponseWriter, code int, detail string) {
+// problemError is an error a handler returns that carries the problem it is
+// answered with: the HTTP status, the machine-readable problem code and the
+// localized detail.
+type problemError interface {
+	error
+	Problem() (status int, code, detail string)
+}
+
+func writeProblem(w http.ResponseWriter, status int, detail string) {
+	writeCodedProblem(w, status, "", detail)
+}
+
+// writeCodedProblem renders an RFC 7807 problem; code, when set, is the problem's
+// machine-readable code.
+func writeCodedProblem(w http.ResponseWriter, status int, code, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"status": code,
-		"title":  http.StatusText(code),
+	w.WriteHeader(status)
+	prob := map[string]any{
+		"status": status,
+		"title":  http.StatusText(status),
 		"detail": detail,
-	})
+	}
+	if code != "" {
+		prob["code"] = code
+	}
+	_ = json.NewEncoder(w).Encode(prob)
 }
 
 // --- cross-cutting net/http middleware ---

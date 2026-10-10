@@ -6,6 +6,8 @@ import (
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/user"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -142,7 +144,7 @@ func (env *TestEnv) siteClient(t *testing.T, jwtValue string) *siteapi.Client {
 }
 
 // SiteToken mints the session token a login issues for the fixture user with the
-// given email: the go-pkgz claims, run through the production claims updater
+// given email: the go-pkgz claims, stamped by the production apiauth.StampUser
 // (User id and current session epoch), signed with the test config's secret and
 // valid for SESSION_TTL from the env's clock. edit, when not nil, changes the
 // claims before signing, for tests of tokens a login never issues (expired,
@@ -160,14 +162,20 @@ func (env *TestEnv) mintSiteToken(ctx context.Context, email string, edit func(*
 		Issuer:       "1mail",
 		DisableXSRF:  true,
 	})
-	claims := apiauth.NewSessionClaims(env.DB).Stamp(ctx, gptoken.Claims{
+	claims := gptoken.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "1mail",
 			Audience:  jwt.ClaimStrings{"1mail"},
 			ExpiresAt: jwt.NewNumericDate(env.now().Add(env.sessionTTL)),
 		},
 		User: &gptoken.User{Name: email, ID: "test"},
-	})
+	}
+	// An unknown email leaves the claims unstamped: the site rejects the token.
+	if u, err := env.DB.User.Query().Where(user.Email(email)).Only(ctx); err == nil {
+		apiauth.StampUser(&claims, u)
+	} else if !ent.IsNotFound(err) {
+		return "", err
+	}
 	if edit != nil {
 		edit(&claims)
 	}

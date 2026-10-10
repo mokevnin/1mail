@@ -110,7 +110,7 @@ func (a *Accounts) UpdateWorkspace(ctx context.Context, s *ent.Scoped, actor eve
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionWorkspaceUpdate,
-			TargetType:  "workspace",
+			TargetType:  workspace.Label,
 			TargetID:    strconv.FormatInt(updated.ID, 10),
 			TargetName:  updated.Name,
 			Diff:        diff,
@@ -145,7 +145,7 @@ func (a *Accounts) SetAuditRetention(ctx context.Context, s *ent.Scoped, actor e
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionWorkspaceUpdate,
-			TargetType:  "workspace",
+			TargetType:  workspace.Label,
 			TargetID:    strconv.FormatInt(before.ID, 10),
 			TargetName:  before.Name,
 			Diff:        map[string]any{"retention_days": map[string]any{"from": before.RetentionDays, "to": days}},
@@ -182,7 +182,7 @@ func (a *Accounts) SetSecondFactorRequirement(ctx context.Context, s *ent.Scoped
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionWorkspaceUpdate,
-			TargetType:  "workspace",
+			TargetType:  workspace.Label,
 			TargetID:    strconv.FormatInt(before.ID, 10),
 			TargetName:  before.Name,
 			Diff: map[string]any{"second_factor_required_at": map[string]any{
@@ -216,7 +216,7 @@ func (a *Accounts) ChangeMembershipRole(ctx context.Context, s *ent.Scoped, acto
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionMembershipUpdate,
-			TargetType:  "membership",
+			TargetType:  membership.Label,
 			TargetID:    strconv.FormatInt(target.ID, 10),
 			TargetName:  name,
 			Diff:        map[string]any{"role": map[string]any{"from": string(target.Role), "to": string(desired)}},
@@ -342,9 +342,16 @@ func (a *Accounts) SetPassword(ctx context.Context, id int64, passwordHash strin
 }
 
 // EndSessions bumps the User's session epoch, ending every session issued before
-// it on every device (ADR 0020, "sign out everywhere").
+// it on every device (ADR 0020, "sign out everywhere"), and records
+// `user.sign_out_everywhere` in the same transaction.
 func (a *Accounts) EndSessions(ctx context.Context, id int64) error {
-	return a.ent.User.UpdateOneID(id).AddSessionEpoch(1).Exec(ctx)
+	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		u, err := tx.User.UpdateOneID(id).AddSessionEpoch(1).Save(ctx)
+		if err != nil {
+			return err
+		}
+		return RecordUserAction(ctx, tx, pub, u, events.ActionUserSignOutEverywhere, nil)
+	})
 }
 
 // RecordLogin records a successful sign-in of the User as `user.login` in the log of
@@ -388,7 +395,7 @@ func RecordActionOnUserIn(ctx context.Context, pub events.Publisher, actor event
 			WorkspaceID: ws,
 			Actor:       actor,
 			Action:      action,
-			TargetType:  "user",
+			TargetType:  user.Label,
 			TargetID:    id,
 			TargetName:  u.Name,
 			Diff:        diff,
@@ -465,7 +472,7 @@ func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, na
 			WorkspaceID: inv.WorkspaceID,
 			Actor:       events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(u.ID, 10), Name: u.Name},
 			Action:      events.ActionInvitationAccept,
-			TargetType:  "invitation",
+			TargetType:  invitation.Label,
 			TargetID:    strconv.FormatInt(inv.ID, 10),
 			TargetName:  inv.Email,
 			Diff:        map[string]any{"role": map[string]any{"to": string(inv.Role)}},
@@ -510,7 +517,7 @@ func (a *Accounts) Invite(ctx context.Context, s *ent.Scoped, actor events.Actor
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionInvitationCreate,
-			TargetType:  "invitation",
+			TargetType:  invitation.Label,
 			TargetID:    strconv.FormatInt(inv.ID, 10),
 			TargetName:  inv.Email,
 			Diff:        map[string]any{"role": map[string]any{"to": string(inv.Role)}},
@@ -539,7 +546,7 @@ func (a *Accounts) RevokeInvitation(ctx context.Context, s *ent.Scoped, actor ev
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
 			Action:      events.ActionInvitationRevoke,
-			TargetType:  "invitation",
+			TargetType:  invitation.Label,
 			TargetID:    strconv.FormatInt(id, 10),
 			TargetName:  inv.Email,
 		})

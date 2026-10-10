@@ -3,6 +3,7 @@ package site
 import (
 	"context"
 	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -200,19 +202,39 @@ func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Sco
 // membershipFor is scopedFor plus the caller's Membership (its User and Workspace
 // loaded). It is where the Two-factor requirement is enforced (ADR 0020): once a
 // User's grace in a requiring Workspace has ended without a Second factor, every
-// request to that Workspace fails with secondfactor.ErrRequired (403
+// request to that Workspace fails with errSecondFactorRequired (403
 // second_factor_required); other Workspaces and the /me endpoints are unaffected.
 func (h *Handlers) membershipFor(ctx context.Context, slug string) (*ent.Scoped, *ent.Membership, error) {
-	a := auth.GetSiteAuth(ctx)
-	if a == nil {
-		return nil, nil, &ent.NotFoundError{}
-	}
-	s, m, err := h.accounts.Scope(ctx, a.UserID, slug)
+	s, m, err := h.membershipEvenIfWithheld(ctx, slug)
 	if err != nil {
 		return nil, nil, err
 	}
 	if secondfactor.Withheld(m, h.now()) {
-		return nil, nil, secondfactor.ErrRequired
+		return nil, nil, errSecondFactorRequired{}
 	}
 	return s, m, nil
+}
+
+// membershipEvenIfWithheld is membershipFor without the Two-factor requirement
+// check. Only turning the requirement off uses it: an Owner or Admin withheld by
+// the requirement must still be able to lift it (ADR 0020).
+func (h *Handlers) membershipEvenIfWithheld(ctx context.Context, slug string) (*ent.Scoped, *ent.Membership, error) {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		return nil, nil, &ent.NotFoundError{}
+	}
+	return h.accounts.Scope(ctx, a.UserID, slug)
+}
+
+// errSecondFactorRequired is secondfactor.ErrRequired as the problem the site
+// answers it with. Returned as an error, it is rendered by the server's error
+// handler, which reads it through its Problem method.
+type errSecondFactorRequired struct{}
+
+func (errSecondFactorRequired) Error() string { return secondfactor.ErrRequired.Error() }
+func (errSecondFactorRequired) Unwrap() error { return secondfactor.ErrRequired }
+
+// Problem is the 403 second_factor_required answer.
+func (errSecondFactorRequired) Problem() (status int, code, detail string) {
+	return http.StatusForbidden, string(siteapi.ProblemCodeSecondFactorRequired), i18n.T("errors.second_factor_required", nil)
 }

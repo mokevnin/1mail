@@ -145,4 +145,5 @@ func TestUsersWithoutASecondFactorKeepTheOneStepLogin(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 	assert.JSONEq(t, `{"outcome":"session"}`, rec.Body.String())
 	assert.NotNil(t, sessionCookie(rec.Result()))
+	assert.Len(t, entriesNamed(t, s.env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserLogin), 1)
 }

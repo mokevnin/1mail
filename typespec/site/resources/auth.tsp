@@ -82,9 +82,12 @@ namespace SiteAuth {
     | UnprocessableEntityProblem
     | TooManyRequestsProblem;
 
-  /** Check the password and start a session (the JWT cookie). Unknown email and
-   * wrong password answer the same 401; failures feed the Login throttle, which
-   * answers 429 even for a correct password while its delay runs (ADR 0025). */
+  /** Check the password. A User without a Second factor gets a session (outcome
+   * `session`, the JWT cookie set here); a User with one gets outcome `challenge`,
+   * a short-lived single-use challenge for the second step and no cookie (ADR
+   * 0020). Unknown email and wrong password answer the same 401; failures feed the
+   * Login throttle, which answers 429 even for a correct password while its delay
+   * runs (ADR 0025). Only a started session resets the throttle's counter. */
   @useAuth(NoAuth)
   @post
   @route("/login")

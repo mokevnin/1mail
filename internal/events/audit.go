@@ -44,6 +44,8 @@ const (
 	ActionInvitationRevoke   = "invitation.revoke"
 	ActionUserLogin          = "user.login"
 	ActionUserPasswordChange = "user.password_change"
+	// "Sign out everywhere": every session of the User ends (ADR 0020).
+	ActionUserSignOutEverywhere = "user.sign_out_everywhere"
 	// The Second factor (ADR 0020).
 	ActionUserSecondFactorEnroll      = "user.second_factor_enroll"
 	ActionUserSecondFactorDisable     = "user.second_factor_disable"
@@ -65,6 +67,7 @@ var ExplicitAuditActions = []string{
 	ActionInvitationRevoke,
 	ActionUserLogin,
 	ActionUserPasswordChange,
+	ActionUserSignOutEverywhere,
 	ActionUserSecondFactorEnroll,
 	ActionUserSecondFactorDisable,
 	ActionUserSecondFactorReset,

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -160,6 +161,11 @@ func TestSignOutEverywhereEndsEverySessionIncludingTheActingOne(t *testing.T) {
 	require.NotNil(t, cleared, "the acting browser's cookie is cleared")
 	assert.Empty(t, cleared.Value)
 	assert.Negative(t, cleared.MaxAge)
+
+	got := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserSignOutEverywhere)
+	require.Len(t, got, 1)
+	assert.Equal(t, "John", got[0].Actor.Name.Value)
+	assert.Equal(t, "user", got[0].Target.Type)
 }
 
 func TestSignOutEverywhereNeedsASession(t *testing.T) {

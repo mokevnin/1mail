@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"context"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,7 +8,6 @@ import (
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mokevnin/1mail/ent"
-	entuser "github.com/mokevnin/1mail/ent/user"
 )
 
 // The session token's claims beyond go-pkgz's own (ADR 0020). Both ride the token's
@@ -71,7 +68,7 @@ func (s *Sessions) Issue(u *ent.User) (*http.Cookie, error) {
 		},
 		User: &gptoken.User{Name: u.Email, ID: "user_" + strconv.FormatInt(u.ID, 10), Email: u.Email},
 	}
-	stampUser(&claims, u)
+	StampUser(&claims, u)
 	tk, err := s.tokens.Token(claims)
 	if err != nil {
 		return nil, err
@@ -109,34 +106,9 @@ func (s *Sessions) cookie(value string, maxAge int) *http.Cookie {
 	}
 }
 
-// SessionClaims stamps hand-built claims (the test harness mints tokens through it):
-// it resolves the login in the token's user name and writes that User's id and
-// current session epoch into the token. A login it cannot resolve leaves the claims
-// as they are, and the site security handler rejects the token.
-type SessionClaims struct {
-	ent *ent.Client
-}
-
-func NewSessionClaims(client *ent.Client) *SessionClaims {
-	return &SessionClaims{ent: client}
-}
-
-// Stamp writes the id and current session epoch of the User the claims' login names.
-func (s *SessionClaims) Stamp(ctx context.Context, claims gptoken.Claims) gptoken.Claims {
-	if claims.User == nil || claims.User.Name == "" {
-		return claims
-	}
-	u, err := s.ent.User.Query().Where(entuser.Email(claims.User.Name)).Only(ctx)
-	if err != nil {
-		slog.ErrorContext(ctx, "session: user of a new token not resolved", "error", err)
-		return claims
-	}
-	stampUser(&claims, u)
-	return claims
-}
-
-// stampUser writes the User's id and session epoch into the claims' user.
-func stampUser(claims *gptoken.Claims, u *ent.User) {
+// StampUser writes the User's id and session epoch into the claims' user: the
+// claims every session carries (Issue; the test harness mints its tokens with it).
+func StampUser(claims *gptoken.Claims, u *ent.User) {
 	claims.User.SetStrAttr(ClaimUserID, strconv.FormatInt(u.ID, 10))
 	claims.User.SetStrAttr(ClaimEpoch, strconv.FormatInt(u.SessionEpoch, 10))
 }

@@ -214,7 +214,7 @@
     "/auth/login": {
       "post": {
         "operationId": "SiteAuth_login",
-        "description": "Check the password and start a session (the JWT cookie). Unknown email and\nwrong password answer the same 401; failures feed the Login throttle, which\nanswers 429 even for a correct password while its delay runs (ADR 0025).",
+        "description": "Check the password. A User without a Second factor gets a session (outcome\n`session`, the JWT cookie set here); a User with one gets outcome `challenge`,\na short-lived single-use challenge for the second step and no cookie (ADR\n0020). Unknown email and wrong password answer the same 401; failures feed the\nLogin throttle, which answers 429 even for a correct password while its delay\nruns (ADR 0025). Only a started session resets the throttle's counter.",
         "parameters": [],
         "responses": {
           "200": {
@@ -961,7 +961,7 @@
     "/me/second-factor/disable": {
       "post": {
         "operationId": "SiteSecondFactor_disable",
-        "description": "Disable the Second factor, proving the password and a current code. Every\nother session ends; the acting one continues under the cookie set here. 403 on\na wrong password, 422 on a wrong code, 409 without an active Second factor.",
+        "description": "Disable the Second factor, proving the password and a current code. Every\nother session ends; the acting one continues under the cookie set here. 403 on\na wrong password (it feeds the Login throttle: 429 while its delay runs), 422\non a wrong code, 409 without an active Second factor.",
         "parameters": [],
         "responses": {
           "204": {
@@ -1005,6 +1005,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Site Second Factor"],
@@ -1023,7 +1067,7 @@
     "/me/second-factor/enrollment": {
       "post": {
         "operationId": "SiteSecondFactor_startEnrollment",
-        "description": "Start enrolling a TOTP Second factor: creates a pending secret (replacing an\nearlier pending one). It counts as a Second factor only once confirmed. 409\nwhen a Second factor is already active.",
+        "description": "Start enrolling a TOTP Second factor, proving the password: creates a pending\nsecret (replacing an earlier pending one). It counts as a Second factor only\nonce confirmed. 403 on a wrong password, 409 when a Second factor is already\nactive. A wrong password feeds the Login throttle, which answers 429 even for a\ncorrect one while its delay runs (ADR 0025).",
         "parameters": [],
         "responses": {
           "200": {
@@ -1036,6 +1080,16 @@
               }
             }
           },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "409": {
             "description": "RFC 7807 conflict response",
             "content": {
@@ -1045,48 +1099,43 @@
                 }
               }
             }
-          }
-        },
-        "tags": ["Site Second Factor"]
-      }
-    },
-    "/me/second-factor/enrollment/confirm": {
-      "post": {
-        "operationId": "SiteSecondFactor_confirmEnrollment",
-        "description": "Confirm the pending enrollment with a code from the app. On success the Second\nfactor is active, every other session ends and the acting one continues under\nthe cookie set here; the Recovery codes are returned once. 422 on a wrong code,\n409 without a pending enrollment.",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "The request has succeeded.",
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
-              "Set-Cookie": {
+              "Retry-After": {
                 "required": true,
-                "description": "The acting session reissued under the new session epoch",
+                "description": "Seconds to wait before retrying",
                 "schema": {
-                  "type": "string"
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
                 }
               }
             },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SiteRecoveryCodes"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "RFC 7807 conflict response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1102,17 +1151,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SiteSecondFactorConfirmInput"
+                "$ref": "#/components/schemas/SiteSecondFactorStartInput"
               }
             }
           }
         }
       }
     },
-    "/me/second-factor/recovery-codes": {
+    "/me/second-factor/enrollment/confirm": {
       "post": {
-        "operationId": "SiteSecondFactor_regenerateRecoveryCodes",
-        "description": "Replace the Recovery codes with a fresh set (the previous set stops working).\nEvery other session ends; the acting one continues under the cookie set here.\n403 on a wrong password, 409 without an active Second factor.",
+        "operationId": "SiteSecondFactor_confirmEnrollment",
+        "description": "Confirm the pending enrollment with the password and a code from the app. On\nsuccess the Second factor is active, every other session ends and the acting\none continues under the cookie set here; the Recovery codes are returned once.\n403 on a wrong password (it feeds the Login throttle: 429 while its delay\nruns), 422 on a wrong code, 409 without a pending enrollment.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1146,6 +1195,163 @@
           },
           "409": {
             "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSecondFactorConfirmInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/second-factor/recovery-codes": {
+      "post": {
+        "operationId": "SiteSecondFactor_regenerateRecoveryCodes",
+        "description": "Replace the Recovery codes with a fresh set (the previous set stops working).\nEvery other session ends; the acting one continues under the cookie set here.\n403 on a wrong password (it feeds the Login throttle: 429 while its delay\nruns), 409 without an active Second factor.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "headers": {
+              "Set-Cookie": {
+                "required": true,
+                "description": "The acting session reissued under the new session epoch",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteRecoveryCodes"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8971,14 +9177,18 @@
       },
       "SiteSecondFactorConfirmInput": {
         "type": "object",
-        "required": ["code"],
+        "required": ["currentPassword", "code"],
         "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password"
+          },
           "code": {
             "type": "string",
             "description": "The current 6-digit TOTP code"
           }
         },
-        "description": "A code from the authenticator app"
+        "description": "Proof of the User's password and a code from the authenticator app"
       },
       "SiteSecondFactorDisableInput": {
         "type": "object",
@@ -9024,6 +9234,17 @@
           }
         },
         "description": "Switch the Two-factor requirement on or off"
+      },
+      "SiteSecondFactorStartInput": {
+        "type": "object",
+        "required": ["currentPassword"],
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password"
+          }
+        },
+        "description": "Proof of the User's password, for starting an enrollment"
       },
       "SiteSecondFactorStatus": {
         "type": "object",

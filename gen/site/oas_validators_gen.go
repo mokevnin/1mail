@@ -3508,6 +3508,14 @@ func (s *SiteSecondFactorConfirmEnrollmentConflict) Validate() error {
 	return nil
 }
 
+func (s *SiteSecondFactorConfirmEnrollmentForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SiteSecondFactorConfirmEnrollmentUnprocessableEntity) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
@@ -3549,6 +3557,22 @@ func (s *SiteSecondFactorRegenerateRecoveryCodesConflict) Validate() error {
 }
 
 func (s *SiteSecondFactorRegenerateRecoveryCodesForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteSecondFactorStartEnrollmentConflict) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteSecondFactorStartEnrollmentForbidden) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err

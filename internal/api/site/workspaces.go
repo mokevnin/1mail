@@ -51,9 +51,15 @@ func withWorkspace(m *ent.Membership, w *ent.Workspace) *ent.Membership {
 }
 
 // SiteWorkspacesSetSecondFactorRequirement switches the Workspace's Two-factor
-// requirement on or off; owner and admin only.
+// requirement on or off; owner and admin only. Turning it off is the one operation
+// a User withheld by the requirement may still perform in the Workspace, so an
+// Owner or Admin without a Second factor is never locked out of lifting it.
 func (h *Handlers) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, req *siteapi.SiteSecondFactorRequirementInput, params siteapi.SiteWorkspacesSetSecondFactorRequirementParams) (siteapi.SiteWorkspacesSetSecondFactorRequirementRes, error) {
-	s, m, err := h.membershipFor(ctx, params.Slug)
+	load := h.membershipFor
+	if !req.Required {
+		load = h.membershipEvenIfWithheld
+	}
+	s, m, err := load(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWorkspacesSetSecondFactorRequirementNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

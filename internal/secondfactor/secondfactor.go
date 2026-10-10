@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 
@@ -59,6 +60,10 @@ var (
 	ErrAlreadyActive = errors.New("secondfactor: second factor already active")
 	// ErrNoPending: there is no pending enrollment to confirm.
 	ErrNoPending = errors.New("secondfactor: no pending enrollment")
+	// ErrBindingMoved: the challenge binding a second step was started under has
+	// moved (another second step, an epoch bump or a password change got there
+	// first), so the challenge is spent.
+	ErrBindingMoved = errors.New("secondfactor: challenge binding moved")
 )
 
 // Method is how a code was verified.
@@ -108,9 +113,7 @@ func (m *Module) Status(ctx context.Context, userID int64) (Status, error) {
 	if !Active(u) {
 		return Status{Pending: u.SecondFactorSecretEncrypted != ""}, nil
 	}
-	n, err := m.ent.RecoveryCode.Query().
-		Where(recoverycode.UserID(userID), recoverycode.UsedAtIsNil()).
-		Count(ctx)
+	n, err := unusedRecoveryCodes(ctx, m.ent, userID)
 	if err != nil {
 		return Status{}, err
 	}
@@ -268,16 +271,31 @@ func (m *Module) Disable(ctx context.Context, userID int64, code string) (*ent.U
 // Verify checks a second-step code for the User at the module's clock: a current
 // TOTP code (each time step works once) or an unused Recovery code (spent here,
 // and recorded as `user.recovery_code_use`). It returns which one matched.
-// ErrNotActive without a Second factor, ErrInvalidCode otherwise.
-func (m *Module) Verify(ctx context.Context, userID int64, code string) (Method, error) {
+//
+// binding is the ChallengeBinding the step's challenge was minted under. It is
+// re-checked inside the transaction with the User row locked, so of two second
+// steps racing on one challenge (say one with a TOTP code, one with a Recovery
+// code) the later sees the binding the earlier moved and fails: a challenge starts
+// at most one session. ErrNotActive without a Second factor, ErrBindingMoved when
+// the binding moved, ErrInvalidCode otherwise.
+func (m *Module) Verify(ctx context.Context, userID int64, binding, code string) (Method, error) {
 	var method Method
 	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		u, err := tx.User.Get(ctx, userID)
+		q := tx.User.Query().Where(user.ID(userID))
+		q.Modify(func(s *sql.Selector) { s.ForUpdate() })
+		u, err := q.Only(ctx)
 		if err != nil {
 			return err
 		}
 		if !Active(u) {
 			return ErrNotActive
+		}
+		current, err := challengeBinding(ctx, tx, u)
+		if err != nil {
+			return err
+		}
+		if subtle.ConstantTimeCompare([]byte(current), []byte(binding)) != 1 {
+			return ErrBindingMoved
 		}
 		method, err = m.verify(ctx, tx, pub, u, code)
 		return err
@@ -290,19 +308,29 @@ func (m *Module) Verify(ctx context.Context, userID int64, code string) (Method,
 // step, a Recovery code success lowers the count of unused codes), on a password
 // change and on every session epoch bump (enroll, regenerate, disable, reset).
 // Keying the challenge's signature to it makes the challenge single-use without a
-// store of spent challenges, so it holds across instances. ErrNotActive without a
-// Second factor.
+// store of spent challenges, so it holds across instances; Verify re-checks it
+// under a lock, so two racing second steps cannot both use it. ErrNotActive
+// without a Second factor.
 func (m *Module) ChallengeBinding(ctx context.Context, u *ent.User) (string, error) {
 	if !Active(u) {
 		return "", ErrNotActive
 	}
-	unused, err := m.ent.RecoveryCode.Query().
-		Where(recoverycode.UserID(u.ID), recoverycode.UsedAtIsNil()).
-		Count(ctx)
+	return challengeBinding(ctx, m.ent, u)
+}
+
+func challengeBinding(ctx context.Context, client *ent.Client, u *ent.User) (string, error) {
+	unused, err := unusedRecoveryCodes(ctx, client, u.ID)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%d|%d|%d|%s", u.SessionEpoch, u.SecondFactorLastStep, unused, u.PasswordHash), nil
+}
+
+// unusedRecoveryCodes counts the User's Recovery codes not spent yet.
+func unusedRecoveryCodes(ctx context.Context, client *ent.Client, userID int64) (int, error) {
+	return client.RecoveryCode.Query().
+		Where(recoverycode.UserID(userID), recoverycode.UsedAtIsNil()).
+		Count(ctx)
 }
 
 // Reset clears the User's Second factor and Recovery codes and bumps the session

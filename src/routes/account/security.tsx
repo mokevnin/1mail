@@ -63,12 +63,14 @@ function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void 
 }
 
 // Enrollment shows the pending secret (QR code and key) and confirms it with a
-// code from the authenticator app.
+// code from the authenticator app and the password proven when it started.
 function Enrollment({
   enrollment,
+  currentPassword,
   onConfirmed,
 }: {
   enrollment: SiteSecondFactorEnrollment
+  currentPassword: string
   onConfirmed: (codes: string[]) => void
 }) {
   const { t } = useTranslation()
@@ -84,7 +86,11 @@ function Enrollment({
   })
 
   return (
-    <form onSubmit={form.onSubmit((v) => confirm.mutate({ body: { code: v.code.trim() } }))}>
+    <form
+      onSubmit={form.onSubmit((v) =>
+        confirm.mutate({ body: { currentPassword, code: v.code.trim() } }),
+      )}
+    >
       <Stack>
         <Text size="sm">{t(($) => $.security.scanHint)}</Text>
         <Image src={enrollment.qrCode} alt={t(($) => $.security.qrAlt)} w={200} h={200} />
@@ -116,30 +122,53 @@ function Enrollment({
   )
 }
 
-// Disabled is the state without a Second factor: start enrolling.
+// Disabled is the state without a Second factor: start enrolling, proving the
+// password (both enrollment steps require it, so a hijacked session cannot enroll).
 function Disabled({ onCodes }: { onCodes: (codes: string[]) => void }) {
   const { t } = useTranslation()
-  const [enrollment, setEnrollment] = useState<SiteSecondFactorEnrollment | null>(null)
+  const form = useForm({ initialValues: { currentPassword: '' } })
+  const [started, setStarted] = useState<{
+    enrollment: SiteSecondFactorEnrollment
+    currentPassword: string
+  } | null>(null)
   const start = useResourceMutation({
     mutation: siteSecondFactorStartEnrollmentMutation(),
     errorTitle: t(($) => $.security.startErrorTitle),
-    onDone: (data) => setEnrollment(data),
+    onDone: (data, variables) =>
+      setStarted({ enrollment: data, currentPassword: variables.body.currentPassword }),
   })
 
-  if (enrollment) {
-    return <Enrollment enrollment={enrollment} onConfirmed={onCodes} />
+  if (started) {
+    return (
+      <Enrollment
+        enrollment={started.enrollment}
+        currentPassword={started.currentPassword}
+        onConfirmed={onCodes}
+      />
+    )
   }
   return (
-    <Stack>
-      <Text size="sm" c="dimmed">
-        {t(($) => $.security.offDescription)}
-      </Text>
-      <Group justify="flex-end">
-        <Button loading={start.isPending} onClick={() => start.mutate({})}>
-          {t(($) => $.security.setUpButton)}
-        </Button>
-      </Group>
-    </Stack>
+    <form
+      onSubmit={form.onSubmit((v) =>
+        start.mutate({ body: { currentPassword: v.currentPassword } }),
+      )}
+    >
+      <Stack>
+        <Text size="sm" c="dimmed">
+          {t(($) => $.security.offDescription)}
+        </Text>
+        <PasswordInput
+          label={t(($) => $.security.passwordLabel)}
+          required
+          {...form.getInputProps('currentPassword')}
+        />
+        <Group justify="flex-end">
+          <Button type="submit" loading={start.isPending}>
+            {t(($) => $.security.setUpButton)}
+          </Button>
+        </Group>
+      </Stack>
+    </form>
   )
 }
 

@@ -93,6 +93,7 @@ test('enrolls an authenticator app and shows the recovery codes once', async () 
   const { screen } = await renderPage()
 
   await expect.element(screen.getByText('Off', { exact: true })).toBeInTheDocument()
+  await screen.getByLabelText(/^Current password/).fill('pw-123456')
   await screen.getByRole('button', { name: 'Set up authenticator app' }).click()
 
   await expect
@@ -108,8 +109,8 @@ test('enrolls an authenticator app and shows the recovery codes once', async () 
     await expect.element(screen.getByText(code)).toBeInTheDocument()
   }
   expect(calls).toEqual([
-    { op: 'start', body: null },
-    { op: 'confirm', body: { code: '123456' } },
+    { op: 'start', body: { currentPassword: 'pw-123456' } },
+    { op: 'confirm', body: { currentPassword: 'pw-123456', code: '123456' } },
   ])
 
   await screen.getByRole('button', { name: 'I have saved them' }).click()
@@ -124,6 +125,7 @@ test('reports a wrong confirmation code and keeps the setup open', async () => {
   })
   const { screen } = await renderPage()
 
+  await screen.getByLabelText(/^Current password/).fill('pw-123456')
   await screen.getByRole('button', { name: 'Set up authenticator app' }).click()
   await screen.getByLabelText(/^Code from the app/).fill('000000')
   await screen.getByRole('button', { name: 'Turn on' }).click()

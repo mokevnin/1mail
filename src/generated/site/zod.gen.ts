@@ -464,9 +464,10 @@ export const zSiteResetPasswordInput = z.object({
 });
 
 /**
- * A code from the authenticator app
+ * Proof of the User's password and a code from the authenticator app
  */
 export const zSiteSecondFactorConfirmInput = z.object({
+  currentPassword: z.string(),
   code: z.string()
 });
 
@@ -492,6 +493,13 @@ export const zSiteSecondFactorEnrollment = z.object({
  */
 export const zSiteSecondFactorRequirementInput = z.object({
   required: z.boolean()
+});
+
+/**
+ * Proof of the User's password, for starting an enrollment
+ */
+export const zSiteSecondFactorStartInput = z.object({
+  currentPassword: z.string()
 });
 
 /**
@@ -1575,6 +1583,8 @@ export const zSiteSecondFactorDisableBody = zSiteSecondFactorDisableInput;
  * There is no content to send for this request, but the headers may be useful.
  */
 export const zSiteSecondFactorDisableResponse = z.void();
+
+export const zSiteSecondFactorStartEnrollmentBody = zSiteSecondFactorStartInput;
 
 /**
  * The request has succeeded.

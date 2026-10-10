@@ -37,7 +37,7 @@ func (h *Handlers) mintLoginChallenge(ctx context.Context, u *ent.User) (string,
 // even a correct code answers 429. A bad challenge has no trusted address, so it is
 // answered 401 without counting; the per-IP login cap still applies to the route.
 func (h *Handlers) SiteAuthSecondFactor(ctx context.Context, req *siteapi.SiteLoginSecondFactorInput) (siteapi.SiteAuthSecondFactorRes, error) {
-	u, err := h.parseLoginChallenge(ctx, req.Challenge)
+	u, binding, err := h.parseLoginChallenge(ctx, req.Challenge)
 	if errors.Is(err, errChallengeInvalid) {
 		v := problem(http.StatusUnauthorized, i18n.T("errors.login_challenge_invalid", nil))
 		return &v, nil
@@ -55,7 +55,7 @@ func (h *Handlers) SiteAuthSecondFactor(ctx context.Context, req *siteapi.SiteLo
 			h.attempts.Limit(accounts.KindLogin), wait, h.attempts.Now())
 	}
 
-	_, err = h.secondFactor.Verify(ctx, u.ID, req.Code)
+	_, err = h.secondFactor.Verify(ctx, u.ID, binding, req.Code)
 	switch {
 	case errors.Is(err, secondfactor.ErrInvalidCode):
 		if err := h.attempts.RecordFailure(ctx, accounts.KindLogin, u.Email); err != nil {
@@ -63,7 +63,8 @@ func (h *Handlers) SiteAuthSecondFactor(ctx context.Context, req *siteapi.SiteLo
 		}
 		v := problem(http.StatusUnauthorized, i18n.T("errors.second_factor_code_invalid", nil))
 		return &v, nil
-	case errors.Is(err, secondfactor.ErrNotActive):
+	case errors.Is(err, secondfactor.ErrNotActive), errors.Is(err, secondfactor.ErrBindingMoved):
+		// The factor is gone, or a racing second step spent the challenge first.
 		v := problem(http.StatusUnauthorized, i18n.T("errors.login_challenge_invalid", nil))
 		return &v, nil
 	case err != nil:
@@ -74,27 +75,29 @@ func (h *Handlers) SiteAuthSecondFactor(ctx context.Context, req *siteapi.SiteLo
 
 var errChallengeInvalid = errors.New("site: login challenge invalid")
 
-// parseLoginChallenge returns the User a still-valid challenge was minted for.
-// errChallengeInvalid when it is forged, expired, already used, or its User is
-// gone or no longer has a Second factor; other errors are the store's.
-func (h *Handlers) parseLoginChallenge(ctx context.Context, challenge string) (*ent.User, error) {
+// parseLoginChallenge returns the User a still-valid challenge was minted for and
+// the challenge binding it verified under, which the second step re-checks inside
+// its transaction. errChallengeInvalid when it is forged, expired, already used,
+// or its User is gone or no longer has a Second factor; other errors are the
+// store's.
+func (h *Handlers) parseLoginChallenge(ctx context.Context, challenge string) (*ent.User, string, error) {
 	var (
 		u       *ent.User
+		binding string
 		loadErr error
 	)
 	_, _, err := h.challenges.Parse(challenge, authtoken.PurposeLoginChallenge, func(id int64) (string, error) {
 		if u, loadErr = h.accounts.User(ctx, id); loadErr != nil {
 			return "", loadErr
 		}
-		var binding string
 		binding, loadErr = h.secondFactor.ChallengeBinding(ctx, u)
 		return binding, loadErr
 	})
 	if loadErr != nil && !ent.IsNotFound(loadErr) && !errors.Is(loadErr, secondfactor.ErrNotActive) {
-		return nil, loadErr
+		return nil, "", loadErr
 	}
 	if err != nil {
-		return nil, errChallengeInvalid
+		return nil, "", errChallengeInvalid
 	}
-	return u, nil
+	return u, binding, nil
 }

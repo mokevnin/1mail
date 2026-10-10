@@ -49,9 +49,12 @@ export const siteAuthForgotPasswordMutation = (options?: Partial<Options<SiteAut
 };
 
 /**
- * Check the password and start a session (the JWT cookie). Unknown email and
- * wrong password answer the same 401; failures feed the Login throttle, which
- * answers 429 even for a correct password while its delay runs (ADR 0025).
+ * Check the password. A User without a Second factor gets a session (outcome
+ * `session`, the JWT cookie set here); a User with one gets outcome `challenge`,
+ * a short-lived single-use challenge for the second step and no cookie (ADR
+ * 0020). Unknown email and wrong password answer the same 401; failures feed the
+ * Login throttle, which answers 429 even for a correct password while its delay
+ * runs (ADR 0025). Only a started session resets the throttle's counter.
  */
 export const siteAuthLoginMutation = (options?: Partial<Options<SiteAuthLoginData>>): UseMutationOptions<SiteAuthLoginResponse, SiteAuthLoginError, Options<SiteAuthLoginData>> => {
   const mutationOptions: UseMutationOptions<SiteAuthLoginResponse, SiteAuthLoginError, Options<SiteAuthLoginData>> = {
@@ -316,7 +319,8 @@ export const siteSecondFactorGetStatusOptions = (options?: Options<SiteSecondFac
 /**
  * Disable the Second factor, proving the password and a current code. Every
  * other session ends; the acting one continues under the cookie set here. 403 on
- * a wrong password, 422 on a wrong code, 409 without an active Second factor.
+ * a wrong password (it feeds the Login throttle: 429 while its delay runs), 422
+ * on a wrong code, 409 without an active Second factor.
  */
 export const siteSecondFactorDisableMutation = (options?: Partial<Options<SiteSecondFactorDisableData>>): UseMutationOptions<SiteSecondFactorDisableResponse, SiteSecondFactorDisableError, Options<SiteSecondFactorDisableData>> => {
   const mutationOptions: UseMutationOptions<SiteSecondFactorDisableResponse, SiteSecondFactorDisableError, Options<SiteSecondFactorDisableData>> = {
@@ -333,9 +337,11 @@ export const siteSecondFactorDisableMutation = (options?: Partial<Options<SiteSe
 };
 
 /**
- * Start enrolling a TOTP Second factor: creates a pending secret (replacing an
- * earlier pending one). It counts as a Second factor only once confirmed. 409
- * when a Second factor is already active.
+ * Start enrolling a TOTP Second factor, proving the password: creates a pending
+ * secret (replacing an earlier pending one). It counts as a Second factor only
+ * once confirmed. 403 on a wrong password, 409 when a Second factor is already
+ * active. A wrong password feeds the Login throttle, which answers 429 even for a
+ * correct one while its delay runs (ADR 0025).
  */
 export const siteSecondFactorStartEnrollmentMutation = (options?: Partial<Options<SiteSecondFactorStartEnrollmentData>>): UseMutationOptions<SiteSecondFactorStartEnrollmentResponse, SiteSecondFactorStartEnrollmentError, Options<SiteSecondFactorStartEnrollmentData>> => {
   const mutationOptions: UseMutationOptions<SiteSecondFactorStartEnrollmentResponse, SiteSecondFactorStartEnrollmentError, Options<SiteSecondFactorStartEnrollmentData>> = {
@@ -352,10 +358,11 @@ export const siteSecondFactorStartEnrollmentMutation = (options?: Partial<Option
 };
 
 /**
- * Confirm the pending enrollment with a code from the app. On success the Second
- * factor is active, every other session ends and the acting one continues under
- * the cookie set here; the Recovery codes are returned once. 422 on a wrong code,
- * 409 without a pending enrollment.
+ * Confirm the pending enrollment with the password and a code from the app. On
+ * success the Second factor is active, every other session ends and the acting
+ * one continues under the cookie set here; the Recovery codes are returned once.
+ * 403 on a wrong password (it feeds the Login throttle: 429 while its delay
+ * runs), 422 on a wrong code, 409 without a pending enrollment.
  */
 export const siteSecondFactorConfirmEnrollmentMutation = (options?: Partial<Options<SiteSecondFactorConfirmEnrollmentData>>): UseMutationOptions<SiteSecondFactorConfirmEnrollmentResponse, SiteSecondFactorConfirmEnrollmentError, Options<SiteSecondFactorConfirmEnrollmentData>> => {
   const mutationOptions: UseMutationOptions<SiteSecondFactorConfirmEnrollmentResponse, SiteSecondFactorConfirmEnrollmentError, Options<SiteSecondFactorConfirmEnrollmentData>> = {
@@ -374,7 +381,8 @@ export const siteSecondFactorConfirmEnrollmentMutation = (options?: Partial<Opti
 /**
  * Replace the Recovery codes with a fresh set (the previous set stops working).
  * Every other session ends; the acting one continues under the cookie set here.
- * 403 on a wrong password, 409 without an active Second factor.
+ * 403 on a wrong password (it feeds the Login throttle: 429 while its delay
+ * runs), 409 without an active Second factor.
  */
 export const siteSecondFactorRegenerateRecoveryCodesMutation = (options?: Partial<Options<SiteSecondFactorRegenerateRecoveryCodesData>>): UseMutationOptions<SiteSecondFactorRegenerateRecoveryCodesResponse, SiteSecondFactorRegenerateRecoveryCodesError, Options<SiteSecondFactorRegenerateRecoveryCodesData>> => {
   const mutationOptions: UseMutationOptions<SiteSecondFactorRegenerateRecoveryCodesResponse, SiteSecondFactorRegenerateRecoveryCodesError, Options<SiteSecondFactorRegenerateRecoveryCodesData>> = {

@@ -80,9 +80,11 @@ type Invoker interface {
 	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
 	// SiteAuthLogin invokes SiteAuth_login operation.
 	//
-	// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
-	// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
-	// delay runs (ADR 0025).
+	// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+	// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+	// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+	// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+	// 0025). Only a started session resets the throttle's counter.
 	//
 	// POST /auth/login
 	SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error)
@@ -379,17 +381,18 @@ type Invoker interface {
 	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
 	// SiteSecondFactorConfirmEnrollment invokes SiteSecondFactor_confirmEnrollment operation.
 	//
-	// Confirm the pending enrollment with a code from the app. On success the Second factor is active,
-	// every other session ends and the acting one continues under the cookie set here; the Recovery codes
-	// are returned once. 422 on a wrong code, 409 without a pending enrollment.
+	// Confirm the pending enrollment with the password and a code from the app. On success the Second
+	// factor is active, every other session ends and the acting one continues under the cookie set here;
+	// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+	// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
 	//
 	// POST /me/second-factor/enrollment/confirm
 	SiteSecondFactorConfirmEnrollment(ctx context.Context, request *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error)
 	// SiteSecondFactorDisable invokes SiteSecondFactor_disable operation.
 	//
 	// Disable the Second factor, proving the password and a current code. Every other session ends; the
-	// acting one continues under the cookie set here. 403 on a wrong password, 422 on a wrong code, 409
-	// without an active Second factor.
+	// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+	// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
 	//
 	// POST /me/second-factor/disable
 	SiteSecondFactorDisable(ctx context.Context, request *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error)
@@ -402,18 +405,20 @@ type Invoker interface {
 	// SiteSecondFactorRegenerateRecoveryCodes invokes SiteSecondFactor_regenerateRecoveryCodes operation.
 	//
 	// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
-	// ends; the acting one continues under the cookie set here. 403 on a wrong password, 409 without an
-	// active Second factor.
+	// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+	// Login throttle: 429 while its delay runs), 409 without an active Second factor.
 	//
 	// POST /me/second-factor/recovery-codes
 	SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, request *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error)
 	// SiteSecondFactorStartEnrollment invokes SiteSecondFactor_startEnrollment operation.
 	//
-	// Start enrolling a TOTP Second factor: creates a pending secret (replacing an earlier pending one).
-	// It counts as a Second factor only once confirmed. 409 when a Second factor is already active.
+	// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+	// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+	// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+	// even for a correct one while its delay runs (ADR 0025).
 	//
 	// POST /me/second-factor/enrollment
-	SiteSecondFactorStartEnrollment(ctx context.Context) (SiteSecondFactorStartEnrollmentRes, error)
+	SiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (SiteSecondFactorStartEnrollmentRes, error)
 	// SiteSegmentsCreate invokes SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.
@@ -1941,9 +1946,11 @@ func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteFo
 
 // SiteAuthLogin invokes SiteAuth_login operation.
 //
-// Check the password and start a session (the JWT cookie). Unknown email and wrong password answer the
-// same 401; failures feed the Login throttle, which answers 429 even for a correct password while its
-// delay runs (ADR 0025).
+// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+// 0025). Only a started session resets the throttle's counter.
 //
 // POST /auth/login
 func (c *Client) SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error) {
@@ -8606,9 +8613,10 @@ func (c *Client) sendSitePublicUnsubscribesPerform(ctx context.Context, params S
 
 // SiteSecondFactorConfirmEnrollment invokes SiteSecondFactor_confirmEnrollment operation.
 //
-// Confirm the pending enrollment with a code from the app. On success the Second factor is active,
-// every other session ends and the acting one continues under the cookie set here; the Recovery codes
-// are returned once. 422 on a wrong code, 409 without a pending enrollment.
+// Confirm the pending enrollment with the password and a code from the app. On success the Second
+// factor is active, every other session ends and the acting one continues under the cookie set here;
+// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
 //
 // POST /me/second-factor/enrollment/confirm
 func (c *Client) SiteSecondFactorConfirmEnrollment(ctx context.Context, request *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error) {
@@ -8725,8 +8733,8 @@ func (c *Client) sendSiteSecondFactorConfirmEnrollment(ctx context.Context, requ
 // SiteSecondFactorDisable invokes SiteSecondFactor_disable operation.
 //
 // Disable the Second factor, proving the password and a current code. Every other session ends; the
-// acting one continues under the cookie set here. 403 on a wrong password, 422 on a wrong code, 409
-// without an active Second factor.
+// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
 //
 // POST /me/second-factor/disable
 func (c *Client) SiteSecondFactorDisable(ctx context.Context, request *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error) {
@@ -8956,8 +8964,8 @@ func (c *Client) sendSiteSecondFactorGetStatus(ctx context.Context) (res *SiteSe
 // SiteSecondFactorRegenerateRecoveryCodes invokes SiteSecondFactor_regenerateRecoveryCodes operation.
 //
 // Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
-// ends; the acting one continues under the cookie set here. 403 on a wrong password, 409 without an
-// active Second factor.
+// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+// Login throttle: 429 while its delay runs), 409 without an active Second factor.
 //
 // POST /me/second-factor/recovery-codes
 func (c *Client) SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, request *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error) {
@@ -9073,16 +9081,18 @@ func (c *Client) sendSiteSecondFactorRegenerateRecoveryCodes(ctx context.Context
 
 // SiteSecondFactorStartEnrollment invokes SiteSecondFactor_startEnrollment operation.
 //
-// Start enrolling a TOTP Second factor: creates a pending secret (replacing an earlier pending one).
-// It counts as a Second factor only once confirmed. 409 when a Second factor is already active.
+// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+// even for a correct one while its delay runs (ADR 0025).
 //
 // POST /me/second-factor/enrollment
-func (c *Client) SiteSecondFactorStartEnrollment(ctx context.Context) (SiteSecondFactorStartEnrollmentRes, error) {
-	res, err := c.sendSiteSecondFactorStartEnrollment(ctx)
+func (c *Client) SiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (SiteSecondFactorStartEnrollmentRes, error) {
+	res, err := c.sendSiteSecondFactorStartEnrollment(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendSiteSecondFactorStartEnrollment(ctx context.Context) (res SiteSecondFactorStartEnrollmentRes, err error) {
+func (c *Client) sendSiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (res SiteSecondFactorStartEnrollmentRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSecondFactor_startEnrollment"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -9127,6 +9137,9 @@ func (c *Client) sendSiteSecondFactorStartEnrollment(ctx context.Context) (res S
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteSecondFactorStartEnrollmentRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	{

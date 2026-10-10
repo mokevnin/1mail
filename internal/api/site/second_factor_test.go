@@ -69,9 +69,17 @@ type enrollmentRes struct {
 func (s *secondFactorEnv) start(t *testing.T, session string) enrollmentRes {
 	t.Helper()
 	var e enrollmentRes
-	code, _ := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment", session, "", &e)
+	code, _ := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment", session, johnPassword, &e)
 	require.Equal(t, http.StatusOK, code)
 	return e
+}
+
+// johnPassword is the body proving John's password.
+var johnPassword = `{"currentPassword":"` + fixtures.OwnerJohnPassword + `"}`
+
+// confirmBody is a confirmation request with John's password and code.
+func confirmBody(code string) string {
+	return `{"currentPassword":"` + fixtures.OwnerJohnPassword + `","code":"` + code + `"}`
 }
 
 type recoveryCodesRes struct {
@@ -85,7 +93,7 @@ func (s *secondFactorEnv) enroll(t *testing.T, session string) (secret string, c
 	e := s.start(t, session)
 	var rc recoveryCodesRes
 	status, fresh := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment/confirm", session,
-		`{"code":"`+s.code(t, e.Secret)+`"}`, &rc)
+		confirmBody(s.code(t, e.Secret)), &rc)
 	require.Equal(t, http.StatusOK, status)
 	require.NotEmpty(t, fresh)
 	return e.Secret, rc.Codes, fresh
@@ -104,7 +112,7 @@ func TestEnrollmentIsPendingUntilConfirmedWithAValidCode(t *testing.T) {
 	assert.Equal(t, factorStatus{Pending: true}, s.status(t, acting), "an unconfirmed secret is not a Second factor")
 
 	status, fresh := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment/confirm", acting,
-		`{"code":"`+wrong(s.code(t, e.Secret))+`"}`, nil)
+		confirmBody(wrong(s.code(t, e.Secret))), nil)
 	assert.Equal(t, http.StatusUnprocessableEntity, status, "a wrong code")
 	assert.Empty(t, fresh)
 	assert.False(t, s.status(t, acting).Enabled, "a wrong code does not activate it")
@@ -112,7 +120,7 @@ func TestEnrollmentIsPendingUntilConfirmedWithAValidCode(t *testing.T) {
 
 	var rc recoveryCodesRes
 	status, fresh = s.send(t, http.MethodPost, "/site/me/second-factor/enrollment/confirm", acting,
-		`{"code":"`+s.code(t, e.Secret)+`"}`, &rc)
+		confirmBody(s.code(t, e.Secret)), &rc)
 	require.Equal(t, http.StatusOK, status)
 	assert.Len(t, rc.Codes, 10)
 	assert.Len(t, uniq(rc.Codes), 10)
@@ -122,6 +130,27 @@ func TestEnrollmentIsPendingUntilConfirmedWithAValidCode(t *testing.T) {
 	require.NotEmpty(t, fresh)
 	assert.Equal(t, http.StatusOK, workspacesStatus(t, s.env, fresh), "the acting session continues")
 	assert.Equal(t, factorStatus{Enabled: true, RecoveryCodesRemaining: 10}, s.status(t, fresh))
+}
+
+// A hijacked session must not enroll a factor of its own and sign the real User out
+// elsewhere: both enrollment steps prove the password.
+func TestEnrollmentRequiresThePasswordOnBothSteps(t *testing.T) {
+	s := newSecondFactorEnv(t)
+	other := s.env.SiteToken(t, fixtures.OwnerJohnEmail, nil)
+	acting := s.env.SiteToken(t, fixtures.OwnerJohnEmail, nil)
+	wrongPassword := `{"currentPassword":"wrong-password"}`
+
+	status, _ := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment", acting, wrongPassword, nil)
+	assert.Equal(t, http.StatusForbidden, status, "starting with a wrong password")
+	assert.Equal(t, factorStatus{}, s.status(t, acting), "nothing pending")
+
+	e := s.start(t, acting)
+	status, fresh := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment/confirm", acting,
+		`{"currentPassword":"wrong-password","code":"`+s.code(t, e.Secret)+`"}`, nil)
+	assert.Equal(t, http.StatusForbidden, status, "confirming with a wrong password")
+	assert.Empty(t, fresh)
+	assert.Equal(t, factorStatus{Pending: true}, s.status(t, acting), "still only pending")
+	assert.Equal(t, http.StatusOK, workspacesStatus(t, s.env, other), "no session ends")
 }
 
 // wrong is a code that differs from c in its last digit.
@@ -155,7 +184,7 @@ func TestAnActiveSecondFactorCannotBeReplacedByStartingAgain(t *testing.T) {
 	s := newSecondFactorEnv(t)
 	_, _, session := s.enroll(t, s.env.SiteToken(t, fixtures.OwnerJohnEmail, nil))
 
-	status, _ := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment", session, "", nil)
+	status, _ := s.send(t, http.MethodPost, "/site/me/second-factor/enrollment", session, johnPassword, nil)
 	assert.Equal(t, http.StatusConflict, status)
 	assert.True(t, s.status(t, session).Enabled)
 }

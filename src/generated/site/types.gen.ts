@@ -1776,9 +1776,13 @@ export type SiteScheduleBroadcastInput = {
 };
 
 /**
- * A code from the authenticator app
+ * Proof of the User's password and a code from the authenticator app
  */
 export type SiteSecondFactorConfirmInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
   /**
    * The current 6-digit TOTP code
    */
@@ -1825,6 +1829,16 @@ export type SiteSecondFactorRequirementInput = {
    * Whether every User with a Membership must have a Second factor
    */
   required: boolean;
+};
+
+/**
+ * Proof of the User's password, for starting an enrollment
+ */
+export type SiteSecondFactorStartInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
 };
 
 /**
@@ -3146,6 +3160,10 @@ export type SiteSecondFactorDisableErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteSecondFactorDisableError = SiteSecondFactorDisableErrors[keyof SiteSecondFactorDisableErrors];
@@ -3160,7 +3178,7 @@ export type SiteSecondFactorDisableResponses = {
 export type SiteSecondFactorDisableResponse = SiteSecondFactorDisableResponses[keyof SiteSecondFactorDisableResponses];
 
 export type SiteSecondFactorStartEnrollmentData = {
-  body?: never;
+  body: SiteSecondFactorStartInput;
   path?: never;
   query?: never;
   url: '/me/second-factor/enrollment';
@@ -3168,9 +3186,17 @@ export type SiteSecondFactorStartEnrollmentData = {
 
 export type SiteSecondFactorStartEnrollmentErrors = {
   /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
    * RFC 7807 conflict response
    */
   409: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteSecondFactorStartEnrollmentError = SiteSecondFactorStartEnrollmentErrors[keyof SiteSecondFactorStartEnrollmentErrors];
@@ -3193,6 +3219,10 @@ export type SiteSecondFactorConfirmEnrollmentData = {
 
 export type SiteSecondFactorConfirmEnrollmentErrors = {
   /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
    * RFC 7807 conflict response
    */
   409: ProblemDetails;
@@ -3200,6 +3230,10 @@ export type SiteSecondFactorConfirmEnrollmentErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteSecondFactorConfirmEnrollmentError = SiteSecondFactorConfirmEnrollmentErrors[keyof SiteSecondFactorConfirmEnrollmentErrors];
@@ -3229,6 +3263,10 @@ export type SiteSecondFactorRegenerateRecoveryCodesErrors = {
    * RFC 7807 conflict response
    */
   409: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteSecondFactorRegenerateRecoveryCodesError = SiteSecondFactorRegenerateRecoveryCodesErrors[keyof SiteSecondFactorRegenerateRecoveryCodesErrors];

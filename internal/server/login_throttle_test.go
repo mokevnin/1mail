@@ -210,3 +210,28 @@ func TestTheSecondStepSharesThePerIPLoginCap(t *testing.T) {
 	}
 	assert.Equal(t, http.StatusTooManyRequests, secondStep(t, env, "forged", "000000").Code)
 }
+
+// A session holder proving the password to manage the Second factor guesses the same
+// password as a login does: wrong ones feed the account's Login throttle, and while
+// its delay runs even the right one answers 429.
+func TestSecondFactorPasswordChecksFeedTheLoginThrottle(t *testing.T) {
+	env, _ := loginEnv(t, 0)
+	cookie := map[string]string{"Cookie": "JWT=" + env.SiteToken(t, fixtures.SecondFactorSamEmail, nil)}
+	regenerate := func(password string) int {
+		return postJSON(t, env, "/site/me/second-factor/recovery-codes",
+			fmt.Sprintf(`{"currentPassword":%q}`, password), cookie).Code
+	}
+	for i := range loginFailures {
+		require.Equal(t, http.StatusForbidden, regenerate("wrong-password"), "failure %d", i+1)
+	}
+
+	assert.Equal(t, http.StatusTooManyRequests, regenerate(fixtures.SecondFactorSamPassword))
+	for path, body := range map[string]string{
+		"/site/me/second-factor/disable":    fmt.Sprintf(`{"currentPassword":%q,"code":%q}`, fixtures.SecondFactorSamPassword, fixtures.SecondFactorSamRecoveryCode),
+		"/site/me/second-factor/enrollment": fmt.Sprintf(`{"currentPassword":%q}`, fixtures.SecondFactorSamPassword),
+	} {
+		assert.Equal(t, http.StatusTooManyRequests, postJSON(t, env, path, body, cookie).Code, path)
+	}
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code, "one counter with the login")
+}

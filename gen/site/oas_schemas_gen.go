@@ -2922,20 +2922,19 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 	s.RetryAfter = val
 }
 
-func (*ProblemDetails) siteAnalyticsOverviewRes()           {}
-func (*ProblemDetails) siteAuthLoginRes()                   {}
-func (*ProblemDetails) siteAuthResetPasswordRes()           {}
-func (*ProblemDetails) siteAuthSecondFactorRes()            {}
-func (*ProblemDetails) siteAuthVerifyEmailRes()             {}
-func (*ProblemDetails) siteEventsActionsRes()               {}
-func (*ProblemDetails) siteEventsListRes()                  {}
-func (*ProblemDetails) siteIntegrationsListRes()            {}
-func (*ProblemDetails) siteInvitationsListRes()             {}
-func (*ProblemDetails) siteMembershipsListRes()             {}
-func (*ProblemDetails) sitePublicInvitationsLookupRes()     {}
-func (*ProblemDetails) sitePublicUnsubscribesPerformRes()   {}
-func (*ProblemDetails) siteSecondFactorStartEnrollmentRes() {}
-func (*ProblemDetails) siteTokensListRes()                  {}
+func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
+func (*ProblemDetails) siteAuthLoginRes()                 {}
+func (*ProblemDetails) siteAuthResetPasswordRes()         {}
+func (*ProblemDetails) siteAuthSecondFactorRes()          {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()           {}
+func (*ProblemDetails) siteEventsActionsRes()             {}
+func (*ProblemDetails) siteEventsListRes()                {}
+func (*ProblemDetails) siteIntegrationsListRes()          {}
+func (*ProblemDetails) siteInvitationsListRes()           {}
+func (*ProblemDetails) siteMembershipsListRes()           {}
+func (*ProblemDetails) sitePublicInvitationsLookupRes()   {}
+func (*ProblemDetails) sitePublicUnsubscribesPerformRes() {}
+func (*ProblemDetails) siteTokensListRes()                {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -3020,12 +3019,16 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 	s.Response = val
 }
 
-func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
-func (*ProblemDetailsHeaders) siteAuthLoginRes()                  {}
-func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
-func (*ProblemDetailsHeaders) siteAuthSecondFactorRes()           {}
-func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
-func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
+func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()                  {}
+func (*ProblemDetailsHeaders) siteAuthLoginRes()                           {}
+func (*ProblemDetailsHeaders) siteAuthRegisterRes()                        {}
+func (*ProblemDetailsHeaders) siteAuthSecondFactorRes()                    {}
+func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes()          {}
+func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()             {}
+func (*ProblemDetailsHeaders) siteSecondFactorConfirmEnrollmentRes()       {}
+func (*ProblemDetailsHeaders) siteSecondFactorDisableRes()                 {}
+func (*ProblemDetailsHeaders) siteSecondFactorRegenerateRecoveryCodesRes() {}
+func (*ProblemDetailsHeaders) siteSecondFactorStartEnrollmentRes()         {}
 
 // Accept an invite. name + password are required only when the invitee has no account yet; ignored
 // otherwise.
@@ -8004,20 +8007,36 @@ type SiteSecondFactorConfirmEnrollmentConflict ProblemDetails
 
 func (*SiteSecondFactorConfirmEnrollmentConflict) siteSecondFactorConfirmEnrollmentRes() {}
 
+type SiteSecondFactorConfirmEnrollmentForbidden ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentForbidden) siteSecondFactorConfirmEnrollmentRes() {}
+
 type SiteSecondFactorConfirmEnrollmentUnprocessableEntity ProblemDetails
 
 func (*SiteSecondFactorConfirmEnrollmentUnprocessableEntity) siteSecondFactorConfirmEnrollmentRes() {}
 
-// A code from the authenticator app.
+// Proof of the User's password and a code from the authenticator app.
 // Ref: #/components/schemas/SiteSecondFactorConfirmInput
 type SiteSecondFactorConfirmInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
 	// The current 6-digit TOTP code.
 	Code string `json:"code"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorConfirmInput) GetCurrentPassword() string {
+	return s.CurrentPassword
 }
 
 // GetCode returns the value of Code.
 func (s *SiteSecondFactorConfirmInput) GetCode() string {
 	return s.Code
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorConfirmInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
 }
 
 // SetCode sets the value of Code.
@@ -8151,6 +8170,31 @@ func (s *SiteSecondFactorRequirementInput) GetRequired() bool {
 // SetRequired sets the value of Required.
 func (s *SiteSecondFactorRequirementInput) SetRequired(val bool) {
 	s.Required = val
+}
+
+type SiteSecondFactorStartEnrollmentConflict ProblemDetails
+
+func (*SiteSecondFactorStartEnrollmentConflict) siteSecondFactorStartEnrollmentRes() {}
+
+type SiteSecondFactorStartEnrollmentForbidden ProblemDetails
+
+func (*SiteSecondFactorStartEnrollmentForbidden) siteSecondFactorStartEnrollmentRes() {}
+
+// Proof of the User's password, for starting an enrollment.
+// Ref: #/components/schemas/SiteSecondFactorStartInput
+type SiteSecondFactorStartInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorStartInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorStartInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
 }
 
 // The authenticated User's Second factor (ADR 0020). Recovery codes are never readable here: only how
