@@ -128,6 +128,29 @@ interface Contacts
     | BadRequestProblem
     | UnauthorizedProblem
     | NotFoundProblem;
+
+  /**
+   * Erase by an identifier other than the contact id (GDPR Art. 17): by `email`
+   * (also anonymizes delivery records to an address that never had a contact) or
+   * by `visitor_id` (an anonymous visitor and its events). Exactly one of the two.
+   * The same rules as deleting by id apply. Requires the contacts:erase scope.
+   */
+  @collectionAction(ContactResource, "erase")
+  @delete
+  @autoRoute
+  eraseBy(
+    ...ResourceCollectionParameters<ContactResource>,
+
+    /** The email address to erase */
+    @query email?: EmailAddress,
+
+    /** The anonymous visitor id to erase */
+    @query visitorId?: string,
+  ):
+    | NoContentResponse
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | NotFoundProblem;
 }
 
 /** One contact to upsert, matched by its alias keys (subject id, email, phone) */

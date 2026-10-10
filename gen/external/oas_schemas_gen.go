@@ -1699,6 +1699,23 @@ type ContactsDeleteUnprocessableEntity ProblemDetails
 
 func (*ContactsDeleteUnprocessableEntity) contactsDeleteRes() {}
 
+type ContactsEraseByBadRequest ProblemDetails
+
+func (*ContactsEraseByBadRequest) contactsEraseByRes() {}
+
+// ContactsEraseByNoContent is response for ContactsEraseBy operation.
+type ContactsEraseByNoContent struct{}
+
+func (*ContactsEraseByNoContent) contactsEraseByRes() {}
+
+type ContactsEraseByNotFound ProblemDetails
+
+func (*ContactsEraseByNotFound) contactsEraseByRes() {}
+
+type ContactsEraseByUnauthorized ProblemDetails
+
+func (*ContactsEraseByUnauthorized) contactsEraseByRes() {}
+
 type ContactsExportBadRequest ProblemDetails
 
 func (*ContactsExportBadRequest) contactsExportRes() {}

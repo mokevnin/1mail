@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/erasure"
@@ -165,7 +166,8 @@ func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteCo
 		v := siteapi.SiteContactsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.erasure.Erase(ctx, scoped, erasure.ByContactID(id))
+	err = h.erasure.Erase(ctx, scoped, erasure.ByContactID(id),
+		erasure.Operator{Kind: erasure.OperatorUser, ID: auth.GetSiteAuth(ctx).UserID})
 	if errors.Is(err, erasure.ErrNotFound) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &v, nil

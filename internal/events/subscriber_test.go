@@ -92,3 +92,22 @@ func TestWebhooksConsumerBuildsPayload(t *testing.T) {
 	assert.Equal(t, NameContactCreated, p["type"])
 	assert.Equal(t, "a@b.c", p["subject"])
 }
+
+// The contact.erased webhook payload carries the customer's subject_id; nothing else
+// identifies the person.
+func TestWebhooksConsumerCarriesTheErasedSubject(t *testing.T) {
+	d := &fakeDispatcher{}
+	handler := webhooksConsumer(nil, d)
+
+	require.NoError(t, handler(msgFor(t, &ContactErased{WorkspaceID: 1, SubjectID: "user-9", IdentifierKind: "contact_id", OperatorKind: "user", OperatorID: 4})))
+
+	require.Len(t, d.calls, 1)
+	assert.Equal(t, NameContactErased, d.calls[0].eventName)
+	var p struct {
+		Type string         `json:"type"`
+		Data map[string]any `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(d.calls[0].body, &p))
+	assert.Equal(t, NameContactErased, p.Type)
+	assert.Equal(t, "user-9", p.Data["subjectId"])
+}

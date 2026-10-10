@@ -393,6 +393,13 @@
   workspace_id: 3
   occurred_at: '2026-01-02 00:00:00'
   created_at: '2026-01-02 00:00:00'
+- id: 330 # fixture: EventAnonymousVisitor
+  visitor_id: vis-anonymous-301
+  action: pricing_viewed
+  properties: '{"path":"/pricing"}'
+  workspace_id: 3
+  occurred_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-02 00:00:00'
 # --- Export subject (contact 800) ---
 - id: 800 # fixture: EventExportCustom
   contact_id: 800

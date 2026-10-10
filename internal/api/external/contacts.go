@@ -143,7 +143,8 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id))
+	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id),
+		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
 	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -152,6 +153,37 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return nil, err
 	}
 	return &externalapi.ContactsDeleteNoContent{}, nil
+}
+
+// ContactsEraseBy is Erasure by an email address or a visitor id (ADR 0021), under the
+// same scope and rules as deleting by id. Exactly one identifier is required.
+func (h *Handlers) ContactsEraseBy(ctx context.Context, params externalapi.ContactsEraseByParams) (externalapi.ContactsEraseByRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:erase") {
+		res := externalapi.ContactsEraseByUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+
+	email, hasEmail := params.Email.Get()
+	visitorID, hasVisitor := params.VisitorId.Get()
+	if hasEmail == hasVisitor || (hasVisitor && visitorID == "") {
+		res := externalapi.ContactsEraseByBadRequest(problem(http.StatusBadRequest, "pass exactly one of email or visitorId"))
+		return &res, nil
+	}
+	id := erasure.ByVisitorID(visitorID)
+	if hasEmail {
+		id = erasure.ByEmail(string(email))
+	}
+
+	err := h.erasure.Erase(ctx, auth.TokenScoped(ctx), id,
+		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
+	if errors.Is(err, erasure.ErrNotFound) {
+		res := externalapi.ContactsEraseByNotFound(problem(http.StatusNotFound, "nothing found for the identifier"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &externalapi.ContactsEraseByNoContent{}, nil
 }
 
 // ContactsBatchUpsert upserts each Contact independently and reports a per-item result.

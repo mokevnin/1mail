@@ -232,6 +232,18 @@ func (UnimplementedHandler) ContactsDelete(ctx context.Context, params ContactsD
 	return r, ht.ErrNotImplemented
 }
 
+// ContactsEraseBy implements Contacts_eraseBy operation.
+//
+// Erase by an identifier other than the contact id (GDPR Art. 17): by `email` (also anonymizes
+// delivery records to an address that never had a contact) or by `visitor_id` (an anonymous visitor
+// and its events). Exactly one of the two. The same rules as deleting by id apply. Requires the
+// contacts:erase scope.
+//
+// DELETE /contacts/erase
+func (UnimplementedHandler) ContactsEraseBy(ctx context.Context, params ContactsEraseByParams) (r ContactsEraseByRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ContactsExport implements Contacts_export operation.
 //
 // Export everything held about one contact as a streamed JSON download: the contact, its custom

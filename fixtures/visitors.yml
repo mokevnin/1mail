@@ -57,6 +57,13 @@
   last_seen_at: '2026-01-02 00:00:00'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-02 00:00:00'
+# Initech: an anonymous device that never identified (no Contact), with an Event.
+- id: 301 # fixture: VisitorAnonymous
+  visitor_id: vis-anonymous-301
+  workspace_id: 3
+  last_seen_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
 # Export subject (contact 800): two known devices.
 - id: 800
   visitor_id: vis-export-laptop

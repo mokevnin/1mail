@@ -1619,6 +1619,70 @@
         }
       }
     },
+    "/contacts/erase": {
+      "delete": {
+        "operationId": "Contacts_eraseBy",
+        "description": "Erase by an identifier other than the contact id (GDPR Art. 17): by `email`\n(also anonymizes delivery records to an address that never had a contact) or\nby `visitor_id` (an anonymous visitor and its events). Exactly one of the two.\nThe same rules as deleting by id apply. Requires the contacts:erase scope.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "The email address to erase",
+            "schema": {
+              "$ref": "#/components/schemas/EmailAddress"
+            },
+            "explode": false
+          },
+          {
+            "name": "visitorId",
+            "in": "query",
+            "required": false,
+            "description": "The anonymous visitor id to erase",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"]
+      }
+    },
     "/contacts/export": {
       "post": {
         "operationId": "Contacts_export",

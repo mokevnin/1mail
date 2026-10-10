@@ -42,6 +42,7 @@ export default defineConfig({
           { text: 'Sending email', link: '/guide/sending' },
           { text: 'Deliverability and consent', link: '/guide/deliverability' },
           { text: 'API', link: '/guide/api' },
+          { text: 'Answering a GDPR request', link: '/guide/gdpr' },
           { text: 'Self-hosting', link: '/self-hosting' },
         ],
       },
