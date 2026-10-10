@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
@@ -158,9 +159,15 @@ func TestOperatorResetIsAuditedInEveryWorkspaceOfTheUser(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, st.Enabled)
 	env.DeliverToEE(t)
-	got, err := env.DB.AuditEntry.Query().Where(auditentry.Action(events.ActionUserSecondFactorReset)).All(ctx)
+	got, err := env.DB.AuditEntry.Query().
+		Where(auditentry.Action(events.ActionUserSecondFactorReset)).
+		Order(ent.Asc(auditentry.FieldWorkspaceID)).
+		All(ctx)
 	require.NoError(t, err)
-	require.Len(t, got, 1, "Sam belongs to Globex only")
+	require.Len(t, got, 2, "Sam belongs to Globex and Umbrella")
 	assert.Equal(t, int64(fixtures.GlobexID), got[0].WorkspaceID)
-	assert.Equal(t, events.ActorOperator, got[0].ActorKind)
+	assert.Equal(t, int64(fixtures.UmbrellaID), got[1].WorkspaceID)
+	for _, e := range got {
+		assert.Equal(t, events.ActorOperator, e.ActorKind)
+	}
 }
