@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -293,6 +294,18 @@ func TestRecheckSendingDomainsWorkerFansOut(t *testing.T) {
 	for _, k := range kinds {
 		assert.Equal(t, "sending_domain_verify", k)
 	}
+}
+
+func TestPurgeAuthAttemptsWorkerRemovesStaleRowsOnly(t *testing.T) {
+	e := newRiverEnv(t)
+	ctx := e.workCtx()
+
+	require.NoError(t, jobs.NewPurgeAuthAttemptsWorker(e.DB).Work(ctx, job(jobs.PurgeAuthAttemptsArgs{})))
+
+	_, err := e.DB.AuthAttempt.Get(ctx, fixtures.StaleLoginAttemptID)
+	assert.True(t, ent.IsNotFound(err), "the stale row is purged")
+	_, err = e.DB.AuthAttempt.Get(ctx, fixtures.FreshLoginAttemptID)
+	assert.NoError(t, err, "the current row stays")
 }
 
 func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {

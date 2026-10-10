@@ -30,6 +30,9 @@ model ProblemDetails {
 
   /** Field validation errors */
   fields?: FormValidationFields;
+
+  /** Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait */
+  retryAfter?: int32;
 }
 
 /** RFC 7807 bad request response */

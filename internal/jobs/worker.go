@@ -67,6 +67,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	river.AddWorker(workers, &PurgeAuthAttemptsWorker{ent: entClient})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
@@ -88,6 +89,14 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 				river.PeriodicInterval(15*time.Minute),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Drop failed-attempt rows past their window (ADR 0018).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PurgeAuthAttemptsArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),

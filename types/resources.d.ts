@@ -262,6 +262,8 @@ export default interface Resources {
       "errorTitle": "Sign in failed",
       "forgotPasswordLink": "Forgot password?",
       "passwordLabel": "Password",
+      "rateLimitedMinutes": "Too many sign-in attempts. Try again in {{count}} minutes." | "Too many sign-in attempts. Try again in {{count}} minute." | "Too many sign-in attempts. Try again in {{count}} minutes.",
+      "rateLimitedSeconds": "Too many sign-in attempts. Try again in {{count}} seconds." | "Too many sign-in attempts. Try again in {{count}} second." | "Too many sign-in attempts. Try again in {{count}} seconds.",
       "registerLink": "Create account",
       "submitButton": "Sign in",
       "title": "Sign in"

@@ -125,6 +125,14 @@ const (
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.
 	EventGlobexID = 900
+	// FreshLoginAttemptEmail is from fixtures/auth_attempts.
+	FreshLoginAttemptEmail = "fresh@attempts.test"
+	// FreshLoginAttemptID is from fixtures/auth_attempts.
+	FreshLoginAttemptID = 101
+	// GhostLoginAttemptEmail is from fixtures/auth_attempts.
+	GhostLoginAttemptEmail = "ghost@attempts.test"
+	// GhostLoginAttemptID is from fixtures/auth_attempts.
+	GhostLoginAttemptID = 102
 	// GlobexCollectKey is from fixtures/workspaces.
 	GlobexCollectKey = "omck_test_globex_collect_key"
 	// GlobexID is from fixtures/workspaces.
@@ -209,6 +217,10 @@ const (
 	SendingDomainVerifiedDomain = "mail.acme.com"
 	// SendingDomainVerifiedID is from fixtures/sending_domains.
 	SendingDomainVerifiedID = 1
+	// StaleLoginAttemptEmail is from fixtures/auth_attempts.
+	StaleLoginAttemptEmail = "stale@attempts.test"
+	// StaleLoginAttemptID is from fixtures/auth_attempts.
+	StaleLoginAttemptID = 100
 	// SuppressionGhostBounceDestination is from fixtures/suppressions.
 	SuppressionGhostBounceDestination = "ghost@codebasics.dev"
 	// SuppressionGhostBounceID is from fixtures/suppressions.

@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+	"time"
 
 	"net/http/httptest"
 
@@ -138,16 +139,27 @@ type TestEnv struct {
 }
 
 // Option tunes the server a test builds with Setup.
-type Option func(*config.Config)
+type Option func(*setup)
+
+// setup is what the options edit: a private copy of the test config and the clock
+// the account attempt module reads.
+type setup struct {
+	cfg *config.Config
+	now func() time.Time
+}
 
 // WithConfig edits a private copy of the test config before the server is built.
-func WithConfig(edit func(*config.Config)) Option { return Option(edit) }
+func WithConfig(edit func(*config.Config)) Option { return func(s *setup) { edit(s.cfg) } }
+
+// WithClock replaces the clock of the account attempt module (the login delay), so
+// a test freezes or advances time instead of sleeping.
+func WithClock(now func() time.Time) Option { return func(s *setup) { s.now = now } }
 
 // WithRateLimits turns the rate limits on with the given (small) budgets. Without
 // it every limit is 0 (disabled), so tests never throttle each other; limiters
 // are per Setup, so budgets never leak between tests either.
 func WithRateLimits(limits config.RateLimits) Option {
-	return func(c *config.Config) { c.RateLimits = limits }
+	return func(s *setup) { s.cfg.RateLimits = limits }
 }
 
 func Setup(t *testing.T, opts ...Option) *TestEnv {
@@ -157,8 +169,9 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 
 	cfg := *baseCfg
 	cfg.RateLimits = config.RateLimits{}
+	st := &setup{cfg: &cfg, now: time.Now}
 	for _, opt := range opts {
-		opt(&cfg)
+		opt(st)
 	}
 
 	// dsn arg is just a pool identifier; each Open is its own transaction.
@@ -205,6 +218,9 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
+	attempts := accounts.NewAttempts(client,
+		accounts.WithClock(st.now),
+		accounts.WithRule(accounts.KindLogin, accounts.LoginRule(cfg.RateLimits.LoginFailures)))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
@@ -215,7 +231,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
-		Accounts: acc, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,

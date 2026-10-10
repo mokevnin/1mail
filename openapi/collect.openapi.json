@@ -290,6 +290,11 @@
               "type": "string"
             },
             "description": "Field validation errors"
+          },
+          "retryAfter": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait"
           }
         },
         "description": "RFC 7807 Problem Details"

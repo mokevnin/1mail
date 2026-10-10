@@ -61,15 +61,21 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		URL:            cfg.AppURL,
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
 	})
-	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client))
+	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client, site.Attempts))
 	authHandler, avatarHandler := authSvc.Handlers()
+	limiter := ratelimit.New(cfg.RateLimits)
+	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0018) on both of its
+	// paths: the provider's own and the SPA's /site alias. The longer pattern
+	// outranks the /auth/ subtree.
+	throttledLogin := loginThrottle(authHandler, site.Attempts, limiter.LoginIP())
+	mux.Handle("/auth/direct/login", throttledLogin)
 	mux.Handle("/auth/", authHandler)
 	mux.Handle("/avatar/", avatarHandler)
 	// The SPA's generated client posts to /site/auth/direct/login (baseUrl "/site");
 	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
 	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	mux.Handle("/site/auth/direct/login", authHandler)
+	mux.Handle("/site/auth/direct/login", throttledLogin)
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
@@ -134,7 +140,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// Order (ADR 0018): recoverer, requestID, CORS, client address, rate limit,
 	// timeout. CORS precedes the limiter so a 429 still reaches the browser; guard
 	// sits inside CORS so preflights are answered before the check.
-	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, ratelimit.New(cfg.RateLimits).Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), guard), nil
+	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, limiter.Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token

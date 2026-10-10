@@ -260,6 +260,12 @@
     "errorTitle": "Sign in failed",
     "forgotPasswordLink": "Forgot password?",
     "passwordLabel": "Password",
+    "rateLimitedMinutes": "Too many sign-in attempts. Try again in {{count}} minutes.",
+    "rateLimitedMinutes_one": "Too many sign-in attempts. Try again in {{count}} minute.",
+    "rateLimitedMinutes_other": "Too many sign-in attempts. Try again in {{count}} minutes.",
+    "rateLimitedSeconds": "Too many sign-in attempts. Try again in {{count}} seconds.",
+    "rateLimitedSeconds_one": "Too many sign-in attempts. Try again in {{count}} second.",
+    "rateLimitedSeconds_other": "Too many sign-in attempts. Try again in {{count}} seconds.",
     "registerLink": "Create account",
     "submitButton": "Sign in",
     "title": "Sign in"

@@ -3932,6 +3932,8 @@ type ProblemDetails struct {
 	Form OptString `json:"form"`
 	// Field validation errors.
 	Fields OptProblemDetailsFields `json:"fields"`
+	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
+	RetryAfter OptInt32 `json:"retryAfter"`
 }
 
 // GetType returns the value of Type.
@@ -3974,6 +3976,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 	return s.Fields
 }
 
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetails) GetRetryAfter() OptInt32 {
+	return s.RetryAfter
+}
+
 // SetType sets the value of Type.
 func (s *ProblemDetails) SetType(val OptString) {
 	s.Type = val
@@ -4012,6 +4019,11 @@ func (s *ProblemDetails) SetForm(val OptString) {
 // SetFields sets the value of Fields.
 func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
+	s.RetryAfter = val
 }
 
 func (*ProblemDetails) customFieldsListRes() {}

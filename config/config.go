@@ -25,10 +25,15 @@ type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
 	// consent confirm) per client IP and endpoint.
 	Human int
+	// LoginFailures is how many failed logins one account may have within 15 minutes
+	// before login answers 429 with an exponentially growing delay (no lockout).
+	LoginFailures int
+	// LoginIP caps login requests per client IP per minute.
+	LoginIP int
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60}
+var DefaultRateLimits = RateLimits{Human: 60, LoginFailures: 5, LoginIP: 20}
 
 type Config struct {
 	DatabaseURL    string
@@ -100,6 +105,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
+	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
+	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -145,7 +152,9 @@ func Load(envName string) (*Config, error) {
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
 		},
 		RateLimits: RateLimits{
-			Human: v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			Human:         v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			LoginFailures: v.GetInt("RATE_LIMIT_LOGIN_FAILURES"),
+			LoginIP:       v.GetInt("RATE_LIMIT_LOGIN_IP_PER_MINUTE"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),

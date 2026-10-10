@@ -111,6 +111,10 @@ export type ProblemDetails = {
   fields?: {
     [key: string]: string;
   };
+  /**
+   * Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait
+   */
+  retryAfter?: number;
 };
 
 export type TimeZoneName = string;

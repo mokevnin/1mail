@@ -49,6 +49,10 @@ export type ProblemDetails = {
   fields?: {
     [key: string]: string;
   };
+  /**
+   * Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait
+   */
+  retryAfter?: number;
 };
 
 /**
@@ -1983,6 +1987,10 @@ export type SiteAuthDirectLoginErrors = {
    * Access is forbidden.
    */
   403: SiteDirectLoginError;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteAuthDirectLoginError = SiteAuthDirectLoginErrors[keyof SiteAuthDirectLoginErrors];

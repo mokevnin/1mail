@@ -37,6 +37,34 @@ var (
 			},
 		},
 	}
+	// AuthAttemptsColumns holds the columns for the "auth_attempts" table.
+	AuthAttemptsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "email", Type: field.TypeString},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"login", "password_reset"}},
+		{Name: "failures", Type: field.TypeInt, Default: 0},
+		{Name: "last_attempt_at", Type: field.TypeTime},
+	}
+	// AuthAttemptsTable holds the schema information for the "auth_attempts" table.
+	AuthAttemptsTable = &schema.Table{
+		Name:       "auth_attempts",
+		Columns:    AuthAttemptsColumns,
+		PrimaryKey: []*schema.Column{AuthAttemptsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "authattempt_email_kind",
+				Unique:  true,
+				Columns: []*schema.Column{AuthAttemptsColumns[3], AuthAttemptsColumns[4]},
+			},
+			{
+				Name:    "authattempt_last_attempt_at",
+				Unique:  false,
+				Columns: []*schema.Column{AuthAttemptsColumns[6]},
+			},
+		},
+	}
 	// AutomationsColumns holds the columns for the "automations" table.
 	AutomationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -905,6 +933,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
+		AuthAttemptsTable,
 		AutomationsTable,
 		AutomationRunsTable,
 		BroadcastsTable,
@@ -937,6 +966,9 @@ func init() {
 	APITokensTable.ForeignKeys[0].RefTable = WorkspacesTable
 	APITokensTable.Annotation = &entsql.Annotation{
 		Table: "api_tokens",
+	}
+	AuthAttemptsTable.Annotation = &entsql.Annotation{
+		Table: "auth_attempts",
 	}
 	AutomationsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	AutomationsTable.Annotation = &entsql.Annotation{

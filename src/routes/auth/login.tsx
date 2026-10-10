@@ -7,8 +7,9 @@ import { useTranslation } from 'react-i18next'
 
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
+import { useApiErrorMessage } from '../../hooks/useApiErrorMessage.ts'
 import { forgotPasswordRoute, indexRoute, registerRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getRetryAfterSeconds, isRateLimitedError } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -16,6 +17,18 @@ export function LoginPage() {
   const router = useRouter()
   // Set when a guard (e.g. the OAuth consent screen) sent the user here to sign in.
   const { redirect } = useSearch({ strict: false })
+
+  const apiErrorMessage = useApiErrorMessage()
+
+  // How long to wait, when the throttle says so (ADR 0018): whole minutes from a
+  // minute up, seconds below.
+  const rateLimitMessage = (error: unknown) => {
+    const seconds = getRetryAfterSeconds(error)
+    if (!isRateLimitedError(error) || seconds === undefined) return undefined
+    return seconds >= 60
+      ? t(($) => $.login.rateLimitedMinutes, { count: Math.ceil(seconds / 60) })
+      : t(($) => $.login.rateLimitedSeconds, { count: seconds })
+  }
 
   const form = useForm<SiteDirectLoginInput>({
     initialValues: {
@@ -33,10 +46,12 @@ export function LoginPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.login.errorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.login.errorMessage),
-        ),
+        message:
+          rateLimitMessage(error) ??
+          apiErrorMessage(
+            error,
+            t(($) => $.login.errorMessage),
+          ),
       })
     },
   })
