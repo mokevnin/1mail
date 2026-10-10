@@ -16,6 +16,7 @@ type Contact struct {
 func (Contact) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "contacts"},
+		Audited{Action: "contact", NamesOnly: true},
 	}
 }
 

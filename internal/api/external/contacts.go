@@ -172,7 +172,10 @@ func (h *Handlers) ContactsBatchUpsert(ctx context.Context, req *externalapi.Ups
 			items[i].CustomFields = convert.RawMap(v)
 		}
 	}
-	outcomes := h.contacts.UpsertBatch(ctx, auth.TokenScoped(ctx), items)
+	outcomes, err := h.contacts.UpsertBatch(ctx, auth.TokenScoped(ctx), items)
+	if err != nil {
+		return nil, err
+	}
 
 	results := make([]externalapi.ContactBatchItemResult, len(outcomes))
 	for i, o := range outcomes {

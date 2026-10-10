@@ -105,7 +105,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 		ErrorHandler: &errorHandler{logger: logger},
 		// OTel spans + metrics per job insert/work, via the global providers set
 		// by telemetry.Setup (a no-op when telemetry is disabled, e.g. tests).
-		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
+		Middleware:   []rivertype.Middleware{otelriver.NewMiddleware(nil)},
 		PeriodicJobs: periodic,
 	})
 	if err != nil {
