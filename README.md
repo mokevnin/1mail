@@ -178,38 +178,10 @@ Two options:
 
 ### Configuration
 
-Configuration is read from the environment (and, if present, `.env` files).
-
-| Variable                                                            | Default                  | Description                                                                                                                                                                               |
-| ------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                      | — (**required**)         | PostgreSQL connection string                                                                                                                                                              |
-| `PORT`                                                              | `3000`                   | HTTP listen port                                                                                                                                                                          |
-| `APP_URL`                                                           | `http://localhost:3000`  | Public base URL (auth token issuance)                                                                                                                                                     |
-| `AUTO_MIGRATE`                                                      | `false`                  | Apply embedded migrations on startup                                                                                                                                                      |
-| `JWT_SECRET`                                                        | — (**required in prod**) | JWT signing secret; required outside development                                                                                                                                          |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025`         | Outbound email                                                                                                                                                                            |
-| `CORS_ORIGINS`                                                      | —                        | Origins allowed credentialed CORS on the cookie API (`/site`, `/auth`); empty = same-origin only                                                                                          |
-| `MAX_BODY_BYTES`                                                    | `1048576`                | Largest accepted request body in bytes on every surface except `/collect`; larger bodies get `413`                                                                                        |
-| `COLLECT_MAX_BODY_BYTES` / `COLLECT_MAX_EVENT_BYTES`                | `512000` / `32768`       | Largest `/collect` batch (`POST /collect/events`) and largest single event (an identify body, or each event in a batch); larger gets `413`                                                |
-| `RATE_LIMIT_HUMAN_PER_MINUTE`                                       | `60`                     | Requests per minute per IP and endpoint on signup, invitation accept and consent confirm; over it `429` with `Retry-After`; `0` disables                                                  |
-| `RATE_LIMIT_API_BURST_PER_SECOND`                                   | `20`                     | Requests per second per Workspace on `/api` and `/mcp` (one shared budget); over it `429` with `Retry-After`; `0` disables                                                                |
-| `RATE_LIMIT_API_PER_MINUTE`                                         | `600`                    | Requests per minute per Workspace on `/api` and `/mcp`, stacked on the burst limit; `0` disables                                                                                          |
-| `RATE_LIMIT_FAILED_AUTH_PER_MINUTE`                                 | `30`                     | Failed bearer-token authentications per minute per IP; over it `429`; successful ones are not counted; `0` disables                                                                       |
-| `RATE_LIMIT_TRACKING_PER_MINUTE`                                    | `600`                    | Open and click events recorded per minute per IP; over it the redirect or pixel is still served and only the recording is skipped (never a `429`); `0` disables                           |
-| `RATE_LIMIT_LOGIN_FAILURES`                                         | `5`                      | Failed logins per account within 15 minutes before login answers `429` with `Retry-After` and a doubling delay (1 s up to 15 min, no lockout), even for a correct password; `0` disables. |
-| `RATE_LIMIT_LOGIN_IP_PER_MINUTE`                                    | `20`                     | Login requests per minute per client IP; over it `429` with `Retry-After`; `0` disables.                                                                                                  |
-| `RATE_LIMIT_COLLECT_PER_MINUTE`                                     | `6000`                   | Requests per minute per Workspace on `/collect` (its own budget, apart from `/api`); over it `429` with `Retry-After`; `0` disables                                                       |
-| `RATE_LIMIT_COLLECT_IP_PER_MINUTE`                                  | `300`                    | Requests per minute per client IP on `/collect`; over it `429` with `Retry-After`; `0` disables                                                                                           |
-| `RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR`                   | `3`                      | Password-reset mails sent per address per hour; over it forgot-password still answers `202` and sends nothing (the answer never reveals whether the account exists); `0` disables.        |
-| `RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR`                            | `10`                     | Forgot-password requests per client IP per hour; over it `429` with `Retry-After`; `0` disables.                                                                                          |
-| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | `7`                      | Minimum age in days before a consumed domain-event outbox row is pruned (ADR 0019)                                                                                                        |
-| `EVENTS_RETENTION_DAYS`                                             | `400`                    | Age in days after which analytical Events are deleted daily at 03:00 UTC; `0` disables. Evidentiary Events are kept (ADR 0019)                                                            |
-
-`COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
-external-API bootstrap token).
-
-For deploying 1mail yourself (Docker or single binary, full env-var reference, migrations,
-health checks), see [`docs/self-hosting.md`](docs/self-hosting.md).
+Configuration is read from the environment (and, if present, `.env` files). Every variable, its
+default and its meaning are listed in [`docs/self-hosting.md`](docs/self-hosting.md), the one
+place to add a new one; it also covers deploying with Docker or the single binary, migrations
+and health checks.
 
 ## License
 

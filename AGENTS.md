@@ -224,6 +224,8 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
   commitlint runs on every commit, merge commits included: write `chore: merge <what>`, never
   `Merge branch …`; the header fits 120 characters and each body line 100.
+- A new environment variable gets one row in the env table of `docs/self-hosting.md`, the only
+  table (`mise run check:env`); the README links to it.
 - ADR numbers are unique (`mise run check:adr`). Take the next free number when you add an ADR,
   and re-check after merging `main`: parallel branches pick the same one.
 - After changing TypeSpec or `ent/schema`, run `mise run generate` and commit the generated output.
