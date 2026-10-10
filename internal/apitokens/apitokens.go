@@ -7,7 +7,7 @@
 //
 // OAuth issuing (internal/oauthserver) keeps its own flow: its scopes are fixed by
 // the consent screen, and it only shares the credential generators in
-// internal/service.
+// internal/credentials.
 package apitokens
 
 import (
@@ -20,7 +20,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/credentials"
 )
 
 var (
@@ -64,15 +64,15 @@ func Mint(ctx context.Context, s *ent.Scoped, in Input) (Minted, error) {
 		}
 	}
 
-	prefix, err := service.GenerateTokenPrefix()
+	prefix, err := credentials.GenerateTokenPrefix()
 	if err != nil {
 		return Minted{}, err
 	}
-	secret, err := service.GenerateTokenSecret()
+	secret, err := credentials.GenerateTokenSecret()
 	if err != nil {
 		return Minted{}, err
 	}
-	hash, err := service.HashTokenSecret(secret)
+	hash, err := credentials.HashTokenSecret(secret)
 	if err != nil {
 		return Minted{}, err
 	}
@@ -89,7 +89,7 @@ func Mint(ctx context.Context, s *ent.Scoped, in Input) (Minted, error) {
 	if err != nil {
 		return Minted{}, err
 	}
-	return Minted{Token: token, Value: service.TokenValue(prefix, secret)}, nil
+	return Minted{Token: token, Value: credentials.TokenValue(prefix, secret)}, nil
 }
 
 // MintWithin is Mint for a token acting as minter: every requested scope must be

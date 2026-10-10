@@ -1,20 +1,26 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteBroadcastsDeleteData,
-  SiteBroadcastsListData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteBroadcastsDelete,
+  handleSiteBroadcastsList,
+} from '../../generated/site/msw.gen.ts'
 import { broadcastsRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { BroadcastsListPage } from './list.tsx'
 
-const SLUG = { slug: 'test' }
-const LIST_ROUTE = routeMount(broadcastsRoute, SLUG)
+const LIST_ROUTE = routeMount(broadcastsRoute, { slug: 'test' })
 
 const STATS = { recipientsTotal: 120, openedCount: 45 }
-const DRAFT = { id: '1', name: 'Spring launch', status: 'draft', stats: STATS }
+const DRAFT = {
+  id: '1',
+  name: 'Spring launch',
+  status: 'draft',
+  stats: STATS,
+}
 const HELD = {
   id: '2',
   name: 'Autumn digest',
@@ -23,12 +29,10 @@ const HELD = {
   stats: STATS,
 }
 
-function listRoute(respond: () => Response) {
-  return route<SiteBroadcastsListData>('GET', '/workspaces/{slug}/broadcasts', SLUG, respond)
-}
-
 test('lists broadcasts with status, hold badge and counters', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [DRAFT, HELD], totalItems: 2 }))])
+  worker.use(
+    handleSiteBroadcastsList(() => HttpResponse.json({ items: [DRAFT, HELD], totalItems: 2 })),
+  )
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
 
@@ -41,7 +45,7 @@ test('lists broadcasts with status, hold badge and counters', async () => {
 })
 
 test('shows the empty state when there are no broadcasts', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteBroadcastsList(() => HttpResponse.json({ items: [], totalItems: 0 })))
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
 
@@ -49,7 +53,7 @@ test('shows the empty state when there are no broadcasts', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }))])
+  worker.use(handleSiteBroadcastsList(() => problem(500)))
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
 
@@ -57,16 +61,18 @@ test('shows an error alert when the list fails to load', async () => {
 })
 
 test('New broadcast navigates to the create page', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteBroadcastsList(() => HttpResponse.json({ items: [], totalItems: 0 })))
 
   const { screen, navigate } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'New broadcast' }).click()
 
-  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ params: SLUG }))
+  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ params: { slug: 'test' } }))
 })
 
 test('Report and Edit navigate with the broadcast id; Edit is only enabled for drafts', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [DRAFT, HELD], totalItems: 2 }))])
+  worker.use(
+    handleSiteBroadcastsList(() => HttpResponse.json({ items: [DRAFT, HELD], totalItems: 2 })),
+  )
 
   const { screen, navigate } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Spring launch')).toBeInTheDocument()
@@ -88,21 +94,16 @@ test('Report and Edit navigate with the broadcast id; Edit is only enabled for d
 test('deleting a broadcast asks for confirmation, deletes it and refreshes the list', async () => {
   const deleted: string[] = []
   let listFetches = 0
-  mockClientRoutes([
-    listRoute(() => {
+  worker.use(
+    handleSiteBroadcastsList(() => {
       listFetches++
-      return jsonResponse({ items: deleted.length ? [HELD] : [DRAFT, HELD], totalItems: 2 })
+      return HttpResponse.json({ items: deleted.length ? [HELD] : [DRAFT, HELD], totalItems: 2 })
     }),
-    route<SiteBroadcastsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/broadcasts/{id}',
-      { ...SLUG, id: '1' },
-      () => {
-        deleted.push('1')
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteBroadcastsDelete(({ params }) => {
+      deleted.push(params.id)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Spring launch')).toBeInTheDocument()
@@ -119,12 +120,12 @@ test('deleting a broadcast asks for confirmation, deletes it and refreshes the l
 
 test('changing the page requests page 2 of the broadcasts', async () => {
   const pages: (string | null)[] = []
-  mockClientRoutes([
-    route<SiteBroadcastsListData>('GET', '/workspaces/{slug}/broadcasts', SLUG, (req) => {
-      pages.push(new URL(req.url).searchParams.get('page'))
-      return jsonResponse({ items: [DRAFT], totalItems: 25 })
+  worker.use(
+    handleSiteBroadcastsList(({ request }) => {
+      pages.push(new URL(request.url).searchParams.get('page'))
+      return HttpResponse.json({ items: [DRAFT], totalItems: 25 })
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Spring launch')).toBeInTheDocument()
@@ -134,15 +135,10 @@ test('changing the page requests page 2 of the broadcasts', async () => {
 })
 
 test('a failed delete shows the error toast and keeps the broadcast', async () => {
-  mockClientRoutes([
-    listRoute(() => jsonResponse({ items: [DRAFT], totalItems: 1 })),
-    route<SiteBroadcastsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/broadcasts/{id}',
-      { ...SLUG, id: '1' },
-      () => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }),
-    ),
-  ])
+  worker.use(
+    handleSiteBroadcastsList(() => HttpResponse.json({ items: [DRAFT], totalItems: 1 })),
+    handleSiteBroadcastsDelete(() => problem(500)),
+  )
 
   const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'Delete' }).first().click()

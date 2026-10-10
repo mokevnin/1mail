@@ -309,6 +309,18 @@ const (
 	EventRecentAnalyticalEmail = "old310@example.com"
 	// EventRecentAnalyticalID is from fixtures/events.
 	EventRecentAnalyticalID = 310
+	// EventTieFirstAction is from fixtures/events.
+	EventTieFirstAction = "tie_probe"
+	// EventTieFirstEmail is from fixtures/events.
+	EventTieFirstEmail = "tie@example.com"
+	// EventTieFirstID is from fixtures/events.
+	EventTieFirstID = 990
+	// EventTieSecondAction is from fixtures/events.
+	EventTieSecondAction = "tie_probe"
+	// EventTieSecondEmail is from fixtures/events.
+	EventTieSecondEmail = "tie@example.com"
+	// EventTieSecondID is from fixtures/events.
+	EventTieSecondID = 991
 	// FreshLoginAttemptEmail is from fixtures/auth_attempts.
 	FreshLoginAttemptEmail = "fresh@attempts.test"
 	// FreshLoginAttemptID is from fixtures/auth_attempts.
@@ -350,19 +362,59 @@ const (
 	// GlobexOwnerMembershipID is from fixtures/memberships.
 	GlobexOwnerMembershipID = 2
 	// GlobexSamMembershipID is from fixtures/memberships.
-	GlobexSamMembershipID = 5
+	GlobexSamMembershipID = 9
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// InitechAdminAdaEmail is from fixtures/users.
+	InitechAdminAdaEmail = "ada@initech.test"
+	// InitechAdminAdaID is from fixtures/users.
+	InitechAdminAdaID = 7
+	// InitechAdminAdaName is from fixtures/users.
+	InitechAdminAdaName = "Ada"
+	// InitechAdminAdaPassword is from fixtures/users.
+	InitechAdminAdaPassword = "ada-test-password"
+	// InitechAdminMembershipID is from fixtures/memberships.
+	InitechAdminMembershipID = 7
+	// InitechCoOwnerMembershipID is from fixtures/memberships.
+	InitechCoOwnerMembershipID = 6
+	// InitechCoOwnerOwenEmail is from fixtures/users.
+	InitechCoOwnerOwenEmail = "owen@initech.test"
+	// InitechCoOwnerOwenID is from fixtures/users.
+	InitechCoOwnerOwenID = 6
+	// InitechCoOwnerOwenName is from fixtures/users.
+	InitechCoOwnerOwenName = "Owen"
+	// InitechCoOwnerOwenPassword is from fixtures/users.
+	InitechCoOwnerOwenPassword = "owen-test-password"
 	// InitechCollectKey is from fixtures/workspaces.
 	InitechCollectKey = "omck_test_initech_collect_key"
 	// InitechID is from fixtures/workspaces.
 	InitechID = 3
 	// InitechIngestKey is from fixtures/workspaces.
 	InitechIngestKey = "omik_test_initech_ingest_key"
+	// InitechMemberMaxEmail is from fixtures/users.
+	InitechMemberMaxEmail = "max@initech.test"
+	// InitechMemberMaxID is from fixtures/users.
+	InitechMemberMaxID = 8
+	// InitechMemberMaxName is from fixtures/users.
+	InitechMemberMaxName = "Max"
+	// InitechMemberMaxPassword is from fixtures/users.
+	InitechMemberMaxPassword = "max-test-password"
+	// InitechMemberMembershipID is from fixtures/memberships.
+	InitechMemberMembershipID = 8
 	// InitechName is from fixtures/workspaces.
 	InitechName = "Initech"
+	// InitechOwnerMembershipID is from fixtures/memberships.
+	InitechOwnerMembershipID = 5
+	// InitechOwnerOlgaEmail is from fixtures/users.
+	InitechOwnerOlgaEmail = "olga@initech.test"
+	// InitechOwnerOlgaID is from fixtures/users.
+	InitechOwnerOlgaID = 5
+	// InitechOwnerOlgaName is from fixtures/users.
+	InitechOwnerOlgaName = "Olga"
+	// InitechOwnerOlgaPassword is from fixtures/users.
+	InitechOwnerOlgaPassword = "olga-test-password"
 	// InitechRitaMembershipID is from fixtures/memberships.
-	InitechRitaMembershipID = 9
+	InitechRitaMembershipID = 13
 	// InitechSlug is from fixtures/workspaces.
 	InitechSlug = "initech"
 	// IntegrationAcmeDefaultID is from fixtures/integrations.
@@ -436,7 +488,7 @@ const (
 	// SecondFactorSamEmail is from fixtures/users.
 	SecondFactorSamEmail = "sam@globex.test"
 	// SecondFactorSamID is from fixtures/users.
-	SecondFactorSamID = 5
+	SecondFactorSamID = 9
 	// SecondFactorSamName is from fixtures/users.
 	SecondFactorSamName = "Sam"
 	// SecondFactorSamPassword is from fixtures/users.
@@ -538,7 +590,7 @@ const (
 	// UmbrellaMemberNinaEmail is from fixtures/users.
 	UmbrellaMemberNinaEmail = "nina@umbrella.test"
 	// UmbrellaMemberNinaID is from fixtures/users.
-	UmbrellaMemberNinaID = 7
+	UmbrellaMemberNinaID = 11
 	// UmbrellaMemberNinaName is from fixtures/users.
 	UmbrellaMemberNinaName = "Nina"
 	// UmbrellaMemberNinaPassword is from fixtures/users.
@@ -546,19 +598,19 @@ const (
 	// UmbrellaName is from fixtures/workspaces.
 	UmbrellaName = "Umbrella"
 	// UmbrellaNinaMembershipID is from fixtures/memberships.
-	UmbrellaNinaMembershipID = 7
+	UmbrellaNinaMembershipID = 11
 	// UmbrellaOwnerRitaEmail is from fixtures/users.
 	UmbrellaOwnerRitaEmail = "rita@umbrella.test"
 	// UmbrellaOwnerRitaID is from fixtures/users.
-	UmbrellaOwnerRitaID = 6
+	UmbrellaOwnerRitaID = 10
 	// UmbrellaOwnerRitaName is from fixtures/users.
 	UmbrellaOwnerRitaName = "Rita"
 	// UmbrellaOwnerRitaPassword is from fixtures/users.
 	UmbrellaOwnerRitaPassword = "rita-test-password"
 	// UmbrellaRitaMembershipID is from fixtures/memberships.
-	UmbrellaRitaMembershipID = 6
+	UmbrellaRitaMembershipID = 10
 	// UmbrellaSamMembershipID is from fixtures/memberships.
-	UmbrellaSamMembershipID = 8
+	UmbrellaSamMembershipID = 12
 	// UmbrellaSlug is from fixtures/workspaces.
 	UmbrellaSlug = "umbrella"
 	// UnsubscribeErasableDestination is from fixtures/unsubscribes.
@@ -575,6 +627,10 @@ const (
 	VisitorErasableID = 300
 	// VisitorGlobexID is from fixtures/visitors.
 	VisitorGlobexID = 900
+	// WebhookCodebasicsDisabledID is from fixtures/webhook_endpoints.
+	WebhookCodebasicsDisabledID = 101
+	// WebhookCodebasicsDisabledURL is from fixtures/webhook_endpoints.
+	WebhookCodebasicsDisabledURL = "https://hooks.codebasics.dev/disabled"
 	// WebhookCodebasicsID is from fixtures/webhook_endpoints.
 	WebhookCodebasicsID = 100
 	// WebhookCodebasicsURL is from fixtures/webhook_endpoints.

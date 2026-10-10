@@ -1,10 +1,8 @@
-package service
+package credentials
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"math/big"
-	"net/url"
 	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
@@ -61,24 +59,6 @@ func GenerateIngestKey() (string, error) {
 		return "", err
 	}
 	return ingestKeyPrefix + "_" + secret, nil
-}
-
-// GenerateWebhookSecret returns a Standard Webhooks signing secret: the
-// "whsec_" prefix plus base64 random bytes, the format the standard-webhooks
-// library expects (it base64-decodes the part after the prefix).
-func GenerateWebhookSecret() (string, error) {
-	b := make([]byte, 24)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return "whsec_" + base64.StdEncoding.EncodeToString(b), nil
-}
-
-// ValidWebhookURL accepts only absolute http(s) URLs. (Network-level SSRF
-// defenses live in the delivery worker, which dials the resolved IP.)
-func ValidWebhookURL(raw string) bool {
-	u, err := url.Parse(raw)
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 func HashTokenSecret(secret string) (string, error) {

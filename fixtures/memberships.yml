@@ -28,38 +28,63 @@
   role: member
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
-# Sam (with a Second factor) is a member of Globex.
-- id: 5 # fixture: GlobexSamMembership
+# Initech's roster (users 5-8): two owners, an admin and a member, for the Role invariant tests.
+- id: 5 # fixture: InitechOwnerMembership
   user_id: 5
+  workspace_id: 3
+  role: owner
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 6 # fixture: InitechCoOwnerMembership
+  user_id: 6
+  workspace_id: 3
+  role: owner
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 7 # fixture: InitechAdminMembership
+  user_id: 7
+  workspace_id: 3
+  role: admin
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 8 # fixture: InitechMemberMembership
+  user_id: 8
+  workspace_id: 3
+  role: member
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+# Sam (with a Second factor) is a member of Globex.
+- id: 9 # fixture: GlobexSamMembership
+  user_id: 9
   workspace_id: 2
   role: member
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
 # Umbrella (workspace 4) has a Two-factor requirement since 2026-03-01.
 # Rita's Membership predates it: her grace ends 7 days after the requirement's start.
-- id: 6 # fixture: UmbrellaRitaMembership
-  user_id: 6
+- id: 10 # fixture: UmbrellaRitaMembership
+  user_id: 10
   workspace_id: 4
   role: owner
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
 # Nina joined after the requirement started: her grace ends 7 days after joining.
-- id: 7 # fixture: UmbrellaNinaMembership
-  user_id: 7
+- id: 11 # fixture: UmbrellaNinaMembership
+  user_id: 11
   workspace_id: 4
   role: member
   created_at: '2026-03-05 00:00:00'
   updated_at: '2026-03-05 00:00:00'
 # Sam's one Second factor satisfies Umbrella too.
-- id: 8 # fixture: UmbrellaSamMembership
-  user_id: 5
+- id: 12 # fixture: UmbrellaSamMembership
+  user_id: 9
   workspace_id: 4
   role: admin
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
 # Rita in a Workspace without a requirement: it stays reachable while Umbrella is blocked.
-- id: 9 # fixture: InitechRitaMembership
-  user_id: 6
+- id: 13 # fixture: InitechRitaMembership
+  user_id: 10
   workspace_id: 3
   role: member
   created_at: '2026-01-01 00:00:00'

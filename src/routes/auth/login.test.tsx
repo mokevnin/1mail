@@ -1,9 +1,11 @@
 import { notifications } from '@mantine/notifications'
+import { HttpResponse } from 'msw'
 import { afterEach, expect, test } from 'vitest'
 
-import type { SiteAuthLoginData, SiteAuthSecondFactorData } from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientFetch, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { handleSiteAuthLogin, handleSiteAuthSecondFactor } from '../../generated/site/msw.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { LoginPage } from './login.tsx'
 
 // Toasts live in a global store and would cover the form's buttons in the next test.
@@ -12,7 +14,7 @@ afterEach(() => {
 })
 
 test('navigates home after a successful login', async () => {
-  mockClientFetch(() => jsonResponse({}))
+  worker.use(handleSiteAuthLogin({ body: { outcome: 'session' } }))
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -24,7 +26,7 @@ test('navigates home after a successful login', async () => {
 })
 
 test('shows an error notification when login fails', async () => {
-  mockClientFetch(() => jsonResponse({ detail: 'Invalid credentials' }, { status: 401 }))
+  worker.use(handleSiteAuthLogin(() => problem(401, { detail: 'Invalid credentials' })))
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -37,7 +39,7 @@ test('shows an error notification when login fails', async () => {
 })
 
 test('shows how long to wait when login is rate limited', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 90 }, { status: 429 }))
+  worker.use(handleSiteAuthLogin(() => problem(429, { retryAfter: 90 })))
   const { screen } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -48,7 +50,7 @@ test('shows how long to wait when login is rate limited', async () => {
 })
 
 test('shows the wait in seconds when it is under a minute', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 4 }, { status: 429 }))
+  worker.use(handleSiteAuthLogin(() => problem(429, { retryAfter: 4 })))
   const { screen } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -60,15 +62,13 @@ test('shows the wait in seconds when it is under a minute', async () => {
 
 test('asks for the second step only when the login answers with a challenge', async () => {
   const secondStepBodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteAuthLoginData>('POST', '/auth/login', {}, () =>
-      jsonResponse({ outcome: 'challenge', challenge: 'signed-challenge' }),
-    ),
-    route<SiteAuthSecondFactorData>('POST', '/auth/second-factor', {}, async (req) => {
-      secondStepBodies.push(await req.json())
-      return jsonResponse({ outcome: 'session' })
+  worker.use(
+    handleSiteAuthLogin({ body: { outcome: 'challenge', challenge: 'signed-challenge' } }),
+    handleSiteAuthSecondFactor(async ({ request }) => {
+      secondStepBodies.push(await request.json())
+      return HttpResponse.json({ outcome: 'session' })
     }),
-  ])
+  )
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('sam@example.com')
@@ -84,9 +84,7 @@ test('asks for the second step only when the login answers with a challenge', as
 })
 
 test('a session outcome skips the second step', async () => {
-  mockClientRoutes([
-    route<SiteAuthLoginData>('POST', '/auth/login', {}, () => jsonResponse({ outcome: 'session' })),
-  ])
+  worker.use(handleSiteAuthLogin({ body: { outcome: 'session' } }))
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -98,14 +96,10 @@ test('a session outcome skips the second step', async () => {
 })
 
 test('shows an error and stays on the second step when the code is wrong', async () => {
-  mockClientRoutes([
-    route<SiteAuthLoginData>('POST', '/auth/login', {}, () =>
-      jsonResponse({ outcome: 'challenge', challenge: 'signed-challenge' }),
-    ),
-    route<SiteAuthSecondFactorData>('POST', '/auth/second-factor', {}, () =>
-      jsonResponse({ detail: 'the code is not valid' }, { status: 401 }),
-    ),
-  ])
+  worker.use(
+    handleSiteAuthLogin({ body: { outcome: 'challenge', challenge: 'signed-challenge' } }),
+    handleSiteAuthSecondFactor(() => problem(401, { detail: 'the code is not valid' })),
+  )
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('sam@example.com')

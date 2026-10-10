@@ -3,8 +3,6 @@ package events_test
 import (
 	"context"
 	"database/sql"
-	"slices"
-	"sync"
 	"testing"
 	"time"
 
@@ -21,48 +19,6 @@ import (
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
-
-type recordingEnroller struct {
-	mu    sync.Mutex
-	calls []string
-}
-
-func (r *recordingEnroller) OnEvent(_ context.Context, _, _ int64, action string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.calls = append(r.calls, action)
-	return nil
-}
-
-func (r *recordingEnroller) count() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return len(r.calls)
-}
-
-type recordingDispatcher struct {
-	mu    sync.Mutex
-	names []string
-}
-
-func (r *recordingDispatcher) snapshot() []string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return slices.Clone(r.names)
-}
-
-func (r *recordingDispatcher) Dispatch(_ context.Context, _ *ent.Scoped, name, _ string, _ []byte) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.names = append(r.names, name)
-	return nil
-}
-
-func (r *recordingDispatcher) count() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return len(r.names)
-}
 
 // RegisterSubscribers wires the four consumers onto one router; a published hard
 // bounce reaches every one of them. It runs against the real DB (the router reads
@@ -90,7 +46,8 @@ func TestRegisterSubscribersFansEveryEventOutToAllConsumers(t *testing.T) {
 	router, err := events.NewRouter()
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = router.Close() })
-	enroller, dispatcher := &recordingEnroller{}, &recordingDispatcher{}
+	enroller := &EnrollerMock{OnEventFunc: func(context.Context, int64, int64, string) error { return nil }}
+	dispatcher := &WebhookDispatcherMock{DispatchFunc: func(context.Context, *ent.Scoped, string, string, []byte) error { return nil }}
 	require.NoError(t, events.RegisterSubscribers(router, sqlDB, client, enroller, dispatcher))
 
 	runCtx, cancel := context.WithCancel(ctx)
@@ -108,9 +65,11 @@ func TestRegisterSubscribersFansEveryEventOutToAllConsumers(t *testing.T) {
 	require.Eventually(t, func() bool {
 		persisted, _ := client.Event.Query().Where(event.SubjectID(dest)).Exist(ctx)
 		suppressed, _ := client.Suppression.Query().Where(suppression.Destination(dest)).Exist(ctx)
-		return persisted && suppressed && enroller.count() >= 1 && dispatcher.count() >= 1
+		return persisted && suppressed && len(enroller.OnEventCalls()) >= 1 && len(dispatcher.DispatchCalls()) >= 1
 	}, 15*time.Second, 50*time.Millisecond, "persist, suppression, automations and webhooks must all see the event")
 	// Delivery is at-least-once: a serialization failure while acking redelivers the
 	// message, so a consumer may see it more than once, never a different event.
-	assert.Subset(t, []string{events.NameEmailBounced}, dispatcher.snapshot())
+	for _, c := range dispatcher.DispatchCalls() {
+		assert.Equal(t, events.NameEmailBounced, c.EventName)
+	}
 }

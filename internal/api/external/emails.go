@@ -10,13 +10,13 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/templates"
 )
 
 // EmailsSend is the transactional send surface (ADR 0005): a single-recipient
@@ -50,8 +50,8 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		return &res, nil
 	}
 	// Workspace-scoped: another workspace's template id must 404, never send.
-	tmpl, err := auth.TokenScoped(ctx).EmailTemplate().Get(ctx, templateID)
-	if ent.IsNotFound(err) {
+	tmpl, err := h.templates.Get(ctx, auth.TokenScoped(ctx), templateID)
+	if errors.Is(err, templates.ErrNotFound) {
 		res := externalapi.EmailsSendNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
 	}
@@ -67,7 +67,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 
 	// The contact this destination resolves to, when one exists (transactional mail
 	// may go to an address with no contact); the send fact attaches to it.
-	contactID, err := service.ResolveContactID(ctx, auth.TokenScoped(ctx), "", &dest, nil)
+	contactID, err := contacts.ResolveID(ctx, auth.TokenScoped(ctx), "", &dest, nil)
 	if err != nil {
 		return nil, err
 	}

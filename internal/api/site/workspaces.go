@@ -8,6 +8,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/secondfactor"
@@ -68,7 +69,7 @@ func (h *Handlers) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(m.Role) {
+	if !accounts.CanManageSecondFactor(m.Role) {
 		v := siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden(problem(http.StatusForbidden, "only owners and admins can change the two-factor requirement"))
 		return &v, nil
 	}

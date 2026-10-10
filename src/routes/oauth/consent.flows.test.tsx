@@ -1,12 +1,14 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteOAuthDecideData,
-  SiteOAuthDescribeData,
-  SiteWorkspacesListData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteOAuthDecide,
+  handleSiteOAuthDescribe,
+  handleSiteWorkspacesList,
+} from '../../generated/site/msw.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { OAuthConsent } from './consent.tsx'
 
 const request = {
@@ -24,32 +26,33 @@ const workspace = (slug: string, name: string) => ({
   collectKey: 'omck',
   ingestKey: 'omik',
   postalAddress: '',
+  role: 'owner' as const,
   createdAt: '2026-01-01T00:00:00Z',
 })
 
 function serve(
   workspaces: ReturnType<typeof workspace>[],
-  decide: (req: Request) => Response | Promise<Response>,
+  decide: Parameters<typeof handleSiteOAuthDecide>[0],
 ) {
-  mockClientRoutes([
-    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse(workspaces)),
-    route<SiteOAuthDescribeData>('GET', '/oauth/authorization', {}, () =>
-      jsonResponse({
+  worker.use(
+    handleSiteWorkspacesList({ body: workspaces }),
+    handleSiteOAuthDescribe({
+      body: {
         clientName: 'Fixture Connector',
         redirectUri: request.redirectUri,
         scopes: ['contacts:read'],
         sendScopes: [],
-      }),
-    ),
-    route<SiteOAuthDecideData>('POST', '/oauth/authorization', {}, decide),
-  ])
+      },
+    }),
+    handleSiteOAuthDecide(decide),
+  )
 }
 
 test('the decision targets the workspace the user picked', async () => {
   const slugs: string[] = []
-  serve([workspace('acme', 'Acme'), workspace('beta', 'Beta')], async (req) => {
+  serve([workspace('acme', 'Acme'), workspace('beta', 'Beta')], async ({ request: req }) => {
     slugs.push((await req.json()).workspaceSlug)
-    return jsonResponse({ redirectUrl: '#done' })
+    return HttpResponse.json({ redirectUrl: '#done' })
   })
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
@@ -64,7 +67,7 @@ test('without a workspace the user cannot approve or deny', async () => {
   let decided = false
   serve([], () => {
     decided = true
-    return jsonResponse({ redirectUrl: '#done' })
+    return HttpResponse.json({ redirectUrl: '#done' })
   })
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
@@ -75,9 +78,7 @@ test('without a workspace the user cannot approve or deny', async () => {
 })
 
 test('an unexpected failure is toasted with the API detail', async () => {
-  serve([workspace('acme', 'Acme')], () =>
-    jsonResponse({ status: 500, detail: 'the code store is down' }, { status: 500 }),
-  )
+  serve([workspace('acme', 'Acme')], () => problem(500, { detail: 'the code store is down' }))
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
   await screen.getByRole('button', { name: 'Allow access' }).click()

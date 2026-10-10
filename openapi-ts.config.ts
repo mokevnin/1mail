@@ -20,6 +20,7 @@ export default defineConfig([
         name: '@hey-api/typescript',
       },
       '@hey-api/client-fetch',
+      'msw',
       {
         name: '@hey-api/sdk',
         validator: { request: 'zod' },

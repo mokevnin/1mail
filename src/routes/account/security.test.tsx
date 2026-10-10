@@ -1,18 +1,22 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
+import {
+  handleSiteSecondFactorConfirmEnrollment,
+  handleSiteSecondFactorDisable,
+  handleSiteSecondFactorGetStatus,
+  handleSiteSecondFactorRegenerateRecoveryCodes,
+  handleSiteSecondFactorStartEnrollment,
+} from '../../generated/site/msw.gen.ts'
 import type {
-  SiteSecondFactorConfirmEnrollmentData,
-  SiteSecondFactorDisableData,
   SiteSecondFactorEnrollment,
-  SiteSecondFactorGetStatusData,
-  SiteSecondFactorRegenerateRecoveryCodesData,
-  SiteSecondFactorStartEnrollmentData,
   SiteSecondFactorStatus,
 } from '../../generated/site/types.gen.ts'
 import { securityRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { SecurityPage } from './security.tsx'
 
 type Op = 'start' | 'confirm' | 'regenerate' | 'disable'
@@ -42,44 +46,30 @@ function serveSecurity(
       calls.push({ op, body: text ? JSON.parse(text) : null })
       return (overrides[op] ?? fallback)(req)
     }
-  mockClientRoutes([
-    route<SiteSecondFactorGetStatusData>('GET', '/me/second-factor', {}, () =>
-      jsonResponse(status),
-    ),
-    route<SiteSecondFactorStartEnrollmentData>(
-      'POST',
-      '/me/second-factor/enrollment',
-      {},
+  worker.use(
+    handleSiteSecondFactorGetStatus(() => HttpResponse.json(status)),
+    handleSiteSecondFactorStartEnrollment(({ request }) =>
       serve('start', () => {
         status = { enabled: false, pending: true, recoveryCodesRemaining: 0 }
-        return jsonResponse(enrollment)
-      }),
+        return HttpResponse.json(enrollment)
+      })(request),
     ),
-    route<SiteSecondFactorConfirmEnrollmentData>(
-      'POST',
-      '/me/second-factor/enrollment/confirm',
-      {},
+    handleSiteSecondFactorConfirmEnrollment(({ request }) =>
       serve('confirm', () => {
         status = { enabled: true, pending: false, recoveryCodesRemaining: codes.length }
-        return jsonResponse({ codes })
-      }),
+        return HttpResponse.json({ codes })
+      })(request),
     ),
-    route<SiteSecondFactorRegenerateRecoveryCodesData>(
-      'POST',
-      '/me/second-factor/recovery-codes',
-      {},
-      serve('regenerate', () => jsonResponse({ codes })),
+    handleSiteSecondFactorRegenerateRecoveryCodes(({ request }) =>
+      serve('regenerate', () => HttpResponse.json({ codes }))(request),
     ),
-    route<SiteSecondFactorDisableData>(
-      'POST',
-      '/me/second-factor/disable',
-      {},
+    handleSiteSecondFactorDisable(({ request }) =>
       serve('disable', () => {
         status = { enabled: false, pending: false, recoveryCodesRemaining: 0 }
-        return new Response(null, { status: 204 })
-      }),
+        return new HttpResponse(null, { status: 204 })
+      })(request),
     ),
-  ])
+  )
 }
 
 const off: SiteSecondFactorStatus = { enabled: false, pending: false, recoveryCodesRemaining: 0 }
@@ -121,7 +111,7 @@ test('enrolls an authenticator app and shows the recovery codes once', async () 
 
 test('reports a wrong confirmation code and keeps the setup open', async () => {
   serveSecurity([], off, {
-    confirm: () => jsonResponse({ status: 422, detail: 'the code is not valid' }, { status: 422 }),
+    confirm: () => problem(422, { detail: 'the code is not valid' }),
   })
   const { screen } = await renderPage()
 

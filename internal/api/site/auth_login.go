@@ -10,10 +10,10 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/secondfactor"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // SiteAuthLogin is the one route that starts a session (ADR 0020). It consults the
@@ -98,15 +98,15 @@ func (h *Handlers) checkPassword(ctx context.Context, email, password string) (u
 		return nil, false, err
 	}
 	if u == nil || u.PasswordHash == "" {
-		service.VerifyPassword(decoyHash(), password)
+		credentials.VerifyPassword(decoyHash(), password)
 		return nil, false, nil
 	}
-	return u, service.VerifyPassword(u.PasswordHash, password), nil
+	return u, credentials.VerifyPassword(u.PasswordHash, password), nil
 }
 
 // decoyHash is a real password hash nobody knows the password of, hashed once.
 var decoyHash = sync.OnceValue(func() string {
-	h, err := service.HashPassword("decoy password: no account matches")
+	h, err := credentials.HashPassword("decoy password: no account matches")
 	if err != nil {
 		return ""
 	}

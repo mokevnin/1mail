@@ -12,8 +12,8 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +65,7 @@ func (env *TestEnv) SiteAnonymous(t *testing.T) *siteapi.Client {
 // (scopes contacts, tokens and events, read and write).
 func (env *TestEnv) ExternalAnchor(t *testing.T) *externalapi.Client {
 	t.Helper()
-	return env.ExternalWithToken(t, service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret))
+	return env.ExternalWithToken(t, credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret))
 }
 
 // ExternalScoped returns an /api client bearing a fresh Acme token that has
@@ -86,18 +86,18 @@ func (env *TestEnv) ScopedBearer(t *testing.T, scopes ...string) string {
 // tests, e.g. fixtures.GlobexID).
 func (env *TestEnv) ScopedBearerFor(t *testing.T, workspaceID int64, scopes ...string) string {
 	t.Helper()
-	prefix, err := service.GenerateTokenPrefix()
+	prefix, err := credentials.GenerateTokenPrefix()
 	require.NoError(t, err)
-	secret, err := service.GenerateTokenSecret()
+	secret, err := credentials.GenerateTokenSecret()
 	require.NoError(t, err)
-	hash, err := service.HashTokenSecret(secret)
+	hash, err := credentials.HashTokenSecret(secret)
 	require.NoError(t, err)
 	_, err = env.DB.ApiToken.Create().
 		SetName("actor-token").SetPrefix(prefix).SetSecretHash(hash).SetScopes(scopes).
 		SetWorkspaceID(workspaceID).
 		Save(t.Context())
 	require.NoError(t, err)
-	return service.TokenValue(prefix, secret)
+	return credentials.TokenValue(prefix, secret)
 }
 
 // ExternalAnonymous returns an /api client carrying no credential.

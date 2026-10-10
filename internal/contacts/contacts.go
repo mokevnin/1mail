@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 // Alias key fields, as reported by ConflictError.Field.
@@ -353,6 +354,18 @@ func Resolve(ctx context.Context, s *ent.Scoped, subjectID, email, phone *string
 	return nil, nil
 }
 
+// ResolveID resolves an existing Contact by any present alias key (subject_id
+// → email → phone) and returns its id, or 0 if none matches. It never creates a
+// Contact — used by event ingest to attach an event to a Contact by stable identity
+// when one already exists, leaving it anonymous (0) otherwise.
+func ResolveID(ctx context.Context, s *ent.Scoped, subjectID string, email, phone *string) (int64, error) {
+	c, err := Resolve(ctx, s, &subjectID, email, phone)
+	if err != nil || c == nil {
+		return 0, err
+	}
+	return c.ID, nil
+}
+
 func publishCreated(ctx context.Context, pub events.Publisher, workspaceID int64, c *ent.Contact) error {
 	return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: workspaceID, ContactID: c.ID, Email: lo.FromPtr(c.Email)})
 }
@@ -393,4 +406,13 @@ func domainError(err error) error {
 		}
 	}
 	return err
+}
+
+// List returns one page of the Workspace's Contacts, ascending by id.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Contact], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.Contact().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Contact, error) {
+			return s.Contact().Query().Order(ent.Asc(contact.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }

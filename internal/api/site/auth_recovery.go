@@ -10,8 +10,9 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/credentials"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // Token lifetimes for the self-service account flows.
@@ -72,7 +73,7 @@ func (h *Handlers) SiteAuthResetPassword(ctx context.Context, req *siteapi.SiteR
 		v := problem(http.StatusBadRequest, i18n.T("errors.reset_link_invalid", nil))
 		return &v, nil
 	}
-	hash, err := service.HashPassword(req.Password)
+	hash, err := credentials.HashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,7 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 	// The new address was proven by clicking this link, so it is verified. The
 	// unique index also guards the race if the address was taken meanwhile.
 	err = h.accounts.ChangeEmail(ctx, uid, newEmail)
-	if service.IsUniqueViolation(err) {
+	if db.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthConfirmEmailChangeConflict(problem(http.StatusConflict, i18n.T("errors.email_in_use", nil)))
 		return &v, nil
 	}

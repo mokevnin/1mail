@@ -45,7 +45,7 @@ template funcs, both at minimum cost (production verify code reads the cost from
 stored hash). The generator lifts the quoted literal into `<Name>Password` /
 `<Name>Secret`, so `fixtures.OwnerJohnPassword`, `fixtures.AnchorTokenSecret` etc. can
 authenticate as that identity; the full token is
-`service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)`. Use them
+`credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)`. Use them
 only on annotated anchor rows, not dev tokens. The test values are plain constants in the
 generated file; gitleaks needs no allowlist for them.
 

@@ -2,9 +2,12 @@ package sending
 
 import (
 	"context"
-	"net"
+	"errors"
 	"strings"
 	"testing"
+
+	"github.com/foxcpp/go-mockdns"
+	"github.com/mokevnin/1mail/internal/dnstest"
 )
 
 func TestGenerateKeypairRoundTrip(t *testing.T) {
@@ -40,56 +43,69 @@ func TestDKIMRecordHost(t *testing.T) {
 	}
 }
 
-func stubLookup(records []string, err error) TXTLookup {
-	return func(_ context.Context, _ string) ([]string, error) {
-		return records, err
-	}
-}
+const dkimZone = "1mail._domainkey.mail.acme.com."
 
 func TestVerifyDKIM(t *testing.T) {
 	const pub = "v=DKIM1; k=rsa; p=MIIBIjANBgkqABC"
+	// A 2048-bit key outgrows one 255-byte TXT string; the server splits it and
+	// net.Resolver rejoins the chunks.
+	longPub := "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA" + strings.Repeat("abcdefghij", 40)
 
 	tests := []struct {
 		name    string
-		lookup  TXTLookup
+		zones   map[string]mockdns.Zone
+		expect  string
 		want    bool
 		wantErr bool
 	}{
 		{
 			name:   "exact match",
-			lookup: stubLookup([]string{pub}, nil),
+			zones:  map[string]mockdns.Zone{dkimZone: {TXT: []string{pub}}},
+			expect: pub,
 			want:   true,
 		},
 		{
 			name:   "match among several records",
-			lookup: stubLookup([]string{"v=spf1 -all", pub}, nil),
+			zones:  map[string]mockdns.Zone{dkimZone: {TXT: []string{"v=spf1 -all", pub}}},
+			expect: pub,
 			want:   true,
 		},
 		{
 			name:   "match despite interior whitespace in p=",
-			lookup: stubLookup([]string{"v=DKIM1; k=rsa; p=MIIBIjANBg kqABC"}, nil),
+			zones:  map[string]mockdns.Zone{dkimZone: {TXT: []string{"v=DKIM1; k=rsa; p=MIIBIjANBg kqABC"}}},
+			expect: pub,
+			want:   true,
+		},
+		{
+			name:   "match across chunked TXT strings",
+			zones:  map[string]mockdns.Zone{dkimZone: {TXT: []string{longPub}}},
+			expect: longPub,
 			want:   true,
 		},
 		{
 			name:   "wrong key",
-			lookup: stubLookup([]string{"v=DKIM1; k=rsa; p=DIFFERENT"}, nil),
+			zones:  map[string]mockdns.Zone{dkimZone: {TXT: []string{"v=DKIM1; k=rsa; p=DIFFERENT"}}},
+			expect: pub,
 			want:   false,
 		},
 		{
 			name:   "no record published (NXDOMAIN)",
-			lookup: stubLookup(nil, &net.DNSError{Err: "no such host", IsNotFound: true}),
+			zones:  map[string]mockdns.Zone{},
+			expect: pub,
 			want:   false,
 		},
 		{
 			name:    "resolver failure surfaces",
-			lookup:  stubLookup(nil, &net.DNSError{Err: "server misbehaving", IsTemporary: true}),
+			zones:   map[string]mockdns.Zone{dkimZone: {Err: errors.New("server misbehaving")}},
+			expect:  pub,
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := VerifyDKIM(context.Background(), tt.lookup, "1mail", "mail.acme.com", pub)
+			lookup := dnstest.Resolver(t, tt.zones).LookupTXT
+			got, err := VerifyDKIM(context.Background(), lookup, "1mail", "mail.acme.com", tt.expect)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

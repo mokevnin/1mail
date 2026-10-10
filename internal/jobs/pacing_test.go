@@ -34,7 +34,7 @@ func (e *riverEnv) recipientJobTimes(t *testing.T) []time.Time {
 func (e *riverEnv) planBroadcast(t *testing.T, id int64) {
 	t.Helper()
 	e.DB.Broadcast.UpdateOneID(id).SetStatus(broadcast.StatusSending).ExecX(e.workCtx())
-	w := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	w := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	require.NoError(t, w.Work(e.workCtx(), job(jobs.SendBroadcastArgs{BroadcastID: id})))
 }
 
@@ -131,7 +131,7 @@ func TestSuppressionDuringPacingIsHonouredAtSendTime(t *testing.T) {
 	rec := e.DB.BroadcastRecipient.Query().
 		Where(broadcastrecipient.BroadcastID(fixtures.BroadcastDraftID), broadcastrecipient.ContactID(alice.ID)).OnlyX(ctx)
 
-	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	require.NoError(t, rw.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: rec.ID, BroadcastID: fixtures.BroadcastDraftID})))
 
 	assert.Equal(t, broadcastrecipient.StatusSkipped, e.DB.BroadcastRecipient.GetX(ctx, rec.ID).Status)
@@ -148,7 +148,7 @@ func TestLoweringTheLimitMidSendDefersTheRemainingJobs(t *testing.T) {
 	e.planBroadcast(t, fixtures.BroadcastDraftID) // planned unlimited: every job due now
 	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
 
-	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	recs := e.DB.BroadcastRecipient.Query().Where(broadcastrecipient.BroadcastID(fixtures.BroadcastDraftID)).AllX(ctx)
 	require.Greater(t, len(recs), 2)
 	var deferred int
@@ -175,7 +175,7 @@ func TestDeferralBacklogIgnoresRecipientsAsleepOnTheirOwnDeferral(t *testing.T) 
 	e.planBroadcast(t, fixtures.BroadcastDraftID)
 	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
 
-	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	recs := e.DB.BroadcastRecipient.Query().Where(broadcastrecipient.BroadcastID(fixtures.BroadcastDraftID)).
 		Order(ent.Asc(broadcastrecipient.FieldID)).AllX(ctx)
 	require.Greater(t, len(recs), 2)

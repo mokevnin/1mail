@@ -1,14 +1,17 @@
-import { expect, test } from 'vitest'
+import { HttpResponse } from 'msw'
+import { beforeEach, expect, test } from 'vitest'
 
-import type {
-  SiteWebhookEndpointResource,
-  SiteWebhooksCreateData,
-  SiteWebhooksDeleteData,
-  SiteWebhooksListData,
-  SiteWebhooksUpdateData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteAuditList,
+  handleSiteWebhooksCreate,
+  handleSiteWebhooksDelete,
+  handleSiteWebhooksList,
+  handleSiteWebhooksUpdate,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteWebhookEndpointResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { WebhooksSection } from './WebhooksSection.tsx'
 
 const SLUG = 'test'
@@ -26,17 +29,18 @@ function endpoint(over: Partial<SiteWebhookEndpointResource> = {}): SiteWebhookE
   }
 }
 
-function page(items: SiteWebhookEndpointResource[]) {
-  return jsonResponse({ items, page: 1, pageSize: 20, totalItems: items.length, totalPages: 1 })
-}
-
 const list = (items: SiteWebhookEndpointResource[]) =>
-  route<SiteWebhooksListData>('GET', '/workspaces/{slug}/webhooks', { slug: SLUG }, () =>
-    page(items),
-  )
+  handleSiteWebhooksList({
+    body: { items, page: 1, pageSize: 20, totalItems: items.length, totalPages: 1 },
+  })
+
+// Without a license the change-history link probes the Audit log and hides itself.
+beforeEach(() => {
+  worker.use(handleSiteAuditList(() => problem(402)))
+})
 
 test('lists endpoints, showing all events and the enabled state', async () => {
-  mockClientRoutes([
+  worker.use(
     list([
       endpoint(),
       endpoint({
@@ -46,7 +50,7 @@ test('lists endpoints, showing all events and the enabled state', async () => {
         enabled: false,
       }),
     ]),
-  ])
+  )
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await expect.element(screen.getByText('https://example.com/hook')).toBeInTheDocument()
@@ -59,18 +63,13 @@ test('lists endpoints, showing all events and the enabled state', async () => {
 
 test('creates an endpoint from the form', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteWebhooksCreateData>(
-      'POST',
-      '/workspaces/{slug}/webhooks',
-      { slug: SLUG },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(endpoint(), { status: 201 })
-      },
-    ),
-  ])
+    handleSiteWebhooksCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(endpoint(), { status: 201 })
+    }),
+  )
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Endpoint URL/).fill('  https://example.com/new  ')
@@ -81,18 +80,13 @@ test('creates an endpoint from the form', async () => {
 
 test('toggles an endpoint off', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
+  worker.use(
     list([endpoint({ eventTypes: ['email.opened'] })]),
-    route<SiteWebhooksUpdateData>(
-      'PUT',
-      '/workspaces/{slug}/webhooks/{id}',
-      { slug: SLUG, id: '1' },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(endpoint({ enabled: false }))
-      },
-    ),
-  ])
+    handleSiteWebhooksUpdate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(endpoint({ enabled: false }))
+    }),
+  )
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Disable' }).click()
@@ -104,18 +98,13 @@ test('toggles an endpoint off', async () => {
 
 test('deletes an endpoint after confirmation', async () => {
   let deleted = false
-  mockClientRoutes([
+  worker.use(
     list([endpoint()]),
-    route<SiteWebhooksDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/webhooks/{id}',
-      { slug: SLUG, id: '1' },
-      () => {
-        deleted = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteWebhooksDelete(() => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Delete' }).click()
@@ -125,23 +114,17 @@ test('deletes an endpoint after confirmation', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([
-    route<SiteWebhooksListData>('GET', '/workspaces/{slug}/webhooks', { slug: SLUG }, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteWebhooksList(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Failed to load webhooks').first()).toBeInTheDocument()
 })
 
 test('reports a create failure', async () => {
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteWebhooksCreateData>('POST', '/workspaces/{slug}/webhooks', { slug: SLUG }, () =>
-      jsonResponse({ status: 422, detail: 'url must be https' }, { status: 422 }),
-    ),
-  ])
+    handleSiteWebhooksCreate(() => problem(422, { detail: 'url must be https' })),
+  )
   const { screen } = await renderWithRouter(<WebhooksSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Endpoint URL/).fill('http://x.test')

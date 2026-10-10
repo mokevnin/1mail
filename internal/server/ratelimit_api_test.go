@@ -10,8 +10,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/mokevnin/1mail/config"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +38,7 @@ func getAPI(t *testing.T, env *testhelper.TestEnv, bearer string, headers map[st
 }
 
 func anchorBearer() string {
-	return service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)
+	return credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)
 }
 
 func remaining(t *testing.T, rec *httptest.ResponseRecorder) int {

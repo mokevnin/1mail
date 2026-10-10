@@ -104,7 +104,9 @@ type TXTLookup func(ctx context.Context, name string) ([]string, error)
 // failure returns the error.
 func VerifyDKIM(ctx context.Context, lookup TXTLookup, selector, domain, expectedPubTXT string) (bool, error) {
 	host, _ := DKIMRecord(selector, domain, expectedPubTXT)
-	records, err := lookup(ctx, host)
+	// Fully qualified: a relative name would be retried through the host's resolv.conf
+	// search suffixes, which can turn a SERVFAIL into a misleading "not found".
+	records, err := lookup(ctx, host+".")
 	if err != nil {
 		if dnsIsNotFound(err) {
 			return false, nil

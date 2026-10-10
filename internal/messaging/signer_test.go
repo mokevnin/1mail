@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	emdkim "github.com/emersion/go-msgauth/dkim"
+	"github.com/foxcpp/go-mockdns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/internal/dnstest"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -18,6 +20,19 @@ import (
 // Fixture sending domains for workspace 1 (fixtures/sending_domains.yml):
 //   id 1  mail.acme.com  verified,   selector "1mail"
 //   id 2  news.acme.com  unverified, selector "1mail"
+
+// dkimLookup serves pubTXT at mail.acme.com's DKIM name through a real resolver.
+// Any other name answers NXDOMAIN, so a signature over the wrong domain or
+// selector fails verification.
+func dkimLookup(t *testing.T, pubTXT string) func(string) ([]string, error) {
+	t.Helper()
+	r := dnstest.Resolver(t, map[string]mockdns.Zone{
+		"1mail._domainkey.mail.acme.com.": {TXT: []string{pubTXT}},
+	})
+	return func(name string) ([]string, error) {
+		return r.LookupTXT(context.Background(), name+".")
+	}
+}
 
 func TestDKIMSignerVerifiedDomain(t *testing.T) {
 	env := testhelper.Setup(t)
@@ -177,7 +192,7 @@ func TestDKIMSignsListUnsubscribeHeaders(t *testing.T) {
 	assert.Contains(t, raw, "c=simple/relaxed")
 
 	verifs, err := emdkim.VerifyWithOptions(bytes.NewReader(buf.Bytes()), &emdkim.VerifyOptions{
-		LookupTXT: func(string) ([]string, error) { return []string{pubTXT}, nil },
+		LookupTXT: dkimLookup(t, pubTXT),
 	})
 	require.NoError(t, err)
 	require.Len(t, verifs, 1)
@@ -212,7 +227,7 @@ func TestDKIMTransactionalUnchanged(t *testing.T) {
 	assert.Contains(t, raw, "c=relaxed/relaxed", "transactional stays on relaxed canonicalization")
 
 	verifs, err := emdkim.VerifyWithOptions(bytes.NewReader(buf.Bytes()), &emdkim.VerifyOptions{
-		LookupTXT: func(string) ([]string, error) { return []string{pubTXT}, nil },
+		LookupTXT: dkimLookup(t, pubTXT),
 	})
 	require.NoError(t, err)
 	require.Len(t, verifs, 1)
@@ -246,11 +261,7 @@ func TestDKIMSignatureCryptoVerifies(t *testing.T) {
 	require.NoError(t, err)
 
 	verifs, err := emdkim.VerifyWithOptions(bytes.NewReader(buf.Bytes()), &emdkim.VerifyOptions{
-		LookupTXT: func(name string) ([]string, error) {
-			require.True(t, strings.HasPrefix(name, "1mail._domainkey.mail.acme.com"),
-				"unexpected DKIM record lookup: %s", name)
-			return []string{pubTXT}, nil
-		},
+		LookupTXT: dkimLookup(t, pubTXT),
 	})
 	require.NoError(t, err)
 	require.Len(t, verifs, 1)

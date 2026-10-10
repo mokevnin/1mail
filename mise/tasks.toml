@@ -119,15 +119,15 @@ done
 # --- tests -----------------------------------------------------------------------
 
 [test]
-description = "Go tests (creates the test DB first); pass packages/flags after `--`"
+description = "Go tests, shuffled (creates the test DB first); pass packages/flags after `--`"
 daemons = ["db"]
 depends = ["db:create-test"]
 env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
 usage = 'arg "[go_test_args]" var=#true default="./..." help="packages and flags for go test"'
-run = 'go test -p 1 ${usage_go_test_args}'
+run = 'eval "set -- $usage_go_test_args"; go test -p 1 -shuffle=on "$@"'
 
 ["test:e2e"]
-description = "End-to-end suite (ADR 0024): rebuilds the dedicated e2e DB, starts its own Mailpit, boots the app in-process; pass `go test` flags after `--`"
+description = "End-to-end suite (ADR 0024): rebuilds the dedicated e2e DB, starts its own Mailpit, boots the app in-process; pass `go test` flags after `--`; HOLD=true keeps the stack up after the run for inspection"
 daemons = ["db"]
 env = { APP_ENV = "e2e", DATABASE_URL = "{{env.E2E_DB_URL}}", METRICS_ADDR = "" }
 usage = 'arg "[go_test_args]" var=#true default="./e2e/..." help="packages and flags for go test"'
@@ -136,7 +136,7 @@ run = [
   "go run ./cmd/db create",
   "atlas migrate apply --env local --allow-dirty",
   "go run ./cmd/db river-up",
-  "go test -tags e2e -count=1 -p 1 ${usage_go_test_args}",
+  '''eval "set -- $usage_go_test_args"; go test -tags e2e -count=1 -p 1 -shuffle=on "$@"''',
 ]
 
 ["test:watch"]
@@ -194,16 +194,27 @@ run = [
   "go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources",
 ]
 
+["generate:mocks"]
+description = "Go interfaces -> test mocks (moq, *_gen_test.go next to the tests that use them)"
+run = [
+  "go tool moq -out internal/jobs/mocks_gen_test.go -pkg jobs_test ./internal/outbound Senders",
+  "go tool moq -out internal/messaging/mocks_gen_test.go -pkg messaging_test ./internal/messaging EmailSender",
+  "go tool moq -out internal/events/mocks_gen_test.go -pkg events ./internal/events Enroller WebhookDispatcher",
+  "go tool moq -out internal/events/mocks_ext_gen_test.go -pkg events_test ./internal/events Enroller WebhookDispatcher",
+  "go tool moq -out cmd/server/mocks_gen_test.go -pkg main ./cmd/server workspaceOps",
+]
+
 ["generate:fixtures"]
 description = "fixtures/*.yml -> Go (fixture catalog constants for `# fixture: Name` rows)"
 run = "go run ./cmd/fixturegen"
 
 [generate]
-description = "Full cycle: typespec -> openapi -> backend -> fixture catalog -> frontend -> i18n types -> format"
+description = "Full cycle: typespec -> openapi -> backend -> test mocks -> fixture catalog -> frontend -> i18n types -> format"
 run = [
   { task = "generate:typespec" },
   { task = "generate:openapi" },
   { task = "generate:backend" },
+  { task = "generate:mocks" },
   { task = "generate:fixtures" },
   { task = "fix" },
 ]

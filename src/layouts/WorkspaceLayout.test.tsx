@@ -1,20 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
 import { siteTagsListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
-import type {
-  SiteTagsListData,
-  SiteWorkspaceResource,
-  SiteWorkspacesListData,
-  SiteWorkspacesSetSecondFactorRequirementData,
-} from '../generated/site/types.gen.ts'
+import {
+  handleSiteTagsList,
+  handleSiteWorkspacesList,
+  handleSiteWorkspacesSetSecondFactorRequirement,
+} from '../generated/site/msw.gen.ts'
+import type { SiteWorkspaceResource } from '../generated/site/types.gen.ts'
 import { overviewRoute, securityRoute, workspaceRoute } from '../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../test/mockFetch.ts'
+import { page } from '../test/payloads.ts'
+import { problem } from '../test/problem.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
 import { routeMount } from '../test/routeMount.ts'
+import { worker } from '../test/worker.ts'
 import { WorkspaceLayout } from './WorkspaceLayout.tsx'
 
-// route() wants a `path` record; these operations have none, so give it an empty one.
 const MOUNT = routeMount(workspaceRoute, { slug: 'acme' })
 
 const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource => ({
@@ -29,11 +31,10 @@ const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource 
   ...over,
 })
 
-const list = (items: SiteWorkspaceResource[]) =>
-  route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse(items))
+const list = (items: SiteWorkspaceResource[]) => handleSiteWorkspacesList({ body: items })
 
 test('renders the workspace sidebar and no suspension banner for an active workspace', async () => {
-  mockClientRoutes([list([workspace({})])])
+  worker.use(list([workspace({})]))
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect.element(screen.getByText('Overview', { exact: true })).toBeInTheDocument()
@@ -41,9 +42,7 @@ test('renders the workspace sidebar and no suspension banner for an active works
 })
 
 test('a suspended workspace shows the banner with the reason', async () => {
-  mockClientRoutes([
-    list([workspace({ suspendedAt: '2026-02-01T00:00:00Z', suspensionReason: 'spam' })]),
-  ])
+  worker.use(list([workspace({ suspendedAt: '2026-02-01T00:00:00Z', suspensionReason: 'spam' })]))
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect.element(screen.getByText('Sending is suspended')).toBeInTheDocument()
@@ -51,7 +50,7 @@ test('a suspended workspace shows the banner with the reason', async () => {
 })
 
 test('a suspension without a reason omits the reason line', async () => {
-  mockClientRoutes([list([workspace({ suspendedAt: '2026-02-01T00:00:00Z' })])])
+  worker.use(list([workspace({ suspendedAt: '2026-02-01T00:00:00Z' })]))
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect.element(screen.getByText('Sending is suspended')).toBeInTheDocument()
@@ -59,7 +58,7 @@ test('a suspension without a reason omits the reason line', async () => {
 })
 
 test('the switcher navigates to the chosen workspace overview', async () => {
-  mockClientRoutes([list([workspace({}), workspace({ id: '2', name: 'Beta', slug: 'beta' })])])
+  worker.use(list([workspace({}), workspace({ id: '2', name: 'Beta', slug: 'beta' })]))
   const { screen, navigate } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await screen.getByRole('combobox').click()
@@ -78,7 +77,7 @@ const DAY = 24 * 60 * 60 * 1000
 
 test('during the grace of a Two-factor requirement a banner leads to enrollment', async () => {
   const endsAt = new Date(Date.now() + 3 * DAY).toISOString()
-  mockClientRoutes([list([workspace({ secondFactorGraceEndsAt: endsAt })])])
+  worker.use(list([workspace({ secondFactorGraceEndsAt: endsAt })]))
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect
@@ -94,7 +93,7 @@ test('during the grace of a Two-factor requirement a banner leads to enrollment'
 
 test('after the grace the workspace is replaced by the screen that leads to enrollment', async () => {
   const endsAt = new Date(Date.now() - DAY).toISOString()
-  mockClientRoutes([list([workspace({ secondFactorGraceEndsAt: endsAt })])])
+  worker.use(list([workspace({ secondFactorGraceEndsAt: endsAt })]))
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
@@ -104,15 +103,10 @@ test('after the grace the workspace is replaced by the screen that leads to enro
 })
 
 test('a 403 second_factor_required from the workspace shows the blocked screen', async () => {
-  mockClientRoutes([
+  worker.use(
     list([workspace({})]),
-    route<SiteTagsListData>('GET', '/workspaces/{slug}/tags', { slug: 'acme' }, () =>
-      jsonResponse(
-        { status: 403, title: 'Forbidden', code: 'second_factor_required' },
-        { status: 403 },
-      ),
-    ),
-  ])
+    handleSiteTagsList(() => problem(403, { title: 'Forbidden', code: 'second_factor_required' })),
+  )
   const { screen } = await renderWithRouter(
     <>
       <WorkspaceLayout />
@@ -132,27 +126,19 @@ test('a withheld owner can turn the requirement off from the blocked screen', as
     secondFactorRequiredAt: '2026-03-01T00:00:00Z',
     secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
   })
-  mockClientRoutes([
-    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse([current])),
-    route<SiteWorkspacesSetSecondFactorRequirementData>(
-      'PUT',
-      '/workspaces/{slug}/second-factor-requirement',
-      { slug: 'acme' },
-      async (req) => {
-        bodies.push(await req.text())
-        current = workspace({ role: 'owner' })
-        return jsonResponse(current)
-      },
-    ),
-    route<SiteTagsListData>('GET', '/workspaces/{slug}/tags', { slug: 'acme' }, () =>
+  worker.use(
+    handleSiteWorkspacesList(() => HttpResponse.json([current])),
+    handleSiteWorkspacesSetSecondFactorRequirement(async ({ request }) => {
+      bodies.push(await request.text())
+      current = workspace({ role: 'owner' })
+      return HttpResponse.json(current)
+    }),
+    handleSiteTagsList(() =>
       bodies.length > 0
-        ? jsonResponse([])
-        : jsonResponse(
-            { status: 403, title: 'Forbidden', code: 'second_factor_required' },
-            { status: 403 },
-          ),
+        ? HttpResponse.json(page([]))
+        : problem(403, { title: 'Forbidden', code: 'second_factor_required' }),
     ),
-  ])
+  )
   const { screen } = await renderWithRouter(
     <>
       <WorkspaceLayout />
@@ -171,14 +157,14 @@ test('a withheld owner can turn the requirement off from the blocked screen', as
 })
 
 test('a withheld member is not offered to turn the requirement off', async () => {
-  mockClientRoutes([
+  worker.use(
     list([
       workspace({
         secondFactorRequiredAt: '2026-03-01T00:00:00Z',
         secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
       }),
     ]),
-  ])
+  )
   const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
 
   await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()

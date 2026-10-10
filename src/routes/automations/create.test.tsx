@@ -1,10 +1,12 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SiteAutomationsCreateData } from '../../generated/site/types.gen.ts'
+import { handleSiteAutomationsCreate } from '../../generated/site/msw.gen.ts'
 import { automationsCreateRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { AutomationCreatePage } from './create.tsx'
 
 const SLUG = { slug: 'test' }
@@ -13,28 +15,23 @@ const NOW = '2026-01-01T00:00:00Z'
 
 test('creating an automation sends the trimmed name and trigger, then opens the builder', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteAutomationsCreateData>(
-      'POST',
-      '/workspaces/{slug}/automations',
-      SLUG,
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(
-          {
-            id: '7',
-            name: 'Welcome',
-            status: 'draft',
-            triggerEvent: 'contact.created',
-            steps: [],
-            createdAt: NOW,
-            updatedAt: NOW,
-          },
-          { status: 201 },
-        )
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAutomationsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(
+        {
+          id: '7',
+          name: 'Welcome',
+          status: 'draft',
+          triggerEvent: 'contact.created',
+          steps: [],
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+        { status: 201 },
+      )
+    }),
+  )
 
   const { screen, navigate } = await renderWithRouter(<AutomationCreatePage />, CREATE_ROUTE)
   await expect.element(screen.getByText('New automation')).toBeInTheDocument()
@@ -52,17 +49,12 @@ test('creating an automation sends the trimmed name and trigger, then opens the 
 
 test('the chosen trigger event is sent', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteAutomationsCreateData>(
-      'POST',
-      '/workspaces/{slug}/automations',
-      SLUG,
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse({ title: 'Boom', status: 500 }, { status: 500 })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAutomationsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return problem(500)
+    }),
+  )
 
   const { screen } = await renderWithRouter(<AutomationCreatePage />, CREATE_ROUTE)
 
@@ -76,8 +68,6 @@ test('the chosen trigger event is sent', async () => {
 })
 
 test('Cancel returns to the list without calling the API', async () => {
-  mockClientRoutes([])
-
   const { screen, navigate } = await renderWithRouter(<AutomationCreatePage />, CREATE_ROUTE)
   await screen.getByRole('button', { name: 'Cancel' }).click()
 

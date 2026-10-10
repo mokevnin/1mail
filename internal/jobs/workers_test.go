@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -26,11 +25,12 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/internal/dnstest"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -62,7 +62,7 @@ func newRiverEnv(t *testing.T) *riverEnv {
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
 	require.NoError(t, err)
 	fs := &fakeSender{}
-	mod := newMod(env, fakeResolver{sender: fs})
+	mod := newMod(env, resolvingTo(fs))
 	client, err := jobs.NewClient(pool, env.DB, env.SQLDB, mod, cipher, env.SystemMail, nil, registry.Default(), cfg.AppURL, jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention})
 	require.NoError(t, err)
 	e := &riverEnv{TestEnv: env, pool: pool, client: client, cipher: cipher, cfg: cfg, sender: fs}
@@ -279,7 +279,7 @@ func TestDeliverWebhookWorker(t *testing.T) {
 func TestVerifySendingDomainWorker(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	gone := lookupReturning(nil, &net.DNSError{IsNotFound: true})
+	gone := dnstest.Resolver(t, nil).LookupTXT
 
 	// Verified domain whose DNS vanished: flips, owner is emailed.
 	w := jobs.NewVerifySendingDomainWorker(env.DB, gone, env.SystemMail)
@@ -340,7 +340,7 @@ func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {
 
 	// Step 1 sends and schedules the next step; the wait step schedules a delayed
 	// one; the last step finishes the run without queueing more.
-	w := jobs.NewRunStepWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	w := jobs.NewRunStepWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	require.NoError(t, w.Work(ctx, job(jobs.RunStepArgs{RunID: run.ID})))
 	assert.Len(t, e.sender.sent, 1)
 	assert.Len(t, e.queued(t), 2)
@@ -360,7 +360,7 @@ func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {
 func TestBroadcastWorkers(t *testing.T) {
 	e := newRiverEnv(t)
 	ctx := e.workCtx()
-	w := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	w := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	assert.Equal(t, 10*time.Minute, w.Timeout(nil))
 
 	// A draft (unscheduled after queueing) is not sent.
@@ -379,7 +379,7 @@ func TestBroadcastWorkers(t *testing.T) {
 	require.Len(t, recs, len(kinds))
 
 	// Delivering every recipient finalizes the broadcast.
-	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, resolvingTo(e.sender)))
 	for _, r := range recs {
 		require.NoError(t, rw.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: r.ID, BroadcastID: fixtures.BroadcastDraftID})))
 	}
@@ -392,26 +392,26 @@ func TestBroadcastWorkers(t *testing.T) {
 	assert.Len(t, e.queued(t), before)
 
 	// A suspended workspace holds: the job snoozes rather than fails.
-	_, err := service.SuspendWorkspace(ctx, e.Bus, fixtures.AcmeID, "system", "complaints")
+	_, err := suspension.SuspendWorkspace(ctx, e.Bus, fixtures.AcmeID, "system", "complaints")
 	require.NoError(t, err)
 	e.DB.Broadcast.UpdateOneID(fixtures.BroadcastProSegmentID).SetStatus(broadcast.StatusSending).ExecX(ctx)
 	var snooze *river.JobSnoozeError
 	require.ErrorAs(t, w.Work(ctx, job(jobs.SendBroadcastArgs{BroadcastID: fixtures.BroadcastProSegmentID})), &snooze)
 
 	// A resolver failure is a plain error: river retries it.
-	hold := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, fakeResolver{err: errors.New("no integration")}))
+	hold := jobs.NewSendBroadcastWorker(e.DB, newMod(e.TestEnv, failingResolver(errors.New("no integration"))))
 	require.Error(t, hold.Work(ctx, job(jobs.SendBroadcastArgs{BroadcastID: fixtures.BroadcastProSegmentID})))
 }
 
 func TestSendRecipientWorkerRecordsTerminalFailure(t *testing.T) {
 	e := newRiverEnv(t)
 	ctx := e.workCtx()
-	mod := newMod(e.TestEnv, fakeResolver{sender: e.sender})
+	mod := newMod(e.TestEnv, resolvingTo(e.sender))
 	ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
 	require.NoError(t, err)
 	require.NotEmpty(t, ids)
 
-	failing := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: erroringSender{}}))
+	failing := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, resolvingTo(erroringSender{})))
 	// Not the last attempt: the error surfaces for retry, row stays pending.
 	err = failing.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: ids[0], BroadcastID: fixtures.BroadcastDraftID}))
 	require.Error(t, err)

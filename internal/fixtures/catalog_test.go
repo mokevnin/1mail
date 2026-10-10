@@ -8,8 +8,8 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -29,15 +29,15 @@ func TestCatalogPlaintextSecretsVerifyAgainstLoadedHashes(t *testing.T) {
 		{fixtures.OutsiderOscarID, fixtures.OutsiderOscarPassword},
 	} {
 		u := env.DB.User.GetX(ctx, tc.id)
-		require.True(t, service.VerifyPassword(u.PasswordHash, tc.password), "user %d", tc.id)
-		require.False(t, service.VerifyPassword(u.PasswordHash, tc.password+"x"), "user %d", tc.id)
+		require.True(t, credentials.VerifyPassword(u.PasswordHash, tc.password), "user %d", tc.id)
+		require.False(t, credentials.VerifyPassword(u.PasswordHash, tc.password+"x"), "user %d", tc.id)
 	}
 
 	tok := env.DB.ApiToken.GetX(ctx, fixtures.AnchorTokenID)
-	require.True(t, service.VerifyTokenSecret(fixtures.AnchorTokenSecret, tok.SecretHash))
-	require.False(t, service.VerifyTokenSecret(fixtures.AnchorTokenSecret+"x", tok.SecretHash))
+	require.True(t, credentials.VerifyTokenSecret(fixtures.AnchorTokenSecret, tok.SecretHash))
+	require.False(t, credentials.VerifyTokenSecret(fixtures.AnchorTokenSecret+"x", tok.SecretHash))
 
-	parsed := service.ParseToken(service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret))
+	parsed := credentials.ParseToken(credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret))
 	require.NotNil(t, parsed)
 	require.Equal(t, fixtures.AnchorTokenPrefix, parsed.Prefix)
 	require.Equal(t, 1, env.DB.ApiToken.Query().Where(apitoken.Prefix(parsed.Prefix)).CountX(ctx))

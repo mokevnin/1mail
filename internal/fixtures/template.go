@@ -10,8 +10,9 @@ import (
 	"github.com/go-crypt/crypt/algorithm/argon2"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // timeLayout is the Postgres-friendly timestamp layout the template date helpers
@@ -44,10 +45,10 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 		"encrypt":   func(s string) (string, error) { return cipher.Encrypt([]byte(s)) },
 		// Invitation tokens are stored only as a SHA-256 hash; fixtures express the
 		// raw token and hash it at load time so tests can present the raw value.
-		"inviteHash": service.HashInviteToken,
+		"inviteHash": accounts.HashInviteToken,
 		// Recovery codes are stored only as a hash (ADR 0020); the fixture states the
 		// code and the generator lifts it into the catalog (fixtures.<Name>Code).
-		"recoveryCodeHash": service.HashRecoveryCode,
+		"recoveryCodeHash": credentials.HashRecoveryCode,
 		// Anchor credentials: the fixture states the plaintext and the hash is derived
 		// at load time, so hash and secret cannot drift apart. The fixture generator
 		// lifts the plaintext literal into the catalog (e.g. fixtures.OwnerJohnPassword).
@@ -59,7 +60,7 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 }
 
 // hashPasswordMinCost is a PHC argon2id hash at the minimum legal parameters
-// (service.VerifyPassword decodes the parameters from the hash itself).
+// (credentials.VerifyPassword decodes the parameters from the hash itself).
 func hashPasswordMinCost(password string) (string, error) {
 	hasher, err := argon2.New(
 		argon2.WithVariantID(),
@@ -78,7 +79,7 @@ func hashPasswordMinCost(password string) (string, error) {
 }
 
 // hashTokenSecretMinCost is a bcrypt hash at bcrypt.MinCost
-// (service.VerifyTokenSecret reads the cost from the hash).
+// (credentials.VerifyTokenSecret reads the cost from the hash).
 func hashTokenSecretMinCost(secret string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.MinCost)
 	if err != nil {

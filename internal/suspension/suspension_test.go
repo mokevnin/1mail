@@ -1,4 +1,4 @@
-package service_test
+package suspension_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -16,7 +16,7 @@ func TestSuspendWorkspaceRecordsAttribution(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	changed, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "complaint rate 0.9%")
+	changed, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "complaint rate 0.9%")
 	require.NoError(t, err)
 	assert.True(t, changed)
 
@@ -34,9 +34,9 @@ func TestSuspendWorkspaceIsIdempotent(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "first")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "first")
 	require.NoError(t, err)
-	changed, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "second")
+	changed, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "second")
 	require.NoError(t, err)
 	assert.False(t, changed)
 
@@ -49,9 +49,9 @@ func TestUnsuspendWorkspaceClearsEverything(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "abuse")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli", "abuse")
 	require.NoError(t, err)
-	changed, err := service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli")
+	changed, err := suspension.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli")
 	require.NoError(t, err)
 	assert.True(t, changed)
 
@@ -60,7 +60,7 @@ func TestUnsuspendWorkspaceClearsEverything(t *testing.T) {
 	assert.Nil(t, ws.SuspendedBy)
 	assert.Nil(t, ws.SuspensionReason)
 
-	changed, err = service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli")
+	changed, err = suspension.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "cli")
 	require.NoError(t, err)
 	assert.False(t, changed, "unsuspending a workspace that is not suspended is a no-op")
 }
@@ -68,16 +68,6 @@ func TestUnsuspendWorkspaceClearsEverything(t *testing.T) {
 func TestSuspendWorkspaceRequiresAReason(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	_, err := service.SuspendWorkspace(context.Background(), env.Bus, fixtures.AcmeID, "cli", "  ")
+	_, err := suspension.SuspendWorkspace(context.Background(), env.Bus, fixtures.AcmeID, "cli", "  ")
 	require.Error(t, err, "attribution needs a reason: the owner is told why")
-}
-
-func TestWorkspaceIDBySlug(t *testing.T) {
-	env := testhelper.Setup(t)
-
-	id, err := service.WorkspaceIDBySlug(context.Background(), env.DB, fixtures.AcmeSlug)
-	require.NoError(t, err)
-	assert.EqualValues(t, fixtures.AcmeID, id)
-	_, err = service.WorkspaceIDBySlug(context.Background(), env.DB, "no-such-workspace")
-	require.Error(t, err)
 }

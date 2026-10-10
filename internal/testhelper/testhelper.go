@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/analytics"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -50,7 +51,9 @@ import (
 	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tags"
+	"github.com/mokevnin/1mail/internal/templates"
 	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/1mail/internal/webhooks"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
@@ -150,6 +153,8 @@ type TestEnv struct {
 	// Tracker is the instance the server and the sender share: mint tracking,
 	// unsubscribe and confirmation tokens with it, never with a second one.
 	Tracker *tracking.Tracker
+	// Cipher is the instance the server seals with, for modules a test builds directly.
+	Cipher *secrets.Cipher
 
 	edition *ee.Edition // the EE parts, built like the composition root builds them
 
@@ -268,12 +273,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
 	erasureModule := erasure.New(bus)
-	tagsModule := tags.New()
-	integrationsModule := integrations.New(bus, cipher, catalog, inline)
-	sendingDomainsModule := sendingdomains.New(bus, cipher, inline)
-	automationsModule := automations.New()
-	broadcastsModule := broadcasts.New(inline)
-	acc := accounts.New(client, bus)
+	templatesModule := templates.New()
 	lic, err := licensekey.Parse("", licensekey.ProductionKey, time.Now())
 	require.NoError(t, err, "parse empty license")
 	if !st.unlicensed {
@@ -281,12 +281,19 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		require.NoError(t, err, "mint test license")
 	}
 	edition := ee.New(client, lic)
+	tagsModule := tags.New()
+	webhooksModule := webhooks.New(cipher, edition.Audit)
+	integrationsModule := integrations.New(bus, cipher, catalog, inline)
+	sendingDomainsModule := sendingdomains.New(bus, cipher, inline)
+	automationsModule := automations.New()
+	broadcastsModule := broadcasts.New(inline)
+	acc := accounts.New(client, bus)
 	attempts := accounts.NewAttempts(client,
 		accounts.WithClock(st.now),
 		accounts.WithRateLimits(cfg.RateLimits))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
-		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
+		Accounts: acc, Bus: bus, Webhooks: webhooksModule, Outbound: sender,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule, Templates: templatesModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule, SendingDomains: sendingDomainsModule,
 		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
@@ -295,18 +302,18 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	require.NoError(t, err, "build MCP handler")
 	secondFactor := secondfactor.New(client, bus, cipher, st.now)
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
-		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Webhooks: webhooksModule, Outbound: sender,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule, Templates: templatesModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
-		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit, Analytics: analytics.New(),
 		SecondFactor: secondFactor,
 		Clock:        st.now,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret, edition: edition, now: st.now, sessionTTL: cfg.SessionTTL,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, Cipher: cipher, jwtSecret: baseCfg.JWTSecret, edition: edition, now: st.now, sessionTTL: cfg.SessionTTL,
 		SystemMail: systemMail, CustomerMail: customerMail, SES: fakeSES, SecondFactor: secondFactor,
 	}
 }

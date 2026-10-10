@@ -1,20 +1,26 @@
-import { expect, test, vi } from 'vitest'
+import { HttpResponse } from 'msw'
+import { expect, test } from 'vitest'
 
-import type { SiteAuthLogoutData } from '../generated/site/types.gen.ts'
+import { handleSiteAuthLogout } from '../generated/site/msw.gen.ts'
 import { profileRoute, settingsRoute } from '../router.tsx'
-import { mockClientFetch, mockClientRoutes, route } from '../test/mockFetch.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
+import { worker } from '../test/worker.ts'
 import { UserMenu } from './UserMenu.tsx'
 
 test('logout calls the site logout operation and navigates to login', async () => {
-  const logout = vi.fn<() => Response>(() => new Response(null, { status: 204 }))
-  mockClientRoutes([route<SiteAuthLogoutData>('POST', '/auth/logout', {}, logout)])
+  let calls = 0
+  worker.use(
+    handleSiteAuthLogout(() => {
+      calls += 1
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen, navigate } = await renderWithRouter(<UserMenu slug="acme" />)
 
   await screen.getByRole('button').click()
   await screen.getByText('Sign out').click()
 
-  await expect.poll(() => logout.mock.calls.length).toBe(1)
+  await expect.poll(() => calls).toBe(1)
   await expect.poll(() => navigate.mock.calls).toContainEqual([{ to: '/login' }])
 })
 
@@ -45,7 +51,7 @@ test('workspace settings item navigates with the active slug', async () => {
 })
 
 test('a failed logout shows an error and stays put', async () => {
-  mockClientFetch(() => Promise.reject(new TypeError('offline')))
+  worker.use(handleSiteAuthLogout(() => HttpResponse.error()))
   const { screen, navigate } = await renderWithRouter(<UserMenu slug="acme" />)
   await screen.getByRole('button').click()
   await screen.getByText('Sign out').click()

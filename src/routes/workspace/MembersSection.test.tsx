@@ -1,20 +1,24 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
+import {
+  handleSiteInvitationsCreate,
+  handleSiteInvitationsDelete,
+  handleSiteInvitationsList,
+  handleSiteMembershipsDelete,
+  handleSiteMembershipsList,
+  handleSiteMembershipsResetSecondFactor,
+  handleSiteMembershipsUpdate,
+  handleSiteUserGetMe,
+} from '../../generated/site/msw.gen.ts'
 import type {
   SiteInvitationResource,
-  SiteInvitationsCreateData,
-  SiteInvitationsDeleteData,
-  SiteInvitationsListData,
   SiteMembershipResource,
-  SiteMembershipsDeleteData,
   SiteMembershipRole,
-  SiteMembershipsListData,
-  SiteMembershipsResetSecondFactorData,
-  SiteMembershipsUpdateData,
-  SiteUserGetMeData,
 } from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { MembersSection } from './MembersSection.tsx'
 
 const SLUG = 'test'
@@ -37,19 +41,20 @@ const invitation: SiteInvitationResource = {
   createdAt: '2026-01-01T00:00:00Z',
 }
 
-const members = route<SiteMembershipsListData>(
-  'GET',
-  '/workspaces/{slug}/memberships',
-  { slug: SLUG },
-  () => jsonResponse([member]),
-)
-const invites = (items: SiteInvitationResource[]) =>
-  route<SiteInvitationsListData>('GET', '/workspaces/{slug}/invitations', { slug: SLUG }, () =>
-    jsonResponse(items),
-  )
+// The signed-in User: Ann, the member above (the Second factor reset is role-gated).
+const ME = {
+  id: '10',
+  name: 'Ann',
+  email: 'ann@example.com',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+}
+const me = () => handleSiteUserGetMe({ body: ME })
+const members = () => [me(), handleSiteMembershipsList({ body: [member] })]
+const invites = (items: SiteInvitationResource[]) => handleSiteInvitationsList({ body: items })
 
 test('lists members and pending invitations', async () => {
-  mockClientRoutes([members, invites([invitation])])
+  worker.use(...members(), invites([invitation]))
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await expect.element(screen.getByText('ann@example.com')).toBeInTheDocument()
@@ -58,22 +63,17 @@ test('lists members and pending invitations', async () => {
 
 test('invites a member and reveals the invite link', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    members,
+  worker.use(
+    ...members(),
     invites([]),
-    route<SiteInvitationsCreateData>(
-      'POST',
-      '/workspaces/{slug}/invitations',
-      { slug: SLUG },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(
-          { inviteUrl: 'https://app.test/invite/abc', resource: invitation },
-          { status: 201 },
-        )
-      },
-    ),
-  ])
+    handleSiteInvitationsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(
+        { inviteUrl: 'https://app.test/invite/abc', resource: invitation },
+        { status: 201 },
+      )
+    }),
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await screen
@@ -93,19 +93,14 @@ test('invites a member and reveals the invite link', async () => {
 
 test('revokes an invitation after confirmation', async () => {
   let revoked = false
-  mockClientRoutes([
-    members,
+  worker.use(
+    ...members(),
     invites([invitation]),
-    route<SiteInvitationsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/invitations/{id}',
-      { slug: SLUG, id: '5' },
-      () => {
-        revoked = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteInvitationsDelete(() => {
+      revoked = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Revoke' }).click()
@@ -116,19 +111,14 @@ test('revokes an invitation after confirmation', async () => {
 
 test('removes a member after confirmation', async () => {
   let removed = false
-  mockClientRoutes([
-    members,
+  worker.use(
+    ...members(),
     invites([]),
-    route<SiteMembershipsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/memberships/{id}',
-      { slug: SLUG, id: '1' },
-      () => {
-        removed = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteMembershipsDelete(() => {
+      removed = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Remove' }).click()
@@ -139,19 +129,14 @@ test('removes a member after confirmation', async () => {
 
 test('changes a member role', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    members,
+  worker.use(
+    ...members(),
     invites([]),
-    route<SiteMembershipsUpdateData>(
-      'PUT',
-      '/workspaces/{slug}/memberships/{id}',
-      { slug: SLUG, id: '1' },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse({ ...member, role: 'admin' })
-      },
-    ),
-  ])
+    handleSiteMembershipsUpdate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({ ...member, role: 'admin' })
+    }),
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await screen.getByRole('combobox').first().click()
@@ -161,12 +146,11 @@ test('changes a member role', async () => {
 })
 
 test('shows an error alert when members fail to load', async () => {
-  mockClientRoutes([
-    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', { slug: SLUG }, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
+  worker.use(
+    me(),
+    handleSiteMembershipsList(() => problem(500, { detail: 'boom' })),
     invites([]),
-  ])
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Failed to load members').first()).toBeInTheDocument()
@@ -174,13 +158,6 @@ test('shows an error alert when members fail to load', async () => {
 
 // The signed-in User (id 10) with the given role, next to Sam, who has a Second factor.
 function teamWithSam(role: SiteMembershipRole) {
-  const me = {
-    id: '10',
-    name: 'Ann',
-    email: 'ann@example.com',
-    emailVerified: true,
-    createdAt: '2026-01-01T00:00:00Z',
-  }
   const sam: SiteMembershipResource = {
     ...member,
     id: '2',
@@ -189,29 +166,18 @@ function teamWithSam(role: SiteMembershipRole) {
     name: 'Sam',
     secondFactorEnabled: true,
   }
-  return [
-    route<SiteUserGetMeData>('GET', '/me', {}, () => jsonResponse(me)),
-    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', { slug: SLUG }, () =>
-      jsonResponse([{ ...member, role }, sam]),
-    ),
-    invites([]),
-  ]
+  return [me(), handleSiteMembershipsList({ body: [{ ...member, role }, sam] }), invites([])]
 }
 
 test('an owner resets a member Second factor after confirmation', async () => {
   let reset = false
-  mockClientRoutes([
+  worker.use(
     ...teamWithSam('owner'),
-    route<SiteMembershipsResetSecondFactorData>(
-      'POST',
-      '/workspaces/{slug}/memberships/{id}/reset-second-factor',
-      { slug: SLUG, id: '2' },
-      () => {
-        reset = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteMembershipsResetSecondFactor(({ params }) => {
+      reset = params.id === '2'
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Reset 2FA' }).click()
@@ -221,7 +187,7 @@ test('an owner resets a member Second factor after confirmation', async () => {
 })
 
 test('a member is not offered a Second factor reset', async () => {
-  mockClientRoutes(teamWithSam('member'))
+  worker.use(...teamWithSam('member'))
   const { screen } = await renderWithRouter(<MembersSection slug={SLUG} />)
 
   await expect.element(screen.getByText('sam@example.com')).toBeInTheDocument()

@@ -1,16 +1,16 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteWorkspaceResource,
-  SiteWorkspacesListData,
-  SiteWorkspacesSetSecondFactorRequirementData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteWorkspacesList,
+  handleSiteWorkspacesSetSecondFactorRequirement,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { formatDate } from '../../utils/datetime.ts'
 import { SecondFactorRequirementSection } from './SecondFactorRequirementSection.tsx'
 
-const SLUG = { slug: 'acme' }
 const NOW = '2026-01-01T00:00:00Z'
 
 const workspace = (over: Partial<SiteWorkspaceResource> = {}): SiteWorkspaceResource => ({
@@ -25,24 +25,17 @@ const workspace = (over: Partial<SiteWorkspaceResource> = {}): SiteWorkspaceReso
   ...over,
 })
 
-const listRoute = route<SiteWorkspacesListData>('GET', '/workspaces', {}, () =>
-  jsonResponse([workspace()]),
-)
+const listRoute = handleSiteWorkspacesList({ body: [workspace()] })
 
 test('an owner switches the requirement on', async () => {
   const bodies: string[] = []
-  mockClientRoutes([
+  worker.use(
     listRoute,
-    route<SiteWorkspacesSetSecondFactorRequirementData>(
-      'PUT',
-      '/workspaces/{slug}/second-factor-requirement',
-      SLUG,
-      async (req) => {
-        bodies.push(await req.text())
-        return jsonResponse(workspace({ secondFactorRequiredAt: '2026-03-01T00:00:00Z' }))
-      },
-    ),
-  ])
+    handleSiteWorkspacesSetSecondFactorRequirement(async ({ request }) => {
+      bodies.push(await request.text())
+      return HttpResponse.json(workspace({ secondFactorRequiredAt: '2026-03-01T00:00:00Z' }))
+    }),
+  )
   const { screen } = await renderWithRouter(
     <SecondFactorRequirementSection workspace={workspace({ role: 'owner' })} />,
   )
@@ -55,7 +48,7 @@ test('an owner switches the requirement on', async () => {
 })
 
 test('a member sees the requirement and its grace but cannot change it', async () => {
-  mockClientRoutes([listRoute])
+  worker.use(listRoute)
   const required = workspace({ secondFactorRequiredAt: '2026-03-01T00:00:00Z' })
   const { screen } = await renderWithRouter(<SecondFactorRequirementSection workspace={required} />)
 

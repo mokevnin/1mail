@@ -15,12 +15,6 @@ import (
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-type stubSender struct{}
-
-func (stubSender) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
-	return messaging.Receipt{MessageID: "stub"}, nil
-}
-
 func TestFirstNonEmpty(t *testing.T) {
 	assert.Equal(t, "b", messaging.FirstNonEmpty("", "b", "c"))
 	assert.Empty(t, messaging.FirstNonEmpty("", ""))
@@ -69,7 +63,11 @@ func TestCatalogBuildEmail(t *testing.T) {
 	cat := messaging.NewCatalog(
 		messaging.ProviderDescriptor{
 			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSMTP,
-			Build: func([]byte, messaging.Signer) (any, error) { return stubSender{}, nil },
+			Build: func([]byte, messaging.Signer) (any, error) {
+				return &EmailSenderMock{SendFunc: func(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
+					return messaging.Receipt{MessageID: "stub"}, nil
+				}}, nil
+			},
 		},
 		messaging.ProviderDescriptor{
 			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSES,

@@ -1,14 +1,16 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteSendingDomainResource,
-  SiteSendingDomainsCreateData,
-  SiteSendingDomainsDeleteData,
-  SiteSendingDomainsListData,
-  SiteSendingDomainsVerifyData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteSendingDomainsCreate,
+  handleSiteSendingDomainsDelete,
+  handleSiteSendingDomainsList,
+  handleSiteSendingDomainsVerify,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteSendingDomainResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { SendingDomainsSection } from './SendingDomainsSection.tsx'
 
 const SLUG = 'test'
@@ -29,15 +31,12 @@ function domain(over: Partial<SiteSendingDomainResource> = {}): SiteSendingDomai
 }
 
 const list = (items: SiteSendingDomainResource[]) =>
-  route<SiteSendingDomainsListData>(
-    'GET',
-    '/workspaces/{slug}/sending-domains',
-    { slug: SLUG },
-    () => jsonResponse({ items, page: 1, pageSize: 20, totalItems: items.length, totalPages: 1 }),
-  )
+  handleSiteSendingDomainsList({
+    body: { items, page: 1, pageSize: 20, totalItems: items.length, totalPages: 1 },
+  })
 
 test('shows pending and verified domains', async () => {
-  mockClientRoutes([list([domain(), domain({ id: '2', domain: 'ok.acme.com', verified: true })])])
+  worker.use(list([domain(), domain({ id: '2', domain: 'ok.acme.com', verified: true })]))
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('mail.acme.com')).toBeInTheDocument()
@@ -47,18 +46,13 @@ test('shows pending and verified domains', async () => {
 
 test('adds a domain', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteSendingDomainsCreateData>(
-      'POST',
-      '/workspaces/{slug}/sending-domains',
-      { slug: SLUG },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(domain(), { status: 201 })
-      },
-    ),
-  ])
+    handleSiteSendingDomainsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(domain(), { status: 201 })
+    }),
+  )
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Domain/).fill(' mail.acme.com ')
@@ -69,18 +63,13 @@ test('adds a domain', async () => {
 
 test('starts verification', async () => {
   let verified = false
-  mockClientRoutes([
+  worker.use(
     list([domain()]),
-    route<SiteSendingDomainsVerifyData>(
-      'POST',
-      '/workspaces/{slug}/sending-domains/{id}/verify',
-      { slug: SLUG, id: '1' },
-      () => {
-        verified = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteSendingDomainsVerify(() => {
+      verified = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Verify' }).click()
@@ -91,18 +80,13 @@ test('starts verification', async () => {
 
 test('deletes a domain after confirmation', async () => {
   let deleted = false
-  mockClientRoutes([
+  worker.use(
     list([domain()]),
-    route<SiteSendingDomainsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/sending-domains/{id}',
-      { slug: SLUG, id: '1' },
-      () => {
-        deleted = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteSendingDomainsDelete(() => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Delete' }).click()
@@ -112,14 +96,7 @@ test('deletes a domain after confirmation', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([
-    route<SiteSendingDomainsListData>(
-      'GET',
-      '/workspaces/{slug}/sending-domains',
-      { slug: SLUG },
-      () => jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteSendingDomainsList(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await expect
@@ -128,7 +105,7 @@ test('shows an error alert when the list fails to load', async () => {
 })
 
 test('expanding a domain row shows its DNS records', async () => {
-  mockClientRoutes([list([domain()])])
+  worker.use(list([domain()]))
   const { screen } = await renderWithRouter(<SendingDomainsSection slug={SLUG} />)
 
   await screen.getByText('mail.acme.com').click()

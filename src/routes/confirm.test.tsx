@@ -1,26 +1,20 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SitePublicConfirmationsPerformData } from '../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../test/mockFetch.ts'
+import { handleSitePublicConfirmationsPerform } from '../generated/site/msw.gen.ts'
+import { problem } from '../test/problem.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
+import { worker } from '../test/worker.ts'
 import { ConfirmSubscription } from './confirm.tsx'
-
-const perform = (respond: () => Response) =>
-  route<SitePublicConfirmationsPerformData>(
-    'POST',
-    '/confirmations/{token}',
-    { token: 'tok-1' },
-    respond,
-  )
 
 test('pressing Confirm performs the confirmation through the contract and thanks the user', async () => {
   const calls: string[] = []
-  mockClientRoutes([
-    perform(() => {
+  worker.use(
+    handleSitePublicConfirmationsPerform(() => {
       calls.push('performed')
-      return new Response(null, { status: 204 })
+      return new HttpResponse(null, { status: 204 })
     }),
-  ])
+  )
   const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
 
   await screen.getByRole('button', { name: 'Confirm subscription' }).click()
@@ -30,9 +24,7 @@ test('pressing Confirm performs the confirmation through the contract and thanks
 })
 
 test('shows the error state when the token is rejected', async () => {
-  mockClientRoutes([
-    perform(() => jsonResponse({ status: 400, title: 'Bad Request' }, { status: 400 })),
-  ])
+  worker.use(handleSitePublicConfirmationsPerform(() => problem(400, 'Bad Request')))
   const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
 
   await screen.getByRole('button', { name: 'Confirm subscription' }).click()
@@ -41,7 +33,7 @@ test('shows the error state when the token is rejected', async () => {
 })
 
 test('a link that expires before the button is pressed offers sign-up-again', async () => {
-  mockClientRoutes([perform(() => jsonResponse({ status: 410, title: 'Gone' }, { status: 410 }))])
+  worker.use(handleSitePublicConfirmationsPerform(() => problem(410, 'Gone')))
   const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
 
   await screen.getByRole('button', { name: 'Confirm subscription' }).click()
@@ -51,9 +43,7 @@ test('a link that expires before the button is pressed offers sign-up-again', as
 })
 
 test('a rate-limited confirmation shows the localized too-many-requests message', async () => {
-  mockClientRoutes([
-    perform(() => jsonResponse({ status: 429, title: 'Too Many Requests' }, { status: 429 })),
-  ])
+  worker.use(handleSitePublicConfirmationsPerform(() => problem(429, 'Too Many Requests')))
   const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
 
   await screen.getByRole('button', { name: 'Confirm subscription' }).click()

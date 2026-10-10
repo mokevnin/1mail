@@ -2,43 +2,28 @@ package site
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"time"
 
-	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automation"
-	"github.com/mokevnin/1mail/ent/automationrun"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/analytics"
 )
 
-// analyticsDayFormat is the bucket label format for the engagement time series.
-// Buckets are UTC days (date_trunc('day', …)); a known v1 limitation is that all
-// workspaces see UTC-aligned days regardless of their locale.
-const analyticsDayFormat = "2006-01-02"
-
-// rangeDays maps the selectable analytics window to a number of days (inclusive
-// of today). 30d is the default when the param is absent or unrecognized.
-func rangeDays(r siteapi.OptSiteAnalyticsRange) int {
+// analyticsWindow maps the selectable range to the module's window; 30d is the
+// default when the param is absent or unrecognized.
+func analyticsWindow(r siteapi.OptSiteAnalyticsRange) analytics.Window {
 	if v, ok := r.Get(); ok {
 		switch v {
 		case siteapi.SiteAnalyticsRange7d:
-			return 7
+			return analytics.Window7Days
 		case siteapi.SiteAnalyticsRange90d:
-			return 90
+			return analytics.Window90Days
 		}
 	}
-	return 30
+	return analytics.Window30Days
 }
 
-// SiteAnalyticsOverview returns aggregate metrics for the workspace dashboard.
-// Engagement KPIs and the time series share a single range-filterable source
-// (BroadcastRecipient delivery timestamps) so the cards and the chart reconcile;
-// contact and automation counts are point-in-time snapshots.
+// SiteAnalyticsOverview maps the analytics module's Overview onto the DTO.
 func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.SiteAnalyticsOverviewParams) (siteapi.SiteAnalyticsOverviewRes, error) {
 	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
@@ -48,181 +33,27 @@ func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.Sit
 	if err != nil {
 		return nil, err
 	}
-
-	days := rangeDays(params.Range)
-	today := time.Now().UTC().Truncate(24 * time.Hour)
-	since := today.AddDate(0, 0, -(days - 1))
-	until := today.AddDate(0, 0, 1) // exclusive upper bound (midnight tomorrow UTC)
-
-	contacts, err := h.analyticsContacts(ctx, s, since)
+	ov, err := h.analytics.Overview(ctx, s, analyticsWindow(params.Range))
 	if err != nil {
 		return nil, err
 	}
-	email, err := h.analyticsEmail(ctx, s, since, until)
-	if err != nil {
-		return nil, err
+	series := make([]siteapi.SiteAnalyticsPoint, len(ov.Series))
+	for i, p := range ov.Series {
+		series[i] = siteapi.SiteAnalyticsPoint{Date: p.Date, Sent: int32(p.Sent), Opened: int32(p.Opened), Clicked: int32(p.Clicked)}
 	}
-	automations, err := h.analyticsAutomations(ctx, s)
-	if err != nil {
-		return nil, err
-	}
-	series, err := h.analyticsTimeseries(ctx, s, since, until)
-	if err != nil {
-		return nil, err
-	}
-
 	return &siteapi.SiteAnalyticsOverview{
-		Contacts:    contacts,
-		Email:       email,
-		Automations: automations,
-		Timeseries:  series,
+		Contacts: siteapi.SiteAnalyticsContacts{
+			Total: int32(ov.Contacts.Total), Active: int32(ov.Contacts.Active),
+			Unsubscribed: int32(ov.Contacts.Unsubscribed), NewInRange: int32(ov.Contacts.NewInWindow),
+		},
+		Email: siteapi.SiteAnalyticsEmail{
+			SentCount: int32(ov.Email.Sent), OpenedCount: int32(ov.Email.Opened), ClickedCount: int32(ov.Email.Clicked),
+			OpenRate: ov.Email.OpenRate, ClickRate: ov.Email.ClickRate, ClickToOpenRate: ov.Email.ClickToOpenRate,
+		},
+		Automations: siteapi.SiteAnalyticsAutomations{
+			Total: int32(ov.Automations.Total), Active: int32(ov.Automations.Active),
+			RunsActive: int32(ov.Automations.RunsActive), RunsCompleted: int32(ov.Automations.RunsCompleted),
+		},
+		Timeseries: series,
 	}, nil
-}
-
-func (h *Handlers) analyticsContacts(ctx context.Context, s *ent.Scoped, since time.Time) (siteapi.SiteAnalyticsContacts, error) {
-	var out siteapi.SiteAnalyticsContacts
-	total, err := s.Contact().Query().Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	// Eligibility is derived, not stored (ADR 0001): "unsubscribed" here means the
-	// contact's email is globally non-mailable (suppressed or opted out of
-	// everything); "active" is the remainder.
-	unsub, err := s.Contact().Query().
-		Where(eligibility.GloballyOptedOut(eligibility.ChannelEmail)).
-		Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	active := total - unsub
-	newInRange, err := s.Contact().Query().Where(contact.CreatedAtGTE(since)).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	return siteapi.SiteAnalyticsContacts{
-		Total:        int32(total),
-		Active:       int32(active),
-		Unsubscribed: int32(unsub),
-		NewInRange:   int32(newInRange),
-	}, nil
-}
-
-func (h *Handlers) analyticsEmail(ctx context.Context, s *ent.Scoped, since, until time.Time) (siteapi.SiteAnalyticsEmail, error) {
-	var out siteapi.SiteAnalyticsEmail
-	// Cohort by send: the denominator is the messages sent in the window, and
-	// opens/clicks are counted among that same cohort. This keeps opened ≤ sent
-	// (rates stay in [0,1]) and lets the KPIs reconcile with the time series,
-	// which buckets the same cohort by send day.
-	cohort := func() *ent.BroadcastRecipientQuery {
-		return s.BroadcastRecipient().Query().Where(
-			broadcastrecipient.SentAtGTE(since),
-			broadcastrecipient.SentAtLT(until),
-		)
-	}
-	sent, err := cohort().Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	opened, err := cohort().Where(broadcastrecipient.OpenedAtNotNil()).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	clicked, err := cohort().Where(broadcastrecipient.ClickedAtNotNil()).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	return siteapi.SiteAnalyticsEmail{
-		SentCount:       int32(sent),
-		OpenedCount:     int32(opened),
-		ClickedCount:    int32(clicked),
-		OpenRate:        ratio(opened, sent),
-		ClickRate:       ratio(clicked, sent),
-		ClickToOpenRate: ratio(clicked, opened),
-	}, nil
-}
-
-func (h *Handlers) analyticsAutomations(ctx context.Context, s *ent.Scoped) (siteapi.SiteAnalyticsAutomations, error) {
-	var out siteapi.SiteAnalyticsAutomations
-	total, err := s.Automation().Query().Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	active, err := s.Automation().Query().Where(automation.StatusEQ(automation.StatusActive)).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	runsActive, err := s.AutomationRun().Query().Where(automationrun.StatusEQ(automationrun.StatusActive)).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	runsCompleted, err := s.AutomationRun().Query().Where(automationrun.StatusEQ(automationrun.StatusCompleted)).Count(ctx)
-	if err != nil {
-		return out, err
-	}
-	return siteapi.SiteAnalyticsAutomations{
-		Total:         int32(total),
-		Active:        int32(active),
-		RunsActive:    int32(runsActive),
-		RunsCompleted: int32(runsCompleted),
-	}, nil
-}
-
-// analyticsTimeseries buckets the send cohort by UTC send day — sent, plus the
-// opened/clicked subsets — then zero-fills every day in [since, until) so the
-// chart has no gaps. date_trunc is forced to UTC (via AT TIME ZONE 'UTC') so the
-// bucket labels match the UTC zero-fill loop regardless of the DB session zone.
-func (h *Handlers) analyticsTimeseries(ctx context.Context, s *ent.Scoped, since, until time.Time) ([]siteapi.SiteAnalyticsPoint, error) {
-	var rows []struct {
-		Day     string `sql:"day"`
-		Sent    int    `sql:"sent"`
-		Opened  int    `sql:"opened"`
-		Clicked int    `sql:"clicked"`
-	}
-	err := s.BroadcastRecipient().Query().
-		Modify(func(sel *sql.Selector) {
-			sentAt := sel.C(broadcastrecipient.FieldSentAt)
-			sel.Select(
-				sql.As(fmt.Sprintf("to_char(date_trunc('day', %s AT TIME ZONE 'UTC'), 'YYYY-MM-DD')", sentAt), "day"),
-				sql.As("COUNT(*)", "sent"),
-				sql.As(fmt.Sprintf("COUNT(%s)", sel.C(broadcastrecipient.FieldOpenedAt)), "opened"),
-				sql.As(fmt.Sprintf("COUNT(%s)", sel.C(broadcastrecipient.FieldClickedAt)), "clicked"),
-			).
-				Where(sql.And(
-					sql.GTE(sentAt, since),
-					sql.LT(sentAt, until),
-				)).
-				GroupBy("day")
-		}).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-
-	type counts struct{ sent, opened, clicked int }
-	byDay := make(map[string]counts, len(rows))
-	for _, r := range rows {
-		byDay[r.Day] = counts{sent: r.Sent, opened: r.Opened, clicked: r.Clicked}
-	}
-
-	var points []siteapi.SiteAnalyticsPoint
-	for d := since; d.Before(until); d = d.AddDate(0, 0, 1) {
-		day := d.Format(analyticsDayFormat)
-		c := byDay[day]
-		points = append(points, siteapi.SiteAnalyticsPoint{
-			Date:    day,
-			Sent:    int32(c.sent),
-			Opened:  int32(c.opened),
-			Clicked: int32(c.clicked),
-		})
-	}
-	return points, nil
-}
-
-// ratio is num/denom as a float32 in [0,1], guarding against a zero denominator.
-// Mirrors the per-broadcast rate semantics in the resources package.
-func ratio(num, denom int) float32 {
-	if denom <= 0 {
-		return 0
-	}
-	return float32(num) / float32(denom)
 }

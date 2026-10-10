@@ -18,9 +18,9 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -74,7 +74,7 @@ func TestBearerAuthResolvesAValidTokenToItsWorkspaceAndScopes(t *testing.T) {
 	h := auth.NewExternalSecurityHandler(env.DB, env.Bus)
 
 	ctx, err := h.HandleBearerAuth(context.Background(), "", externalapi.BearerAuth{
-		Token: service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
+		Token: credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
 	})
 	require.NoError(t, err)
 	got := auth.GetTokenAuth(ctx)
@@ -95,17 +95,17 @@ func TestBearerAuthRejectsEveryUnusableToken(t *testing.T) {
 	env := testhelper.Setup(t)
 	h := auth.NewExternalSecurityHandler(env.DB, env.Bus)
 	ctx := context.Background()
-	valid := service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)
+	valid := credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)
 
 	revoked := env.ScopedBearer(t, "contacts:read")
-	parsed := service.ParseToken(revoked)
+	parsed := credentials.ParseToken(revoked)
 	require.NotNil(t, parsed)
 	n, err := env.DB.ApiToken.Update().Where(apitoken.Prefix(parsed.Prefix)).SetRevokedAt(time.Now()).Save(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 1, n)
 
 	expired := env.ScopedBearer(t, "contacts:read")
-	parsed = service.ParseToken(expired)
+	parsed = credentials.ParseToken(expired)
 	require.NotNil(t, parsed)
 	n, err = env.DB.ApiToken.Update().Where(apitoken.Prefix(parsed.Prefix)).SetExpiresAt(time.Now().Add(-time.Minute)).Save(ctx)
 	require.NoError(t, err)
@@ -114,8 +114,8 @@ func TestBearerAuthRejectsEveryUnusableToken(t *testing.T) {
 	for name, token := range map[string]string{
 		"empty":            "",
 		"malformed":        "not-a-token",
-		"unknown prefix":   service.TokenValue("nosuchprefix", "whatever"),
-		"wrong secret":     service.TokenValue(fixtures.AnchorTokenPrefix, "not-the-secret"),
+		"unknown prefix":   credentials.TokenValue("nosuchprefix", "whatever"),
+		"wrong secret":     credentials.TokenValue(fixtures.AnchorTokenPrefix, "not-the-secret"),
 		"revoked":          revoked,
 		"expired":          expired,
 		"valid prefix cut": valid[:len(valid)-len(fixtures.AnchorTokenSecret)-1],
@@ -129,7 +129,7 @@ func TestBearerAuthRejectsEveryUnusableToken(t *testing.T) {
 func TestBearerAuthStorageFailureIsNotAnUnauthorizedAnswer(t *testing.T) {
 	h := auth.NewExternalSecurityHandler(closedClient(t), nil)
 	_, err := h.HandleBearerAuth(context.Background(), "", externalapi.BearerAuth{
-		Token: service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
+		Token: credentials.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
 	})
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, auth.ErrUnauthorized, "a database outage is a 500, not a 401 for a valid token")

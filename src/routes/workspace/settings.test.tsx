@@ -1,8 +1,25 @@
+import { HttpResponse } from 'msw'
 import { afterEach, expect, test, vi } from 'vitest'
 
+import {
+  handleSiteAuditGetRetention,
+  handleSiteAuditList,
+  handleSiteEventsList,
+  handleSiteIntegrationsList,
+  handleSiteInvitationsList,
+  handleSiteMembershipsList,
+  handleSiteSendingDomainsList,
+  handleSiteSuppressionsList,
+  handleSiteTokensList,
+  handleSiteUserGetMe,
+  handleSiteWebhooksList,
+  handleSiteWorkspacesList,
+  handleSiteWorkspacesUpdate,
+} from '../../generated/site/msw.gen.ts'
 import { activityRoute } from '../../router.tsx'
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { SettingsPage } from './settings.tsx'
 
 const workspace = {
@@ -12,6 +29,7 @@ const workspace = {
   collectKey: 'omck_test_key',
   ingestKey: 'omik_test_key',
   postalAddress: '',
+  role: 'owner' as const,
   createdAt: '2026-01-01T00:00:00Z',
 }
 
@@ -19,28 +37,44 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function eventsPage(totalItems: number) {
-  return jsonResponse({ items: [], page: 1, pageSize: 1, totalItems, totalPages: 0 })
+const emptyPage = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 0 }
+
+// The settings page lists the workspaces, polls the events feed for the install status and
+// embeds the other workspace sections, all empty here.
+function serveWorkspace(totalItems = 0) {
+  worker.use(
+    handleSiteMembershipsList({ body: [] }),
+    handleSiteUserGetMe({
+      body: {
+        id: '1',
+        name: 'Me',
+        email: 'me@example.com',
+        emailVerified: true,
+        createdAt: '2026-01-01T00:00:00Z',
+      },
+    }),
+    handleSiteInvitationsList({ body: [] }),
+    handleSiteAuditGetRetention({ body: { retentionDays: null } }),
+    handleSiteAuditList({ body: { items: [] } }),
+    handleSiteSendingDomainsList({ body: emptyPage }),
+    handleSiteWebhooksList({ body: emptyPage }),
+    handleSiteSuppressionsList({ body: emptyPage }),
+    handleSiteWorkspacesList({ body: [workspace] }),
+    handleSiteEventsList({ body: { items: [], page: 1, pageSize: 1, totalItems, totalPages: 0 } }),
+    handleSiteTokensList({ body: [] }),
+    handleSiteIntegrationsList({ body: [] }),
+  )
 }
 
 test('renames the workspace and shows the tracking snippet and test command', async () => {
   const puts: string[] = []
-  mockClientFetch(async (input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.method === 'PUT') {
-      puts.push(await req.clone().text())
-      return jsonResponse({ ...workspace, name: 'Acme Inc' })
-    }
-    // Install status polls the events feed (no events yet).
-    if (req.url.includes('/events')) {
-      return eventsPage(0)
-    }
-    // The settings page also lists API tokens and integrations (none here).
-    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
-      return jsonResponse([])
-    }
-    return jsonResponse([workspace])
-  })
+  serveWorkspace()
+  worker.use(
+    handleSiteWorkspacesUpdate(async ({ request }) => {
+      puts.push(await request.text())
+      return HttpResponse.json({ ...workspace, name: 'Acme Inc' })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<SettingsPage />)
 
@@ -60,34 +94,12 @@ test('renames the workspace and shows the tracking snippet and test command', as
 })
 
 test('shows the connected install status once events arrive', async () => {
-  mockClientFetch((input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.url.includes('/events')) {
-      return eventsPage(7)
-    }
-    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
-      return jsonResponse([])
-    }
-    return jsonResponse([workspace])
-  })
+  serveWorkspace(7)
 
   const { screen } = await renderWithRouter(<SettingsPage />)
 
   await expect.element(screen.getByText(/Events are arriving/)).toBeInTheDocument()
 })
-
-function serveWorkspace() {
-  mockClientFetch((input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.url.includes('/events')) {
-      return eventsPage(0)
-    }
-    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
-      return jsonResponse([])
-    }
-    return jsonResponse([workspace])
-  })
-}
 
 test('the activity link opens the workspace activity feed', async () => {
   serveWorkspace()
@@ -117,7 +129,12 @@ test('each copy button flips to the copied state', async () => {
 })
 
 test('shows an error alert when the workspaces fail to load', async () => {
-  mockClientFetch(() => jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }))
+  worker.use(
+    handleSiteWorkspacesList(() => problem(500, { detail: 'boom' })),
+    handleSiteEventsList(() => problem(500, { detail: 'boom' })),
+    handleSiteTokensList(() => problem(500, { detail: 'boom' })),
+    handleSiteIntegrationsList(() => problem(500, { detail: 'boom' })),
+  )
   const { screen } = await renderWithRouter(<SettingsPage />)
 
   await expect.element(screen.getByRole('alert', { name: /Failed to load/ })).toBeInTheDocument()

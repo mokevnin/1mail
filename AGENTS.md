@@ -19,7 +19,7 @@ every caller (regenerate afterwards), rather than layering the new design over t
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
 hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`),
 `src/generated/` / `packages/analytics/src/generated/`, or the `*_gen.go` files in the
-`internal/api/{site,external}/resources` packages and `internal/fixtures/catalog_gen.go` — regenerate instead.
+`internal/api/{site,external}/resources` packages and `internal/fixtures/catalog_gen.go`, or any `*_gen_test.go` mock — regenerate instead.
 
 ```
 typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi.json
@@ -30,6 +30,7 @@ ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
 ent/schema/*.go + ent/template/scoped*.tmpl  ──entc──▶ ent/scoped.go, ent/scoped_registry.go  (scoped client: `client.Scoped(ws)`)
 ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/resources/converter_gen.go
 fixtures/*.yml (`# fixture: Name` rows)  ──cmd/fixturegen──▶ internal/fixtures/catalog_gen.go (named test constants)
+Go interfaces (`mise run generate:mocks` task list)  ──moq──▶ <pkg>/mocks_gen_test.go (test mocks; add an interface to the task list)
 ```
 
 - **goverter** maps ent entities → ogen resource DTOs. The `Converter` interface and its
@@ -47,7 +48,7 @@ fixtures/*.yml (`# fixture: Name` rows)  ──cmd/fixturegen──▶ internal/
 Generated files carry a header (`Code generated … DO NOT EDIT`, or `// @ts-nocheck` on the
 frontend) and are flagged `linguist-generated` in `.gitattributes` (GitHub collapses them in
 diffs). Generated code lives in dedicated dirs — `internal/` is otherwise hand-written, its
-only generated files being the two `converter_gen.go` and `internal/fixtures/catalog_gen.go`.
+only generated files being the two `converter_gen.go`, `internal/fixtures/catalog_gen.go` and the moq `*_gen_test.go` mocks.
 
 ## Common commands
 
@@ -85,10 +86,14 @@ Run a single Go test (arguments after `--` go to `go test`; the default is `./..
 mise run test -- ./internal/api/site -run TestSiteContactsRequireAuth
 ```
 
+Go tests always run with `-shuffle=on` (the seed is printed; reproduce an order with
+`-shuffle=<seed>`), so a test must not depend on another's side effects.
+
 End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
 `mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
-app in-process. Scenarios are domain steps on `e2e.Workspace` (`env.NewWorkspace(t).Ready()`,
-`ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
+app in-process. `HOLD=true mise run test:e2e` keeps the app and Mailpit up after the run (their URLs are
+printed) until Ctrl-C, to inspect a failed scenario in the Mailpit UI. Scenarios are domain steps on
+`e2e.Workspace` (`env.NewWorkspace(t).Ready()`, `ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
 (`workspace.go`, `integration.go`, `contacts.go`, `broadcast.go`, `automation.go`, `consent.go`); `_test.go`
 files hold only scenarios, and bodies are authored with `e2e.MJML(text)`. Mail is observed only through
 the Workspace's `Inbox`: one wait (`w.Inbox.Wait(e2e.Match{To, Subject})`) and one absence check
@@ -153,12 +158,12 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
      (`internal/server/hooks_ses.go`), signed unsubscribe/confirm tokens
      (`internal/consent`), and `accounts.BootstrapScope` (the bootstrap token).
 - **The raw `*ent.Client` is allowed only in:** `internal/accounts` (User, Membership,
-  Workspace, invitation by token), `internal/api/auth` (credentials, token and key lookup),
+  Workspace incl. slug resolution, invitation by token), `internal/api/auth` (credentials, token and key lookup),
   `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,
   so it works on the bus's raw transaction client and scopes from the token's Workspace),
   `internal/oauthserver`, `internal/secondfactor` (a User's TOTP Second factor and Recovery
-  codes, ADR 0020: they belong to the User, not a Workspace), `internal/service` (suspension,
-  slug resolution), `internal/events`
+  codes, ADR 0020: they belong to the User, not a Workspace), `internal/suspension` (Workspace
+  suspension), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
   subscriber: its envelope carries only a Workspace id, ADR 0022), `ee/retention` (the

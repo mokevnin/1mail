@@ -8,10 +8,10 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/secondfactor"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // SiteSecondFactorGetStatus answers whether the User has a Second factor, a pending
@@ -171,7 +171,7 @@ func (h *Handlers) provePassword(ctx context.Context, password string) (userID i
 		return 0, false, ratelimit.FromContext(ctx).Delay(ctx, ratelimit.PolicyLoginAccount,
 			h.attempts.Limit(accounts.KindLogin), wait, h.attempts.Now())
 	}
-	if u.PasswordHash != "" && service.VerifyPassword(u.PasswordHash, password) {
+	if u.PasswordHash != "" && credentials.VerifyPassword(u.PasswordHash, password) {
 		return userID, true, nil
 	}
 	return userID, false, h.attempts.RecordFailure(ctx, accounts.KindLogin, u.Email)

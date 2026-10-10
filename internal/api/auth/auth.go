@@ -13,9 +13,9 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/ratelimit"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
 
@@ -122,7 +122,7 @@ func guardedAuth[T any](ctx context.Context, authenticate func() (T, error), cha
 }
 
 func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
-	parsed := service.ParseToken(t.Token)
+	parsed := credentials.ParseToken(t.Token)
 	if parsed == nil {
 		return ctx, ErrUnauthorized
 	}
@@ -144,7 +144,7 @@ func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalap
 	if token.ExpiresAt != nil && token.ExpiresAt.Before(time.Now()) {
 		return ctx, ErrUnauthorized
 	}
-	if !service.VerifyTokenSecret(parsed.Secret, token.SecretHash) {
+	if !credentials.VerifyTokenSecret(parsed.Secret, token.SecretHash) {
 		return ctx, ErrUnauthorized
 	}
 

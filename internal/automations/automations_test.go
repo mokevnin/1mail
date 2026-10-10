@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -106,34 +107,17 @@ func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
 	assert.Len(t, stored, 3, "a refused update leaves the definition as it was")
 }
 
-func TestListPagesNewestFirstWithinTheWorkspace(t *testing.T) {
+func TestListIsNewestFirstWithinTheWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New()
-	ctx := context.Background()
-	_, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(ctx)
+	page, err := automations.New().List(context.Background(), env.DB.Scoped(fixtures.AcmeID), pagination.Params{Page: 1, PageSize: 100})
 	require.NoError(t, err)
-
-	total, err := env.DB.Automation.Query().Where(automation.WorkspaceID(fixtures.AcmeID)).Count(ctx)
-	require.NoError(t, err)
-	require.Greater(t, total, 1)
-
-	first, gotTotal, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 1, 0)
-	require.NoError(t, err)
-	assert.Equal(t, total, gotTotal)
-	require.Len(t, first, 1)
-	second, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 1, 1)
-	require.NoError(t, err)
-	require.Len(t, second, 1)
-	assert.Greater(t, first[0].ID, second[0].ID, "newest first")
-
-	all, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 100, 0)
-	require.NoError(t, err)
-	for _, a := range all {
+	require.Greater(t, page.TotalItems, 1)
+	for i, a := range page.Items {
 		assert.EqualValues(t, fixtures.AcmeID, a.WorkspaceID, "another tenant's automation leaked")
+		if i > 0 {
+			assert.Greater(t, page.Items[i-1].ID, a.ID, "newest first")
+		}
 	}
-	past, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 10, total)
-	require.NoError(t, err)
-	assert.Empty(t, past)
 }
 
 func TestUpdateChangesOnlyWhatIsGivenAndKeepsTheStatus(t *testing.T) {

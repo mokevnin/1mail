@@ -1,13 +1,15 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteAnalyticsOverviewData,
-  SiteWorkspacesListData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteAnalyticsOverview,
+  handleSiteWorkspacesList,
+} from '../../generated/site/msw.gen.ts'
 import { overviewRoute } from '../../router.tsx'
-import { jsonResponse, mockClientFetch, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { OverviewPage } from './overview.tsx'
 
 const overview = {
@@ -25,13 +27,10 @@ const overview = {
 }
 
 test('shows the workspace name and contacts count', async () => {
-  mockClientFetch((input) => {
-    const url = input instanceof Request ? input.url : String(input)
-    if (url.includes('/analytics/overview')) {
-      return jsonResponse(overview)
-    }
-    if (url.includes('/workspaces')) {
-      return jsonResponse([
+  worker.use(
+    handleSiteAnalyticsOverview({ body: overview }),
+    handleSiteWorkspacesList({
+      body: [
         {
           id: '1',
           name: 'Acme',
@@ -39,12 +38,12 @@ test('shows the workspace name and contacts count', async () => {
           collectKey: 'k',
           ingestKey: 'i',
           postalAddress: '',
+          role: 'owner' as const,
           createdAt: '2026-01-01T00:00:00Z',
         },
-      ])
-    }
-    return jsonResponse({})
-  })
+      ],
+    }),
+  )
 
   const { screen } = await renderWithRouter(<OverviewPage />, {
     path: '/workspaces/$slug/',
@@ -55,21 +54,15 @@ test('shows the workspace name and contacts count', async () => {
   await expect.element(screen.getByText('42', { exact: true })).toBeInTheDocument()
 })
 
-const SLUG = { slug: 'test' }
-const mount = routeMount(overviewRoute, SLUG)
-const workspaces = route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse([]))
-
-const overviewRoutes = (respond: (req: Request) => Response | Promise<Response>) => [
-  workspaces,
-  route<SiteAnalyticsOverviewData>('GET', '/workspaces/{slug}/analytics/overview', SLUG, respond),
-]
+const mount = routeMount(overviewRoute, { slug: 'test' })
 
 test('switching the range refetches the analytics for that window', async () => {
   const ranges: (string | null)[] = []
-  mockClientRoutes(
-    overviewRoutes((req) => {
-      ranges.push(new URL(req.url).searchParams.get('range'))
-      return jsonResponse(overview)
+  worker.use(
+    handleSiteWorkspacesList({ body: [] }),
+    handleSiteAnalyticsOverview(({ request }) => {
+      ranges.push(new URL(request.url).searchParams.get('range'))
+      return HttpResponse.json(overview)
     }),
   )
   const { screen } = await renderWithRouter(<OverviewPage />, mount)
@@ -81,8 +74,9 @@ test('switching the range refetches the analytics for that window', async () => 
 })
 
 test('shows an error alert when analytics fail to load', async () => {
-  mockClientRoutes(
-    overviewRoutes(() => jsonResponse({ status: 500, detail: 'boom' }, { status: 500 })),
+  worker.use(
+    handleSiteWorkspacesList({ body: [] }),
+    handleSiteAnalyticsOverview(() => problem(500, { detail: 'boom' })),
   )
   const { screen } = await renderWithRouter(<OverviewPage />, mount)
 
@@ -91,13 +85,14 @@ test('shows an error alert when analytics fail to load', async () => {
 })
 
 test('a workspace without contacts shows the empty hint instead of the chart', async () => {
-  mockClientRoutes(
-    overviewRoutes(() =>
-      jsonResponse({
+  worker.use(
+    handleSiteWorkspacesList({ body: [] }),
+    handleSiteAnalyticsOverview({
+      body: {
         ...overview,
         contacts: { total: 0, active: 0, unsubscribed: 0, newInRange: 0 },
-      }),
-    ),
+      },
+    }),
   )
   const { screen } = await renderWithRouter(<OverviewPage />, mount)
 

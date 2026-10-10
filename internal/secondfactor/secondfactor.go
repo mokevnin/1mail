@@ -30,9 +30,9 @@ import (
 	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // Issuer names the instance in the authenticator app.
@@ -379,7 +379,7 @@ func (m *Module) verify(ctx context.Context, tx *ent.Client, pub events.Publishe
 	n, err := tx.RecoveryCode.Update().
 		Where(
 			recoverycode.UserID(u.ID),
-			recoverycode.CodeHash(service.HashRecoveryCode(code)),
+			recoverycode.CodeHash(credentials.HashRecoveryCode(code)),
 			recoverycode.UsedAtIsNil(),
 		).
 		SetUsedAt(m.now()).
@@ -454,7 +454,7 @@ func replaceRecoveryCodes(ctx context.Context, tx *ent.Client, userID int64) ([]
 	builders := make([]*ent.RecoveryCodeCreate, RecoveryCodeCount)
 	for i := range codes {
 		codes[i] = newRecoveryCode()
-		builders[i] = tx.RecoveryCode.Create().SetUserID(userID).SetCodeHash(service.HashRecoveryCode(codes[i]))
+		builders[i] = tx.RecoveryCode.Create().SetUserID(userID).SetCodeHash(credentials.HashRecoveryCode(codes[i]))
 	}
 	if err := tx.RecoveryCode.CreateBulk(builders...).Exec(ctx); err != nil {
 		return nil, err

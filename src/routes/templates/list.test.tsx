@@ -1,27 +1,23 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteTemplatesDeleteData,
-  SiteTemplatesListData,
-} from '../../generated/site/types.gen.ts'
+import { handleSiteTemplatesDelete, handleSiteTemplatesList } from '../../generated/site/msw.gen.ts'
 import { templatesRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { page, TIMESTAMPS } from '../../test/payloads.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { TemplatesListPage } from './list.tsx'
 
 const SLUG = { slug: 'test' }
 const LIST_ROUTE = routeMount(templatesRoute, SLUG)
 
-const WELCOME = { id: '1', name: 'Welcome', subject: 'Hello there' }
-const RECEIPT = { id: '2', name: 'Receipt', subject: 'Your receipt' }
-
-function listRoute(respond: () => Response) {
-  return route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, respond)
-}
+const WELCOME = { id: '1', name: 'Welcome', subject: 'Hello there', body: '', ...TIMESTAMPS }
+const RECEIPT = { id: '2', name: 'Receipt', subject: 'Your receipt', body: '', ...TIMESTAMPS }
 
 test('lists the workspace templates', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [WELCOME, RECEIPT], totalItems: 2 }))])
+  worker.use(handleSiteTemplatesList({ body: page([WELCOME, RECEIPT], 2) }))
 
   const { screen } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
 
@@ -32,7 +28,7 @@ test('lists the workspace templates', async () => {
 })
 
 test('shows the empty state when there are no templates', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteTemplatesList({ body: page([], 0) }))
 
   const { screen } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
 
@@ -40,7 +36,7 @@ test('shows the empty state when there are no templates', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }))])
+  worker.use(handleSiteTemplatesList(() => problem(500)))
 
   const { screen } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
 
@@ -48,7 +44,7 @@ test('shows an error alert when the list fails to load', async () => {
 })
 
 test('New template navigates to the create page', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteTemplatesList({ body: page([], 0) }))
 
   const { screen, navigate } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'New template' }).click()
@@ -57,7 +53,7 @@ test('New template navigates to the create page', async () => {
 })
 
 test('Edit navigates to the template edit page', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [WELCOME], totalItems: 1 }))])
+  worker.use(handleSiteTemplatesList({ body: page([WELCOME], 1) }))
 
   const { screen, navigate } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Welcome')).toBeInTheDocument()
@@ -71,21 +67,19 @@ test('Edit navigates to the template edit page', async () => {
 test('deleting a template asks for confirmation, deletes it and refreshes the list', async () => {
   const deleted: string[] = []
   let listFetches = 0
-  mockClientRoutes([
-    listRoute(() => {
+  worker.use(
+    handleSiteTemplatesList(() => {
       listFetches++
-      return jsonResponse({ items: deleted.length ? [RECEIPT] : [WELCOME, RECEIPT], totalItems: 2 })
+      return HttpResponse.json({
+        items: deleted.length ? [RECEIPT] : [WELCOME, RECEIPT],
+        totalItems: 2,
+      })
     }),
-    route<SiteTemplatesDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/templates/{id}',
-      { ...SLUG, id: '1' },
-      () => {
-        deleted.push('1')
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteTemplatesDelete(({ params }) => {
+      deleted.push(params.id)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<TemplatesListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Welcome')).toBeInTheDocument()

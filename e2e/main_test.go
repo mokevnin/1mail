@@ -5,6 +5,8 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 )
 
@@ -23,5 +25,18 @@ func run(m *testing.M) int {
 	}
 	defer stop()
 	env = e
-	return m.Run()
+	code := m.Run()
+	if os.Getenv("HOLD") == "true" {
+		hold(e)
+	}
+	return code
+}
+
+// hold keeps the application and Mailpit running after the run (HOLD=true) so a failed
+// scenario can be inspected in the Mailpit UI; SIGINT or SIGTERM stops it.
+func hold(e *Env) {
+	fmt.Fprintf(os.Stderr, "e2e: HOLD=true, the stack stays up\n  application: %s\n  mailpit:     %s\n  Ctrl-C to stop\n", e.BaseURL, e.mailpit.URL())
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	<-sig
 }

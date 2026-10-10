@@ -362,6 +362,14 @@ coherent ways: it suppresses (Suppression), it subtracts from the Complaint-rate
 and it is the Bounce-rate numerator.
 _Avoid_: Delivery-failure rate (that would fold in transient bounces)
 
+**Engagement rates**:
+The dashboard's open, click and click-to-open ratios over a chosen window (7, 30 or 90 UTC days).
+A **send cohort**: the denominator is the Broadcast recipients sent in the window, and opens and
+clicks are counted among that same cohort, so opened never exceeds sent and the rates stay within
+[0, 1]. Not the **Complaint rate** or **Bounce rate**: those are deliverability flow rates per
+Sending domain, counted from Events by their own time and never tied to a send.
+_Avoid_: Reputation, deliverability (those name the Sending-domain rates)
+
 **API token**:
 A workspace-scoped, **scoped** bearer credential for the external `/api` surface — a public
 `prefix` plus a hashed secret, carrying scopes, optional expiry, and revocation. Distinct from
@@ -398,6 +406,22 @@ notifies the workspace owner, and is one-click reversible by an Operator. Suspen
 _reputation_ freeze; a Billing hold is a separate money-driven freeze on the same core send
 chokepoint — the two are independent reasons, never merged.
 _Avoid_: Ban, lockout, disable, quota (suspension is not a billing state — see Billing hold)
+
+**Operator console**:
+The Operator's own web surface (a fourth API surface beside `/site`, `/api`, `/collect`) for
+acting across Workspaces. It shows Workspace **metadata only** (identity, suspension state,
+deliverability rates, send volume, Audit log) — never Contacts, content, or Events — and offers
+suspend and unsuspend. Impersonation is out of scope. A SaaS/platform concept, absent from a
+plain self-hosted install.
+_Avoid_: Admin panel, back office
+
+**Abuse detector**:
+The automated actor (`system`) that watches each Workspace's **Complaint rate** and **Bounce
+rate** and freezes sending through **Workspace suspension** when they cross a limit, above a
+minimum send volume. A lower limit only **warns** the owner and freezes nothing. It counts only
+events after the last time a suspension was cleared, never reverses a suspension itself (only an
+Operator does), and skips a Workspace an Operator has exempted. A SaaS/platform concept.
+_Avoid_: Spam filter, auto-ban
 
 **Webhook endpoint** (outbound):
 A workspace-scoped HTTP destination that **1mail calls** when domain events occur — subscribes
@@ -450,7 +474,9 @@ _Avoid_: Team, seat, collaborator, ownership
 
 **Role**:
 A Membership's permission level in a Workspace (e.g. owner / admin / member). The exact set is a
-follow-up; the structural decision is that access is role-scoped per Membership.
+follow-up; the structural decision is that access is role-scoped per Membership. A Workspace
+always keeps at least one owner, and only an owner grants the owner Role or changes or removes
+another owner's Membership.
 _Avoid_: Permission, scope (scope is the API-token term)
 
 **Audit entry** (the Audit log is the Workspace's append-only sequence of them):
@@ -471,28 +497,46 @@ _Avoid_: Event (that is a Contact/data-plane fact), activity, history, changelog
 how much) is a domain concern; rating, plans, invoices, payment, and dunning are **not** — they
 live in an external billing plane and never enter the core glossary.
 
+**Billing period** (metering):
+The calendar month, in UTC, over which usage is measured and a Usage snapshot is closed. The same
+for every Workspace and owned by the core, not by the billing plane: the core closes a period
+before the plane invoices it, so no usage arrives after an invoice is final. Any proration of a
+part-month subscription is the plane's concern.
+_Avoid_: Billing cycle, subscription anniversary
+
 **Usage snapshot** (metering):
-A per-(Workspace, billing period, metric) materialized aggregate of billable activity, finalized
+A per-(Workspace, Billing period, metric) materialized aggregate of billable activity, finalized
 (made immutable) at period close — the billing-grade number a biller consumes. Distinct from the
-raw Events it is computed from, which stay the source of truth for audit and dispute. Different
-metrics aggregate differently: sends are a _sum_ over `email.sent`; contact count is a
-**high-water-mark** (the peak reached during the period), not an instantaneous value. It
-materializes live Events for money the same way a Broadcast recipient's rollup materializes
-engagement — the Events are truth, the snapshot is the closed, reproducible figure. Carries no
-price.
+raw Events it is computed from, which stay the source of truth for audit and dispute. Two
+metrics, aggregated differently: `emails_sent` is a _sum_ of `email.sent` over all three send
+surfaces, one per recipient, in a single total (a suppressed or held message is never sent, so
+never counted); `contacts` is a **high-water-mark** (the peak reached during the period) of
+identified Contacts — those with an email Destination, erased Contacts excluded — never an
+instantaneous value, and never anonymous tracker Contacts. It materializes live Events for money
+the same way a Broadcast recipient's rollup materializes engagement — the Events are truth, the
+snapshot is the closed, reproducible figure. Carries no price.
 _Avoid_: Meter, counter, invoice line, quota (quota is enforcement, not measurement)
+
+**Live usage** (metering):
+The same per-(Workspace, metric) figures for the Billing period still open: not final, with the
+time it was last computed. Read from a worker or cache, never a recount on read, and counting
+sends still in flight. It is what lets the billing plane notice a limit being approached before
+the period closes; the Usage snapshot remains the only figure it invoices.
+_Avoid_: Current usage, real-time usage
 
 **Billing hold**:
 A reversible Workspace state that **freezes all outbound sending** — all three send surfaces
 (Broadcast, Automation, Transactional), exactly like Workspace suspension — but for a _money_
-reason (non-payment / plan-limit breach) rather than reputation. It is a **distinct cause on the
-same core chokepoint**, never a repurposing of suspension: the send path asks one question ("may
-this Workspace send now?") answered by several independent freeze reasons. Two properties set it
-apart from suspension: it engages **only after a dunning grace period** (during dunning nothing
-is frozen — the grace, not the message type, is what protects a tenant's password-reset mail),
-and it is cleared by **payment (self-service)**, whereas suspension is cleared by appeal. The
-state and its dunning lifecycle are an EE concept; only the freeze check lives in the core send
-path.
+reason (non-payment, or a free plan's hard cap) rather than reputation. It is a **distinct cause
+on the same core chokepoint**, never a repurposing of suspension: the send path asks one question
+("may this Workspace send now?") answered by several independent freeze reasons, each stored
+separately. Messages are **held, not failed**: they wait and go out when the hold lifts. Two
+properties set it apart from suspension: the billing plane sets it only once dunning has ended
+(the core has no grace period of its own; during dunning nothing is frozen, so a tenant's
+password-reset mail is protected by the grace, not by message type), and it is cleared by
+**payment (self-service)**, whereas suspension is cleared by appeal. A paid plan exceeding its
+included volume is never held: overage is billed. The state and its lifecycle are an EE concept;
+only the freeze check lives in the core send path.
 _Avoid_: Suspension (that is the reputation freeze), quota, lockout, dunning (dunning is the
 grace period, not the hold)
 

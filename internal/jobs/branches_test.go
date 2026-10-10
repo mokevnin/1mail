@@ -3,7 +3,6 @@ package jobs_test
 import (
 	"context"
 	"errors"
-	"net"
 	"testing"
 	"time"
 
@@ -14,10 +13,11 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/internal/dnstest"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -54,7 +54,7 @@ func TestRunStepOutcomes(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "["+emailStep+"]", true)
 		env.DB.AutomationRun.UpdateOneID(id).SetStatus(automationrun.StatusCompleted).ExecX(ctx)
-		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.NoError(t, err)
 		assert.True(t, res.Done)
 	})
@@ -62,7 +62,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("a run past its last step completes", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "[]", true)
-		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.NoError(t, err)
 		assert.True(t, res.Done)
 		assert.Equal(t, automationrun.StatusCompleted, runStatus(ctx, t, env, id))
@@ -71,7 +71,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("an undecodable definition fails the run", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "not json", true)
-		_, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		_, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.Error(t, err)
 		assert.Equal(t, automationrun.StatusFailed, runStatus(ctx, t, env, id))
 	})
@@ -79,7 +79,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("an unknown step type fails the run", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, `[{"type":"teleport"}]`, true)
-		_, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		_, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.ErrorContains(t, err, "unknown step type")
 		assert.Equal(t, automationrun.StatusFailed, runStatus(ctx, t, env, id))
 	})
@@ -87,7 +87,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("a contact without an email completes the run", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "["+emailStep+"]", false)
-		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.NoError(t, err)
 		assert.True(t, res.Done)
 		assert.Equal(t, automationrun.StatusCompleted, runStatus(ctx, t, env, id))
@@ -97,7 +97,7 @@ func TestRunStepOutcomes(t *testing.T) {
 		env := testhelper.Setup(t)
 		broken := `{"type":"email","subject":"{% if %}broken","body":"<mjml><mj-body></mj-body></mjml>"}`
 		id := enroll(ctx, t, env, "["+broken+"]", true)
-		_, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), id)
+		_, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), id)
 		require.Error(t, err)
 		assert.Equal(t, automationrun.StatusFailed, runStatus(ctx, t, env, id))
 	})
@@ -105,10 +105,10 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("a held workspace waits and asks again later", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "["+emailStep+"]", true)
-		_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
+		_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 		require.NoError(t, err)
 		fs := &fakeSender{}
-		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: fs}), id)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(fs)), id)
 		require.NoError(t, err)
 		assert.False(t, res.Done)
 		require.NotNil(t, res.ResumeAt)
@@ -121,7 +121,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	// queued: the job is finished, not retried.
 	t.Run("an unknown run is finished", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), 424242)
 		require.NoError(t, err)
 		assert.True(t, res.Done)
 	})
@@ -152,7 +152,7 @@ func TestPlanBroadcastFailsOnABrokenSegment(t *testing.T) {
 	t.Run("segment of another workspace", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.DB.Broadcast.UpdateOneID(fixtures.BroadcastDraftID).SetSegmentID(fixtures.SegmentGlobexID).ExecX(ctx)
-		_, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), fixtures.BroadcastDraftID)
+		_, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), fixtures.BroadcastDraftID)
 		require.Error(t, err)
 		assert.Equal(t, broadcast.StatusFailed, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
 	})
@@ -161,7 +161,7 @@ func TestPlanBroadcastFailsOnABrokenSegment(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.DB.Segment.UpdateOneID(fixtures.SegmentProPlanID).SetDefinition("{not json").ExecX(ctx)
 		env.DB.Broadcast.UpdateOneID(fixtures.BroadcastDraftID).SetSegmentID(fixtures.SegmentProPlanID).ExecX(ctx)
-		_, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), fixtures.BroadcastDraftID)
+		_, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), fixtures.BroadcastDraftID)
 		require.Error(t, err)
 		assert.Equal(t, broadcast.StatusFailed, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
 	})
@@ -171,7 +171,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 	ctx := context.Background()
 	plan := func(t *testing.T, env *testhelper.TestEnv) (ids []int64) {
 		t.Helper()
-		ids, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), fixtures.BroadcastDraftID)
+		ids, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), fixtures.BroadcastDraftID)
 		require.NoError(t, err)
 		require.NotEmpty(t, ids)
 		return ids
@@ -185,7 +185,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 		ids := plan(t, env)
 		rec := env.DB.BroadcastRecipient.GetX(ctx, ids[0])
 		env.DB.Contact.UpdateOneID(rec.ContactID).ClearEmail().ExecX(ctx)
-		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), ids[0]))
+		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), ids[0]))
 		assert.Equal(t, broadcastrecipient.StatusFailed, status(env, ids[0]))
 	})
 
@@ -196,16 +196,16 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 		c := env.DB.Contact.GetX(ctx, rec.ContactID)
 		env.DB.Suppression.Create().SetWorkspaceID(fixtures.AcmeID).SetChannel("email").
 			SetDestination(*c.Email).SetReason("bounce").ExecX(ctx)
-		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), ids[0]))
+		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), ids[0]))
 		assert.Equal(t, broadcastrecipient.StatusSkipped, status(env, ids[0]))
 	})
 
 	t.Run("a held workspace leaves the recipient pending", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		ids := plan(t, env)
-		_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
+		_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 		require.NoError(t, err)
-		err = jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), ids[0])
+		err = jobs.SendToRecipient(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), ids[0])
 		require.Error(t, err)
 		var held *jobs.HeldError
 		assert.ErrorAs(t, err, &held)
@@ -216,7 +216,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 	// was queued: nothing to send, nothing to retry.
 	t.Run("unknown recipient", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242))
+		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), 424242))
 	})
 }
 
@@ -225,7 +225,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 func TestOwnerNotificationsSurfaceSenderErrors(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 	require.NoError(t, err)
 	env.SystemMail.SetErr(errors.New("smtp down"))
 
@@ -239,8 +239,8 @@ func TestOwnerNotificationsSurfaceSenderErrors(t *testing.T) {
 func TestInlineSendingDomainVerifyNotifiesOnFlip(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	gone := lookupReturning(nil, errNotFound())
-	inline := jobs.NewInline(env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), env.SystemMail, gone, envCipher(t), registry.Default(), "http://local")
+	gone := dnstest.Resolver(t, nil).LookupTXT
+	inline := jobs.NewInline(env.DB, newMod(env, resolvingTo(&fakeSender{})), env.SystemMail, gone, envCipher(t), registry.Default(), "http://local")
 
 	require.NoError(t, inline.EnqueueSendingDomainVerify(ctx, fixtures.SendingDomainVerifiedID))
 	require.Len(t, env.SystemMail.Messages(), 1)
@@ -256,5 +256,3 @@ func TestInlineSendingDomainVerifyNotifiesOnFlip(t *testing.T) {
 
 	require.Error(t, inline.EnqueueSendingDomainVerify(ctx, 424242))
 }
-
-func errNotFound() error { return &net.DNSError{IsNotFound: true} }

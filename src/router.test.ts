@@ -1,8 +1,9 @@
 import { expect, test } from 'vitest'
 
-import type { SiteWorkspacesListData } from './generated/site/types.gen.ts'
+import { handleSiteWorkspacesList } from './generated/site/msw.gen.ts'
 import { indexRoute, loginRoute, oauthConsentRoute, router, workspaceRoute } from './router.tsx'
-import { jsonResponse, mockClientRoutes, route } from './test/mockFetch.ts'
+import { problem } from './test/problem.ts'
+import { worker } from './test/worker.ts'
 
 const workspace = (slug: string) => ({
   id: slug,
@@ -11,18 +12,17 @@ const workspace = (slug: string) => ({
   collectKey: 'omck',
   ingestKey: 'omik',
   postalAddress: '',
+  role: 'owner' as const,
   createdAt: '2026-01-01T00:00:00Z',
 })
 
 // The guards only ever call the workspaces list, so one stub per scenario is enough.
 function serveWorkspaces(slugs: string[] | 'unauthorized') {
-  mockClientRoutes([
-    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () =>
-      slugs === 'unauthorized'
-        ? jsonResponse({ status: 401, detail: 'unauthorized' }, { status: 401 })
-        : jsonResponse(slugs.map(workspace)),
-    ),
-  ])
+  worker.use(
+    slugs === 'unauthorized'
+      ? handleSiteWorkspacesList(() => problem(401, { detail: 'unauthorized' }))
+      : handleSiteWorkspacesList({ body: slugs.map(workspace) }),
+  )
 }
 
 test('the index route sends a signed-in user to their first workspace', async () => {

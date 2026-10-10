@@ -1,7 +1,18 @@
+// Package pagination is the one page shape of every module List.
+//
+// Order rule: each module owns one order, used by both API surfaces. History
+// (Broadcasts, Automations runs, events) lists newest first, by id descending;
+// catalogues (Templates, Segments, Tags, ...) list ascending by id.
 package pagination
+
+import "context"
 
 const DefaultPage = 1
 const DefaultPageSize = 25
+
+// MaxPageSize caps a requested page size; the API contract states no maximum, so a
+// larger request is served as a page of this size rather than refused.
+const MaxPageSize = 100
 
 type Page[T any] struct {
 	Items      []T `json:"items"`
@@ -18,7 +29,7 @@ func Normalize(page, pageSize *int32) (int, int) {
 		p = int(*page)
 	}
 	if pageSize != nil && *pageSize > 0 {
-		ps = int(*pageSize)
+		ps = min(int(*pageSize), MaxPageSize)
 	}
 	return p, ps
 }
@@ -51,4 +62,57 @@ func Paginate[T any](items []T, page, pageSize *int32) Page[T] {
 		TotalItems: len(items),
 		TotalPages: TotalPages(len(items), ps),
 	}
+}
+
+// Params are normalized page params: Page >= 1, PageSize >= 1.
+type Params struct {
+	Page     int
+	PageSize int
+}
+
+// Offset is the number of rows before the page.
+func (p Params) Offset() int { return Offset(p.Page, p.PageSize) }
+
+// optional is satisfied by the generated optional integer page params of every surface.
+type optional interface{ Get() (int32, bool) }
+
+// ParamsOf normalizes the generated optional page params, applying the defaults.
+func ParamsOf(page, pageSize optional) Params {
+	var pp, sp *int32
+	if v, ok := page.Get(); ok {
+		pp = &v
+	}
+	if v, ok := pageSize.Get(); ok {
+		sp = &v
+	}
+	p, s := Normalize(pp, sp)
+	return Params{Page: p, PageSize: s}
+}
+
+// List builds one page from two closures: the total count, and the rows for a
+// limit and offset. Ent builders share no interface, hence closures. Items is never nil.
+func List[T any](
+	ctx context.Context,
+	p Params,
+	count func(context.Context) (int, error),
+	fetch func(ctx context.Context, limit, offset int) ([]T, error),
+) (Page[T], error) {
+	total, err := count(ctx)
+	if err != nil {
+		return Page[T]{}, err
+	}
+	items, err := fetch(ctx, p.PageSize, p.Offset())
+	if err != nil {
+		return Page[T]{}, err
+	}
+	if items == nil {
+		items = []T{}
+	}
+	return Page[T]{
+		Items:      items,
+		Page:       p.Page,
+		PageSize:   p.PageSize,
+		TotalItems: total,
+		TotalPages: TotalPages(total, p.PageSize),
+	}, nil
 }

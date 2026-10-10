@@ -1,41 +1,37 @@
 import { expect, test } from 'vitest'
 
-import type { SiteTransactionalEmailsListData } from '../../generated/site/types.gen.ts'
+import { handleSiteTransactionalEmailsList } from '../../generated/site/msw.gen.ts'
 import { transactionalEmailsRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { page } from '../../test/payloads.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { formatDateTime } from '../../utils/datetime.ts'
 import { TransactionalEmailsListPage } from './list.tsx'
 
-const SLUG = { slug: 'test' }
-const LIST_ROUTE = routeMount(transactionalEmailsRoute, SLUG)
+const LIST_ROUTE = routeMount(transactionalEmailsRoute, { slug: 'test' })
 
 const SENT = {
   id: '1',
+  channel: 'email' as const,
+  templateId: '1',
   destination: 'alice@example.com',
-  status: 'sent',
+  status: 'sent' as const,
   createdAt: '2026-03-04T10:15:00Z',
 }
 const FAILED = {
   id: '2',
+  channel: 'email' as const,
+  templateId: '1',
   destination: 'bob@example.com',
-  status: 'failed',
+  status: 'failed' as const,
   error: 'mailbox full',
   createdAt: '2026-03-05T11:30:00Z',
 }
 
-function listRoute(respond: () => Response) {
-  return route<SiteTransactionalEmailsListData>(
-    'GET',
-    '/workspaces/{slug}/transactional-emails',
-    SLUG,
-    respond,
-  )
-}
-
 test('lists transactional emails with status, error and sent time', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [SENT, FAILED], totalItems: 2 }))])
+  worker.use(handleSiteTransactionalEmailsList({ body: page([SENT, FAILED], 2) }))
 
   const { screen } = await renderWithRouter(<TransactionalEmailsListPage />, LIST_ROUTE)
 
@@ -49,7 +45,7 @@ test('lists transactional emails with status, error and sent time', async () => 
 })
 
 test('shows the empty message when there are no emails', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteTransactionalEmailsList({ body: page([], 0) }))
 
   const { screen } = await renderWithRouter(<TransactionalEmailsListPage />, LIST_ROUTE)
 
@@ -57,7 +53,7 @@ test('shows the empty message when there are no emails', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }))])
+  worker.use(handleSiteTransactionalEmailsList(() => problem(500)))
 
   const { screen } = await renderWithRouter(<TransactionalEmailsListPage />, LIST_ROUTE)
 

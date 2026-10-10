@@ -1,27 +1,25 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SiteAuthConfirmEmailChangeData } from '../../generated/site/types.gen.ts'
+import { handleSiteAuthConfirmEmailChange } from '../../generated/site/msw.gen.ts'
 import { confirmEmailChangeRoute, loginRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { ConfirmEmailChangePage } from './confirm-email-change.tsx'
 
-// route() wants a `path` record; these operations have none, so give it an empty one.
 const mount = routeMount(confirmEmailChangeRoute)
 const MOUNT = { path: mount.path, initialPath: `${mount.initialPath}?token=tok-c` }
 
-const confirm = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<SiteAuthConfirmEmailChangeData>('POST', '/auth/confirm-email-change', {}, respond)
-
 test('confirms the new email on mount and links to sign in', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    confirm(async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({})
+  worker.use(
+    handleSiteAuthConfirmEmailChange(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({})
     }),
-  ])
+  )
   const { screen } = await renderWithRouter(<ConfirmEmailChangePage />, MOUNT)
 
   await expect.element(screen.getByText('Email updated')).toBeInTheDocument()
@@ -32,14 +30,14 @@ test('confirms the new email on mount and links to sign in', async () => {
 })
 
 test('shows a loading state while the request is in flight', async () => {
-  mockClientRoutes([confirm(() => new Promise<Response>(() => undefined))])
+  worker.use(handleSiteAuthConfirmEmailChange(() => new Promise<never>(() => undefined)))
   const { screen } = await renderWithRouter(<ConfirmEmailChangePage />, MOUNT)
 
   await expect.element(screen.getByText('Confirming your new email…')).toBeInTheDocument()
 })
 
 test('shows the failure state when the token is rejected', async () => {
-  mockClientRoutes([confirm(() => jsonResponse({ status: 400 }, { status: 400 }))])
+  worker.use(handleSiteAuthConfirmEmailChange(() => problem(400, {})))
   const { screen } = await renderWithRouter(<ConfirmEmailChangePage />, MOUNT)
 
   await expect.element(screen.getByText('Confirmation failed')).toBeInTheDocument()

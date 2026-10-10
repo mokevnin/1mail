@@ -2,8 +2,8 @@ package outbound_test
 
 import (
 	"context"
-	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -19,27 +19,8 @@ import (
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-// Send rate limit (ADR 0023), observed at the Outbound send seam with a controllable
-// clock. The default Acme Integration (fixture) carries the limits.
-
-type fakeClock struct {
-	mu  sync.Mutex
-	now time.Time
-}
-
-func newClock() *fakeClock { return &fakeClock{now: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)} }
-
-func (c *fakeClock) Now() time.Time {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.now
-}
-
-func (c *fakeClock) Advance(d time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.now = c.now.Add(d)
-}
+// Send rate limit (ADR 0023), observed at the Outbound send seam under testing/synctest
+// (fake time, frozen until a test sleeps). The default Acme Integration (fixture) carries the limits.
 
 // limited sets the Send rate limit of the Acme default Integration (nil = none).
 func limited(t *testing.T, env *testhelper.TestEnv, perSecond, perDay *int) {
@@ -66,245 +47,263 @@ func send(t *testing.T, m *outbound.Module, env *testhelper.TestEnv, key string)
 func acme(env *testhelper.TestEnv) *ent.Scoped { return env.DB.Scoped(fixtures.AcmeID) }
 
 func TestSpentPerSecondLimitIsADeferralWithTheWaitUntilCapacityReturns(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(2), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(2), nil)
 
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome)
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome)
 
-	res := send(t, m, env, "bc:3")
-	assert.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Empty(t, res.Reason, "a Deferral carries no hold reason")
-	assert.Equal(t, 500*time.Millisecond, res.Wait, "one token at 2 per second takes half a second")
-	assert.Zero(t, res.MessageID)
-	assert.Len(t, env.CustomerMail.Messages(), 2, "the provider is not called")
+		res := send(t, m, env, "bc:3")
+		assert.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Empty(t, res.Reason, "a Deferral carries no hold reason")
+		assert.Equal(t, 500*time.Millisecond, res.Wait, "one token at 2 per second takes half a second")
+		assert.Zero(t, res.MessageID)
+		assert.Len(t, env.CustomerMail.Messages(), 2, "the provider is not called")
+	})
 }
 
 func TestDeferredSendLeavesNoClaimAndSendsExactlyOnceAfterTheWait(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
 
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:a").Outcome)
-	res := send(t, m, env, "bc:b")
-	require.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, time.Second, res.Wait)
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:a").Outcome)
+		res := send(t, m, env, "bc:b")
+		require.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Equal(t, time.Second, res.Wait)
 
-	n, err := acme(env).OutboundMessage().Query().Count(context.Background())
-	require.NoError(t, err)
-	before := n
-	// The deferred key left no row: no claim, so nothing for a retry to trip on.
-	clock.Advance(res.Wait)
-	retry := send(t, m, env, "bc:b")
-	assert.Equal(t, outbound.Sent, retry.Outcome)
-	assert.False(t, retry.Replayed)
+		n, err := acme(env).OutboundMessage().Query().Count(context.Background())
+		require.NoError(t, err)
+		before := n
+		// The deferred key left no row: no claim, so nothing for a retry to trip on.
+		time.Sleep(res.Wait)
+		retry := send(t, m, env, "bc:b")
+		assert.Equal(t, outbound.Sent, retry.Outcome)
+		assert.False(t, retry.Replayed)
 
-	n, err = acme(env).OutboundMessage().Query().Count(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, before+1, n, "exactly one message row for the deferred key")
-	assert.Len(t, env.CustomerMail.Messages(), 2)
+		n, err = acme(env).OutboundMessage().Query().Count(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, before+1, n, "exactly one message row for the deferred key")
+		assert.Len(t, env.CustomerMail.Messages(), 2)
+	})
 }
 
 func TestDailyLimitIsRollingAndReportsItsOwnWait(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, nil, ptr(2))
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, nil, ptr(2))
 
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome)
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome)
 
-	res := send(t, m, env, "bc:3")
-	require.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, 12*time.Hour, res.Wait, "2 per 24h refills one token every 12 hours")
+		res := send(t, m, env, "bc:3")
+		require.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Equal(t, 12*time.Hour, res.Wait, "2 per 24h refills one token every 12 hours")
 
-	clock.Advance(12 * time.Hour)
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:3").Outcome, "capacity returns gradually, not at a window edge")
-	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:4").Outcome)
+		time.Sleep(12 * time.Hour)
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:3").Outcome, "capacity returns gradually, not at a window edge")
+		assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:4").Outcome)
+	})
 }
 
 func TestReservationTakesFromBothBucketsOrNone(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), ptr(2))
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), ptr(2))
 
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome) // second 0, day 1
-	require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
-	require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome) // second 0, day 1
+		require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
+		require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
 
-	// Had the denials taken a daily token, the daily bucket would now be empty.
-	clock.Advance(time.Second)
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome, "the denied attempts spent no daily capacity")
-	clock.Advance(time.Second)
-	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:3").Outcome, "the daily bucket is now spent")
+		// Had the denials taken a daily token, the daily bucket would now be empty.
+		time.Sleep(time.Second)
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:2").Outcome, "the denied attempts spent no daily capacity")
+		time.Sleep(time.Second)
+		assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:3").Outcome, "the daily bucket is now spent")
+	})
 }
 
 func TestSkippedAndHeldMessagesSpendNoCapacity(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), nil)
-	ctx := context.Background()
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
+		ctx := context.Background()
 
-	// Skipped: the destination is suppressed.
-	sup := marketing(t, env, "bc:sup", fixtures.ContactAliceID)
-	sup.Destination = suppressd
-	res, err := m.Send(ctx, acme(env), sup)
-	require.NoError(t, err)
-	require.Equal(t, outbound.Skipped, res.Outcome)
+		// Skipped: the destination is suppressed.
+		sup := marketing(t, env, "bc:sup", fixtures.ContactAliceID)
+		sup.Destination = suppressd
+		res, err := m.Send(ctx, acme(env), sup)
+		require.NoError(t, err)
+		require.Equal(t, outbound.Skipped, res.Outcome)
 
-	// Held: an unverified Sending domain.
-	held := marketing(t, env, "bc:held", fixtures.ContactAliceID)
-	held.FromEmail = "noreply@news.acme.com"
-	res, err = m.Send(ctx, acme(env), held)
-	require.NoError(t, err)
-	require.Equal(t, outbound.Held, res.Outcome)
+		// Held: an unverified Sending domain.
+		held := marketing(t, env, "bc:held", fixtures.ContactAliceID)
+		held.FromEmail = "noreply@news.acme.com"
+		res, err = m.Send(ctx, acme(env), held)
+		require.NoError(t, err)
+		require.Equal(t, outbound.Held, res.Outcome)
 
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:ok").Outcome, "the one token was still there")
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:ok").Outcome, "the one token was still there")
+	})
 }
 
 func TestNoLimitMeansNoLimiterStateAndNoDeferral(t *testing.T) {
-	env := testhelper.Setup(t)
-	m := newModule(env, outbound.WithClock(newClock().Now))
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
 
-	for _, key := range []string{"bc:1", "bc:2", "bc:3", "bc:4", "bc:5"} {
-		assert.Equal(t, outbound.Sent, send(t, m, env, key).Outcome)
-	}
-	n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
-	require.NoError(t, err)
-	assert.Zero(t, n)
+		for _, key := range []string{"bc:1", "bc:2", "bc:3", "bc:4", "bc:5"} {
+			assert.Equal(t, outbound.Sent, send(t, m, env, key).Outcome)
+		}
+		n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
+		require.NoError(t, err)
+		assert.Zero(t, n)
+	})
 }
 
 func TestTransactionalSendsAreNeverDeferredEvenWithTheLimitSpent(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
 
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
-	require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
-	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
-		res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
-		require.NoError(t, err)
-		assert.Equal(t, outbound.Sent, res.Outcome)
-		assert.Zero(t, res.Wait)
-	}
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+		require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
+		for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+			res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
+			require.NoError(t, err)
+			assert.Equal(t, outbound.Sent, res.Outcome)
+			assert.Zero(t, res.Wait)
+		}
+	})
 }
 
 func TestTransactionalSendsSpendCapacityAndDelayLaterMarketingSends(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), nil)
-	ctx := context.Background()
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
+		ctx := context.Background()
 
-	// Three Transactional sends drive the per-second bucket to minus two tokens.
-	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
-		res, err := m.Send(ctx, acme(env), transactional(key, "a@example.com"))
-		require.NoError(t, err)
-		require.Equal(t, outbound.Sent, res.Outcome)
-	}
+		// Three Transactional sends drive the per-second bucket to minus two tokens.
+		for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+			res, err := m.Send(ctx, acme(env), transactional(key, "a@example.com"))
+			require.NoError(t, err)
+			require.Equal(t, outbound.Sent, res.Outcome)
+		}
 
-	res := send(t, m, env, "bc:1")
-	require.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, 3*time.Second, res.Wait, "debt of two tokens plus the one the Broadcast needs")
+		res := send(t, m, env, "bc:1")
+		require.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Equal(t, 3*time.Second, res.Wait, "debt of two tokens plus the one the Broadcast needs")
 
-	clock.Advance(2 * time.Second)
-	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome)
-	clock.Advance(time.Second)
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+		time.Sleep(2 * time.Second)
+		assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome)
+		time.Sleep(time.Second)
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+	})
 }
 
 func TestTransactionalSendsCountTowardTheDailyBucketToo(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, nil, ptr(2))
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, nil, ptr(2))
 
-	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
-		res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
-		require.NoError(t, err)
-		require.Equal(t, outbound.Sent, res.Outcome)
-	}
-	res := send(t, m, env, "bc:1")
-	require.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, 24*time.Hour, res.Wait, "2 per 24h: two tokens of debt plus one more, 12 hours each")
+		for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+			res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
+			require.NoError(t, err)
+			require.Equal(t, outbound.Sent, res.Outcome)
+		}
+		res := send(t, m, env, "bc:1")
+		require.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Equal(t, 24*time.Hour, res.Wait, "2 per 24h: two tokens of debt plus one more, 12 hours each")
+	})
 }
 
 func TestTransactionalThatIsSkippedSpendsNoCapacity(t *testing.T) {
-	env := testhelper.Setup(t)
-	m := newModule(env, outbound.WithClock(newClock().Now))
-	limited(t, env, ptr(1), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
 
-	res, err := m.Send(context.Background(), acme(env), transactional("tx:sup", suppressd))
-	require.NoError(t, err)
-	require.Equal(t, outbound.Skipped, res.Outcome)
+		res, err := m.Send(context.Background(), acme(env), transactional("tx:sup", suppressd))
+		require.NoError(t, err)
+		require.Equal(t, outbound.Skipped, res.Outcome)
 
-	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome, "the suppressed Transactional took no token")
+		assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome, "the suppressed Transactional took no token")
+	})
 }
 
 func TestUnlimitedIntegrationKeepsNoStateForTransactional(t *testing.T) {
-	env := testhelper.Setup(t)
-	m := newModule(env, outbound.WithClock(newClock().Now))
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
 
-	res, err := m.Send(context.Background(), acme(env), transactional("tx:1", "a@example.com"))
-	require.NoError(t, err)
-	require.Equal(t, outbound.Sent, res.Outcome)
-	n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
-	require.NoError(t, err)
-	assert.Zero(t, n)
+		res, err := m.Send(context.Background(), acme(env), transactional("tx:1", "a@example.com"))
+		require.NoError(t, err)
+		require.Equal(t, outbound.Sent, res.Outcome)
+		n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
+		require.NoError(t, err)
+		assert.Zero(t, n)
+	})
 }
 
 func TestAutomationAndBroadcastSendsShareOneLimit(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(1), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(1), nil)
 
-	auto := marketing(t, env, "auto:1", fixtures.ContactAliceID)
-	auto.Kind = outboundmessage.KindAutomation
-	auto.Source = eligibility.AutomationSource(fixtures.AutomationHoldDemoID)
-	res, err := m.Send(context.Background(), acme(env), auto)
-	require.NoError(t, err)
-	require.Equal(t, outbound.Sent, res.Outcome)
+		auto := marketing(t, env, "auto:1", fixtures.ContactAliceID)
+		auto.Kind = outboundmessage.KindAutomation
+		auto.Source = eligibility.AutomationSource(fixtures.AutomationHoldDemoID)
+		res, err := m.Send(context.Background(), acme(env), auto)
+		require.NoError(t, err)
+		require.Equal(t, outbound.Sent, res.Outcome)
 
-	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome, "the Automation send spent the Broadcast's token")
+		assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome, "the Automation send spent the Broadcast's token")
+	})
 }
 
 func TestChangedLimitTakesEffectImmediatelyAndProportionally(t *testing.T) {
-	env := testhelper.Setup(t)
-	clock := newClock()
-	m := newModule(env, outbound.WithClock(clock.Now))
-	limited(t, env, ptr(10), nil)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
+		limited(t, env, ptr(10), nil)
 
-	require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome) // bucket 9/10 full
-	limited(t, env, ptr(1), nil)
+		require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome) // bucket 9/10 full
+		limited(t, env, ptr(1), nil)
 
-	res := send(t, m, env, "bc:2") // 0.9 of one token: not enough yet
-	assert.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, 100*time.Millisecond, res.Wait)
+		res := send(t, m, env, "bc:2") // 0.9 of one token: not enough yet
+		assert.Equal(t, outbound.Deferral, res.Outcome)
+		assert.Equal(t, 100*time.Millisecond, res.Wait)
+	})
 }
 
 func TestSentMessageIsStampedWithItsIntegrationAndCountsAsUsage(t *testing.T) {
-	env := testhelper.Setup(t)
-	m := newModule(env)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		m := newModule(env)
 
-	before, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
-	require.NoError(t, err)
+		before, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
+		require.NoError(t, err)
 
-	res := send(t, m, env, "bc:usage")
-	require.Equal(t, outbound.Sent, res.Outcome)
+		res := send(t, m, env, "bc:usage")
+		require.Equal(t, outbound.Sent, res.Outcome)
 
-	msg, err := acme(env).OutboundMessage().Get(context.Background(), res.MessageID)
-	require.NoError(t, err)
-	require.NotNil(t, msg.IntegrationID, "the message records the Integration it went through")
-	assert.Equal(t, int64(fixtures.IntegrationAcmeDefaultID), *msg.IntegrationID)
+		msg, err := acme(env).OutboundMessage().Get(context.Background(), res.MessageID)
+		require.NoError(t, err)
+		require.NotNil(t, msg.IntegrationID, "the message records the Integration it went through")
+		assert.Equal(t, int64(fixtures.IntegrationAcmeDefaultID), *msg.IntegrationID)
 
-	after, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
-	require.NoError(t, err)
-	assert.Equal(t, before[fixtures.IntegrationAcmeDefaultID]+1, after[fixtures.IntegrationAcmeDefaultID])
+		after, err := sendlimit.Usage(context.Background(), acme(env), time.Now())
+		require.NoError(t, err)
+		assert.Equal(t, before[fixtures.IntegrationAcmeDefaultID]+1, after[fixtures.IntegrationAcmeDefaultID])
+	})
 }

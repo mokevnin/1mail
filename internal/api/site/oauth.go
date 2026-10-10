@@ -3,6 +3,7 @@ package site
 import (
 	"context"
 	"errors"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"net/http"
 
 	"github.com/mokevnin/1mail/ent"
@@ -44,7 +45,7 @@ func (h *Handlers) SiteOAuthDecide(ctx context.Context, req *siteapi.SiteOAuthDe
 	if err != nil {
 		return nil, err
 	}
-	if !canManageTokens(role) {
+	if !accounts.CanManageTokens(role) {
 		v := siteapi.SiteOAuthDecideForbidden(problem(http.StatusForbidden, "only owners and admins can connect an application"))
 		return &v, nil
 	}
