@@ -22,7 +22,7 @@ jobs:
         with:
           # A PR opened with GITHUB_TOKEN does not trigger pull_request workflows, and
           # the checks run only on release-please PRs, so it needs an App or PAT token.
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
