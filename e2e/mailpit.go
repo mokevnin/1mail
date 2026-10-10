@@ -228,6 +228,9 @@ func (m *Mailpit) WaitForRecipient(ctx context.Context, recipient string, timeou
 			}
 		}
 		lastErr = err
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			lastErr = nil // our own timeout cutting a request short says nothing about the inbox
+		}
 		select {
 		case <-ctx.Done():
 			diag, lerr := m.List(context.WithoutCancel(ctx), 100)

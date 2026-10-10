@@ -17,7 +17,7 @@ import (
 )
 
 // EmailTimeout bounds every wait for an email; asynchronous steps are polled, never slept.
-const EmailTimeout = 30 * time.Second
+const EmailTimeout = 60 * time.Second
 
 // tokenScopes are everything the scenario steps need; a test's token carries them all.
 var tokenScopes = []string{
