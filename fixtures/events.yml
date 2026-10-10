@@ -480,3 +480,17 @@
   workspace_id: 1
   occurred_at: '2026-02-01 09:00:00'
   created_at: '2026-02-01 09:00:00'
+
+# --- Same-instant events: List breaks created_at ties by id (eventlog) ---
+- id: 990 # fixture: EventTieFirst
+  email: tie@example.com
+  action: tie_probe
+  workspace_id: 1
+  occurred_at: '2030-01-01 00:00:00'
+  created_at: '2030-01-01 00:00:00'
+- id: 991 # fixture: EventTieSecond
+  email: tie@example.com
+  action: tie_probe
+  workspace_id: 1
+  occurred_at: '2030-01-01 00:00:00'
+  created_at: '2030-01-01 00:00:00'

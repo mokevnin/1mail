@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/event"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -22,56 +22,28 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := scoped.Event().Query()
-	if v, ok := params.Action.Get(); ok && v != "" {
-		q = q.Where(event.ActionEQ(v))
-	}
-	// Preferred: filter a contact's activity by the stable identity link, which
-	// includes anonymous events stitched onto the contact at Identify (ADR 0002).
+	f := eventlog.Filter{Action: params.Action.Or(""), Email: params.Email.Or("")}
 	if v, ok := params.ContactId.Get(); ok {
 		if id, perr := strconv.ParseInt(string(v), 10, 64); perr == nil {
-			q = q.Where(event.ContactID(id))
+			f.ContactID = &id
 		}
 	}
-	if v, ok := params.Email.Get(); ok && v != "" {
-		// Case-insensitive: contact emails are stored as entered, but collect
-		// ingestion lowercases event emails (service.normalizeLower), so an exact
-		// match would miss a contact's tracked events.
-		q = q.Where(event.EmailEqualFold(v))
-	}
-	total, err := q.Count(ctx)
+	page, err := h.eventlog.List(ctx, scoped, f, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := q.Order(ent.Desc(event.FieldCreatedAt), ent.Desc(event.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]siteapi.SiteEventResource, len(items))
-	for i, e := range items {
+	resources := make([]siteapi.SiteEventResource, len(page.Items))
+	for i, e := range page.Items {
 		resources[i] = mapper.EventToResource(e)
 	}
 
 	return &siteapi.SiteEventsListOK{
 		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 
