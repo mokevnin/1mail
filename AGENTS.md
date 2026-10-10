@@ -69,6 +69,11 @@ mise run generate       # typespec -> openapi -> backend -> frontend -> i18n typ
 environment to use an external Postgres). Several tasks in one command need `:::` between
 them (`mise run check:fe ::: check:deps`); otherwise the extra names become arguments.
 
+Run Go tests only through `mise run test`: it sets `APP_ENV=test` and the test DB, and a bare
+`go test` opens the dev database and fails. If its Postgres will not start (macOS shared memory
+is spent by one `db` daemon per worktree), run `mise run worktrees:prune -- --apply` to remove
+the worktrees whose branch is already in `origin/main`; drop `--apply` for a dry run.
+
 Run a single Go test (arguments after `--` go to `go test`; the default is `./...`):
 
 ```sh
@@ -212,6 +217,10 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
 
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
+  commitlint runs on every commit, merge commits included: write `chore: merge <what>`, never
+  `Merge branch …`; the header fits 120 characters and each body line 100.
+- ADR numbers are unique (`mise run check:adr`). Take the next free number when you add an ADR,
+  and re-check after merging `main`: parallel branches pick the same one.
 - After changing TypeSpec or `ent/schema`, run `mise run generate` and commit the generated output.
 - **No direct SQL in tests.** Tests read and write through ent (`env.DB`), river's own API, or a
   `testhelper` abstraction for tables ent doesn't model (the domain-event outbox: `env.Outbox*`,

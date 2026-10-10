@@ -95,6 +95,27 @@ run = 'go run ./cmd/db generate "${usage_name}"'
 description = "Mint a fresh ENCRYPTION_KEY (base64 Tink keyset) to paste into your .env"
 run = "go run ./cmd/server genkey"
 
+# --- worktrees ----------------------------------------------------------------------
+
+["worktrees:prune"]
+description = "Remove clean worktrees whose branch is already in origin/main (each runs its own Postgres daemon, and ~30 of them exhaust macOS shared memory); dry run unless --apply"
+usage = 'flag "--apply" help="actually remove, instead of listing"'
+run = '''
+git fetch -q origin main
+main_wt=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+git worktree list --porcelain | awk '/^worktree /{p=substr($0,10)} /^branch /{b=substr($0,8)} /^$/{if(p&&b)print p"\t"b; p="";b=""} END{if(p&&b)print p"\t"b}' |
+while IFS=$'\t' read -r path ref; do
+  [ "$path" = "$main_wt" ] && continue
+  branch=${ref#refs/heads/}
+  [ -n "$(git -C "$path" status --porcelain)" ] && { echo "keep    $path ($branch): uncommitted changes"; continue; }
+  git merge-base --is-ancestor "$ref" origin/main || { echo "keep    $path ($branch): not in origin/main"; continue; }
+  if [ -z "${usage_apply:-}" ]; then echo "would remove $path ($branch)"; continue; fi
+  (cd "$path" && mise daemons stop >/dev/null 2>&1) || true
+  git worktree unlock "$path" 2>/dev/null || true
+  git worktree remove "$path" && git branch -d "$branch" >/dev/null && echo "removed $path ($branch)"
+done
+'''
+
 # --- tests -----------------------------------------------------------------------
 
 [test]
@@ -193,6 +214,7 @@ depends = [
   "check:security",
   "check:ast",
   "check:typos",
+  "check:adr",
   "check:helm",
 ]
 
@@ -206,6 +228,17 @@ description = "The project has no custom CSS: no stylesheet may be tracked (libr
 run = '''
 if git ls-files | grep -Ei '\.(css|scss|sass|less|pcss|styl)$'; then
   echo 'error: custom CSS is not allowed, style through Mantine'; exit 1
+fi
+'''
+
+["check:adr"]
+description = "ADR numbers are unique (parallel integration branches each pick the next free number)"
+run = '''
+nums=$(ls docs/adr | sed -n 's/^\([0-9][0-9]*\)-.*/\1/p')
+dup=$(echo "$nums" | sort | uniq -d)
+if [ -n "$dup" ]; then
+  next=$(printf '%04d' $(( $(echo "$nums" | sort -n | tail -1 | sed 's/^0*//') + 1 )))
+  echo "error: duplicate ADR numbers in docs/adr: $(echo $dup); renumber the newer file (next free: $next)"; exit 1
 fi
 '''
 
