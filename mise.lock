@@ -895,6 +895,46 @@ checksum = "sha256:0a1edc0b799512051c57071ce0e798d3f2cf67dc98171366f1d2b326072e3
 url = "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_windows_amd64.zip"
 url_api = "https://api.github.com/repos/caddyserver/caddy/releases/assets/607244987"
 
+[[tools.doctl]]
+version = "1.181.0"
+backend = "aqua:digitalocean/doctl"
+specifiers = ["latest"]
+
+[tools.doctl."platforms.linux-arm64"]
+checksum = "sha256:af258f3914f705408e5f46e0ca77f950b878818eb25a855b8fb6c28d61336925"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867685"
+
+[tools.doctl."platforms.linux-arm64-musl"]
+checksum = "sha256:af258f3914f705408e5f46e0ca77f950b878818eb25a855b8fb6c28d61336925"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867685"
+
+[tools.doctl."platforms.linux-x64"]
+checksum = "sha256:a6b25c8fb2e635f24bef1cf69732204a2e4f32b0efcdff03e310fe5ad9cae7c4"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867679"
+
+[tools.doctl."platforms.linux-x64-musl"]
+checksum = "sha256:a6b25c8fb2e635f24bef1cf69732204a2e4f32b0efcdff03e310fe5ad9cae7c4"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867679"
+
+[tools.doctl."platforms.macos-arm64"]
+checksum = "sha256:d6f53a011673fb0082d1adc17e9b0b751e9de5db33c08b08e6d3d172cdbb19d0"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867690"
+
+[tools.doctl."platforms.macos-x64"]
+checksum = "sha256:6552ff7b544279d7567f12e43c1bd2fdf113f553efa9cbec5487421439eefb4c"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-darwin-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867523"
+
+[tools.doctl."platforms.windows-x64"]
+checksum = "sha256:32ab215b1fa99846e944d33422233fe6d4b5daec8b5cdf0eae90f67efdfb98b1"
+url = "https://github.com/digitalocean/doctl/releases/download/v1.181.0/doctl-1.181.0-windows-amd64.zip"
+url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/625867513"
+
 [[tools.gitleaks]]
 version = "8.30.1"
 backend = "aqua:gitleaks/gitleaks"

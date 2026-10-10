@@ -19,6 +19,7 @@ pnpm = "12"
 typos = "latest"
 "aqua:boyter/scc" = "latest"
 zizmor = "latest"
+doctl = "latest"
 
 # Install the git hooks (hk.pkl) once the toolchain is in place.
 [hooks]
