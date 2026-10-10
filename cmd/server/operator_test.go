@@ -13,8 +13,13 @@ import (
 
 func opsCreating(password string, err error) *operatorOpsMock {
 	return &operatorOpsMock{
-		CreateOperatorFunc: func(context.Context, string) (string, error) { return password, err },
+		CreateOperatorFunc:    func(context.Context, string) (string, error) { return password, err },
+		ResetOperatorTOTPFunc: func(context.Context, string) error { return nil },
 	}
+}
+
+func opsResetting(err error) *operatorOpsMock {
+	return &operatorOpsMock{ResetOperatorTOTPFunc: func(context.Context, string) error { return err }}
 }
 
 func TestOperatorCreateShowsTheOneTimePassword(t *testing.T) {
@@ -47,4 +52,28 @@ func TestOperatorNeedsACommandAndAnEmail(t *testing.T) {
 		require.Error(t, runOperator(context.Background(), ops, args, &bytes.Buffer{}), "args %v", args)
 	}
 	assert.Empty(t, ops.CreateOperatorCalls())
+}
+
+func TestOperatorResetTOTPClearsTheFactorAndSaysTheOperatorReenrols(t *testing.T) {
+	ops := opsResetting(nil)
+	var out bytes.Buffer
+
+	require.NoError(t, runOperator(context.Background(), ops, []string{"reset-totp", "staff@sphericon.test"}, &out))
+
+	calls := ops.ResetOperatorTOTPCalls()
+	require.Len(t, calls, 1)
+	assert.Equal(t, "staff@sphericon.test", calls[0].Email)
+	assert.Contains(t, out.String(), "re-enrol")
+}
+
+func TestOperatorResetTOTPRefusesAnUnknownOperator(t *testing.T) {
+	err := runOperator(context.Background(), opsResetting(operator.ErrNotFound), []string{"reset-totp", "nobody@sphericon.test"}, &bytes.Buffer{})
+
+	require.ErrorContains(t, err, "no operator")
+}
+
+func TestOperatorResetTOTPNeedsTheLicense(t *testing.T) {
+	err := runOperator(context.Background(), opsResetting(operator.ErrNotLicensed), []string{"reset-totp", "staff@sphericon.test"}, &bytes.Buffer{})
+
+	require.ErrorContains(t, err, "license")
 }

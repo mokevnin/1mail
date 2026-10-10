@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/sphericon/ee/licensekey"
 	"github.com/mokevnin/sphericon/ent"
 	entoperator "github.com/mokevnin/sphericon/ent/operator"
+	"github.com/mokevnin/sphericon/internal/accounts"
 	"github.com/mokevnin/sphericon/internal/authtoken"
 	"github.com/mokevnin/sphericon/internal/credentials"
 	"github.com/mokevnin/sphericon/internal/otpcode"
@@ -52,7 +53,25 @@ var (
 	ErrInvalidChallenge = errors.New("operator: invalid challenge")
 	// ErrInvalidCode: the code is not a current, unused TOTP code of the Operator.
 	ErrInvalidCode = errors.New("operator: invalid code")
+	// ErrNotFound: no Operator has this email.
+	ErrNotFound = errors.New("operator: not found")
 )
+
+// ThrottledError is the login throttle's refusal (ADR 0025, ADR 0026): the address has
+// failed too often and must wait Wait before the next attempt, even with the right
+// password or code. The handler renders it as the standard 429.
+type ThrottledError struct {
+	// Wait is how long the address must still wait.
+	Wait time.Duration
+	// Limit is the failure threshold the throttle applies.
+	Limit int
+	// Now is the clock of the throttle, so the reset time is on its time base.
+	Now time.Time
+}
+
+func (e *ThrottledError) Error() string {
+	return fmt.Sprintf("operator: login throttled for %s", e.Wait)
+}
 
 // Config is what the Operator needs from the instance.
 type Config struct {
@@ -65,6 +84,10 @@ type Config struct {
 	SecureCookies bool
 	// Clock is the clock of TOTP codes, challenges and session expiry; nil is time.Now.
 	Clock func() time.Time
+	// Attempts counts failed logins per address (ADR 0025), under the Operator's own
+	// kind so a User of the same address never shares a counter. Nil disables the
+	// throttle.
+	Attempts *accounts.Attempts
 }
 
 // Validate refuses a configuration an Operator surface cannot run on. It is checked
@@ -88,6 +111,7 @@ type Module struct {
 	lic        *licensekey.License
 	cipher     *secrets.Cipher
 	challenges *authtoken.Signer
+	attempts   *accounts.Attempts
 	now        func() time.Time
 }
 
@@ -98,7 +122,7 @@ func NewModule(client *ent.Client, lic *licensekey.License, cipher *secrets.Ciph
 		now = time.Now
 	}
 	return &Module{
-		ent: client, lic: lic, cipher: cipher, now: now,
+		ent: client, lic: lic, cipher: cipher, attempts: cfg.Attempts, now: now,
 		challenges: authtoken.New(cfg.Secret).WithClock(now),
 	}
 }
@@ -142,24 +166,60 @@ func (m *Module) Create(ctx context.Context, email string) (password string, err
 	return password, err
 }
 
+// throttle refuses with a *ThrottledError while the address's delay runs.
+func (m *Module) throttle(ctx context.Context, email string) error {
+	if m.attempts == nil {
+		return nil
+	}
+	wait, err := m.attempts.Delay(ctx, accounts.KindOperatorLogin, email)
+	if err != nil {
+		return err
+	}
+	if wait > 0 {
+		return &ThrottledError{Wait: wait, Limit: m.attempts.Limit(accounts.KindOperatorLogin), Now: m.attempts.Now()}
+	}
+	return nil
+}
+
+func (m *Module) recordFailure(ctx context.Context, email string) error {
+	if m.attempts == nil {
+		return nil
+	}
+	return m.attempts.RecordFailure(ctx, accounts.KindOperatorLogin, email)
+}
+
+func (m *Module) recordSuccess(ctx context.Context, email string) error {
+	if m.attempts == nil {
+		return nil
+	}
+	return m.attempts.RecordSuccess(ctx, accounts.KindOperatorLogin, email)
+}
+
 // CheckPassword is the first login step: it returns the Operator the credentials
-// belong to, or ErrInvalidCredentials. A password is always hashed, against a
+// belong to, or ErrInvalidCredentials. While the address's failure delay runs it
+// answers a *ThrottledError even for the right password, and every failure (an unknown
+// email too) feeds the counter. A correct password does not reset it: only a started
+// session does, else knowing the password would buy a fresh round of code guesses. A password is always hashed, against a
 // throwaway hash when no Operator matches, so the answer time does not tell an unknown
 // email apart.
 func (m *Module) CheckPassword(ctx context.Context, email, password string) (*ent.Operator, error) {
 	if err := m.licensed(); err != nil {
 		return nil, err
 	}
-	op, err := m.ent.Operator.Query().Where(entoperator.Email(normalizeEmail(email))).Only(ctx)
+	email = normalizeEmail(email)
+	if err := m.throttle(ctx, email); err != nil {
+		return nil, err
+	}
+	op, err := m.ent.Operator.Query().Where(entoperator.Email(email)).Only(ctx)
 	if ent.IsNotFound(err) {
 		credentials.VerifyPassword(decoyHash(), password)
-		return nil, ErrInvalidCredentials
+		return nil, errors.Join(ErrInvalidCredentials, m.recordFailure(ctx, email))
 	}
 	if err != nil {
 		return nil, err
 	}
 	if !credentials.VerifyPassword(op.PasswordHash, password) {
-		return nil, ErrInvalidCredentials
+		return nil, errors.Join(ErrInvalidCredentials, m.recordFailure(ctx, email))
 	}
 	return op, nil
 }
@@ -230,13 +290,16 @@ func binding(op *ent.Operator) string {
 // and returns the Operator to start a session for. At first login the code also
 // confirms the enrolment (and bumps the session epoch). The binding is re-checked
 // inside the transaction with the Operator row locked, so two steps racing on one
-// challenge cannot both succeed. ErrInvalidChallenge or ErrInvalidCode otherwise.
+// challenge cannot both succeed. ErrInvalidChallenge or ErrInvalidCode otherwise. While
+// the Operator's failure delay runs it answers a *ThrottledError even for the right
+// code; a wrong code feeds the counter, a started session resets it.
 func (m *Module) Complete(ctx context.Context, challenge, code string) (*ent.Operator, error) {
 	if err := m.licensed(); err != nil {
 		return nil, err
 	}
 	var (
 		held    string
+		email   string
 		loadErr error
 	)
 	id, _, err := m.challenges.Parse(challenge, authtoken.PurposeOperatorLoginChallenge, func(id int64) (string, error) {
@@ -244,7 +307,7 @@ func (m *Module) Complete(ctx context.Context, challenge, code string) (*ent.Ope
 		if op, loadErr = m.ent.Operator.Get(ctx, id); loadErr != nil {
 			return "", loadErr
 		}
-		held = binding(op)
+		held, email = binding(op), op.Email
 		return held, nil
 	})
 	if loadErr != nil && !ent.IsNotFound(loadErr) {
@@ -252,6 +315,10 @@ func (m *Module) Complete(ctx context.Context, challenge, code string) (*ent.Ope
 	}
 	if err != nil {
 		return nil, ErrInvalidChallenge
+	}
+
+	if err := m.throttle(ctx, email); err != nil {
+		return nil, err
 	}
 
 	tx, err := m.ent.Tx(ctx)
@@ -262,9 +329,39 @@ func (m *Module) Complete(ctx context.Context, challenge, code string) (*ent.Ope
 	if err != nil {
 		_ = tx.Rollback()
 		// A wrong code changes nothing, so rolling back loses nothing.
+		if errors.Is(err, ErrInvalidCode) {
+			err = errors.Join(err, m.recordFailure(ctx, email))
+		}
 		return nil, err
 	}
-	return op, tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return op, m.recordSuccess(ctx, email)
+}
+
+// ResetTOTP is the only way a lost TOTP is reset (`sphericon operator reset-totp`, no
+// web flow exists): it clears the secret and its confirmation, bumps the session epoch
+// (which ends every session and kills any live challenge) and leaves the Operator to
+// re-enrol at next login. ErrNotFound for an unknown email.
+func (m *Module) ResetTOTP(ctx context.Context, email string) error {
+	if err := m.licensed(); err != nil {
+		return err
+	}
+	n, err := m.ent.Operator.Update().
+		Where(entoperator.Email(normalizeEmail(email))).
+		SetTotpSecretEncrypted("").
+		ClearTotpConfirmedAt().
+		SetTotpLastStep(0).
+		AddSessionEpoch(1).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (m *Module) verify(ctx context.Context, tx *ent.Tx, id int64, held, code string) (*ent.Operator, error) {

@@ -290,8 +290,12 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		lic, err = testLicense()
 		require.NoError(t, err, "mint test license")
 	}
+	attempts := accounts.NewAttempts(client,
+		accounts.WithClock(st.now),
+		accounts.WithRateLimits(cfg.RateLimits))
 	edition, err := ee.New(client, lic, cipher, cfg.JWTSecret, operator.Config{
 		Secret: newOperatorSecret(), SessionTTL: cfg.OperatorSessionTTL, SecureCookies: cfg.SecureCookies(), Clock: st.now,
+		Attempts: attempts,
 	})
 	require.NoError(t, err, "build edition")
 	tagsModule := tags.New()
@@ -301,9 +305,6 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
-	attempts := accounts.NewAttempts(client,
-		accounts.WithClock(st.now),
-		accounts.WithRateLimits(cfg.RateLimits))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Webhooks: webhooksModule, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule, Templates: templatesModule,
