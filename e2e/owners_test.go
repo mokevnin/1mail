@@ -11,17 +11,37 @@ import (
 	"github.com/mokevnin/1mail/internal/accounts"
 )
 
-// Two owners demoted at the same moment: without the row lock both would count two
-// owners and succeed, leaving the Workspace ownerless. It cannot run under the
+// Two owners changed at the same moment: without the row lock both would count two
+// owners and succeed, leaving the Workspace ownerless. These cannot run under the
 // transaction-per-test harness, where both would share one transaction.
 func TestConcurrentOwnerDemotionsKeepOneOwner(t *testing.T) {
 	t.Parallel()
+	w, owners := workspaceWithTwoOwners(t)
+	assertOneRefused(t, w, w.DemoteConcurrently(owners...))
+}
+
+func TestConcurrentOwnerRemovalsKeepOneOwner(t *testing.T) {
+	t.Parallel()
+	w, owners := workspaceWithTwoOwners(t)
+	assertOneRefused(t, w, w.RemoveConcurrently(owners...))
+}
+
+func TestConcurrentOwnerDemotionAndRemovalKeepOneOwner(t *testing.T) {
+	t.Parallel()
+	w, owners := workspaceWithTwoOwners(t)
+	assertOneRefused(t, w, w.DemoteAndRemoveConcurrently(owners[0], owners[1]))
+}
+
+func workspaceWithTwoOwners(t *testing.T) (*Workspace, []int64) {
+	t.Helper()
 	w := env.NewWorkspace(t)
 	owners := w.AddOwner()
 	require.Len(t, owners, 2)
+	return w, owners
+}
 
-	errs := w.DemoteConcurrently(owners...)
-
+func assertOneRefused(t *testing.T, w *Workspace, errs []error) {
+	t.Helper()
 	failed := 0
 	for _, err := range errs {
 		if err != nil {
@@ -29,6 +49,6 @@ func TestConcurrentOwnerDemotionsKeepOneOwner(t *testing.T) {
 			failed++
 		}
 	}
-	assert.Equal(t, 1, failed, "exactly one demotion is refused")
+	assert.Equal(t, 1, failed, "exactly one change is refused")
 	assert.Len(t, w.OwnerMembershipIDs(), 1, "the Workspace keeps an owner")
 }
