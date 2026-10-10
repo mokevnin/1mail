@@ -106,7 +106,7 @@ three behaviours follow from the architecture:
 - **Mail sent after the backup point can be sent again.** Each email 1mail sends is recorded
   as an Outbound message before the provider is called, and the idempotency key that prevents
   duplicate sends lives in that same database row
-  ([ADR 0015](../adr/0015-outbound-send-single-chokepoint)). A message sent after the backup
+  ([ADR 0015](https://github.com/mokevnin/1mail/blob/main/docs/adr/0015-outbound-send-single-chokepoint.md)). A message sent after the backup
   point has no row in the restored database, so its send is not recognized as already done
   and a still-pending job or automation step can send it again. Delivery to the provider is
   at-least-once by design.

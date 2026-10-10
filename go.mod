@@ -14,6 +14,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ses v1.42.4
 	github.com/doyensec/safeurl v0.2.5
 	github.com/emersion/go-msgauth v0.7.0
+	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
+	github.com/emersion/go-smtp v0.25.0
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0

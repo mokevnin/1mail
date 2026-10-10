@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -16,6 +17,7 @@ import (
 	appdb "github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/logging"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -37,6 +39,17 @@ func main() {
 
 	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version") {
 		slog.Info("1mail version", "version", version, "commit", commit, "built", date)
+		return
+	}
+
+	// `server genkey` prints a fresh ENCRYPTION_KEY, so a binary or image install
+	// can bootstrap without the Go toolchain.
+	if len(os.Args) > 1 && os.Args[1] == "genkey" {
+		key, err := secrets.GenerateKeysetBase64()
+		if err != nil {
+			fatal("genkey", err)
+		}
+		fmt.Println(key)
 		return
 	}
 

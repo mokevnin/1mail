@@ -45,7 +45,7 @@ per client connection. There is no PgBouncer-compatible mode.
 ## Retention
 
 Two pieces of data grow with traffic: the **Event** table and the domain-event **outbox**. Both
-are pruned in core by background jobs. The policy is [ADR 0019](../adr/0019-event-retention).
+are pruned in core by background jobs. The policy is [ADR 0019](https://github.com/mokevnin/1mail/blob/main/docs/adr/0019-event-retention.md).
 
 | Variable                      | Default | `0` means | What it controls                                                                                                                                                                               |
 | ----------------------------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
