@@ -23,12 +23,12 @@ func (m *Module) reserve(ctx context.Context, s *ent.Scoped, req Request, integ 
 	}
 	limits := sendlimit.EffectiveOf(integ).Limits()
 	if req.Kind == outboundmessage.KindTransactional {
-		if err := sendlimit.Spend(ctx, s, integ.ID, limits, m.now()); err != nil {
+		if err := sendlimit.Spend(ctx, s, integ.ID, limits, time.Now()); err != nil {
 			return 0, fmt.Errorf("outbound: spend send capacity: %w", err)
 		}
 		return 0, nil
 	}
-	wait, err := sendlimit.Reserve(ctx, s, integ.ID, limits, m.now())
+	wait, err := sendlimit.Reserve(ctx, s, integ.ID, limits, time.Now())
 	if err != nil {
 		return 0, fmt.Errorf("outbound: reserve send capacity: %w", err)
 	}

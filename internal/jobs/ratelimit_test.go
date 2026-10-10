@@ -3,6 +3,7 @@ package jobs_test
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/riverqueue/river"
@@ -23,59 +24,61 @@ import (
 // limit snooze (no attempt consumed, no hold reason), and every recipient is still
 // sent exactly once as capacity returns.
 func TestBroadcastThroughALimitedIntegrationLosesNoRecipient(t *testing.T) {
-	e := newRiverEnv(t)
-	ctx := e.workCtx()
-	now := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
-	mod := outbound.New(e.Bus, fakeResolver{sender: e.sender}, tracking.New("test-secret", "http://local"),
-		outbound.WithClock(func() time.Time { return now }))
-	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(2).ExecX(ctx)
+	synctest.Test(t, func(t *testing.T) {
+		e := newRiverEnv(t)
+		ctx := e.workCtx()
+		now := time.Now()
+		mod := outbound.New(e.Bus, fakeResolver{sender: e.sender}, tracking.New("test-secret", "http://local"))
+		e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(2).ExecX(ctx)
 
-	ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
-	require.NoError(t, err)
-	require.Greater(t, len(ids), 2, "the fixture audience must outgrow one second of capacity")
-	w := jobs.NewSendRecipientWorker(e.DB, mod)
+		ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
+		require.NoError(t, err)
+		require.Greater(t, len(ids), 2, "the fixture audience must outgrow one second of capacity")
+		w := jobs.NewSendRecipientWorker(e.DB, mod)
 
-	// Drive the recipient jobs the way river does: a snoozed job is not run again
-	// before its wake time, so the simulated clock jumps to the earliest wake time.
-	start := now
-	wake := map[int64]time.Time{}
-	for _, id := range ids {
-		wake[id] = now
-	}
-	for len(wake) > 0 {
-		next := now.Add(24 * time.Hour)
-		for _, at := range wake {
-			if at.Before(next) {
-				next = at
-			}
-		}
-		now = next
+		// Drive the recipient jobs the way river does: a snoozed job is not run again
+		// before its wake time, so the simulated clock jumps to the earliest wake time.
+		start := now
+		wake := map[int64]time.Time{}
 		for _, id := range ids {
-			at, queued := wake[id]
-			if !queued || at.After(now) {
-				continue
-			}
-			err := w.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: id, BroadcastID: fixtures.BroadcastDraftID}))
-			if err == nil {
-				delete(wake, id)
-				continue
-			}
-			var snooze *river.JobSnoozeError
-			require.ErrorAs(t, err, &snooze, "a Deferral is a snooze, never a failure")
-			assert.GreaterOrEqual(t, snooze.Duration, time.Second, "the wait is floored")
-			wake[id] = now.Add(snooze.Duration)
+			wake[id] = now
 		}
-		assert.Nil(t, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).HoldReason, "busy is not a hold")
-	}
+		for len(wake) > 0 {
+			next := now.Add(24 * time.Hour)
+			for _, at := range wake {
+				if at.Before(next) {
+					next = at
+				}
+			}
+			time.Sleep(next.Sub(now))
+			now = time.Now()
+			for _, id := range ids {
+				at, queued := wake[id]
+				if !queued || at.After(now) {
+					continue
+				}
+				err := w.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: id, BroadcastID: fixtures.BroadcastDraftID}))
+				if err == nil {
+					delete(wake, id)
+					continue
+				}
+				var snooze *river.JobSnoozeError
+				require.ErrorAs(t, err, &snooze, "a Deferral is a snooze, never a failure")
+				assert.GreaterOrEqual(t, snooze.Duration, time.Second, "the wait is floored")
+				wake[id] = now.Add(snooze.Duration)
+			}
+			assert.Nil(t, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).HoldReason, "busy is not a hold")
+		}
 
-	// At 2 per second the Broadcast takes about N/2 seconds: the snoozes track the
-	// limit instead of running far below it or bursting past it.
-	elapsed := now.Sub(start)
-	n := float64(len(ids))
-	assert.GreaterOrEqual(t, elapsed.Seconds(), n/2-1, "never faster than the limit")
-	assert.LessOrEqual(t, elapsed.Seconds(), n/2*1.2+2, "close to the limit, not far below it")
-	assert.Len(t, e.sender.sent, len(ids), "every recipient sent exactly once")
-	assert.Equal(t, broadcast.StatusSent, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
+		// At 2 per second the Broadcast takes about N/2 seconds: the snoozes track the
+		// limit instead of running far below it or bursting past it.
+		elapsed := now.Sub(start)
+		n := float64(len(ids))
+		assert.GreaterOrEqual(t, elapsed.Seconds(), n/2-1, "never faster than the limit")
+		assert.LessOrEqual(t, elapsed.Seconds(), n/2*1.2+2, "close to the limit, not far below it")
+		assert.Len(t, e.sender.sent, len(ids), "every recipient sent exactly once")
+		assert.Equal(t, broadcast.StatusSent, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
+	})
 }
 
 // An Automation step that finds the Integration's limit spent defers: the enrollment
@@ -83,67 +86,67 @@ func TestBroadcastThroughALimitedIntegrationLosesNoRecipient(t *testing.T) {
 // sends exactly once when capacity returns. Transactional traffic is what spends the
 // capacity here, and is itself never slowed.
 func TestAutomationStepDefersWhenTransactionalTrafficSpendsTheLimit(t *testing.T) {
-	env := testhelper.Setup(t)
-	ctx := context.Background()
-	now := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
-	fs := &fakeSender{}
-	mod := outbound.New(env.Bus, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"),
-		outbound.WithClock(func() time.Time { return now }))
-	env.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
+	synctest.Test(t, func(t *testing.T) {
+		env := testhelper.Setup(t)
+		ctx := context.Background()
+		fs := &fakeSender{}
+		mod := outbound.New(env.Bus, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"))
+		env.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
-	require.NoError(t, err)
-	require.Len(t, runIDs, 1)
-
-	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
-		res, err := mod.Send(ctx, env.DB.Scoped(fixtures.AcmeID), outbound.Request{
-			Kind: outboundmessage.KindTransactional, Key: key, Destination: "a@example.com",
-			Subject: "Receipt", Body: "<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>",
-		})
+		runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
 		require.NoError(t, err)
-		require.Equal(t, outbound.Sent, res.Outcome, "Transactional is never delayed")
-	}
-	require.Len(t, fs.sent, 3)
+		require.Len(t, runIDs, 1)
 
-	before := time.Now()
-	res, err := jobs.RunStep(ctx, env.DB, mod, runIDs[0])
-	require.NoError(t, err, "a Deferral is not a failure, so no attempt is consumed")
-	assert.False(t, res.Done)
-	require.NotNil(t, res.ResumeAt, "the worker reschedules the same step")
-	assert.GreaterOrEqual(t, res.ResumeAt.Sub(before), 3*time.Second, "pushed out by the Transactional debt")
-	run := env.DB.AutomationRun.GetX(ctx, runIDs[0])
-	assert.Equal(t, automationrun.StatusActive, run.Status)
-	assert.Zero(t, run.CurrentStep, "the enrollment keeps its place")
-	assert.Len(t, fs.sent, 3, "the step has not sent")
+		for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+			res, err := mod.Send(ctx, env.DB.Scoped(fixtures.AcmeID), outbound.Request{
+				Kind: outboundmessage.KindTransactional, Key: key, Destination: "a@example.com",
+				Subject: "Receipt", Body: "<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>",
+			})
+			require.NoError(t, err)
+			require.Equal(t, outbound.Sent, res.Outcome, "Transactional is never delayed")
+		}
+		require.Len(t, fs.sent, 3)
 
-	now = now.Add(3 * time.Second)
-	res, err = jobs.RunStep(ctx, env.DB, mod, runIDs[0])
-	require.NoError(t, err)
-	assert.Nil(t, res.ResumeAt)
-	assert.Len(t, fs.sent, 4, "the step sends once capacity returns")
-	assert.Equal(t, 1, env.DB.AutomationRun.GetX(ctx, runIDs[0]).CurrentStep)
+		before := time.Now()
+		res, err := jobs.RunStep(ctx, env.DB, mod, runIDs[0])
+		require.NoError(t, err, "a Deferral is not a failure, so no attempt is consumed")
+		assert.False(t, res.Done)
+		require.NotNil(t, res.ResumeAt, "the worker reschedules the same step")
+		assert.GreaterOrEqual(t, res.ResumeAt.Sub(before), 3*time.Second, "pushed out by the Transactional debt")
+		run := env.DB.AutomationRun.GetX(ctx, runIDs[0])
+		assert.Equal(t, automationrun.StatusActive, run.Status)
+		assert.Zero(t, run.CurrentStep, "the enrollment keeps its place")
+		assert.Len(t, fs.sent, 3, "the step has not sent")
+
+		time.Sleep(3 * time.Second)
+		res, err = jobs.RunStep(ctx, env.DB, mod, runIDs[0])
+		require.NoError(t, err)
+		assert.Nil(t, res.ResumeAt)
+		assert.Len(t, fs.sent, 4, "the step sends once capacity returns")
+		assert.Equal(t, 1, env.DB.AutomationRun.GetX(ctx, runIDs[0]).CurrentStep)
+	})
 }
 
 // Automation steps and Broadcast recipients draw on one Integration's limit.
 func TestAutomationStepAndBroadcastRecipientShareTheLimit(t *testing.T) {
-	e := newRiverEnv(t)
-	ctx := e.workCtx()
-	now := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
-	mod := outbound.New(e.Bus, fakeResolver{sender: e.sender}, tracking.New("test-secret", "http://local"),
-		outbound.WithClock(func() time.Time { return now }))
-	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
+	synctest.Test(t, func(t *testing.T) {
+		e := newRiverEnv(t)
+		ctx := e.workCtx()
+		mod := outbound.New(e.Bus, fakeResolver{sender: e.sender}, tracking.New("test-secret", "http://local"))
+		e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, e.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
-	require.NoError(t, err)
-	res, err := jobs.RunStep(ctx, e.DB, mod, runIDs[0])
-	require.NoError(t, err)
-	require.Nil(t, res.ResumeAt, "the first send takes the only token")
-	require.Len(t, e.sender.sent, 1)
+		runIDs, err := jobs.EvaluateTrigger(ctx, e.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
+		require.NoError(t, err)
+		res, err := jobs.RunStep(ctx, e.DB, mod, runIDs[0])
+		require.NoError(t, err)
+		require.Nil(t, res.ResumeAt, "the first send takes the only token")
+		require.Len(t, e.sender.sent, 1)
 
-	ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
-	require.NoError(t, err)
-	w := jobs.NewSendRecipientWorker(e.DB, mod)
-	err = w.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: ids[0], BroadcastID: fixtures.BroadcastDraftID}))
-	var snooze *river.JobSnoozeError
-	require.ErrorAs(t, err, &snooze, "the Broadcast recipient finds the Automation's spend")
+		ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
+		require.NoError(t, err)
+		w := jobs.NewSendRecipientWorker(e.DB, mod)
+		err = w.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: ids[0], BroadcastID: fixtures.BroadcastDraftID}))
+		var snooze *river.JobSnoozeError
+		require.ErrorAs(t, err, &snooze, "the Broadcast recipient finds the Automation's spend")
+	})
 }
