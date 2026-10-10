@@ -126,8 +126,15 @@ func main() {
 		}
 	}()
 
+	// A degraded instance that silently drops Broadcasts is worse than one that
+	// refuses to start, so a job-queue start failure is fatal.
 	if err := application.RunJobs(ctx); err != nil {
-		slog.Error("job queue failed to start", "err", err)
+		stop()
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		_ = application.Stop(shutdownCtx)
+		_ = application.Shutdown(shutdownCtx)
+		cancel()
+		fatal("start job queue", err)
 	}
 
 	go func() {
