@@ -30,7 +30,7 @@ func TestSiteTagCreateIsAuditedUnderTheUser(t *testing.T) {
 	assert.Equal(t, "tag.create", e.Action)
 	assert.Equal(t, events.Actor{Kind: events.ActorUser, ID: strconv.Itoa(fixtures.OwnerJohnID), Name: "John"}, e.Actor)
 	assert.Equal(t, "audited-tag", e.TargetName)
-	assert.Equal(t, map[string]any{"name": map[string]any{"after": "audited-tag"}}, e.Diff)
+	assert.Equal(t, map[string]any{"name": map[string]any{"to": "audited-tag"}}, e.Diff)
 
 	// Applying it again is idempotent and records nothing more.
 	_, err = c.SiteTagsApply(context.Background(), &siteapi.SiteApplyTagInput{Name: "audited-tag"},

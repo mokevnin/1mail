@@ -43,8 +43,8 @@ type AuditChange struct {
 	TargetType string
 	TargetID   string
 	TargetName string
-	// Diff maps a changed field to {"before": v, "after": v}; a sensitive field maps to
-	// {"changed": true} and never carries a value.
+	// Diff maps a changed field to {"from": v, "to": v}; a sensitive field maps to
+	// "changed" and never carries a value.
 	Diff map[string]any
 }
 
@@ -111,7 +111,7 @@ func (s *Scoped) record(ctx context.Context, change AuditChange) error {
 }
 
 // AuditDiff computes the diff of an audited entity's fields. A nil before is a create
-// (every field is "after"), a nil after a delete (every field is "before"); otherwise
+// (every field is "to"), a nil after a delete (every field is "from"); otherwise
 // only the fields that differ appear. A field in sensitive records only that it changed.
 func AuditDiff(before, after map[string]any, sensitive map[string]bool) map[string]any {
 	diff := map[string]any{}
@@ -126,13 +126,13 @@ func AuditDiff(before, after map[string]any, sensitive map[string]bool) map[stri
 		}
 		switch {
 		case sensitive[name]:
-			diff[name] = map[string]any{"changed": true}
+			diff[name] = "changed"
 		case before == nil:
-			diff[name] = map[string]any{"after": a}
+			diff[name] = map[string]any{"to": a}
 		case after == nil:
-			diff[name] = map[string]any{"before": b}
+			diff[name] = map[string]any{"from": b}
 		default:
-			diff[name] = map[string]any{"before": b, "after": a}
+			diff[name] = map[string]any{"from": b, "to": a}
 		}
 	}
 	return diff

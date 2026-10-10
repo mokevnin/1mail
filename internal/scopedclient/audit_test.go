@@ -61,13 +61,13 @@ func TestAuditedTagWritesRecordActorActionAndDiff(t *testing.T) {
 	}
 	assert.Equal(t, "tag.create", got[0].Action)
 	assert.Equal(t, "audited", got[0].TargetName)
-	assert.JSONEq(t, `{"name":{"after":"audited"}}`, diffJSON(t, got[0]))
+	assert.JSONEq(t, `{"name":{"to":"audited"}}`, diffJSON(t, got[0]))
 	assert.Equal(t, "tag.update", got[1].Action)
 	assert.Equal(t, "renamed", got[1].TargetName)
-	assert.JSONEq(t, `{"name":{"before":"audited","after":"renamed"}}`, diffJSON(t, got[1]))
+	assert.JSONEq(t, `{"name":{"from":"audited","to":"renamed"}}`, diffJSON(t, got[1]))
 	assert.Equal(t, "tag.delete", got[2].Action)
 	assert.Equal(t, "renamed", got[2].TargetName, "the name is snapshotted before the row is gone")
-	assert.JSONEq(t, `{"name":{"before":"renamed"}}`, diffJSON(t, got[2]))
+	assert.JSONEq(t, `{"name":{"from":"renamed"}}`, diffJSON(t, got[2]))
 }
 
 func TestAuditedBulkWritesRecordOneEntryPerRow(t *testing.T) {
@@ -209,9 +209,9 @@ func TestAuditDiffRedactsSensitiveFields(t *testing.T) {
 	updated := ent.AuditDiff(map[string]any{"name": "n", "secret": "old"}, map[string]any{"name": "n", "secret": "new"}, sensitive)
 	deleted := ent.AuditDiff(map[string]any{"name": "n", "secret": "old"}, nil, sensitive)
 
-	assert.Equal(t, map[string]any{"name": map[string]any{"after": "n"}, "secret": map[string]any{"changed": true}}, created)
-	assert.Equal(t, map[string]any{"secret": map[string]any{"changed": true}}, updated, "an unchanged field is absent")
-	assert.Equal(t, map[string]any{"name": map[string]any{"before": "n"}, "secret": map[string]any{"changed": true}}, deleted)
+	assert.Equal(t, map[string]any{"name": map[string]any{"to": "n"}, "secret": "changed"}, created)
+	assert.Equal(t, map[string]any{"secret": "changed"}, updated, "an unchanged field is absent")
+	assert.Equal(t, map[string]any{"name": map[string]any{"from": "n"}, "secret": "changed"}, deleted)
 	for _, d := range []map[string]any{created, updated, deleted} {
 		b, err := json.Marshal(d)
 		require.NoError(t, err)

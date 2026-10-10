@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -30,4 +31,16 @@ func TestExternalTagCreateIsAuditedUnderTheToken(t *testing.T) {
 	assert.Equal(t, "tag.create", e.Action)
 	assert.Equal(t, events.Actor{Kind: events.ActorAPIToken, ID: strconv.Itoa(fixtures.AnchorTokenID), Name: fixtures.AnchorTokenName}, e.Actor)
 	assert.Equal(t, "api-tag", e.TargetName)
+
+	// The owner reads it on /site, attributed to the token.
+	env.DeliverToEE(t)
+	list, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteAuditList(context.Background(), siteapi.SiteAuditListParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	page, ok := list.(*siteapi.SiteAuditEntryList)
+	require.Truef(t, ok, "got %T", list)
+	require.NotEmpty(t, page.Items)
+	listed := page.Items[0]
+	assert.Equal(t, "tag.create", listed.Action)
+	assert.Equal(t, siteapi.SiteAuditActorKindAPIToken, listed.Actor.Kind)
+	assert.Equal(t, strconv.Itoa(fixtures.AnchorTokenID), listed.Actor.ID.Value)
 }
