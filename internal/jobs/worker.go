@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -48,8 +49,9 @@ type Client struct {
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
-// in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
+// in account emails (reset/verify/change). db is the raw handle the instance-wide
+// outbox prune runs on; outboxFloor is the minimum age of a pruned outbox row.
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, outboxFloor time.Duration) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -67,6 +69,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: outboxFloor})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))
@@ -107,6 +110,14 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
 				river.PeriodicInterval(15*time.Minute),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Prune the domain-events outbox below the slowest consumer (ADR 0019).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(outboxPruneInterval),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneOutboxArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
