@@ -1,9 +1,6 @@
 name: CodeQL
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
   schedule:
     - cron: '23 4 * * 1'
@@ -12,6 +9,7 @@ permissions: {}
 
 jobs:
   analyze:
+    if: github.event_name == 'schedule' || startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -1,9 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
 
 permissions:
@@ -11,6 +8,7 @@ permissions:
 
 jobs:
   lint:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +31,7 @@ jobs:
         run: mise run check
 
   generated:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +51,7 @@ jobs:
         run: mise run generate:check
 
   commits:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -81,6 +81,7 @@ jobs:
           fi
 
   tracker-size:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -103,6 +104,7 @@ jobs:
         run: pnpm exec size-limit
 
   test:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -119,6 +121,7 @@ jobs:
         run: mise run test
 
   test-e2e:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
@@ -137,6 +140,7 @@ jobs:
         run: mise run test:e2e
 
   test-frontend:
+    if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
 
     steps:
