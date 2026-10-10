@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/analytics"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/site/resources"
 	"github.com/mokevnin/1mail/internal/authtoken"
@@ -80,6 +81,7 @@ type Handlers struct {
 	automations    *automations.Module
 	oauth          *oauthserver.Service
 	audit          AuditLog
+	analytics      *analytics.Module
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -124,6 +126,7 @@ type Deps struct {
 	Tracker        *tracking.Tracker
 	AppURL         string
 	Audit          AuditLog
+	Analytics      *analytics.Module
 }
 
 func NewHandlers(d Deps) *Handlers {
@@ -132,7 +135,7 @@ func NewHandlers(d Deps) *Handlers {
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth, audit: d.Audit,
+		oauth: d.OAuth, audit: d.Audit, analytics: d.Analytics,
 	}
 }
 
