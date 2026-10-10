@@ -40,6 +40,20 @@ type Limits struct {
 // Any reports whether at least one ceiling is set.
 func (l Limits) Any() bool { return l.PerSecond != nil || l.PerDay != nil }
 
+// Interval is the spacing that keeps a stream of messages within the limits: one over
+// the effective rate, which is the slower of the per-second ceiling and the 24-hour
+// ceiling spread evenly over the day. It is zero when no ceiling is set.
+func (l Limits) Interval() time.Duration {
+	var step time.Duration
+	if l.PerSecond != nil && *l.PerSecond > 0 {
+		step = time.Second / time.Duration(*l.PerSecond)
+	}
+	if l.PerDay != nil && *l.PerDay > 0 {
+		step = max(step, time.Duration(daySeconds)*time.Second/time.Duration(*l.PerDay))
+	}
+	return step
+}
+
 // bucket is one of the two token buckets: its fill column, capacity in tokens and
 // the fill fraction regained per second.
 type bucket struct {

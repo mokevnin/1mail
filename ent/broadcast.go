@@ -62,6 +62,8 @@ type Broadcast struct {
 	SkippedCount int `json:"skipped_count,omitempty"`
 	// HoldReason holds the value of the "hold_reason" field.
 	HoldReason *string `json:"hold_reason,omitempty"`
+	// LastScheduledAt holds the value of the "last_scheduled_at" field.
+	LastScheduledAt *time.Time `json:"last_scheduled_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BroadcastQuery when eager-loading is set.
 	Edges        BroadcastEdges `json:"edges"`
@@ -108,7 +110,7 @@ func (*Broadcast) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBody, broadcast.FieldBodyText, broadcast.FieldStatus, broadcast.FieldHoldReason:
 			values[i] = new(sql.NullString)
-		case broadcast.FieldCreatedAt, broadcast.FieldUpdatedAt, broadcast.FieldScheduledAt, broadcast.FieldSentAt:
+		case broadcast.FieldCreatedAt, broadcast.FieldUpdatedAt, broadcast.FieldScheduledAt, broadcast.FieldSentAt, broadcast.FieldLastScheduledAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -270,6 +272,13 @@ func (_m *Broadcast) assignValues(columns []string, values []any) error {
 				_m.HoldReason = new(string)
 				*_m.HoldReason = value.String
 			}
+		case broadcast.FieldLastScheduledAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_scheduled_at", values[i])
+			} else if value.Valid {
+				_m.LastScheduledAt = new(time.Time)
+				*_m.LastScheduledAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -394,6 +403,11 @@ func (_m *Broadcast) String() string {
 	if v := _m.HoldReason; v != nil {
 		builder.WriteString("hold_reason=")
 		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.LastScheduledAt; v != nil {
+		builder.WriteString("last_scheduled_at=")
+		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteByte(')')
 	return builder.String()

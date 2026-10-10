@@ -1,0 +1,66 @@
+package site_test
+
+import (
+	"context"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+// A sending Broadcast reports progress and an ETA derived from its last scheduled
+// time; a held one reports progress but no ETA (a hold is not a busy source); a draft
+// has no progress at all.
+func TestSiteBroadcastProgressAndETA(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	s := env.DB.Scoped(fixtures.AcmeID)
+	id := int64(fixtures.BroadcastDraftID)
+	params := siteapi.SiteBroadcastsGetParams{Slug: fixtures.AcmeSlug, ID: siteapi.EntityId(strconv.FormatInt(id, 10))}
+	get := func() siteapi.SiteBroadcastResource {
+		got, err := c.SiteBroadcastsGet(ctx, params)
+		require.NoError(t, err)
+		res, ok := got.(*siteapi.SiteBroadcastResource)
+		require.Truef(t, ok, "got %T", got)
+		return *res
+	}
+
+	assert.False(t, get().Progress.IsSet(), "a draft has no progress")
+
+	eta := time.Now().Add(90 * time.Minute).Truncate(time.Microsecond)
+	require.NoError(t, s.Broadcast().UpdateOneID(id).SetStatus(broadcast.StatusSending).SetRecipientsTotal(3).SetLastScheduledAt(eta).Exec(ctx))
+	for i, contactID := range []int64{fixtures.ContactAliceID, fixtures.ContactBobID, fixtures.ContactCarolID} {
+		status := broadcastrecipient.StatusPending
+		if i == 0 {
+			status = broadcastrecipient.StatusSent
+		}
+		_, err := s.BroadcastRecipient().Create().SetBroadcastID(id).SetContactID(contactID).SetStatus(status).Save(ctx)
+		require.NoError(t, err)
+	}
+
+	progress, ok := get().Progress.Get()
+	require.True(t, ok)
+	assert.Equal(t, int32(1), progress.ProcessedCount)
+	assert.Equal(t, int32(2), progress.RemainingCount)
+	got, ok := progress.EstimatedCompletionAt.Get()
+	require.True(t, ok)
+	assert.WithinDuration(t, eta, time.Time(got), time.Second, "timestamps are served to the second")
+
+	require.NoError(t, s.Broadcast().UpdateOneID(id).SetHoldReason("unverified_domain").Exec(ctx))
+	res := get()
+	assert.Equal(t, "unverified_domain", res.HoldReason.Value)
+	progress, ok = res.Progress.Get()
+	require.True(t, ok)
+	assert.Equal(t, int32(2), progress.RemainingCount, "recipients stay intact under a hold")
+	_, hasETA := progress.EstimatedCompletionAt.Get()
+	assert.False(t, hasETA, "no ETA while held")
+}

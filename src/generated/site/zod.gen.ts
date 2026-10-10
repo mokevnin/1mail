@@ -656,6 +656,17 @@ export const zSiteAutomationResource = z.object({
 });
 
 /**
+ * How far a sending broadcast has got. A broadcast limited by its Integration's Send
+ * rate limit is paced: recipients go out at an even interval, so the estimate is
+ * derived on the server from the last scheduled time and the recipients remaining.
+ */
+export const zSiteBroadcastProgress = z.object({
+  processedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  remainingCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  estimatedCompletionAt: z.exactOptional(zTimestamp.nullable())
+});
+
+/**
  * Broadcast resource used by the site UI
  */
 export const zSiteBroadcastResource = z.object({
@@ -673,6 +684,7 @@ export const zSiteBroadcastResource = z.object({
   scheduledAt: z.exactOptional(zTimestamp.nullable()),
   sentAt: z.exactOptional(zTimestamp.nullable()),
   stats: zSiteBroadcastStats,
+  progress: z.exactOptional(zSiteBroadcastProgress.nullable()),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });

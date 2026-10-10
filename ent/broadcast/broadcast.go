@@ -59,6 +59,8 @@ const (
 	FieldSkippedCount = "skipped_count"
 	// FieldHoldReason holds the string denoting the hold_reason field in the database.
 	FieldHoldReason = "hold_reason"
+	// FieldLastScheduledAt holds the string denoting the last_scheduled_at field in the database.
+	FieldLastScheduledAt = "last_scheduled_at"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// EdgeRecipients holds the string denoting the recipients edge name in mutations.
@@ -106,6 +108,7 @@ var Columns = []string{
 	FieldFailedCount,
 	FieldSkippedCount,
 	FieldHoldReason,
+	FieldLastScheduledAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -308,6 +311,11 @@ func BySkippedCount(opts ...sql.OrderTermOption) OrderOption {
 // ByHoldReason orders the results by the hold_reason field.
 func ByHoldReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHoldReason, opts...).ToFunc()
+}
+
+// ByLastScheduledAt orders the results by the last_scheduled_at field.
+func ByLastScheduledAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastScheduledAt, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

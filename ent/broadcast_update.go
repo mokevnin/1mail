@@ -422,6 +422,26 @@ func (_u *BroadcastUpdate) ClearHoldReason() *BroadcastUpdate {
 	return _u
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (_u *BroadcastUpdate) SetLastScheduledAt(v time.Time) *BroadcastUpdate {
+	_u.mutation.SetLastScheduledAt(v)
+	return _u
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableLastScheduledAt(v *time.Time) *BroadcastUpdate {
+	if v != nil {
+		_u.SetLastScheduledAt(*v)
+	}
+	return _u
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (_u *BroadcastUpdate) ClearLastScheduledAt() *BroadcastUpdate {
+	_u.mutation.ClearLastScheduledAt()
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *BroadcastUpdate) SetWorkspace(v *Workspace) *BroadcastUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -688,6 +708,12 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.HoldReasonCleared() {
 		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastScheduledAt(); ok {
+		_spec.SetField(broadcast.FieldLastScheduledAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastScheduledAtCleared() {
+		_spec.ClearField(broadcast.FieldLastScheduledAt, field.TypeTime)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1176,6 +1202,26 @@ func (_u *BroadcastUpdateOne) ClearHoldReason() *BroadcastUpdateOne {
 	return _u
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (_u *BroadcastUpdateOne) SetLastScheduledAt(v time.Time) *BroadcastUpdateOne {
+	_u.mutation.SetLastScheduledAt(v)
+	return _u
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableLastScheduledAt(v *time.Time) *BroadcastUpdateOne {
+	if v != nil {
+		_u.SetLastScheduledAt(*v)
+	}
+	return _u
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (_u *BroadcastUpdateOne) ClearLastScheduledAt() *BroadcastUpdateOne {
+	_u.mutation.ClearLastScheduledAt()
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *BroadcastUpdateOne) SetWorkspace(v *Workspace) *BroadcastUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -1472,6 +1518,12 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 	}
 	if _u.mutation.HoldReasonCleared() {
 		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastScheduledAt(); ok {
+		_spec.SetField(broadcast.FieldLastScheduledAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastScheduledAtCleared() {
+		_spec.ClearField(broadcast.FieldLastScheduledAt, field.TypeTime)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
