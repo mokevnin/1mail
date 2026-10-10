@@ -142,13 +142,3 @@ func TestSiteInvitationsDelete(t *testing.T) {
 		assert.IsType(t, &siteapi.SiteInvitationsDeleteNotFound{}, res)
 	}
 }
-
-// The direct-login operation is served by the auth provider's route; the generated
-// handler is only a defensive fallback.
-func TestSiteAuthDirectLoginFallbackIsABadRequest(t *testing.T) {
-	env := testhelper.Setup(t)
-	res, err := env.SiteAnonymous(t).SiteAuthDirectLogin(context.Background(),
-		&siteapi.SiteDirectLoginInput{User: "x", Passwd: "y"})
-	require.NoError(t, err)
-	assert.IsType(t, &siteapi.SiteDirectLoginError{}, res)
-}

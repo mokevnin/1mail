@@ -143,12 +143,12 @@ Frontend tests: `mise run test:watch`.
 - **DI**: `samber/do` container. `internal/app/app.go` `register()` wires every singleton
   (config, sql.DB, ent client, email sender, pubsub, the `http.Handler`). Add new
   dependencies there via `do.Provide`.
-- **HTTP**: `internal/server/server.go` `New()` mounts the three ogen servers plus
-  go-pkgz/auth onto a stdlib `http.ServeMux`, then wraps it with hand-rolled middleware
+- **HTTP**: `internal/server/server.go` `New()` mounts the three ogen servers and the
+  public endpoints onto a stdlib `http.ServeMux`, then wraps it with hand-rolled middleware
   (recoverer, requestID, timeout, CORS). Errors render as RFC 7807 `application/problem+json`.
 - **Three API surfaces**, each with its own TypeSpec spec, ogen server, handler package,
   and auth scheme:
-  - `/site/*` — frontend SPA API. Auth: **JWT cookie** (issued by go-pkgz/auth). Handlers in `internal/api/site`.
+  - `/site/*` — frontend SPA API. Auth: **JWT cookie** (issued by the `login` operation through `auth.Sessions`, ADR 0020). Handlers in `internal/api/site`.
   - `/api/*` — external/public API. Auth: **Bearer api-token** (workspace-scoped). Handlers in `internal/api/external`.
   - `/collect/*` — tracking ingestion from customer sites. Auth: **x-collect-key** header. Handlers in `internal/api/collect`.
 - Auth security handlers live in `internal/api/auth/auth.go`. External requests carry a
@@ -189,7 +189,9 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   Workspace incl. slug resolution, invitation by token), `internal/api/auth` (credentials, token and key lookup),
   `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,
   so it works on the bus's raw transaction client and scopes from the token's Workspace),
-  `internal/oauthserver`, `internal/suspension` (Workspace suspension), `internal/events`
+  `internal/oauthserver`, `internal/secondfactor` (a User's TOTP Second factor and Recovery
+  codes, ADR 0020: they belong to the User, not a Workspace), `internal/suspension` (Workspace
+  suspension), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
   subscriber: its envelope carries only a Workspace id, ADR 0022), `ee/retention` (the

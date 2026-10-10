@@ -35,6 +35,8 @@ type Workspace struct {
 	PostalAddress string `json:"postal_address,omitempty"`
 	// RetentionDays holds the value of the "retention_days" field.
 	RetentionDays *int `json:"retention_days,omitempty"`
+	// SecondFactorRequiredAt holds the value of the "second_factor_required_at" field.
+	SecondFactorRequiredAt *time.Time `json:"second_factor_required_at,omitempty"`
 	// SuspendedAt holds the value of the "suspended_at" field.
 	SuspendedAt *time.Time `json:"suspended_at,omitempty"`
 	// SuspendedBy holds the value of the "suspended_by" field.
@@ -318,7 +320,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey, workspace.FieldPostalAddress, workspace.FieldSuspendedBy, workspace.FieldSuspensionReason:
 			values[i] = new(sql.NullString)
-		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt, workspace.FieldSuspendedAt:
+		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt, workspace.FieldSecondFactorRequiredAt, workspace.FieldSuspendedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -395,6 +397,13 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.RetentionDays = new(int)
 				*_m.RetentionDays = int(value.Int64)
+			}
+		case workspace.FieldSecondFactorRequiredAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field second_factor_required_at", values[i])
+			} else if value.Valid {
+				_m.SecondFactorRequiredAt = new(time.Time)
+				*_m.SecondFactorRequiredAt = value.Time
 			}
 		case workspace.FieldSuspendedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -593,6 +602,11 @@ func (_m *Workspace) String() string {
 	if v := _m.RetentionDays; v != nil {
 		builder.WriteString("retention_days=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.SecondFactorRequiredAt; v != nil {
+		builder.WriteString("second_factor_required_at=")
+		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	if v := _m.SuspendedAt; v != nil {

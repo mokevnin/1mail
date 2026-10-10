@@ -379,9 +379,23 @@ export type EmailAddress = string;
 export type EntityId = string;
 
 /**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export const ProblemCode = { SECOND_FACTOR_REQUIRED: 'second_factor_required' } as const;
+
+/**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export type ProblemCode = typeof ProblemCode[keyof typeof ProblemCode];
+
+/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {
+  /**
+   * Why the request was refused, when the client should act on it
+   */
+  code?: ProblemCode;
   /**
    * A URI reference that identifies the problem type
    */
@@ -1264,28 +1278,6 @@ export const SiteCustomFieldType = {
  */
 export type SiteCustomFieldType = typeof SiteCustomFieldType[keyof typeof SiteCustomFieldType];
 
-export type SiteDirectLoginError = {
-  error: string;
-};
-
-export type SiteDirectLoginInput = {
-  user: string;
-  passwd: string;
-};
-
-export type SiteDirectLoginResult = {
-  name: string;
-  id: string;
-  picture?: string;
-  aud?: string;
-  ip?: string;
-  email?: string;
-  attrs?: {
-    [key: string]: unknown;
-  };
-  role?: string;
-};
-
 /**
  * A DNS record the user publishes to authenticate a sending domain
  */
@@ -1550,6 +1542,49 @@ export type SiteInvitationResource = {
 };
 
 /**
+ * Sign in with an email and password. The email is a plain string: a malformed
+ * address must answer like an unknown one.
+ */
+export type SiteLoginInput = {
+  email: string;
+  password: string;
+};
+
+/**
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
+ */
+export const SiteLoginOutcome = { SESSION: 'session', CHALLENGE: 'challenge' } as const;
+
+/**
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
+ */
+export type SiteLoginOutcome = typeof SiteLoginOutcome[keyof typeof SiteLoginOutcome];
+
+export type SiteLoginResult = {
+  outcome: SiteLoginOutcome;
+  /**
+   * The signed challenge, present when the outcome is `challenge`. It is bound to
+   * the User, valid for 5 minutes and works for one successful second step.
+   */
+  challenge?: string;
+};
+
+/**
+ * The second login step: the challenge from the password step and a code
+ */
+export type SiteLoginSecondFactorInput = {
+  challenge: string;
+  /**
+   * A current TOTP code from the authenticator app, or an unused Recovery code
+   */
+  code: string;
+};
+
+/**
  * A rolling 24-hour Send rate limit the operator may set
  */
 export type SiteMaxPerDay = number;
@@ -1583,6 +1618,10 @@ export type SiteMembershipResource = {
    * The member's role in this workspace
    */
   role: SiteMembershipRole;
+  /**
+   * Whether the member has an active Second factor (ADR 0020)
+   */
+  secondFactorEnabled: boolean;
   /**
    * When the member joined
    */
@@ -1685,6 +1724,26 @@ export type SitePreviewSegmentResult = {
   count: number;
 };
 
+/**
+ * A fresh set of Recovery codes. They are shown only in this response.
+ */
+export type SiteRecoveryCodes = {
+  /**
+   * Single-use codes, each one usable in place of a TOTP code
+   */
+  codes: Array<string>;
+};
+
+/**
+ * Proof of the User's password, for regenerating Recovery codes
+ */
+export type SiteRecoveryCodesInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+};
+
 export type SiteRegisterInput = {
   name: string;
   email: EmailAddress;
@@ -1714,6 +1773,91 @@ export type SiteScheduleBroadcastInput = {
    * When the broadcast should be sent
    */
   scheduledAt: Timestamp;
+};
+
+/**
+ * Proof of the User's password and a code from the authenticator app
+ */
+export type SiteSecondFactorConfirmInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+  /**
+   * The current 6-digit TOTP code
+   */
+  code: string;
+};
+
+/**
+ * Proof of password and possession, for disabling the Second factor
+ */
+export type SiteSecondFactorDisableInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+  /**
+   * A current TOTP code, or an unused Recovery code
+   */
+  code: string;
+};
+
+/**
+ * A pending enrollment: the TOTP secret to add to an authenticator app
+ */
+export type SiteSecondFactorEnrollment = {
+  /**
+   * The secret as a base32 key, for typing it into the app
+   */
+  secret: string;
+  /**
+   * The otpauth:// URI the QR code encodes
+   */
+  otpauthUri: string;
+  /**
+   * The QR code of the otpauth URI, as a PNG data URI
+   */
+  qrCode: string;
+};
+
+/**
+ * Switch the Two-factor requirement on or off
+ */
+export type SiteSecondFactorRequirementInput = {
+  /**
+   * Whether every User with a Membership must have a Second factor
+   */
+  required: boolean;
+};
+
+/**
+ * Proof of the User's password, for starting an enrollment
+ */
+export type SiteSecondFactorStartInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+};
+
+/**
+ * The authenticated User's Second factor (ADR 0020). Recovery codes are never
+ * readable here: only how many are left.
+ */
+export type SiteSecondFactorStatus = {
+  /**
+   * Whether a confirmed TOTP Second factor is active
+   */
+  enabled: boolean;
+  /**
+   * Whether an enrollment was started and still awaits its confirmation code
+   */
+  pending: boolean;
+  /**
+   * Unused Recovery codes left (0 without a Second factor)
+   */
+  recoveryCodesRemaining: number;
 };
 
 /**
@@ -2325,6 +2469,12 @@ export type SiteWorkspaceResource = {
    */
   postalAddress: string;
   /**
+   * The authenticated User's role in this Workspace (from their Membership). It
+   * rides the Workspace list so role-gated UI is known even while the Workspace's
+   * own endpoints are withheld under a Two-factor requirement.
+   */
+  role: SiteMembershipRole;
+  /**
    * When outbound sending was suspended (ADR 0007); absent while the workspace can
    * send. A suspension freezes every send surface but not login, reads or tracking.
    */
@@ -2333,6 +2483,19 @@ export type SiteWorkspaceResource = {
    * Why sending was suspended, shown to the owner; present only while suspended.
    */
   suspensionReason?: string | null;
+  /**
+   * When an Owner or Admin switched on the Two-factor requirement (ADR 0020);
+   * absent while every member may work without a Second factor.
+   */
+  secondFactorRequiredAt?: Timestamp | null;
+  /**
+   * When the authenticated User's grace under the Two-factor requirement ends:
+   * 7 days after the later of the requirement's start and their Membership's
+   * creation. Absent without a requirement or once the User has a Second factor.
+   * After it, every request to this Workspace answers 403 with code
+   * second_factor_required until the User enrolls one.
+   */
+  secondFactorGraceEndsAt?: Timestamp | null;
   /**
    * Creation timestamp
    */
@@ -2620,39 +2783,6 @@ export type SiteAuthConfirmEmailChangeResponses = {
   200: unknown;
 };
 
-export type SiteAuthDirectLoginData = {
-  body: SiteDirectLoginInput;
-  path?: never;
-  query?: never;
-  url: '/auth/direct/login';
-};
-
-export type SiteAuthDirectLoginErrors = {
-  /**
-   * RFC 7807 bad request response
-   */
-  400: ProblemDetails;
-  /**
-   * Access is forbidden.
-   */
-  403: SiteDirectLoginError;
-  /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
-   */
-  429: ProblemDetails;
-};
-
-export type SiteAuthDirectLoginError = SiteAuthDirectLoginErrors[keyof SiteAuthDirectLoginErrors];
-
-export type SiteAuthDirectLoginResponses = {
-  /**
-   * The request has succeeded.
-   */
-  200: SiteDirectLoginResult;
-};
-
-export type SiteAuthDirectLoginResponse = SiteAuthDirectLoginResponses[keyof SiteAuthDirectLoginResponses];
-
 export type SiteAuthForgotPasswordData = {
   body: SiteForgotPasswordInput;
   path?: never;
@@ -2675,6 +2805,51 @@ export type SiteAuthForgotPasswordResponses = {
    */
   202: unknown;
 };
+
+export type SiteAuthLoginData = {
+  body: SiteLoginInput;
+  path?: never;
+  query?: never;
+  url: '/auth/login';
+};
+
+export type SiteAuthLoginErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthLoginError = SiteAuthLoginErrors[keyof SiteAuthLoginErrors];
+
+export type SiteAuthLoginResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteLoginResult;
+};
+
+export type SiteAuthLoginResponse = SiteAuthLoginResponses[keyof SiteAuthLoginResponses];
+
+export type SiteAuthLogoutData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/logout';
+};
+
+export type SiteAuthLogoutResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteAuthLogoutResponse = SiteAuthLogoutResponses[keyof SiteAuthLogoutResponses];
 
 export type SiteAuthRegisterData = {
   body: SiteRegisterInput;
@@ -2731,6 +2906,35 @@ export type SiteAuthResetPasswordResponses = {
    */
   200: unknown;
 };
+
+export type SiteAuthSecondFactorData = {
+  body: SiteLoginSecondFactorInput;
+  path?: never;
+  query?: never;
+  url: '/auth/second-factor';
+};
+
+export type SiteAuthSecondFactorErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthSecondFactorError = SiteAuthSecondFactorErrors[keyof SiteAuthSecondFactorErrors];
+
+export type SiteAuthSecondFactorResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteLoginResult;
+};
+
+export type SiteAuthSecondFactorResponse = SiteAuthSecondFactorResponses[keyof SiteAuthSecondFactorResponses];
 
 export type SiteAuthVerifyEmailData = {
   body: SiteVerifyEmailInput;
@@ -2925,6 +3129,178 @@ export type SiteUserEmailChangeResponses = {
    */
   202: unknown;
 };
+
+export type SiteSecondFactorGetStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor';
+};
+
+export type SiteSecondFactorGetStatusResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteSecondFactorStatus;
+};
+
+export type SiteSecondFactorGetStatusResponse = SiteSecondFactorGetStatusResponses[keyof SiteSecondFactorGetStatusResponses];
+
+export type SiteSecondFactorDisableData = {
+  body: SiteSecondFactorDisableInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/disable';
+};
+
+export type SiteSecondFactorDisableErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteSecondFactorDisableError = SiteSecondFactorDisableErrors[keyof SiteSecondFactorDisableErrors];
+
+export type SiteSecondFactorDisableResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteSecondFactorDisableResponse = SiteSecondFactorDisableResponses[keyof SiteSecondFactorDisableResponses];
+
+export type SiteSecondFactorStartEnrollmentData = {
+  body: SiteSecondFactorStartInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/enrollment';
+};
+
+export type SiteSecondFactorStartEnrollmentErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteSecondFactorStartEnrollmentError = SiteSecondFactorStartEnrollmentErrors[keyof SiteSecondFactorStartEnrollmentErrors];
+
+export type SiteSecondFactorStartEnrollmentResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteSecondFactorEnrollment;
+};
+
+export type SiteSecondFactorStartEnrollmentResponse = SiteSecondFactorStartEnrollmentResponses[keyof SiteSecondFactorStartEnrollmentResponses];
+
+export type SiteSecondFactorConfirmEnrollmentData = {
+  body: SiteSecondFactorConfirmInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/enrollment/confirm';
+};
+
+export type SiteSecondFactorConfirmEnrollmentErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteSecondFactorConfirmEnrollmentError = SiteSecondFactorConfirmEnrollmentErrors[keyof SiteSecondFactorConfirmEnrollmentErrors];
+
+export type SiteSecondFactorConfirmEnrollmentResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteRecoveryCodes;
+};
+
+export type SiteSecondFactorConfirmEnrollmentResponse = SiteSecondFactorConfirmEnrollmentResponses[keyof SiteSecondFactorConfirmEnrollmentResponses];
+
+export type SiteSecondFactorRegenerateRecoveryCodesData = {
+  body: SiteRecoveryCodesInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/recovery-codes';
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesError = SiteSecondFactorRegenerateRecoveryCodesErrors[keyof SiteSecondFactorRegenerateRecoveryCodesErrors];
+
+export type SiteSecondFactorRegenerateRecoveryCodesResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteRecoveryCodes;
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesResponse = SiteSecondFactorRegenerateRecoveryCodesResponses[keyof SiteSecondFactorRegenerateRecoveryCodesResponses];
+
+export type SiteUserSignOutEverywhereData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/sign-out-everywhere';
+};
+
+export type SiteUserSignOutEverywhereResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteUserSignOutEverywhereResponse = SiteUserSignOutEverywhereResponses[keyof SiteUserSignOutEverywhereResponses];
 
 export type SiteUserResendVerificationData = {
   body?: never;
@@ -4968,6 +5344,79 @@ export type SiteMembershipsUpdateResponses = {
 };
 
 export type SiteMembershipsUpdateResponse = SiteMembershipsUpdateResponses[keyof SiteMembershipsUpdateResponses];
+
+export type SiteMembershipsResetSecondFactorData = {
+  body?: never;
+  path: {
+    /**
+     * URL-safe unique slug; the route key for nested workspace resources
+     */
+    slug: string;
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/memberships/{id}/reset-second-factor';
+};
+
+export type SiteMembershipsResetSecondFactorErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteMembershipsResetSecondFactorError = SiteMembershipsResetSecondFactorErrors[keyof SiteMembershipsResetSecondFactorErrors];
+
+export type SiteMembershipsResetSecondFactorResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteMembershipsResetSecondFactorResponse = SiteMembershipsResetSecondFactorResponses[keyof SiteMembershipsResetSecondFactorResponses];
+
+export type SiteWorkspacesSetSecondFactorRequirementData = {
+  body: SiteSecondFactorRequirementInput;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/second-factor-requirement';
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementError = SiteWorkspacesSetSecondFactorRequirementErrors[keyof SiteWorkspacesSetSecondFactorRequirementErrors];
+
+export type SiteWorkspacesSetSecondFactorRequirementResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteWorkspaceResource;
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementResponse = SiteWorkspacesSetSecondFactorRequirementResponses[keyof SiteWorkspacesSetSecondFactorRequirementResponses];
 
 export type SiteSegmentsListData = {
   body?: never;

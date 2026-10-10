@@ -97,3 +97,8 @@ func (i *Inline) EnqueueMemberInvite(ctx context.Context, email, inviteURL, work
 		InviterName:   inviterName,
 	})
 }
+
+// EnqueueSecondFactorRequired sends the "a Second factor is now required" email now.
+func (i *Inline) EnqueueSecondFactorRequired(ctx context.Context, workspaceID int64) error {
+	return NotifySecondFactorRequired(ctx, i.ent, i.systemSender, i.appURL, workspaceID)
+}

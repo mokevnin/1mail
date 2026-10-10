@@ -21,7 +21,7 @@ const localeSentinel = "{{APP_LOCALE}}"
 // unsubstituted sentinel).
 //
 // It is mounted on the catch-all "/" pattern, so it only sees requests not
-// matched by a more specific handler (/site, /api, /collect, /auth, /avatar,
+// matched by a more specific handler (/site, /api, /collect, the 404ing /auth and /avatar,
 // /t.js) — Go 1.22+ ServeMux picks the most specific pattern.
 //
 // When the SPA is not embedded (default build, no embed_spa tag) it returns a

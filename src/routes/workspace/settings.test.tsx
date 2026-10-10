@@ -11,6 +11,7 @@ import {
   handleSiteSendingDomainsList,
   handleSiteSuppressionsList,
   handleSiteTokensList,
+  handleSiteUserGetMe,
   handleSiteWebhooksList,
   handleSiteWorkspacesList,
   handleSiteWorkspacesUpdate,
@@ -28,6 +29,7 @@ const workspace = {
   collectKey: 'omck_test_key',
   ingestKey: 'omik_test_key',
   postalAddress: '',
+  role: 'owner' as const,
   createdAt: '2026-01-01T00:00:00Z',
 }
 
@@ -38,6 +40,15 @@ const emptyPage = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages:
 function serveWorkspace(totalItems = 0) {
   worker.use(
     handleSiteMembershipsList({ body: [] }),
+    handleSiteUserGetMe({
+      body: {
+        id: '1',
+        name: 'Me',
+        email: 'me@example.com',
+        emailVerified: true,
+        createdAt: '2026-01-01T00:00:00Z',
+      },
+    }),
     handleSiteInvitationsList({ body: [] }),
     handleSiteAuditGetRetention({ body: { retentionDays: null } }),
     handleSiteAuditList({ body: { items: [] } }),

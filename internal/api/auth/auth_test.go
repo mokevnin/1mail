@@ -17,7 +17,6 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/db"
@@ -157,32 +156,14 @@ func TestCollectKeyResolvesTheOwningWorkspace(t *testing.T) {
 	assert.NotErrorIs(t, err, auth.ErrUnauthorized)
 }
 
-func siteJWT(t *testing.T, claims gptoken.Claims) string {
-	t.Helper()
-	cfg, err := config.Load("test")
-	require.NoError(t, err)
-	svc := gptoken.NewService(gptoken.Opts{
-		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
-		Issuer:       "1mail",
-		DisableXSRF:  true,
-	})
-	claims.RegisteredClaims = jwt.RegisteredClaims{
-		Issuer: "1mail", Audience: jwt.ClaimStrings{"1mail"}, ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-	}
-	tk, err := svc.Token(claims)
-	require.NoError(t, err)
-	return tk
-}
-
-func TestSiteAuthResolvesTheDashboardUserFromTheJWT(t *testing.T) {
+func TestSiteAuthResolvesTheDashboardUserByTheIDInTheToken(t *testing.T) {
 	env := testhelper.Setup(t)
 	cfg, err := config.Load("test")
 	require.NoError(t, err)
-	h := auth.NewSiteSecurityHandler(cfg.JWTSecret, env.DB)
+	h := auth.NewSiteSecurityHandler(cfg.JWTSecret, env.DB, nil)
 
-	// The direct provider stores the login (email) in User.Name.
 	ctx, err := h.HandleApiKeyAuth(context.Background(), "", siteapi.ApiKeyAuth{
-		APIKey: siteJWT(t, gptoken.Claims{User: &gptoken.User{Name: fixtures.OwnerJohnEmail, ID: "x"}}),
+		APIKey: env.SiteToken(t, fixtures.OwnerJohnEmail, nil),
 	})
 	require.NoError(t, err)
 	got := auth.GetSiteAuth(ctx)
@@ -190,9 +171,9 @@ func TestSiteAuthResolvesTheDashboardUserFromTheJWT(t *testing.T) {
 	assert.EqualValues(t, fixtures.OwnerJohnID, got.UserID)
 	assert.Equal(t, fixtures.OwnerJohnEmail, got.Email)
 
-	// Falls back to the Email claim when the login is empty.
+	// The id decides, not the login name the token also carries.
 	ctx, err = h.HandleApiKeyAuth(context.Background(), "", siteapi.ApiKeyAuth{
-		APIKey: siteJWT(t, gptoken.Claims{User: &gptoken.User{Email: fixtures.OwnerJaneEmail, ID: "x"}}),
+		APIKey: env.SiteToken(t, fixtures.OwnerJaneEmail, func(c *gptoken.Claims) { c.User.Name = fixtures.OwnerJohnEmail }),
 	})
 	require.NoError(t, err)
 	assert.EqualValues(t, fixtures.OwnerJaneID, auth.GetSiteAuth(ctx).UserID)
@@ -202,57 +183,35 @@ func TestSiteAuthRejectsEveryUnusableCredential(t *testing.T) {
 	env := testhelper.Setup(t)
 	cfg, err := config.Load("test")
 	require.NoError(t, err)
-	h := auth.NewSiteSecurityHandler(cfg.JWTSecret, env.DB)
-	other := auth.NewSiteSecurityHandler("a-different-secret", env.DB)
-	good := siteJWT(t, gptoken.Claims{User: &gptoken.User{Name: fixtures.OwnerJohnEmail, ID: "x"}})
+	h := auth.NewSiteSecurityHandler(cfg.JWTSecret, env.DB, nil)
+	other := auth.NewSiteSecurityHandler("a-different-secret", env.DB, nil)
+	good := env.SiteToken(t, fixtures.OwnerJohnEmail, nil)
+	edited := func(edit func(*gptoken.Claims)) string { return env.SiteToken(t, fixtures.OwnerJohnEmail, edit) }
 
 	for name, tc := range map[string]struct {
 		handler *auth.SiteSecurityHandler
 		token   string
 	}{
-		"empty":             {h, ""},
-		"garbage":           {h, "not.a.jwt"},
-		"signed elsewhere":  {other, good},
-		"no user claim":     {h, siteJWT(t, gptoken.Claims{})},
-		"unknown user":      {h, siteJWT(t, gptoken.Claims{User: &gptoken.User{Name: "ghost@nowhere.test", ID: "x"}})},
-		"user without name": {h, siteJWT(t, gptoken.Claims{User: &gptoken.User{ID: "x"}})},
+		"empty":            {h, ""},
+		"garbage":          {h, "not.a.jwt"},
+		"signed elsewhere": {other, good},
+		"no user claim":    {h, edited(func(c *gptoken.Claims) { c.User = nil })},
+		"unknown login":    {h, env.SiteToken(t, "ghost@nowhere.test", nil)},
+		"unknown user id":  {h, edited(func(c *gptoken.Claims) { c.User.SetStrAttr(auth.ClaimUserID, "999999999") })},
+		"no user id":       {h, edited(func(c *gptoken.Claims) { delete(c.User.Attributes, auth.ClaimUserID) })},
+		"no epoch":         {h, edited(func(c *gptoken.Claims) { delete(c.User.Attributes, auth.ClaimEpoch) })},
+		"other epoch":      {h, edited(func(c *gptoken.Claims) { c.User.SetStrAttr(auth.ClaimEpoch, "7") })},
+		"expired":          {h, edited(func(c *gptoken.Claims) { c.ExpiresAt = jwt.NewNumericDate(time.Now().Add(-time.Second)) })},
+		"no expiry":        {h, edited(func(c *gptoken.Claims) { c.ExpiresAt = nil })},
 	} {
 		ctx, err := tc.handler.HandleApiKeyAuth(context.Background(), "", siteapi.ApiKeyAuth{APIKey: tc.token})
 		require.ErrorIs(t, err, auth.ErrUnauthorized, name)
 		assert.Nil(t, auth.GetSiteAuth(ctx), name)
 	}
 
-	_, err = auth.NewSiteSecurityHandler(cfg.JWTSecret, closedClient(t)).HandleApiKeyAuth(context.Background(), "", siteapi.ApiKeyAuth{APIKey: good})
+	_, err = auth.NewSiteSecurityHandler(cfg.JWTSecret, closedClient(t), nil).HandleApiKeyAuth(context.Background(), "", siteapi.ApiKeyAuth{APIKey: good})
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, auth.ErrUnauthorized)
-}
-
-func TestCredCheckerVerifiesLoginCredentials(t *testing.T) {
-	env := testhelper.Setup(t)
-	c := auth.NewCredChecker(env.DB, accounts.NewAttempts(env.DB))
-
-	ok, err := c.Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
-	require.NoError(t, err)
-	assert.True(t, ok)
-
-	ok, err = c.Check(fixtures.OwnerJohnEmail, "wrong")
-	require.NoError(t, err)
-	assert.False(t, ok, "wrong password")
-
-	ok, err = c.Check("ghost@nowhere.test", fixtures.OwnerJohnPassword)
-	require.NoError(t, err)
-	assert.False(t, ok, "unknown user")
-
-	jane, err := env.DB.User.Get(context.Background(), fixtures.OwnerJaneID)
-	require.NoError(t, err)
-	_, err = env.DB.User.UpdateOne(jane).SetPasswordHash("").Save(context.Background())
-	require.NoError(t, err)
-	ok, err = c.Check(fixtures.OwnerJaneEmail, "")
-	require.NoError(t, err)
-	assert.False(t, ok, "a user without a password hash cannot log in, even with an empty password")
-
-	_, err = auth.NewCredChecker(closedClient(t), accounts.NewAttempts(closedClient(t))).Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
-	require.Error(t, err)
 }
 
 // collectWorkspaceID is the resolved collect key's Workspace id, 0 when unauthenticated.

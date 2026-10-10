@@ -83,6 +83,8 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	river.AddWorker(workers, &SendWelcomeWorker{sender: systemSender})
 	river.AddWorker(workers, &SendAuthMailWorker{sender: systemSender, appURL: appURL})
 	river.AddWorker(workers, &SendMemberInviteWorker{sender: systemSender})
+	river.AddWorker(workers, &NotifySecondFactorRequiredWorker{ent: entClient, sender: systemSender, appURL: appURL})
+	river.AddWorker(workers, &RemindSecondFactorWorker{ent: entClient, sender: systemSender, appURL: appURL})
 	// Sending-domain DKIM verification (ADR 0010). LookupTXT re-checks published
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
@@ -159,6 +161,14 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river
 				river.PeriodicInterval(time.Hour),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return PurgeAuthAttemptsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Remind Users a day before their Two-factor grace ends (ADR 0020).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(secondFactorReminderInterval),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return RemindSecondFactorArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),

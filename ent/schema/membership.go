@@ -35,6 +35,13 @@ func (Membership) Fields() []ent.Field {
 		// members and invites; member cannot. Only owner may transfer ownership.
 		field.Enum("role").
 			Values("owner", "admin", "member"),
+		// When the User was last reminded, a day before their grace under the
+		// Workspace's Two-factor requirement ends, to set up a Second factor (ADR 0020).
+		// A reminder counts for the grace it falls in, so a requirement switched off and
+		// on again reminds anew.
+		field.Time("second_factor_reminded_at").
+			Optional().
+			Nillable(),
 	}
 }
 

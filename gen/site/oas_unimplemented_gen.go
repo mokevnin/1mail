@@ -62,18 +62,13 @@ func (UnimplementedHandler) SiteAuditSetRetention(ctx context.Context, req *Site
 
 // SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 //
-// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-// new inbox, which has no session.
+// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+// The link alone never starts a session.
 //
 // POST /auth/confirm-email-change
-func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (r SiteAuthConfirmEmailChangeRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (r SiteAuthDirectLoginRes, _ error) {
+func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (r SiteAuthConfirmEmailChangeRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -85,6 +80,28 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 //
 // POST /auth/forgot-password
 func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (r SiteAuthForgotPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogin implements SiteAuth_login operation.
+//
+// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+// 0025). Only a started session resets the throttle's counter.
+//
+// POST /auth/login
+func (UnimplementedHandler) SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (r SiteAuthLoginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthLogout implements SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (UnimplementedHandler) SiteAuthLogout(ctx context.Context) (r *SiteAuthLogoutNoContent, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -101,6 +118,18 @@ func (UnimplementedHandler) SiteAuthRegister(ctx context.Context, req *SiteRegis
 //
 // POST /auth/reset-password
 func (UnimplementedHandler) SiteAuthResetPassword(ctx context.Context, req *SiteResetPasswordInput) (r SiteAuthResetPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthSecondFactor implements SiteAuth_secondFactor operation.
+//
+// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+// correct code while its delay runs (ADR 0020, ADR 0025).
+//
+// POST /auth/second-factor
+func (UnimplementedHandler) SiteAuthSecondFactor(ctx context.Context, req *SiteLoginSecondFactorInput) (r SiteAuthSecondFactorRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -421,6 +450,17 @@ func (UnimplementedHandler) SiteMembershipsList(ctx context.Context, params Site
 	return r, ht.ErrNotImplemented
 }
 
+// SiteMembershipsResetSecondFactor implements SiteMemberships_resetSecondFactor operation.
+//
+// Reset the member's Second factor (owner/admin only; owner-only for an owner): clears the factor and
+// its Recovery codes and ends every session of theirs. The acting session is untouched. 422 when the
+// member has no Second factor or is the caller (who disables their own with a password and a code).
+//
+// POST /workspaces/{slug}/memberships/{id}/reset-second-factor
+func (UnimplementedHandler) SiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (r SiteMembershipsResetSecondFactorRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteMembershipsUpdate implements SiteMemberships_update operation.
 //
 // Change a member's role (owner/admin only; owner-only to grant owner).
@@ -485,6 +525,61 @@ func (UnimplementedHandler) SitePublicInvitationsLookup(ctx context.Context, par
 //
 // POST /unsubscribes/{token}
 func (UnimplementedHandler) SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (r SitePublicUnsubscribesPerformRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSecondFactorConfirmEnrollment implements SiteSecondFactor_confirmEnrollment operation.
+//
+// Confirm the pending enrollment with the password and a code from the app. On success the Second
+// factor is active, every other session ends and the acting one continues under the cookie set here;
+// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
+//
+// POST /me/second-factor/enrollment/confirm
+func (UnimplementedHandler) SiteSecondFactorConfirmEnrollment(ctx context.Context, req *SiteSecondFactorConfirmInput) (r SiteSecondFactorConfirmEnrollmentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSecondFactorDisable implements SiteSecondFactor_disable operation.
+//
+// Disable the Second factor, proving the password and a current code. Every other session ends; the
+// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
+//
+// POST /me/second-factor/disable
+func (UnimplementedHandler) SiteSecondFactorDisable(ctx context.Context, req *SiteSecondFactorDisableInput) (r SiteSecondFactorDisableRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSecondFactorGetStatus implements SiteSecondFactor_getStatus operation.
+//
+// The authenticated User's Second factor status.
+//
+// GET /me/second-factor
+func (UnimplementedHandler) SiteSecondFactorGetStatus(ctx context.Context) (r *SiteSecondFactorStatus, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSecondFactorRegenerateRecoveryCodes implements SiteSecondFactor_regenerateRecoveryCodes operation.
+//
+// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
+// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+// Login throttle: 429 while its delay runs), 409 without an active Second factor.
+//
+// POST /me/second-factor/recovery-codes
+func (UnimplementedHandler) SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, req *SiteRecoveryCodesInput) (r SiteSecondFactorRegenerateRecoveryCodesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSecondFactorStartEnrollment implements SiteSecondFactor_startEnrollment operation.
+//
+// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+// even for a correct one while its delay runs (ADR 0025).
+//
+// POST /me/second-factor/enrollment
+func (UnimplementedHandler) SiteSecondFactorStartEnrollment(ctx context.Context, req *SiteSecondFactorStartInput) (r SiteSecondFactorStartEnrollmentRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -759,9 +854,21 @@ func (UnimplementedHandler) SiteUserResendVerification(ctx context.Context) erro
 	return ht.ErrNotImplemented
 }
 
+// SiteUserSignOutEverywhere implements SiteUser_signOutEverywhere operation.
+//
+// Sign out everywhere: end every session of the user, on every device, including the one making the
+// request (its cookie is cleared).
+//
+// POST /me/sign-out-everywhere
+func (UnimplementedHandler) SiteUserSignOutEverywhere(ctx context.Context) (r *SiteUserSignOutEverywhereNoContent, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteUserUpdateMe implements SiteUser_updateMe operation.
 //
-// Update the authenticated user's profile (name and/or password).
+// Update the authenticated user's profile (name and/or password). A password change ends every session
+// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+// response.
 //
 // PUT /me
 func (UnimplementedHandler) SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (r SiteUserUpdateMeRes, _ error) {
@@ -819,6 +926,17 @@ func (UnimplementedHandler) SiteWebhooksUpdate(ctx context.Context, req *SiteUpd
 //
 // GET /workspaces
 func (UnimplementedHandler) SiteWorkspacesList(ctx context.Context) (r []SiteWorkspaceResource, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWorkspacesSetSecondFactorRequirement implements SiteWorkspaces_setSecondFactorRequirement operation.
+//
+// Switch the Two-factor requirement on or off (owner and admin only). Switching it on while it is
+// already on keeps the original start, so no one's grace restarts. A change is recorded as an Audit
+// entry.
+//
+// PUT /workspaces/{slug}/second-factor-requirement
+func (UnimplementedHandler) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, req *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (r SiteWorkspacesSetSecondFactorRequirementRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

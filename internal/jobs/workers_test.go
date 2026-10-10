@@ -114,12 +114,14 @@ func TestClientEnqueuesEveryJobKind(t *testing.T) {
 	require.NoError(t, e.client.EnqueueEmailChangeConfirm(ctx, "a@example.com", "tok"))
 	require.NoError(t, e.client.EnqueueMemberInvite(ctx, "a@example.com", "https://x/invite", "Acme", "Jane"))
 	require.NoError(t, e.client.EnqueueSendingDomainVerify(ctx, fixtures.SendingDomainVerifiedID))
+	require.NoError(t, e.client.EnqueueSecondFactorRequired(ctx, fixtures.UmbrellaID))
 	require.NoError(t, e.client.OnEvent(ctx, fixtures.AcmeID, fixtures.ContactAliceID, "contact.created"))
 
 	assert.Equal(t, []string{
 		"send_broadcast", "send_broadcast", "send_welcome",
 		"send_auth_mail", "send_auth_mail", "send_auth_mail",
-		"send_member_invite", "sending_domain_verify", "automation_evaluate_trigger",
+		"send_member_invite", "sending_domain_verify", "second_factor_required_notify",
+		"automation_evaluate_trigger",
 	}, e.queued(t))
 }
 

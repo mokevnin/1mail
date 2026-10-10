@@ -70,6 +70,20 @@ func (_c *MembershipCreate) SetRole(v membership.Role) *MembershipCreate {
 	return _c
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (_c *MembershipCreate) SetSecondFactorRemindedAt(v time.Time) *MembershipCreate {
+	_c.mutation.SetSecondFactorRemindedAt(v)
+	return _c
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (_c *MembershipCreate) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipCreate {
+	if v != nil {
+		_c.SetSecondFactorRemindedAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *MembershipCreate) SetID(v int64) *MembershipCreate {
 	_c.mutation.SetID(v)
@@ -203,6 +217,10 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Role(); ok {
 		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 		_node.Role = value
+	}
+	if value, ok := _c.mutation.SecondFactorRemindedAt(); ok {
+		_spec.SetField(membership.FieldSecondFactorRemindedAt, field.TypeTime, value)
+		_node.SecondFactorRemindedAt = &value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -338,6 +356,24 @@ func (u *MembershipUpsert) UpdateRole() *MembershipUpsert {
 	return u
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (u *MembershipUpsert) SetSecondFactorRemindedAt(v time.Time) *MembershipUpsert {
+	u.Set(membership.FieldSecondFactorRemindedAt, v)
+	return u
+}
+
+// UpdateSecondFactorRemindedAt sets the "second_factor_reminded_at" field to the value that was provided on create.
+func (u *MembershipUpsert) UpdateSecondFactorRemindedAt() *MembershipUpsert {
+	u.SetExcluded(membership.FieldSecondFactorRemindedAt)
+	return u
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (u *MembershipUpsert) ClearSecondFactorRemindedAt() *MembershipUpsert {
+	u.SetNull(membership.FieldSecondFactorRemindedAt)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -442,6 +478,27 @@ func (u *MembershipUpsertOne) SetRole(v membership.Role) *MembershipUpsertOne {
 func (u *MembershipUpsertOne) UpdateRole() *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateRole()
+	})
+}
+
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (u *MembershipUpsertOne) SetSecondFactorRemindedAt(v time.Time) *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetSecondFactorRemindedAt(v)
+	})
+}
+
+// UpdateSecondFactorRemindedAt sets the "second_factor_reminded_at" field to the value that was provided on create.
+func (u *MembershipUpsertOne) UpdateSecondFactorRemindedAt() *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateSecondFactorRemindedAt()
+	})
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (u *MembershipUpsertOne) ClearSecondFactorRemindedAt() *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.ClearSecondFactorRemindedAt()
 	})
 }
 
@@ -715,6 +772,27 @@ func (u *MembershipUpsertBulk) SetRole(v membership.Role) *MembershipUpsertBulk 
 func (u *MembershipUpsertBulk) UpdateRole() *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateRole()
+	})
+}
+
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (u *MembershipUpsertBulk) SetSecondFactorRemindedAt(v time.Time) *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetSecondFactorRemindedAt(v)
+	})
+}
+
+// UpdateSecondFactorRemindedAt sets the "second_factor_reminded_at" field to the value that was provided on create.
+func (u *MembershipUpsertBulk) UpdateSecondFactorRemindedAt() *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateSecondFactorRemindedAt()
+	})
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (u *MembershipUpsertBulk) ClearSecondFactorRemindedAt() *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.ClearSecondFactorRemindedAt()
 	})
 }
 

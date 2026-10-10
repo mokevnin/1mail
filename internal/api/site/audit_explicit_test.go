@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -91,7 +93,7 @@ func TestAuditLoginDuplicatesIntoEachOfTheUsersWorkspacesOnly(t *testing.T) {
 
 	// Mary belongs to Acme and Globex; John to Acme only.
 	require.Equal(t, 200, loginStatus(t, env, fixtures.MemberMaryEmail, fixtures.MemberMaryPassword))
-	require.Equal(t, 403, loginStatus(t, env, fixtures.OwnerJohnEmail, "wrong"), "a failed login is not recorded")
+	require.Equal(t, 401, loginStatus(t, env, fixtures.OwnerJohnEmail, "wrong"), "a failed login is not recorded")
 
 	acme := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserLogin)
 	globex := entriesNamed(t, env, fixtures.OwnerJaneEmail, fixtures.GlobexSlug, events.ActionUserLogin)
@@ -118,7 +120,7 @@ func TestAuditPasswordChangeDuplicatesIntoEachOfTheUsersWorkspaces(t *testing.T)
 		NewPassword:     siteapi.NewOptString("brand-new-pass-1"),
 	})
 	require.NoError(t, err)
-	require.IsType(t, &siteapi.SiteUserResource{}, res)
+	require.IsType(t, &siteapi.SiteUserResourceHeaders{}, res)
 
 	acme := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionUserPasswordChange)
 	globex := entriesNamed(t, env, fixtures.OwnerJaneEmail, fixtures.GlobexSlug, events.ActionUserPasswordChange)
@@ -222,6 +224,22 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = owner.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{                                // user.password_change
 		CurrentPassword: siteapi.NewOptString(fixtures.OwnerJohnPassword), NewPassword: siteapi.NewOptString("another-pass-1")})
 	require.NoError(t, err)
+	started, err := owner.SiteSecondFactorStartEnrollment(ctx, &siteapi.SiteSecondFactorStartInput{CurrentPassword: "another-pass-1"})
+	require.NoError(t, err)
+	code, err := totp.GenerateCode(started.(*siteapi.SiteSecondFactorEnrollment).Secret, time.Now())
+	require.NoError(t, err)
+	_, err = owner.SiteSecondFactorConfirmEnrollment(ctx, &siteapi.SiteSecondFactorConfirmInput{CurrentPassword: "another-pass-1", Code: code}) // user.second_factor_enroll
+	require.NoError(t, err)
+	regenerated, err := owner.SiteSecondFactorRegenerateRecoveryCodes(ctx, // user.recovery_codes_regenerate
+		&siteapi.SiteRecoveryCodesInput{CurrentPassword: "another-pass-1"})
+	require.NoError(t, err)
+	disabled, err := owner.SiteSecondFactorDisable(ctx, &siteapi.SiteSecondFactorDisableInput{ // user.recovery_code_use, user.second_factor_disable
+		CurrentPassword: "another-pass-1", Code: regenerated.(*siteapi.SiteRecoveryCodesHeaders).Response.Codes[0]})
+	require.NoError(t, err)
+	require.IsType(t, &siteapi.SiteSecondFactorDisableNoContent{}, disabled)
+	_, err = env.SiteActor(t, fixtures.OwnerJaneEmail).SiteMembershipsResetSecondFactor(ctx, // user.second_factor_reset
+		siteapi.SiteMembershipsResetSecondFactorParams{Slug: fixtures.GlobexSlug, ID: idStr(fixtures.GlobexSamMembershipID)})
+	require.NoError(t, err)
 	_, err = owner.SiteWorkspacesUpdate(ctx, &siteapi.SiteUpdateWorkspaceInput{Name: "Acme Two"}, // workspace.update
 		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
@@ -235,6 +253,9 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = owner.SiteAuditExport(ctx, siteapi.SiteAuditExportParams{Slug: fixtures.AcmeSlug}) // audit_log.export
+	require.NoError(t, err)
+
+	_, err = owner.SiteUserSignOutEverywhere(ctx) // user.sign_out_everywhere
 	require.NoError(t, err)
 
 	var seen []string

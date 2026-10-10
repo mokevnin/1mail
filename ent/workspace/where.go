@@ -100,6 +100,11 @@ func RetentionDays(v int) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldRetentionDays, v))
 }
 
+// SecondFactorRequiredAt applies equality check predicate on the "second_factor_required_at" field. It's identical to SecondFactorRequiredAtEQ.
+func SecondFactorRequiredAt(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldSecondFactorRequiredAt, v))
+}
+
 // SuspendedAt applies equality check predicate on the "suspended_at" field. It's identical to SuspendedAtEQ.
 func SuspendedAt(v time.Time) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldSuspendedAt, v))
@@ -588,6 +593,56 @@ func RetentionDaysIsNil() predicate.Workspace {
 // RetentionDaysNotNil applies the NotNil predicate on the "retention_days" field.
 func RetentionDaysNotNil() predicate.Workspace {
 	return predicate.Workspace(sql.FieldNotNull(FieldRetentionDays))
+}
+
+// SecondFactorRequiredAtEQ applies the EQ predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtEQ(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtNEQ applies the NEQ predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtNEQ(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNEQ(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtIn applies the In predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtIn(vs ...time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldIn(FieldSecondFactorRequiredAt, vs...))
+}
+
+// SecondFactorRequiredAtNotIn applies the NotIn predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtNotIn(vs ...time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotIn(FieldSecondFactorRequiredAt, vs...))
+}
+
+// SecondFactorRequiredAtGT applies the GT predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtGT(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGT(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtGTE applies the GTE predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtGTE(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGTE(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtLT applies the LT predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtLT(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLT(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtLTE applies the LTE predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtLTE(v time.Time) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLTE(FieldSecondFactorRequiredAt, v))
+}
+
+// SecondFactorRequiredAtIsNil applies the IsNil predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtIsNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldIsNull(FieldSecondFactorRequiredAt))
+}
+
+// SecondFactorRequiredAtNotNil applies the NotNil predicate on the "second_factor_required_at" field.
+func SecondFactorRequiredAtNotNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotNull(FieldSecondFactorRequiredAt))
 }
 
 // SuspendedAtEQ applies the EQ predicate on the "suspended_at" field.

@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/user"
 )
 
@@ -105,6 +106,88 @@ func (_u *UserUpdate) ClearEmailVerifiedAt() *UserUpdate {
 	return _u
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (_u *UserUpdate) SetSessionEpoch(v int64) *UserUpdate {
+	_u.mutation.ResetSessionEpoch()
+	_u.mutation.SetSessionEpoch(v)
+	return _u
+}
+
+// SetNillableSessionEpoch sets the "session_epoch" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSessionEpoch(v *int64) *UserUpdate {
+	if v != nil {
+		_u.SetSessionEpoch(*v)
+	}
+	return _u
+}
+
+// AddSessionEpoch adds value to the "session_epoch" field.
+func (_u *UserUpdate) AddSessionEpoch(v int64) *UserUpdate {
+	_u.mutation.AddSessionEpoch(v)
+	return _u
+}
+
+// SetSecondFactorSecretEncrypted sets the "second_factor_secret_encrypted" field.
+func (_u *UserUpdate) SetSecondFactorSecretEncrypted(v string) *UserUpdate {
+	_u.mutation.SetSecondFactorSecretEncrypted(v)
+	return _u
+}
+
+// SetNillableSecondFactorSecretEncrypted sets the "second_factor_secret_encrypted" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSecondFactorSecretEncrypted(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetSecondFactorSecretEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorSecretEncrypted clears the value of the "second_factor_secret_encrypted" field.
+func (_u *UserUpdate) ClearSecondFactorSecretEncrypted() *UserUpdate {
+	_u.mutation.ClearSecondFactorSecretEncrypted()
+	return _u
+}
+
+// SetSecondFactorConfirmedAt sets the "second_factor_confirmed_at" field.
+func (_u *UserUpdate) SetSecondFactorConfirmedAt(v time.Time) *UserUpdate {
+	_u.mutation.SetSecondFactorConfirmedAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorConfirmedAt sets the "second_factor_confirmed_at" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSecondFactorConfirmedAt(v *time.Time) *UserUpdate {
+	if v != nil {
+		_u.SetSecondFactorConfirmedAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorConfirmedAt clears the value of the "second_factor_confirmed_at" field.
+func (_u *UserUpdate) ClearSecondFactorConfirmedAt() *UserUpdate {
+	_u.mutation.ClearSecondFactorConfirmedAt()
+	return _u
+}
+
+// SetSecondFactorLastStep sets the "second_factor_last_step" field.
+func (_u *UserUpdate) SetSecondFactorLastStep(v int64) *UserUpdate {
+	_u.mutation.ResetSecondFactorLastStep()
+	_u.mutation.SetSecondFactorLastStep(v)
+	return _u
+}
+
+// SetNillableSecondFactorLastStep sets the "second_factor_last_step" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSecondFactorLastStep(v *int64) *UserUpdate {
+	if v != nil {
+		_u.SetSecondFactorLastStep(*v)
+	}
+	return _u
+}
+
+// AddSecondFactorLastStep adds value to the "second_factor_last_step" field.
+func (_u *UserUpdate) AddSecondFactorLastStep(v int64) *UserUpdate {
+	_u.mutation.AddSecondFactorLastStep(v)
+	return _u
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
 func (_u *UserUpdate) AddMembershipIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddMembershipIDs(ids...)
@@ -133,6 +216,21 @@ func (_u *UserUpdate) AddSentInvitations(v ...*Invitation) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddSentInvitationIDs(ids...)
+}
+
+// AddRecoveryCodeIDs adds the "recovery_codes" edge to the RecoveryCode entity by IDs.
+func (_u *UserUpdate) AddRecoveryCodeIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddRecoveryCodeIDs(ids...)
+	return _u
+}
+
+// AddRecoveryCodes adds the "recovery_codes" edges to the RecoveryCode entity.
+func (_u *UserUpdate) AddRecoveryCodes(v ...*RecoveryCode) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRecoveryCodeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -180,6 +278,27 @@ func (_u *UserUpdate) RemoveSentInvitations(v ...*Invitation) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSentInvitationIDs(ids...)
+}
+
+// ClearRecoveryCodes clears all "recovery_codes" edges to the RecoveryCode entity.
+func (_u *UserUpdate) ClearRecoveryCodes() *UserUpdate {
+	_u.mutation.ClearRecoveryCodes()
+	return _u
+}
+
+// RemoveRecoveryCodeIDs removes the "recovery_codes" edge to RecoveryCode entities by IDs.
+func (_u *UserUpdate) RemoveRecoveryCodeIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveRecoveryCodeIDs(ids...)
+	return _u
+}
+
+// RemoveRecoveryCodes removes "recovery_codes" edges to RecoveryCode entities.
+func (_u *UserUpdate) RemoveRecoveryCodes(v ...*RecoveryCode) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRecoveryCodeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -272,6 +391,30 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.EmailVerifiedAtCleared() {
 		_spec.ClearField(user.FieldEmailVerifiedAt, field.TypeTime)
 	}
+	if value, ok := _u.mutation.SessionEpoch(); ok {
+		_spec.SetField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSessionEpoch(); ok {
+		_spec.AddField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.SecondFactorSecretEncrypted(); ok {
+		_spec.SetField(user.FieldSecondFactorSecretEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.SecondFactorSecretEncryptedCleared() {
+		_spec.ClearField(user.FieldSecondFactorSecretEncrypted, field.TypeString)
+	}
+	if value, ok := _u.mutation.SecondFactorConfirmedAt(); ok {
+		_spec.SetField(user.FieldSecondFactorConfirmedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorConfirmedAtCleared() {
+		_spec.ClearField(user.FieldSecondFactorConfirmedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SecondFactorLastStep(); ok {
+		_spec.SetField(user.FieldSecondFactorLastStep, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSecondFactorLastStep(); ok {
+		_spec.AddField(user.FieldSecondFactorLastStep, field.TypeInt64, value)
+	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -355,6 +498,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RecoveryCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRecoveryCodesIDs(); len(nodes) > 0 && !_u.mutation.RecoveryCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RecoveryCodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -458,6 +646,88 @@ func (_u *UserUpdateOne) ClearEmailVerifiedAt() *UserUpdateOne {
 	return _u
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (_u *UserUpdateOne) SetSessionEpoch(v int64) *UserUpdateOne {
+	_u.mutation.ResetSessionEpoch()
+	_u.mutation.SetSessionEpoch(v)
+	return _u
+}
+
+// SetNillableSessionEpoch sets the "session_epoch" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSessionEpoch(v *int64) *UserUpdateOne {
+	if v != nil {
+		_u.SetSessionEpoch(*v)
+	}
+	return _u
+}
+
+// AddSessionEpoch adds value to the "session_epoch" field.
+func (_u *UserUpdateOne) AddSessionEpoch(v int64) *UserUpdateOne {
+	_u.mutation.AddSessionEpoch(v)
+	return _u
+}
+
+// SetSecondFactorSecretEncrypted sets the "second_factor_secret_encrypted" field.
+func (_u *UserUpdateOne) SetSecondFactorSecretEncrypted(v string) *UserUpdateOne {
+	_u.mutation.SetSecondFactorSecretEncrypted(v)
+	return _u
+}
+
+// SetNillableSecondFactorSecretEncrypted sets the "second_factor_secret_encrypted" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSecondFactorSecretEncrypted(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetSecondFactorSecretEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorSecretEncrypted clears the value of the "second_factor_secret_encrypted" field.
+func (_u *UserUpdateOne) ClearSecondFactorSecretEncrypted() *UserUpdateOne {
+	_u.mutation.ClearSecondFactorSecretEncrypted()
+	return _u
+}
+
+// SetSecondFactorConfirmedAt sets the "second_factor_confirmed_at" field.
+func (_u *UserUpdateOne) SetSecondFactorConfirmedAt(v time.Time) *UserUpdateOne {
+	_u.mutation.SetSecondFactorConfirmedAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorConfirmedAt sets the "second_factor_confirmed_at" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSecondFactorConfirmedAt(v *time.Time) *UserUpdateOne {
+	if v != nil {
+		_u.SetSecondFactorConfirmedAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorConfirmedAt clears the value of the "second_factor_confirmed_at" field.
+func (_u *UserUpdateOne) ClearSecondFactorConfirmedAt() *UserUpdateOne {
+	_u.mutation.ClearSecondFactorConfirmedAt()
+	return _u
+}
+
+// SetSecondFactorLastStep sets the "second_factor_last_step" field.
+func (_u *UserUpdateOne) SetSecondFactorLastStep(v int64) *UserUpdateOne {
+	_u.mutation.ResetSecondFactorLastStep()
+	_u.mutation.SetSecondFactorLastStep(v)
+	return _u
+}
+
+// SetNillableSecondFactorLastStep sets the "second_factor_last_step" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSecondFactorLastStep(v *int64) *UserUpdateOne {
+	if v != nil {
+		_u.SetSecondFactorLastStep(*v)
+	}
+	return _u
+}
+
+// AddSecondFactorLastStep adds value to the "second_factor_last_step" field.
+func (_u *UserUpdateOne) AddSecondFactorLastStep(v int64) *UserUpdateOne {
+	_u.mutation.AddSecondFactorLastStep(v)
+	return _u
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
 func (_u *UserUpdateOne) AddMembershipIDs(ids ...int64) *UserUpdateOne {
 	_u.mutation.AddMembershipIDs(ids...)
@@ -486,6 +756,21 @@ func (_u *UserUpdateOne) AddSentInvitations(v ...*Invitation) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.AddSentInvitationIDs(ids...)
+}
+
+// AddRecoveryCodeIDs adds the "recovery_codes" edge to the RecoveryCode entity by IDs.
+func (_u *UserUpdateOne) AddRecoveryCodeIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddRecoveryCodeIDs(ids...)
+	return _u
+}
+
+// AddRecoveryCodes adds the "recovery_codes" edges to the RecoveryCode entity.
+func (_u *UserUpdateOne) AddRecoveryCodes(v ...*RecoveryCode) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRecoveryCodeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -533,6 +818,27 @@ func (_u *UserUpdateOne) RemoveSentInvitations(v ...*Invitation) *UserUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSentInvitationIDs(ids...)
+}
+
+// ClearRecoveryCodes clears all "recovery_codes" edges to the RecoveryCode entity.
+func (_u *UserUpdateOne) ClearRecoveryCodes() *UserUpdateOne {
+	_u.mutation.ClearRecoveryCodes()
+	return _u
+}
+
+// RemoveRecoveryCodeIDs removes the "recovery_codes" edge to RecoveryCode entities by IDs.
+func (_u *UserUpdateOne) RemoveRecoveryCodeIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveRecoveryCodeIDs(ids...)
+	return _u
+}
+
+// RemoveRecoveryCodes removes "recovery_codes" edges to RecoveryCode entities.
+func (_u *UserUpdateOne) RemoveRecoveryCodes(v ...*RecoveryCode) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRecoveryCodeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -655,6 +961,30 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if _u.mutation.EmailVerifiedAtCleared() {
 		_spec.ClearField(user.FieldEmailVerifiedAt, field.TypeTime)
 	}
+	if value, ok := _u.mutation.SessionEpoch(); ok {
+		_spec.SetField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSessionEpoch(); ok {
+		_spec.AddField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.SecondFactorSecretEncrypted(); ok {
+		_spec.SetField(user.FieldSecondFactorSecretEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.SecondFactorSecretEncryptedCleared() {
+		_spec.ClearField(user.FieldSecondFactorSecretEncrypted, field.TypeString)
+	}
+	if value, ok := _u.mutation.SecondFactorConfirmedAt(); ok {
+		_spec.SetField(user.FieldSecondFactorConfirmedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorConfirmedAtCleared() {
+		_spec.ClearField(user.FieldSecondFactorConfirmedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SecondFactorLastStep(); ok {
+		_spec.SetField(user.FieldSecondFactorLastStep, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSecondFactorLastStep(); ok {
+		_spec.AddField(user.FieldSecondFactorLastStep, field.TypeInt64, value)
+	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -738,6 +1068,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RecoveryCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRecoveryCodesIDs(); len(nodes) > 0 && !_u.mutation.RecoveryCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RecoveryCodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RecoveryCodesTable,
+			Columns: []string{user.RecoveryCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(recoverycode.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

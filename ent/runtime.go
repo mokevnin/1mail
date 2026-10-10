@@ -23,6 +23,7 @@ import (
 	"github.com/mokevnin/1mail/ent/oauthclient"
 	"github.com/mokevnin/1mail/ent/oauthcode"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
@@ -518,6 +519,25 @@ func init() {
 	outboundmessageDescClaimedAt := outboundmessageFields[11].Descriptor()
 	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.
 	outboundmessage.DefaultClaimedAt = outboundmessageDescClaimedAt.Default.(func() time.Time)
+	recoverycodeMixin := schema.RecoveryCode{}.Mixin()
+	recoverycodeMixinFields0 := recoverycodeMixin[0].Fields()
+	_ = recoverycodeMixinFields0
+	recoverycodeFields := schema.RecoveryCode{}.Fields()
+	_ = recoverycodeFields
+	// recoverycodeDescCreatedAt is the schema descriptor for created_at field.
+	recoverycodeDescCreatedAt := recoverycodeMixinFields0[0].Descriptor()
+	// recoverycode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	recoverycode.DefaultCreatedAt = recoverycodeDescCreatedAt.Default.(func() time.Time)
+	// recoverycodeDescUpdatedAt is the schema descriptor for updated_at field.
+	recoverycodeDescUpdatedAt := recoverycodeMixinFields0[1].Descriptor()
+	// recoverycode.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	recoverycode.DefaultUpdatedAt = recoverycodeDescUpdatedAt.Default.(func() time.Time)
+	// recoverycode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	recoverycode.UpdateDefaultUpdatedAt = recoverycodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// recoverycodeDescCodeHash is the schema descriptor for code_hash field.
+	recoverycodeDescCodeHash := recoverycodeFields[2].Descriptor()
+	// recoverycode.CodeHashValidator is a validator for the "code_hash" field. It is called by the builders before save.
+	recoverycode.CodeHashValidator = recoverycodeDescCodeHash.Validators[0].(func(string) error)
 	segmentMixin := schema.Segment{}.Mixin()
 	segmentMixinFields0 := segmentMixin[0].Fields()
 	_ = segmentMixinFields0
@@ -667,6 +687,14 @@ func init() {
 	userDescEmail := userFields[2].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescSessionEpoch is the schema descriptor for session_epoch field.
+	userDescSessionEpoch := userFields[5].Descriptor()
+	// user.DefaultSessionEpoch holds the default value on creation for the session_epoch field.
+	user.DefaultSessionEpoch = userDescSessionEpoch.Default.(int64)
+	// userDescSecondFactorLastStep is the schema descriptor for second_factor_last_step field.
+	userDescSecondFactorLastStep := userFields[8].Descriptor()
+	// user.DefaultSecondFactorLastStep holds the default value on creation for the second_factor_last_step field.
+	user.DefaultSecondFactorLastStep = userDescSecondFactorLastStep.Default.(int64)
 	visitorMixin := schema.Visitor{}.Mixin()
 	visitorMixinFields0 := visitorMixin[0].Fields()
 	_ = visitorMixinFields0

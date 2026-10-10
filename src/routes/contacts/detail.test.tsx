@@ -174,6 +174,7 @@ function currentRoleRoutes(role: SiteMembershipRole) {
     email: `u${userId}@example.com`,
     name: `User ${userId}`,
     role: memberRole,
+    secondFactorEnabled: false,
     createdAt: NOW,
   })
   return [

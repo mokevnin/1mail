@@ -19,7 +19,10 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -361,6 +364,72 @@ func TestSuspendAndUnsuspendRejectBadInput(t *testing.T) {
 	changed, err := a.SuspendWorkspace(ctx, "app-suspend-input-test", "", "reason")
 	assert.False(t, changed)
 	assert.ErrorContains(t, err, "an actor and a reason are required")
+}
+
+// The operator command resets a fixture User's Second factor for real (this app
+// commits outside the per-test transaction), so the test restores Sam's factor and
+// Recovery codes and empties the outbox afterwards.
+func TestResetSecondFactorByEmail(t *testing.T) {
+	baseline(t)
+	a, err := NewOperator("test")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = a.Shutdown(context.Background()) })
+	ctx := context.Background()
+	client, err := invokeEnt(a)
+	require.NoError(t, err)
+	database, err := invokeSQL(a)
+	require.NoError(t, err)
+	require.NoError(t, testhelper.PurgeOutbox(ctx, database))
+
+	before := client.User.GetX(ctx, fixtures.SecondFactorSamID)
+	codes := client.RecoveryCode.Query().Where(recoverycode.UserID(fixtures.SecondFactorSamID)).AllX(ctx)
+	t.Cleanup(func() {
+		ctx := context.WithoutCancel(ctx)
+		require.NoError(t, testhelper.PurgeOutbox(ctx, database))
+		client.RecoveryCode.Delete().Where(recoverycode.UserID(before.ID)).ExecX(ctx)
+		for _, c := range codes {
+			create := client.RecoveryCode.Create().SetUserID(before.ID).SetCodeHash(c.CodeHash).SetCreatedAt(c.CreatedAt)
+			if c.UsedAt != nil {
+				create.SetUsedAt(*c.UsedAt)
+			}
+			create.ExecX(ctx)
+		}
+		client.User.UpdateOneID(before.ID).
+			SetSecondFactorSecretEncrypted(before.SecondFactorSecretEncrypted).
+			SetNillableSecondFactorConfirmedAt(before.SecondFactorConfirmedAt).
+			SetSecondFactorLastStep(before.SecondFactorLastStep).
+			SetSessionEpoch(before.SessionEpoch).
+			ExecX(ctx)
+	})
+
+	changed, err := a.ResetSecondFactor(ctx, fixtures.SecondFactorSamEmail)
+	require.NoError(t, err)
+	assert.True(t, changed)
+	after := client.User.GetX(ctx, fixtures.SecondFactorSamID)
+	assert.Nil(t, after.SecondFactorConfirmedAt)
+	assert.Empty(t, after.SecondFactorSecretEncrypted)
+	assert.Greater(t, after.SessionEpoch, before.SessionEpoch, "every session ends")
+
+	envelopes, err := testhelper.OutboxEnvelopesOn(ctx, database, events.NameAuditEntry)
+	require.NoError(t, err)
+	var workspaces []int64
+	for _, e := range envelopes {
+		ev, err := events.Decode(e)
+		require.NoError(t, err)
+		entry := ev.(*events.AuditEntry)
+		require.Equal(t, events.ActionUserSecondFactorReset, entry.Action)
+		assert.Equal(t, events.ActorOperator, entry.Actor.Kind)
+		workspaces = append(workspaces, entry.WorkspaceID)
+	}
+	assert.ElementsMatch(t, []int64{fixtures.GlobexID, fixtures.UmbrellaID}, workspaces,
+		"an Audit entry in every Workspace Sam belongs to")
+
+	changed, err = a.ResetSecondFactor(ctx, fixtures.SecondFactorSamEmail)
+	require.NoError(t, err)
+	assert.False(t, changed, "no second factor: nothing changes")
+
+	_, err = a.ResetSecondFactor(ctx, "nobody@app-2fa-reset.test")
+	assert.ErrorContains(t, err, `user "nobody@app-2fa-reset.test"`)
 }
 
 func TestBuildSystemSender(t *testing.T) {

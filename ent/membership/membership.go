@@ -25,6 +25,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
+	// FieldSecondFactorRemindedAt holds the string denoting the second_factor_reminded_at field in the database.
+	FieldSecondFactorRemindedAt = "second_factor_reminded_at"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -55,6 +57,7 @@ var Columns = []string{
 	FieldWorkspaceID,
 	FieldUserID,
 	FieldRole,
+	FieldSecondFactorRemindedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -131,6 +134,11 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByRole orders the results by the role field.
 func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
+}
+
+// BySecondFactorRemindedAt orders the results by the second_factor_reminded_at field.
+func BySecondFactorRemindedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecondFactorRemindedAt, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

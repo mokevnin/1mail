@@ -25,12 +25,12 @@ type SiteAuthConfirmEmailChangeRes interface {
 	siteAuthConfirmEmailChangeRes()
 }
 
-type SiteAuthDirectLoginRes interface {
-	siteAuthDirectLoginRes()
-}
-
 type SiteAuthForgotPasswordRes interface {
 	siteAuthForgotPasswordRes()
+}
+
+type SiteAuthLoginRes interface {
+	siteAuthLoginRes()
 }
 
 type SiteAuthRegisterRes interface {
@@ -39,6 +39,10 @@ type SiteAuthRegisterRes interface {
 
 type SiteAuthResetPasswordRes interface {
 	siteAuthResetPasswordRes()
+}
+
+type SiteAuthSecondFactorRes interface {
+	siteAuthSecondFactorRes()
 }
 
 type SiteAuthVerifyEmailRes interface {
@@ -181,6 +185,10 @@ type SiteMembershipsListRes interface {
 	siteMembershipsListRes()
 }
 
+type SiteMembershipsResetSecondFactorRes interface {
+	siteMembershipsResetSecondFactorRes()
+}
+
 type SiteMembershipsUpdateRes interface {
 	siteMembershipsUpdateRes()
 }
@@ -207,6 +215,22 @@ type SitePublicInvitationsLookupRes interface {
 
 type SitePublicUnsubscribesPerformRes interface {
 	sitePublicUnsubscribesPerformRes()
+}
+
+type SiteSecondFactorConfirmEnrollmentRes interface {
+	siteSecondFactorConfirmEnrollmentRes()
+}
+
+type SiteSecondFactorDisableRes interface {
+	siteSecondFactorDisableRes()
+}
+
+type SiteSecondFactorRegenerateRecoveryCodesRes interface {
+	siteSecondFactorRegenerateRecoveryCodesRes()
+}
+
+type SiteSecondFactorStartEnrollmentRes interface {
+	siteSecondFactorStartEnrollmentRes()
 }
 
 type SiteSegmentsCreateRes interface {
@@ -343,6 +367,10 @@ type SiteWebhooksListRes interface {
 
 type SiteWebhooksUpdateRes interface {
 	siteWebhooksUpdateRes()
+}
+
+type SiteWorkspacesSetSecondFactorRequirementRes interface {
+	siteWorkspacesSetSecondFactorRequirementRes()
 }
 
 type SiteWorkspacesUpdateRes interface {

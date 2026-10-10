@@ -79,9 +79,23 @@ export type PaymentRequiredProblem = {
 };
 
 /**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export const ProblemCode = { SECOND_FACTOR_REQUIRED: 'second_factor_required' } as const;
+
+/**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export type ProblemCode = typeof ProblemCode[keyof typeof ProblemCode];
+
+/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {
+  /**
+   * Why the request was refused, when the client should act on it
+   */
+  code?: ProblemCode;
   /**
    * A URI reference that identifies the problem type
    */

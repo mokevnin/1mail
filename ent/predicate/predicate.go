@@ -60,6 +60,9 @@ type OAuthCode func(*sql.Selector)
 // OutboundMessage is the predicate function for outboundmessage builders.
 type OutboundMessage func(*sql.Selector)
 
+// RecoveryCode is the predicate function for recoverycode builders.
+type RecoveryCode func(*sql.Selector)
+
 // Segment is the predicate function for segment builders.
 type Segment func(*sql.Selector)
 

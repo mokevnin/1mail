@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/ee"
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/analytics"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
@@ -41,6 +42,7 @@ import (
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/reputation"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sending"
@@ -499,6 +501,30 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	return suspension.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
 }
 
+// ResetSecondFactor clears the Second factor and Recovery codes of the User with
+// this email and ends every session of theirs (ADR 0020), recorded as
+// `user.second_factor_reset` by the Operator "cli" in each of their Workspaces. It
+// reports whether anything changed: a User without a Second factor is left as is.
+func (a *App) ResetSecondFactor(ctx context.Context, email string) (bool, error) {
+	client, err := do.Invoke[*entClient](a.injector)
+	if err != nil {
+		return false, err
+	}
+	id, err := client.User.Query().Where(user.Email(email)).OnlyID(ctx)
+	if err != nil {
+		return false, fmt.Errorf("user %q: %w", email, err)
+	}
+	sf, err := do.Invoke[*secondfactor.Module](a.injector)
+	if err != nil {
+		return false, err
+	}
+	err = sf.ResetByOperator(ctx, id, "cli")
+	if errors.Is(err, secondfactor.ErrNotActive) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
 // Accounts is the product's Accounts module from the DI container, for harnesses that
 // arrange users and Workspaces through the same instance the HTTP surface runs on
 // (the end-to-end suite), so they open no second connection pool.
@@ -794,6 +820,21 @@ func register(injector do.Injector, env string, o options) {
 			return nil, err
 		}
 		return accounts.NewAttempts(client.Client, accounts.WithRateLimits(cfg.RateLimits)), nil
+	})
+	do.Provide(injector, func(i do.Injector) (*secondfactor.Module, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		return secondfactor.New(client.Client, bus.Bus, cipher, nil), nil
 	})
 
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the
@@ -1147,6 +1188,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	sf, err := do.Invoke[*secondfactor.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	an, err := do.Invoke[*analytics.Module](i)
 	if err != nil {
 		return apisite.Deps{}, err
@@ -1155,7 +1200,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Webhooks: wh, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Templates: tpl, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
-		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit, Analytics: an,
+		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit, SecondFactor: sf, Analytics: an,
 	}, nil
 }
 

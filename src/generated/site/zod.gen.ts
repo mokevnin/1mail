@@ -13,9 +13,15 @@ export const zEmailAddress = z.email();
 export const zEntityId = z.string().regex(/^[0-9]+$/);
 
 /**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export const zProblemCode = z.enum(['second_factor_required']);
+
+/**
  * RFC 7807 Problem Details
  */
 export const zProblemDetails = z.object({
+  code: z.exactOptional(zProblemCode),
   type: z.exactOptional(z.string()),
   title: z.exactOptional(z.string()),
   status: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })),
@@ -271,26 +277,6 @@ export const zSiteCustomFieldType = z.enum([
   'datetime'
 ]);
 
-export const zSiteDirectLoginError = z.object({
-  error: z.string()
-});
-
-export const zSiteDirectLoginInput = z.object({
-  user: z.string(),
-  passwd: z.string()
-});
-
-export const zSiteDirectLoginResult = z.object({
-  name: z.string(),
-  id: z.string(),
-  picture: z.exactOptional(z.string()),
-  aud: z.exactOptional(z.string()),
-  ip: z.exactOptional(z.string()),
-  email: z.exactOptional(z.string()),
-  attrs: z.exactOptional(z.record(z.string(), z.unknown())),
-  role: z.exactOptional(z.string())
-});
-
 /**
  * A DNS record the user publishes to authenticate a sending domain
  */
@@ -353,6 +339,35 @@ export const zSiteInvitationLookupResult = z.object({
   workspaceName: z.string(),
   email: zEmailAddress,
   hasAccount: z.boolean()
+});
+
+/**
+ * Sign in with an email and password. The email is a plain string: a malformed
+ * address must answer like an unknown one.
+ */
+export const zSiteLoginInput = z.object({
+  email: z.string(),
+  password: z.string()
+});
+
+/**
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
+ */
+export const zSiteLoginOutcome = z.enum(['session', 'challenge']);
+
+export const zSiteLoginResult = z.object({
+  outcome: zSiteLoginOutcome,
+  challenge: z.exactOptional(z.string())
+});
+
+/**
+ * The second login step: the challenge from the password step and a code
+ */
+export const zSiteLoginSecondFactorInput = z.object({
+  challenge: z.string(),
+  code: z.string()
 });
 
 /**
@@ -420,6 +435,20 @@ export const zSitePreviewSegmentResult = z.object({
   count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
+/**
+ * A fresh set of Recovery codes. They are shown only in this response.
+ */
+export const zSiteRecoveryCodes = z.object({
+  codes: z.array(z.string())
+});
+
+/**
+ * Proof of the User's password, for regenerating Recovery codes
+ */
+export const zSiteRecoveryCodesInput = z.object({
+  currentPassword: z.string()
+});
+
 export const zSiteRegisterInput = z.object({
   name: z.string(),
   email: zEmailAddress,
@@ -432,6 +461,55 @@ export const zSiteRegisterInput = z.object({
 export const zSiteResetPasswordInput = z.object({
   token: z.string(),
   password: z.string()
+});
+
+/**
+ * Proof of the User's password and a code from the authenticator app
+ */
+export const zSiteSecondFactorConfirmInput = z.object({
+  currentPassword: z.string(),
+  code: z.string()
+});
+
+/**
+ * Proof of password and possession, for disabling the Second factor
+ */
+export const zSiteSecondFactorDisableInput = z.object({
+  currentPassword: z.string(),
+  code: z.string()
+});
+
+/**
+ * A pending enrollment: the TOTP secret to add to an authenticator app
+ */
+export const zSiteSecondFactorEnrollment = z.object({
+  secret: z.string(),
+  otpauthUri: z.string(),
+  qrCode: z.string()
+});
+
+/**
+ * Switch the Two-factor requirement on or off
+ */
+export const zSiteSecondFactorRequirementInput = z.object({
+  required: z.boolean()
+});
+
+/**
+ * Proof of the User's password, for starting an enrollment
+ */
+export const zSiteSecondFactorStartInput = z.object({
+  currentPassword: z.string()
+});
+
+/**
+ * The authenticated User's Second factor (ADR 0020). Recovery codes are never
+ * readable here: only how many are left.
+ */
+export const zSiteSecondFactorStatus = z.object({
+  enabled: z.boolean(),
+  pending: z.boolean(),
+  recoveryCodesRemaining: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 /**
@@ -1047,6 +1125,7 @@ export const zSiteMembershipResource = z.object({
   email: zEmailAddress,
   name: z.string(),
   role: zSiteMembershipRole,
+  secondFactorEnabled: z.boolean(),
   createdAt: zTimestamp
 });
 
@@ -1164,8 +1243,11 @@ export const zSiteWorkspaceResource = z.object({
   collectKey: z.string(),
   ingestKey: z.string(),
   postalAddress: z.string(),
+  role: zSiteMembershipRole,
   suspendedAt: z.exactOptional(zTimestamp.nullable()),
   suspensionReason: z.exactOptional(z.string().nullable()),
+  secondFactorRequiredAt: z.exactOptional(zTimestamp.nullable()),
+  secondFactorGraceEndsAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp
 });
 
@@ -1421,14 +1503,19 @@ export const zSiteWebhookEndpointResourceParentKey = z.string();
 
 export const zSiteAuthConfirmEmailChangeBody = zSiteConfirmEmailChangeInput;
 
-export const zSiteAuthDirectLoginBody = zSiteDirectLoginInput;
+export const zSiteAuthForgotPasswordBody = zSiteForgotPasswordInput;
+
+export const zSiteAuthLoginBody = zSiteLoginInput;
 
 /**
  * The request has succeeded.
  */
-export const zSiteAuthDirectLoginResponse = zSiteDirectLoginResult;
+export const zSiteAuthLoginResponse = zSiteLoginResult;
 
-export const zSiteAuthForgotPasswordBody = zSiteForgotPasswordInput;
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteAuthLogoutResponse = z.void();
 
 export const zSiteAuthRegisterBody = zSiteRegisterInput;
 
@@ -1438,6 +1525,13 @@ export const zSiteAuthRegisterBody = zSiteRegisterInput;
 export const zSiteAuthRegisterResponse = zSiteRegisterResult;
 
 export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
+
+export const zSiteAuthSecondFactorBody = zSiteLoginSecondFactorInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuthSecondFactorResponse = zSiteLoginResult;
 
 export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
 
@@ -1478,6 +1572,44 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
 
 export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorGetStatusResponse = zSiteSecondFactorStatus;
+
+export const zSiteSecondFactorDisableBody = zSiteSecondFactorDisableInput;
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSecondFactorDisableResponse = z.void();
+
+export const zSiteSecondFactorStartEnrollmentBody = zSiteSecondFactorStartInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorStartEnrollmentResponse = zSiteSecondFactorEnrollment;
+
+export const zSiteSecondFactorConfirmEnrollmentBody = zSiteSecondFactorConfirmInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorConfirmEnrollmentResponse = zSiteRecoveryCodes;
+
+export const zSiteSecondFactorRegenerateRecoveryCodesBody = zSiteRecoveryCodesInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorRegenerateRecoveryCodesResponse = zSiteRecoveryCodes;
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteUserSignOutEverywhereResponse = z.void();
 
 export const zSiteOAuthDescribeQuery = z.object({
   clientId: z.string(),
@@ -2059,6 +2191,27 @@ export const zSiteMembershipsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteMembershipsUpdateResponse = zSiteMembershipResource;
+
+export const zSiteMembershipsResetSecondFactorPath = z.object({
+  slug: z.string(),
+  id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteMembershipsResetSecondFactorResponse = z.void();
+
+export const zSiteWorkspacesSetSecondFactorRequirementBody = zSiteSecondFactorRequirementInput;
+
+export const zSiteWorkspacesSetSecondFactorRequirementPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWorkspacesSetSecondFactorRequirementResponse = zSiteWorkspaceResource;
 
 export const zSiteSegmentsListPath = z.object({
   slug: z.string()

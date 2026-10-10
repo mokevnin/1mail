@@ -2393,6 +2393,52 @@ func (o OptNilTimestamp) Or(d Timestamp) Timestamp {
 	return d
 }
 
+// NewOptProblemCode returns new OptProblemCode with value set to v.
+func NewOptProblemCode(v ProblemCode) OptProblemCode {
+	return OptProblemCode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProblemCode is optional ProblemCode.
+type OptProblemCode struct {
+	Value ProblemCode
+	Set   bool
+}
+
+// IsSet returns true if OptProblemCode was set.
+func (o OptProblemCode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProblemCode) Reset() {
+	var v ProblemCode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProblemCode) SetTo(v ProblemCode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProblemCode) Get() (v ProblemCode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProblemCode) Or(d ProblemCode) ProblemCode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptProblemDetailsErrors returns new OptProblemDetailsErrors with value set to v.
 func NewOptProblemDetailsErrors(v ProblemDetailsErrors) OptProblemDetailsErrors {
 	return OptProblemDetailsErrors{
@@ -2577,52 +2623,6 @@ func (o OptSiteAuditActorKind) Or(d SiteAuditActorKind) SiteAuditActorKind {
 	return d
 }
 
-// NewOptSiteDirectLoginResultAttrs returns new OptSiteDirectLoginResultAttrs with value set to v.
-func NewOptSiteDirectLoginResultAttrs(v SiteDirectLoginResultAttrs) OptSiteDirectLoginResultAttrs {
-	return OptSiteDirectLoginResultAttrs{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSiteDirectLoginResultAttrs is optional SiteDirectLoginResultAttrs.
-type OptSiteDirectLoginResultAttrs struct {
-	Value SiteDirectLoginResultAttrs
-	Set   bool
-}
-
-// IsSet returns true if OptSiteDirectLoginResultAttrs was set.
-func (o OptSiteDirectLoginResultAttrs) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSiteDirectLoginResultAttrs) Reset() {
-	var v SiteDirectLoginResultAttrs
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSiteDirectLoginResultAttrs) SetTo(v SiteDirectLoginResultAttrs) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSiteDirectLoginResultAttrs) Get() (v SiteDirectLoginResultAttrs, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSiteDirectLoginResultAttrs) Or(d SiteDirectLoginResultAttrs) SiteDirectLoginResultAttrs {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSiteSuppressionChannel returns new OptSiteSuppressionChannel with value set to v.
 func NewOptSiteSuppressionChannel(v SiteSuppressionChannel) OptSiteSuppressionChannel {
 	return OptSiteSuppressionChannel{
@@ -2761,9 +2761,47 @@ func (o OptTimestamp) Or(d Timestamp) Timestamp {
 	return d
 }
 
+// A machine-readable reason a client branches on, beyond the HTTP status.
+// Ref: #/components/schemas/ProblemCode
+type ProblemCode string
+
+const (
+	ProblemCodeSecondFactorRequired ProblemCode = "second_factor_required"
+)
+
+// AllValues returns all ProblemCode values.
+func (ProblemCode) AllValues() []ProblemCode {
+	return []ProblemCode{
+		ProblemCodeSecondFactorRequired,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ProblemCode) MarshalText() ([]byte, error) {
+	switch s {
+	case ProblemCodeSecondFactorRequired:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ProblemCode) UnmarshalText(data []byte) error {
+	switch ProblemCode(data) {
+	case ProblemCodeSecondFactorRequired:
+		*s = ProblemCodeSecondFactorRequired
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // RFC 7807 Problem Details.
 // Ref: #/components/schemas/ProblemDetails
 type ProblemDetails struct {
+	// Why the request was refused, when the client should act on it.
+	Code OptProblemCode `json:"code"`
 	// A URI reference that identifies the problem type.
 	Type OptString `json:"type"`
 	// A short, human-readable summary of the problem type.
@@ -2782,6 +2820,11 @@ type ProblemDetails struct {
 	Fields OptProblemDetailsFields `json:"fields"`
 	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
 	RetryAfter OptInt32 `json:"retryAfter"`
+}
+
+// GetCode returns the value of Code.
+func (s *ProblemDetails) GetCode() OptProblemCode {
+	return s.Code
 }
 
 // GetType returns the value of Type.
@@ -2827,6 +2870,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 // GetRetryAfter returns the value of RetryAfter.
 func (s *ProblemDetails) GetRetryAfter() OptInt32 {
 	return s.RetryAfter
+}
+
+// SetCode sets the value of Code.
+func (s *ProblemDetails) SetCode(val OptProblemCode) {
+	s.Code = val
 }
 
 // SetType sets the value of Type.
@@ -2875,8 +2923,9 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 }
 
 func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
-func (*ProblemDetails) siteAuthDirectLoginRes()           {}
+func (*ProblemDetails) siteAuthLoginRes()                 {}
 func (*ProblemDetails) siteAuthResetPasswordRes()         {}
+func (*ProblemDetails) siteAuthSecondFactorRes()          {}
 func (*ProblemDetails) siteAuthVerifyEmailRes()           {}
 func (*ProblemDetails) siteEventsActionsRes()             {}
 func (*ProblemDetails) siteEventsListRes()                {}
@@ -2970,11 +3019,16 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 	s.Response = val
 }
 
-func (*ProblemDetailsHeaders) siteAuthDirectLoginRes()            {}
-func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
-func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
-func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
-func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
+func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()                  {}
+func (*ProblemDetailsHeaders) siteAuthLoginRes()                           {}
+func (*ProblemDetailsHeaders) siteAuthRegisterRes()                        {}
+func (*ProblemDetailsHeaders) siteAuthSecondFactorRes()                    {}
+func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes()          {}
+func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()             {}
+func (*ProblemDetailsHeaders) siteSecondFactorConfirmEnrollmentRes()       {}
+func (*ProblemDetailsHeaders) siteSecondFactorDisableRes()                 {}
+func (*ProblemDetailsHeaders) siteSecondFactorRegenerateRecoveryCodesRes() {}
+func (*ProblemDetailsHeaders) siteSecondFactorStartEnrollmentRes()         {}
 
 // Accept an invite. name + password are required only when the invitee has no account yet; ignored
 // otherwise.
@@ -3871,7 +3925,19 @@ type SiteAuthConfirmEmailChangeConflict ProblemDetails
 func (*SiteAuthConfirmEmailChangeConflict) siteAuthConfirmEmailChangeRes() {}
 
 // SiteAuthConfirmEmailChangeOK is response for SiteAuthConfirmEmailChange operation.
-type SiteAuthConfirmEmailChangeOK struct{}
+type SiteAuthConfirmEmailChangeOK struct {
+	SetCookie OptString
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteAuthConfirmEmailChangeOK) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteAuthConfirmEmailChangeOK) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
 
 func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 
@@ -3879,6 +3945,21 @@ func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 type SiteAuthForgotPasswordAccepted struct{}
 
 func (*SiteAuthForgotPasswordAccepted) siteAuthForgotPasswordRes() {}
+
+// SiteAuthLogoutNoContent is response for SiteAuthLogout operation.
+type SiteAuthLogoutNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteAuthLogoutNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteAuthLogoutNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
 
 type SiteAuthRegisterConflict ProblemDetails
 
@@ -6069,154 +6150,6 @@ func (s *SiteCustomFieldsListOK) SetTotalPages(val int32) {
 
 func (*SiteCustomFieldsListOK) siteCustomFieldsListRes() {}
 
-// Ref: #/components/schemas/SiteDirectLoginError
-type SiteDirectLoginError struct {
-	Error string `json:"error"`
-}
-
-// GetError returns the value of Error.
-func (s *SiteDirectLoginError) GetError() string {
-	return s.Error
-}
-
-// SetError sets the value of Error.
-func (s *SiteDirectLoginError) SetError(val string) {
-	s.Error = val
-}
-
-func (*SiteDirectLoginError) siteAuthDirectLoginRes() {}
-
-// Ref: #/components/schemas/SiteDirectLoginInput
-type SiteDirectLoginInput struct {
-	User   string `json:"user"`
-	Passwd string `json:"passwd"`
-}
-
-// GetUser returns the value of User.
-func (s *SiteDirectLoginInput) GetUser() string {
-	return s.User
-}
-
-// GetPasswd returns the value of Passwd.
-func (s *SiteDirectLoginInput) GetPasswd() string {
-	return s.Passwd
-}
-
-// SetUser sets the value of User.
-func (s *SiteDirectLoginInput) SetUser(val string) {
-	s.User = val
-}
-
-// SetPasswd sets the value of Passwd.
-func (s *SiteDirectLoginInput) SetPasswd(val string) {
-	s.Passwd = val
-}
-
-// Ref: #/components/schemas/SiteDirectLoginResult
-type SiteDirectLoginResult struct {
-	Name    string                        `json:"name"`
-	ID      string                        `json:"id"`
-	Picture OptString                     `json:"picture"`
-	Aud     OptString                     `json:"aud"`
-	IP      OptString                     `json:"ip"`
-	Email   OptString                     `json:"email"`
-	Attrs   OptSiteDirectLoginResultAttrs `json:"attrs"`
-	Role    OptString                     `json:"role"`
-}
-
-// GetName returns the value of Name.
-func (s *SiteDirectLoginResult) GetName() string {
-	return s.Name
-}
-
-// GetID returns the value of ID.
-func (s *SiteDirectLoginResult) GetID() string {
-	return s.ID
-}
-
-// GetPicture returns the value of Picture.
-func (s *SiteDirectLoginResult) GetPicture() OptString {
-	return s.Picture
-}
-
-// GetAud returns the value of Aud.
-func (s *SiteDirectLoginResult) GetAud() OptString {
-	return s.Aud
-}
-
-// GetIP returns the value of IP.
-func (s *SiteDirectLoginResult) GetIP() OptString {
-	return s.IP
-}
-
-// GetEmail returns the value of Email.
-func (s *SiteDirectLoginResult) GetEmail() OptString {
-	return s.Email
-}
-
-// GetAttrs returns the value of Attrs.
-func (s *SiteDirectLoginResult) GetAttrs() OptSiteDirectLoginResultAttrs {
-	return s.Attrs
-}
-
-// GetRole returns the value of Role.
-func (s *SiteDirectLoginResult) GetRole() OptString {
-	return s.Role
-}
-
-// SetName sets the value of Name.
-func (s *SiteDirectLoginResult) SetName(val string) {
-	s.Name = val
-}
-
-// SetID sets the value of ID.
-func (s *SiteDirectLoginResult) SetID(val string) {
-	s.ID = val
-}
-
-// SetPicture sets the value of Picture.
-func (s *SiteDirectLoginResult) SetPicture(val OptString) {
-	s.Picture = val
-}
-
-// SetAud sets the value of Aud.
-func (s *SiteDirectLoginResult) SetAud(val OptString) {
-	s.Aud = val
-}
-
-// SetIP sets the value of IP.
-func (s *SiteDirectLoginResult) SetIP(val OptString) {
-	s.IP = val
-}
-
-// SetEmail sets the value of Email.
-func (s *SiteDirectLoginResult) SetEmail(val OptString) {
-	s.Email = val
-}
-
-// SetAttrs sets the value of Attrs.
-func (s *SiteDirectLoginResult) SetAttrs(val OptSiteDirectLoginResultAttrs) {
-	s.Attrs = val
-}
-
-// SetRole sets the value of Role.
-func (s *SiteDirectLoginResult) SetRole(val OptString) {
-	s.Role = val
-}
-
-func (*SiteDirectLoginResult) siteAuthDirectLoginRes() {}
-
-type SiteDirectLoginResultAttrs map[string]jx.Raw
-
-func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
-}
-
 // A DNS record the user publishes to authenticate a sending domain.
 // Ref: #/components/schemas/SiteDnsRecord
 type SiteDnsRecord struct {
@@ -7263,6 +7196,164 @@ type SiteInvitationsListOKApplicationJSON []SiteInvitationResource
 
 func (*SiteInvitationsListOKApplicationJSON) siteInvitationsListRes() {}
 
+// Sign in with an email and password. The email is a plain string: a malformed address must answer
+// like an unknown one.
+// Ref: #/components/schemas/SiteLoginInput
+type SiteLoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteLoginInput) GetEmail() string {
+	return s.Email
+}
+
+// GetPassword returns the value of Password.
+func (s *SiteLoginInput) GetPassword() string {
+	return s.Password
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteLoginInput) SetEmail(val string) {
+	s.Email = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SiteLoginInput) SetPassword(val string) {
+	s.Password = val
+}
+
+// What a login granted (ADR 0020). `session`: the session cookie is set. `challenge`: the password was
+// right but the User has a Second factor; no session exists yet, and the `challenge` goes with a code
+// to `/auth/second-factor`.
+// Ref: #/components/schemas/SiteLoginOutcome
+type SiteLoginOutcome string
+
+const (
+	SiteLoginOutcomeSession   SiteLoginOutcome = "session"
+	SiteLoginOutcomeChallenge SiteLoginOutcome = "challenge"
+)
+
+// AllValues returns all SiteLoginOutcome values.
+func (SiteLoginOutcome) AllValues() []SiteLoginOutcome {
+	return []SiteLoginOutcome{
+		SiteLoginOutcomeSession,
+		SiteLoginOutcomeChallenge,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteLoginOutcome) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteLoginOutcomeSession:
+		return []byte(s), nil
+	case SiteLoginOutcomeChallenge:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteLoginOutcome) UnmarshalText(data []byte) error {
+	switch SiteLoginOutcome(data) {
+	case SiteLoginOutcomeSession:
+		*s = SiteLoginOutcomeSession
+		return nil
+	case SiteLoginOutcomeChallenge:
+		*s = SiteLoginOutcomeChallenge
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/SiteLoginResult
+type SiteLoginResult struct {
+	Outcome SiteLoginOutcome `json:"outcome"`
+	// The signed challenge, present when the outcome is `challenge`. It is bound to the User, valid for 5
+	// minutes and works for one successful second step.
+	Challenge OptString `json:"challenge"`
+}
+
+// GetOutcome returns the value of Outcome.
+func (s *SiteLoginResult) GetOutcome() SiteLoginOutcome {
+	return s.Outcome
+}
+
+// GetChallenge returns the value of Challenge.
+func (s *SiteLoginResult) GetChallenge() OptString {
+	return s.Challenge
+}
+
+// SetOutcome sets the value of Outcome.
+func (s *SiteLoginResult) SetOutcome(val SiteLoginOutcome) {
+	s.Outcome = val
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *SiteLoginResult) SetChallenge(val OptString) {
+	s.Challenge = val
+}
+
+// SiteLoginResultHeaders wraps SiteLoginResult with response headers.
+type SiteLoginResultHeaders struct {
+	SetCookie OptString
+	Response  SiteLoginResult
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteLoginResultHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteLoginResultHeaders) GetResponse() SiteLoginResult {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteLoginResultHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteLoginResultHeaders) SetResponse(val SiteLoginResult) {
+	s.Response = val
+}
+
+func (*SiteLoginResultHeaders) siteAuthLoginRes()        {}
+func (*SiteLoginResultHeaders) siteAuthSecondFactorRes() {}
+
+// The second login step: the challenge from the password step and a code.
+// Ref: #/components/schemas/SiteLoginSecondFactorInput
+type SiteLoginSecondFactorInput struct {
+	Challenge string `json:"challenge"`
+	// A current TOTP code from the authenticator app, or an unused Recovery code.
+	Code string `json:"code"`
+}
+
+// GetChallenge returns the value of Challenge.
+func (s *SiteLoginSecondFactorInput) GetChallenge() string {
+	return s.Challenge
+}
+
+// GetCode returns the value of Code.
+func (s *SiteLoginSecondFactorInput) GetCode() string {
+	return s.Code
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *SiteLoginSecondFactorInput) SetChallenge(val string) {
+	s.Challenge = val
+}
+
+// SetCode sets the value of Code.
+func (s *SiteLoginSecondFactorInput) SetCode(val string) {
+	s.Code = val
+}
+
 type SiteMaxPerDay int32
 
 type SiteMaxPerSecond int32
@@ -7280,6 +7371,8 @@ type SiteMembershipResource struct {
 	Name string `json:"name"`
 	// The member's role in this workspace.
 	Role SiteMembershipRole `json:"role"`
+	// Whether the member has an active Second factor (ADR 0020).
+	SecondFactorEnabled bool `json:"secondFactorEnabled"`
 	// When the member joined.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -7307,6 +7400,11 @@ func (s *SiteMembershipResource) GetName() string {
 // GetRole returns the value of Role.
 func (s *SiteMembershipResource) GetRole() SiteMembershipRole {
 	return s.Role
+}
+
+// GetSecondFactorEnabled returns the value of SecondFactorEnabled.
+func (s *SiteMembershipResource) GetSecondFactorEnabled() bool {
+	return s.SecondFactorEnabled
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -7337,6 +7435,11 @@ func (s *SiteMembershipResource) SetName(val string) {
 // SetRole sets the value of Role.
 func (s *SiteMembershipResource) SetRole(val SiteMembershipRole) {
 	s.Role = val
+}
+
+// SetSecondFactorEnabled sets the value of SecondFactorEnabled.
+func (s *SiteMembershipResource) SetSecondFactorEnabled(val bool) {
+	s.SecondFactorEnabled = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -7416,6 +7519,23 @@ func (*SiteMembershipsDeleteUnprocessableEntity) siteMembershipsDeleteRes() {}
 type SiteMembershipsListOKApplicationJSON []SiteMembershipResource
 
 func (*SiteMembershipsListOKApplicationJSON) siteMembershipsListRes() {}
+
+type SiteMembershipsResetSecondFactorForbidden ProblemDetails
+
+func (*SiteMembershipsResetSecondFactorForbidden) siteMembershipsResetSecondFactorRes() {}
+
+// SiteMembershipsResetSecondFactorNoContent is response for SiteMembershipsResetSecondFactor operation.
+type SiteMembershipsResetSecondFactorNoContent struct{}
+
+func (*SiteMembershipsResetSecondFactorNoContent) siteMembershipsResetSecondFactorRes() {}
+
+type SiteMembershipsResetSecondFactorNotFound ProblemDetails
+
+func (*SiteMembershipsResetSecondFactorNotFound) siteMembershipsResetSecondFactorRes() {}
+
+type SiteMembershipsResetSecondFactorUnprocessableEntity ProblemDetails
+
+func (*SiteMembershipsResetSecondFactorUnprocessableEntity) siteMembershipsResetSecondFactorRes() {}
 
 type SiteMembershipsUpdateForbidden ProblemDetails
 
@@ -7689,6 +7809,69 @@ type SitePublicUnsubscribesPerformNoContent struct{}
 
 func (*SitePublicUnsubscribesPerformNoContent) sitePublicUnsubscribesPerformRes() {}
 
+// A fresh set of Recovery codes. They are shown only in this response.
+// Ref: #/components/schemas/SiteRecoveryCodes
+type SiteRecoveryCodes struct {
+	// Single-use codes, each one usable in place of a TOTP code.
+	Codes []string `json:"codes"`
+}
+
+// GetCodes returns the value of Codes.
+func (s *SiteRecoveryCodes) GetCodes() []string {
+	return s.Codes
+}
+
+// SetCodes sets the value of Codes.
+func (s *SiteRecoveryCodes) SetCodes(val []string) {
+	s.Codes = val
+}
+
+// SiteRecoveryCodesHeaders wraps SiteRecoveryCodes with response headers.
+type SiteRecoveryCodesHeaders struct {
+	SetCookie string
+	Response  SiteRecoveryCodes
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteRecoveryCodesHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteRecoveryCodesHeaders) GetResponse() SiteRecoveryCodes {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteRecoveryCodesHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteRecoveryCodesHeaders) SetResponse(val SiteRecoveryCodes) {
+	s.Response = val
+}
+
+func (*SiteRecoveryCodesHeaders) siteSecondFactorConfirmEnrollmentRes()       {}
+func (*SiteRecoveryCodesHeaders) siteSecondFactorRegenerateRecoveryCodesRes() {}
+
+// Proof of the User's password, for regenerating Recovery codes.
+// Ref: #/components/schemas/SiteRecoveryCodesInput
+type SiteRecoveryCodesInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteRecoveryCodesInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteRecoveryCodesInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {
 	Name     string       `json:"name"`
@@ -7818,6 +8001,242 @@ func (s *SiteScheduleBroadcastInput) GetScheduledAt() Timestamp {
 // SetScheduledAt sets the value of ScheduledAt.
 func (s *SiteScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
 	s.ScheduledAt = val
+}
+
+type SiteSecondFactorConfirmEnrollmentConflict ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentConflict) siteSecondFactorConfirmEnrollmentRes() {}
+
+type SiteSecondFactorConfirmEnrollmentForbidden ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentForbidden) siteSecondFactorConfirmEnrollmentRes() {}
+
+type SiteSecondFactorConfirmEnrollmentUnprocessableEntity ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentUnprocessableEntity) siteSecondFactorConfirmEnrollmentRes() {}
+
+// Proof of the User's password and a code from the authenticator app.
+// Ref: #/components/schemas/SiteSecondFactorConfirmInput
+type SiteSecondFactorConfirmInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+	// The current 6-digit TOTP code.
+	Code string `json:"code"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorConfirmInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// GetCode returns the value of Code.
+func (s *SiteSecondFactorConfirmInput) GetCode() string {
+	return s.Code
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorConfirmInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
+// SetCode sets the value of Code.
+func (s *SiteSecondFactorConfirmInput) SetCode(val string) {
+	s.Code = val
+}
+
+type SiteSecondFactorDisableConflict ProblemDetails
+
+func (*SiteSecondFactorDisableConflict) siteSecondFactorDisableRes() {}
+
+type SiteSecondFactorDisableForbidden ProblemDetails
+
+func (*SiteSecondFactorDisableForbidden) siteSecondFactorDisableRes() {}
+
+// Proof of password and possession, for disabling the Second factor.
+// Ref: #/components/schemas/SiteSecondFactorDisableInput
+type SiteSecondFactorDisableInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+	// A current TOTP code, or an unused Recovery code.
+	Code string `json:"code"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorDisableInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// GetCode returns the value of Code.
+func (s *SiteSecondFactorDisableInput) GetCode() string {
+	return s.Code
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorDisableInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
+// SetCode sets the value of Code.
+func (s *SiteSecondFactorDisableInput) SetCode(val string) {
+	s.Code = val
+}
+
+// SiteSecondFactorDisableNoContent is response for SiteSecondFactorDisable operation.
+type SiteSecondFactorDisableNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteSecondFactorDisableNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteSecondFactorDisableNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*SiteSecondFactorDisableNoContent) siteSecondFactorDisableRes() {}
+
+type SiteSecondFactorDisableUnprocessableEntity ProblemDetails
+
+func (*SiteSecondFactorDisableUnprocessableEntity) siteSecondFactorDisableRes() {}
+
+// A pending enrollment: the TOTP secret to add to an authenticator app.
+// Ref: #/components/schemas/SiteSecondFactorEnrollment
+type SiteSecondFactorEnrollment struct {
+	// The secret as a base32 key, for typing it into the app.
+	Secret string `json:"secret"`
+	// The otpauth:// URI the QR code encodes.
+	OtpauthUri string `json:"otpauthUri"`
+	// The QR code of the otpauth URI, as a PNG data URI.
+	QrCode string `json:"qrCode"`
+}
+
+// GetSecret returns the value of Secret.
+func (s *SiteSecondFactorEnrollment) GetSecret() string {
+	return s.Secret
+}
+
+// GetOtpauthUri returns the value of OtpauthUri.
+func (s *SiteSecondFactorEnrollment) GetOtpauthUri() string {
+	return s.OtpauthUri
+}
+
+// GetQrCode returns the value of QrCode.
+func (s *SiteSecondFactorEnrollment) GetQrCode() string {
+	return s.QrCode
+}
+
+// SetSecret sets the value of Secret.
+func (s *SiteSecondFactorEnrollment) SetSecret(val string) {
+	s.Secret = val
+}
+
+// SetOtpauthUri sets the value of OtpauthUri.
+func (s *SiteSecondFactorEnrollment) SetOtpauthUri(val string) {
+	s.OtpauthUri = val
+}
+
+// SetQrCode sets the value of QrCode.
+func (s *SiteSecondFactorEnrollment) SetQrCode(val string) {
+	s.QrCode = val
+}
+
+func (*SiteSecondFactorEnrollment) siteSecondFactorStartEnrollmentRes() {}
+
+type SiteSecondFactorRegenerateRecoveryCodesConflict ProblemDetails
+
+func (*SiteSecondFactorRegenerateRecoveryCodesConflict) siteSecondFactorRegenerateRecoveryCodesRes() {
+}
+
+type SiteSecondFactorRegenerateRecoveryCodesForbidden ProblemDetails
+
+func (*SiteSecondFactorRegenerateRecoveryCodesForbidden) siteSecondFactorRegenerateRecoveryCodesRes() {
+}
+
+// Switch the Two-factor requirement on or off.
+// Ref: #/components/schemas/SiteSecondFactorRequirementInput
+type SiteSecondFactorRequirementInput struct {
+	// Whether every User with a Membership must have a Second factor.
+	Required bool `json:"required"`
+}
+
+// GetRequired returns the value of Required.
+func (s *SiteSecondFactorRequirementInput) GetRequired() bool {
+	return s.Required
+}
+
+// SetRequired sets the value of Required.
+func (s *SiteSecondFactorRequirementInput) SetRequired(val bool) {
+	s.Required = val
+}
+
+type SiteSecondFactorStartEnrollmentConflict ProblemDetails
+
+func (*SiteSecondFactorStartEnrollmentConflict) siteSecondFactorStartEnrollmentRes() {}
+
+type SiteSecondFactorStartEnrollmentForbidden ProblemDetails
+
+func (*SiteSecondFactorStartEnrollmentForbidden) siteSecondFactorStartEnrollmentRes() {}
+
+// Proof of the User's password, for starting an enrollment.
+// Ref: #/components/schemas/SiteSecondFactorStartInput
+type SiteSecondFactorStartInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorStartInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorStartInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
+// The authenticated User's Second factor (ADR 0020). Recovery codes are never readable here: only how
+// many are left.
+// Ref: #/components/schemas/SiteSecondFactorStatus
+type SiteSecondFactorStatus struct {
+	// Whether a confirmed TOTP Second factor is active.
+	Enabled bool `json:"enabled"`
+	// Whether an enrollment was started and still awaits its confirmation code.
+	Pending bool `json:"pending"`
+	// Unused Recovery codes left (0 without a Second factor).
+	RecoveryCodesRemaining int32 `json:"recoveryCodesRemaining"`
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteSecondFactorStatus) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetPending returns the value of Pending.
+func (s *SiteSecondFactorStatus) GetPending() bool {
+	return s.Pending
+}
+
+// GetRecoveryCodesRemaining returns the value of RecoveryCodesRemaining.
+func (s *SiteSecondFactorStatus) GetRecoveryCodesRemaining() int32 {
+	return s.RecoveryCodesRemaining
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteSecondFactorStatus) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetPending sets the value of Pending.
+func (s *SiteSecondFactorStatus) SetPending(val bool) {
+	s.Pending = val
+}
+
+// SetRecoveryCodesRemaining sets the value of RecoveryCodesRemaining.
+func (s *SiteSecondFactorStatus) SetRecoveryCodesRemaining(val int32) {
+	s.RecoveryCodesRemaining = val
 }
 
 // Segment resource used by the site UI.
@@ -10411,7 +10830,48 @@ func (s *SiteUserResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
-func (*SiteUserResource) siteUserUpdateMeRes() {}
+// SiteUserResourceHeaders wraps SiteUserResource with response headers.
+type SiteUserResourceHeaders struct {
+	SetCookie OptString
+	Response  SiteUserResource
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteUserResourceHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteUserResourceHeaders) GetResponse() SiteUserResource {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteUserResourceHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteUserResourceHeaders) SetResponse(val SiteUserResource) {
+	s.Response = val
+}
+
+func (*SiteUserResourceHeaders) siteUserUpdateMeRes() {}
+
+// SiteUserSignOutEverywhereNoContent is response for SiteUserSignOutEverywhere operation.
+type SiteUserSignOutEverywhereNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteUserSignOutEverywhereNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteUserSignOutEverywhereNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
 
 type SiteUserUpdateMeForbidden ProblemDetails
 
@@ -10665,11 +11125,23 @@ type SiteWorkspaceResource struct {
 	// Physical postal address printed in the marketing email footer (CAN-SPAM 15 U.S.C. §7704(a)(5)).
 	// Empty until the workspace sets one.
 	PostalAddress string `json:"postalAddress"`
+	// The authenticated User's role in this Workspace (from their Membership). It rides the Workspace list
+	// so role-gated UI is known even while the Workspace's own endpoints are withheld under a Two-factor
+	// requirement.
+	Role SiteMembershipRole `json:"role"`
 	// When outbound sending was suspended (ADR 0007); absent while the workspace can send. A suspension
 	// freezes every send surface but not login, reads or tracking.
 	SuspendedAt OptNilTimestamp `json:"suspendedAt"`
 	// Why sending was suspended, shown to the owner; present only while suspended.
 	SuspensionReason OptNilString `json:"suspensionReason"`
+	// When an Owner or Admin switched on the Two-factor requirement (ADR 0020); absent while every member
+	// may work without a Second factor.
+	SecondFactorRequiredAt OptNilTimestamp `json:"secondFactorRequiredAt"`
+	// When the authenticated User's grace under the Two-factor requirement ends: 7 days after the later of
+	// the requirement's start and their Membership's creation. Absent without a requirement or once the
+	// User has a Second factor. After it, every request to this Workspace answers 403 with code
+	// second_factor_required until the User enrolls one.
+	SecondFactorGraceEndsAt OptNilTimestamp `json:"secondFactorGraceEndsAt"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -10704,6 +11176,11 @@ func (s *SiteWorkspaceResource) GetPostalAddress() string {
 	return s.PostalAddress
 }
 
+// GetRole returns the value of Role.
+func (s *SiteWorkspaceResource) GetRole() SiteMembershipRole {
+	return s.Role
+}
+
 // GetSuspendedAt returns the value of SuspendedAt.
 func (s *SiteWorkspaceResource) GetSuspendedAt() OptNilTimestamp {
 	return s.SuspendedAt
@@ -10712,6 +11189,16 @@ func (s *SiteWorkspaceResource) GetSuspendedAt() OptNilTimestamp {
 // GetSuspensionReason returns the value of SuspensionReason.
 func (s *SiteWorkspaceResource) GetSuspensionReason() OptNilString {
 	return s.SuspensionReason
+}
+
+// GetSecondFactorRequiredAt returns the value of SecondFactorRequiredAt.
+func (s *SiteWorkspaceResource) GetSecondFactorRequiredAt() OptNilTimestamp {
+	return s.SecondFactorRequiredAt
+}
+
+// GetSecondFactorGraceEndsAt returns the value of SecondFactorGraceEndsAt.
+func (s *SiteWorkspaceResource) GetSecondFactorGraceEndsAt() OptNilTimestamp {
+	return s.SecondFactorGraceEndsAt
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -10749,6 +11236,11 @@ func (s *SiteWorkspaceResource) SetPostalAddress(val string) {
 	s.PostalAddress = val
 }
 
+// SetRole sets the value of Role.
+func (s *SiteWorkspaceResource) SetRole(val SiteMembershipRole) {
+	s.Role = val
+}
+
 // SetSuspendedAt sets the value of SuspendedAt.
 func (s *SiteWorkspaceResource) SetSuspendedAt(val OptNilTimestamp) {
 	s.SuspendedAt = val
@@ -10759,12 +11251,33 @@ func (s *SiteWorkspaceResource) SetSuspensionReason(val OptNilString) {
 	s.SuspensionReason = val
 }
 
+// SetSecondFactorRequiredAt sets the value of SecondFactorRequiredAt.
+func (s *SiteWorkspaceResource) SetSecondFactorRequiredAt(val OptNilTimestamp) {
+	s.SecondFactorRequiredAt = val
+}
+
+// SetSecondFactorGraceEndsAt sets the value of SecondFactorGraceEndsAt.
+func (s *SiteWorkspaceResource) SetSecondFactorGraceEndsAt(val OptNilTimestamp) {
+	s.SecondFactorGraceEndsAt = val
+}
+
 // SetCreatedAt sets the value of CreatedAt.
 func (s *SiteWorkspaceResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
-func (*SiteWorkspaceResource) siteWorkspacesUpdateRes() {}
+func (*SiteWorkspaceResource) siteWorkspacesSetSecondFactorRequirementRes() {}
+func (*SiteWorkspaceResource) siteWorkspacesUpdateRes()                     {}
+
+type SiteWorkspacesSetSecondFactorRequirementForbidden ProblemDetails
+
+func (*SiteWorkspacesSetSecondFactorRequirementForbidden) siteWorkspacesSetSecondFactorRequirementRes() {
+}
+
+type SiteWorkspacesSetSecondFactorRequirementNotFound ProblemDetails
+
+func (*SiteWorkspacesSetSecondFactorRequirementNotFound) siteWorkspacesSetSecondFactorRequirementRes() {
+}
 
 type SiteWorkspacesUpdateNotFound ProblemDetails
 

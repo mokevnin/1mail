@@ -3,7 +3,9 @@ package site
 import (
 	"context"
 	"io"
+	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
@@ -19,9 +21,11 @@ import (
 	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/tags"
@@ -58,6 +62,9 @@ type SystemMailEnqueuer interface {
 	// the invite also returns a copy-link, so a missing/failed mailer (common on
 	// self-hosted with no SMTP) must not fail the invite.
 	EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error
+	// EnqueueSecondFactorRequired emails the Workspace's Users without a Second
+	// factor that its Two-factor requirement is now on, with their deadline (ADR 0020).
+	EnqueueSecondFactorRequired(ctx context.Context, workspaceID int64) error
 }
 
 type Handlers struct {
@@ -84,6 +91,11 @@ type Handlers struct {
 	oauth          *oauthserver.Service
 	audit          AuditLog
 	analytics      *analytics.Module
+	sessions       *auth.Sessions
+	secondFactor   *secondfactor.Module
+	now            func() time.Time
+	// challenges signs the login challenge on the env clock (ADR 0020).
+	challenges *authtoken.Signer
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -106,8 +118,7 @@ type AuditLog interface {
 type Deps struct {
 	Accounts *accounts.Accounts
 	// Attempts counts failed logins and password-reset mails per account (ADR
-	// 0025); the login route's credential checker and throttle wrapper and
-	// forgot-password share it.
+	// 0025); login and forgot-password share it.
 	Attempts       *accounts.Attempts
 	OAuth          *oauthserver.Service
 	Bus            *events.Bus
@@ -130,15 +141,29 @@ type Deps struct {
 	AppURL         string
 	Audit          AuditLog
 	Analytics      *analytics.Module
+	// Sessions issues the session cookie on login (ADR 0020). The composition
+	// root (server.New) builds it from the instance secret and SESSION_TTL.
+	Sessions *auth.Sessions
+	// SecondFactor enrolls and verifies a User's TOTP Second factor (ADR 0020).
+	SecondFactor *secondfactor.Module
+	// Clock is the time the site session's expiry and a Two-factor requirement's
+	// grace are checked against (ADR 0020); nil means time.Now. Tests inject one to
+	// move past a session's lifetime or a grace period.
+	Clock func() time.Time
 }
 
 func NewHandlers(d Deps) *Handlers {
+	now := d.Clock
+	if now == nil {
+		now = time.Now
+	}
 	return &Handlers{
 		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, webhooks: d.Webhooks, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags, templates: d.Templates,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth, audit: d.Audit, analytics: d.Analytics,
+		oauth: d.OAuth, audit: d.Audit, analytics: d.Analytics, sessions: d.Sessions, secondFactor: d.SecondFactor, now: now,
+		challenges: d.Tokens.WithClock(d.Clock),
 	}
 }
 
@@ -173,9 +198,49 @@ func (h *Handlers) actor(ctx context.Context) events.Actor {
 // scopedWithRoleFor is scopedFor plus the caller's role, for owner/admin-gated
 // actions.
 func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Scoped, membership.Role, error) {
+	s, m, err := h.membershipFor(ctx, slug)
+	if err != nil {
+		return nil, "", err
+	}
+	return s, m.Role, nil
+}
+
+// membershipFor is scopedFor plus the caller's Membership (its User and Workspace
+// loaded). It is where the Two-factor requirement is enforced (ADR 0020): once a
+// User's grace in a requiring Workspace has ended without a Second factor, every
+// request to that Workspace fails with errSecondFactorRequired (403
+// second_factor_required); other Workspaces and the /me endpoints are unaffected.
+func (h *Handlers) membershipFor(ctx context.Context, slug string) (*ent.Scoped, *ent.Membership, error) {
+	s, m, err := h.membershipEvenIfWithheld(ctx, slug)
+	if err != nil {
+		return nil, nil, err
+	}
+	if secondfactor.Withheld(m, h.now()) {
+		return nil, nil, errSecondFactorRequired{}
+	}
+	return s, m, nil
+}
+
+// membershipEvenIfWithheld is membershipFor without the Two-factor requirement
+// check. Only turning the requirement off uses it: an Owner or Admin withheld by
+// the requirement must still be able to lift it (ADR 0020).
+func (h *Handlers) membershipEvenIfWithheld(ctx context.Context, slug string) (*ent.Scoped, *ent.Membership, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
-		return nil, "", &ent.NotFoundError{}
+		return nil, nil, &ent.NotFoundError{}
 	}
 	return h.accounts.Scope(ctx, a.UserID, slug)
+}
+
+// errSecondFactorRequired is secondfactor.ErrRequired as the problem the site
+// answers it with. Returned as an error, it is rendered by the server's error
+// handler, which reads it through its Problem method.
+type errSecondFactorRequired struct{}
+
+func (errSecondFactorRequired) Error() string { return secondfactor.ErrRequired.Error() }
+func (errSecondFactorRequired) Unwrap() error { return secondfactor.ErrRequired }
+
+// Problem is the 403 second_factor_required answer.
+func (errSecondFactorRequired) Problem() (status int, code, detail string) {
+	return http.StatusForbidden, string(siteapi.ProblemCodeSecondFactorRequired), i18n.T("errors.second_factor_required", nil)
 }

@@ -566,6 +566,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}},
+		{Name: "second_factor_reminded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "user_id", Type: field.TypeInt64},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -577,13 +578,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "memberships_users_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[4]},
+				Columns:    []*schema.Column{MembershipsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "memberships_workspaces_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[5]},
+				Columns:    []*schema.Column{MembershipsColumns[6]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -592,7 +593,7 @@ var (
 			{
 				Name:    "membership_user_id_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{MembershipsColumns[4], MembershipsColumns[5]},
+				Columns: []*schema.Column{MembershipsColumns[5], MembershipsColumns[6]},
 			},
 		},
 	}
@@ -698,6 +699,36 @@ var (
 				Name:    "outboundmessage_workspace_id_sending_domain_created_at",
 				Unique:  false,
 				Columns: []*schema.Column{OutboundMessagesColumns[22], OutboundMessagesColumns[9], OutboundMessagesColumns[1]},
+			},
+		},
+	}
+	// RecoveryCodesColumns holds the columns for the "recovery_codes" table.
+	RecoveryCodesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "code_hash", Type: field.TypeString},
+		{Name: "used_at", Type: field.TypeTime, Nullable: true},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// RecoveryCodesTable holds the schema information for the "recovery_codes" table.
+	RecoveryCodesTable = &schema.Table{
+		Name:       "recovery_codes",
+		Columns:    RecoveryCodesColumns,
+		PrimaryKey: []*schema.Column{RecoveryCodesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "recovery_codes_users_recovery_codes",
+				Columns:    []*schema.Column{RecoveryCodesColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "recoverycode_user_id_code_hash",
+				Unique:  true,
+				Columns: []*schema.Column{RecoveryCodesColumns[5], RecoveryCodesColumns[3]},
 			},
 		},
 	}
@@ -902,6 +933,10 @@ var (
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "email_verified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "session_epoch", Type: field.TypeInt64, Default: 0},
+		{Name: "second_factor_secret_encrypted", Type: field.TypeString, Nullable: true},
+		{Name: "second_factor_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "second_factor_last_step", Type: field.TypeInt64, Default: 0},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -995,6 +1030,7 @@ var (
 		{Name: "require_confirmed_opt_in", Type: field.TypeBool, Default: false},
 		{Name: "postal_address", Type: field.TypeString, Nullable: true, Default: ""},
 		{Name: "retention_days", Type: field.TypeInt, Nullable: true},
+		{Name: "second_factor_required_at", Type: field.TypeTime, Nullable: true},
 		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
 		{Name: "suspended_by", Type: field.TypeString, Nullable: true},
 		{Name: "suspension_reason", Type: field.TypeString, Nullable: true},
@@ -1050,6 +1086,7 @@ var (
 		OauthClientsTable,
 		OauthCodesTable,
 		OutboundMessagesTable,
+		RecoveryCodesTable,
 		SegmentsTable,
 		SendLimitersTable,
 		SendingDomainsTable,
@@ -1138,6 +1175,10 @@ func init() {
 	OutboundMessagesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	OutboundMessagesTable.Annotation = &entsql.Annotation{
 		Table: "outbound_messages",
+	}
+	RecoveryCodesTable.ForeignKeys[0].RefTable = UsersTable
+	RecoveryCodesTable.Annotation = &entsql.Annotation{
+		Table: "recovery_codes",
 	}
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{

@@ -48,6 +48,8 @@ type Tx struct {
 	OAuthCode *OAuthCodeClient
 	// OutboundMessage is the client for interacting with the OutboundMessage builders.
 	OutboundMessage *OutboundMessageClient
+	// RecoveryCode is the client for interacting with the RecoveryCode builders.
+	RecoveryCode *RecoveryCodeClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
 	// SendLimiter is the client for interacting with the SendLimiter builders.
@@ -217,6 +219,7 @@ func (tx *Tx) init() {
 	tx.OAuthClient = NewOAuthClientClient(tx.config)
 	tx.OAuthCode = NewOAuthCodeClient(tx.config)
 	tx.OutboundMessage = NewOutboundMessageClient(tx.config)
+	tx.RecoveryCode = NewRecoveryCodeClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
 	tx.SendLimiter = NewSendLimiterClient(tx.config)
 	tx.SendingDomain = NewSendingDomainClient(tx.config)

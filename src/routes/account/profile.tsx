@@ -7,11 +7,14 @@ import {
   Loader,
   PasswordInput,
   Stack,
+  Text,
   TextInput,
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { useQuery } from '@tanstack/react-query'
+import { modals } from '@mantine/modals'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -19,6 +22,7 @@ import {
   siteUserGetMeOptions,
   siteUserGetMeQueryKey,
   siteUserResendVerificationMutation,
+  siteUserSignOutEverywhereMutation,
   siteUserUpdateMeMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type {
@@ -27,6 +31,7 @@ import type {
   SiteUserResource,
 } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { loginRoute } from '../../router.tsx'
 
 type ProfileFormValues = {
   name: string
@@ -167,6 +172,50 @@ function EmailSection() {
   )
 }
 
+// SessionsSection ends every session of the user, this browser's included, so
+// it asks first and lands on the login screen.
+function SessionsSection() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const signOut = useResourceMutation({
+    mutation: siteUserSignOutEverywhereMutation(),
+    errorTitle: t(($) => $.profile.signOutEverywhereErrorTitle),
+    onDone: async () => {
+      queryClient.clear()
+      await navigate({ to: loginRoute.to })
+    },
+  })
+
+  const confirm = () => {
+    modals.openConfirmModal({
+      title: t(($) => $.profile.signOutEverywhereTitle),
+      children: <Text>{t(($) => $.profile.signOutEverywhereConfirm)}</Text>,
+      labels: {
+        cancel: t(($) => $.actions.cancel),
+        confirm: t(($) => $.profile.signOutEverywhereButton),
+      },
+      confirmProps: { color: 'red' },
+      onConfirm: () => signOut.mutate({}),
+    })
+  }
+
+  return (
+    <Stack maw={420}>
+      <Divider label={t(($) => $.profile.sessionsSectionTitle)} />
+      <Text size="sm" c="dimmed">
+        {t(($) => $.profile.signOutEverywhereDescription)}
+      </Text>
+      <Group justify="flex-end">
+        <Button color="red" variant="light" loading={signOut.isPending} onClick={confirm}>
+          {t(($) => $.profile.signOutEverywhereButton)}
+        </Button>
+      </Group>
+    </Stack>
+  )
+}
+
 export function ProfilePage() {
   const { t } = useTranslation()
   const meQuery = useQuery(siteUserGetMeOptions())
@@ -188,6 +237,7 @@ export function ProfilePage() {
           {meQuery.data.emailVerified ? null : <UnverifiedAlert />}
           <ProfileForm user={meQuery.data} />
           <EmailSection />
+          <SessionsSection />
         </Stack>
       ) : null}
     </Stack>

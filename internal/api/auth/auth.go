@@ -9,12 +9,10 @@ import (
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
-	entuser "github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/ratelimit"
@@ -250,81 +248,65 @@ func GetSiteAuth(ctx context.Context) *SiteAuth {
 
 // SiteSecurityHandler implements siteapi.SecurityHandler: validates the JWT
 // cookie issued by go-pkgz/auth and resolves the dashboard user from it.
+//
+// go-pkgz's Parse ignores an expired exp (its own middleware would refresh), so the
+// expiry is enforced here against the injected clock; there is no refresh (ADR
+// 0020). The User is looked up by the id the token carries, and the token's epoch
+// must equal the User's session_epoch: a bump ends every earlier session.
 type SiteSecurityHandler struct {
 	tokens *gptoken.Service
 	ent    *ent.Client
+	now    func() time.Time
 }
 
-func NewSiteSecurityHandler(jwtSecret string, client *ent.Client) *SiteSecurityHandler {
+// NewSiteSecurityHandler builds the cookie handler. now is the clock the token's
+// expiry is checked against; nil means time.Now.
+func NewSiteSecurityHandler(jwtSecret string, client *ent.Client, now func() time.Time) *SiteSecurityHandler {
 	svc := gptoken.NewService(gptoken.Opts{
 		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
 		Issuer:       "1mail",
 		DisableXSRF:  true,
 	})
-	return &SiteSecurityHandler{tokens: svc, ent: client}
+	if now == nil {
+		now = time.Now
+	}
+	return &SiteSecurityHandler{tokens: svc, ent: client, now: now}
 }
 
 var _ siteapi.SecurityHandler = (*SiteSecurityHandler)(nil)
 
 func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.OperationName, t siteapi.ApiKeyAuth) (context.Context, error) {
-	claims, err := h.tokens.Parse(t.APIKey)
-	if err != nil || claims.User == nil {
-		return ctx, ErrUnauthorized
-	}
-
-	// The direct provider stores the login (email) in User.Name; resolve the ent user by it.
-	email := claims.User.Name
-	if email == "" {
-		email = claims.User.Email
-	}
-	u, err := h.ent.User.Query().Where(entuser.Email(email)).Only(ctx)
-	if ent.IsNotFound(err) {
-		return ctx, ErrUnauthorized
-	}
+	u, err := h.Verify(ctx, t.APIKey)
 	if err != nil {
 		return ctx, err
 	}
-
 	return WithSiteAuth(ctx, &SiteAuth{UserID: u.ID, Email: u.Email}), nil
 }
 
-// CredChecker verifies user credentials for go-pkgz/auth direct provider.
-//
-// It also feeds the per-account login throttle (ADR 0025): every failure is counted,
-// for unknown emails too, and a success resets the counter. It never answers 429
-// itself, because go-pkgz/auth turns a checker error into a 500; the login route's
-// HTTP wrapper in internal/server consults the same counters before the provider runs.
-type CredChecker struct {
-	ent      *ent.Client
-	attempts *accounts.Attempts
-}
-
-func NewCredChecker(client *ent.Client, attempts *accounts.Attempts) *CredChecker {
-	return &CredChecker{ent: client, attempts: attempts}
-}
-
-func (c *CredChecker) Check(user, password string) (bool, error) {
-	ctx := context.Background()
-	ok, err := c.verify(ctx, user, password)
+// Verify checks a raw session token (signature, expiry, User id and epoch) and
+// returns the User it belongs to, or ErrUnauthorized.
+func (h *SiteSecurityHandler) Verify(ctx context.Context, raw string) (*ent.User, error) {
+	claims, err := h.tokens.Parse(raw)
 	if err != nil {
-		return false, err
+		return nil, ErrUnauthorized
 	}
-	if ok {
-		return true, c.attempts.RecordSuccess(ctx, accounts.KindLogin, user)
+	if claims.ExpiresAt == nil || !h.now().Before(claims.ExpiresAt.Time) {
+		return nil, ErrUnauthorized
 	}
-	return false, c.attempts.RecordFailure(ctx, accounts.KindLogin, user)
-}
+	id, epoch, ok := sessionUser(claims)
+	if !ok {
+		return nil, ErrUnauthorized
+	}
 
-func (c *CredChecker) verify(ctx context.Context, user, password string) (bool, error) {
-	u, err := c.ent.User.Query().Where(entuser.Email(user)).Only(ctx)
+	u, err := h.ent.User.Get(ctx, id)
 	if ent.IsNotFound(err) {
-		return false, nil
+		return nil, ErrUnauthorized
 	}
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	if u.PasswordHash == "" {
-		return false, nil
+	if u.SessionEpoch != epoch {
+		return nil, ErrUnauthorized
 	}
-	return credentials.VerifyPassword(u.PasswordHash, password), nil
+	return u, nil
 }

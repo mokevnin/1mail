@@ -1,36 +1,37 @@
 import { Avatar, Group, Menu, Text, UnstyledButton } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { IconChevronDown, IconLogout, IconSettings, IconUser } from '@tabler/icons-react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { siteAuthLogoutMutation } from '../generated/site/@tanstack/react-query.gen.ts'
 import { loginRoute, profileRoute, settingsRoute } from '../router.tsx'
 
 // UserMenu is the header account dropdown: profile, workspace settings, logout.
 // `slug` is the active workspace (absent in the account layout); the workspace
-// settings item only renders when one is set. Logout hits go-pkgz/auth at
-// /auth/logout (outside the generated /site client), which clears the JWT
-// cookie; we then drop cached queries and route to login.
+// settings item only renders when one is set. Logout calls the site logout
+// operation, which clears the session cookie; we then drop cached queries and
+// route to login.
 export function UserMenu({ slug, label }: { slug?: string; label?: string }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/auth/logout')
-    } catch {
+  const logoutMutation = useMutation({
+    ...siteAuthLogoutMutation(),
+    onSuccess: async () => {
+      queryClient.clear()
+      await navigate({ to: loginRoute.to })
+    },
+    onError: () => {
       notifications.show({
         color: 'red',
         title: t(($) => $.userMenu.logoutErrorTitle),
         message: t(($) => $.userMenu.logoutErrorTitle),
       })
-      return
-    }
-    queryClient.clear()
-    await navigate({ to: loginRoute.to })
-  }
+    },
+  })
 
   return (
     <Menu position="bottom-end" withinPortal>
@@ -62,7 +63,11 @@ export function UserMenu({ slug, label }: { slug?: string; label?: string }) {
           </Menu.Item>
         ) : null}
         <Menu.Divider />
-        <Menu.Item color="red" leftSection={<IconLogout size={16} />} onClick={handleLogout}>
+        <Menu.Item
+          color="red"
+          leftSection={<IconLogout size={16} />}
+          onClick={() => logoutMutation.mutate({})}
+        >
           {t(($) => $.userMenu.logout)}
         </Menu.Item>
       </Menu.Dropdown>

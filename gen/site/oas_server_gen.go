@@ -42,15 +42,13 @@ type Handler interface {
 	SiteAuditSetRetention(ctx context.Context, req *SiteAuditRetention, params SiteAuditSetRetentionParams) (SiteAuditSetRetentionRes, error)
 	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 	//
-	// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-	// new inbox, which has no session.
+	// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+	// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+	// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+	// The link alone never starts a session.
 	//
 	// POST /auth/confirm-email-change
-	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
-	// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
-	//
-	// POST /auth/direct/login
-	SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
+	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (SiteAuthConfirmEmailChangeRes, error)
 	// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 	//
 	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -59,6 +57,22 @@ type Handler interface {
 	//
 	// POST /auth/forgot-password
 	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
+	// SiteAuthLogin implements SiteAuth_login operation.
+	//
+	// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+	// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+	// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+	// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+	// 0025). Only a started session resets the throttle's counter.
+	//
+	// POST /auth/login
+	SiteAuthLogin(ctx context.Context, req *SiteLoginInput) (SiteAuthLoginRes, error)
+	// SiteAuthLogout implements SiteAuth_logout operation.
+	//
+	// End the session on this browser: clears the session cookie.
+	//
+	// POST /auth/logout
+	SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error)
 	// SiteAuthRegister implements SiteAuth_register operation.
 	//
 	// POST /auth/register
@@ -69,6 +83,15 @@ type Handler interface {
 	//
 	// POST /auth/reset-password
 	SiteAuthResetPassword(ctx context.Context, req *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthSecondFactor implements SiteAuth_secondFactor operation.
+	//
+	// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+	// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+	// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+	// correct code while its delay runs (ADR 0020, ADR 0025).
+	//
+	// POST /auth/second-factor
+	SiteAuthSecondFactor(ctx context.Context, req *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error)
 	// SiteAuthVerifyEmail implements SiteAuth_verifyEmail operation.
 	//
 	// Confirm an email address from a verification token (signup verification).
@@ -281,6 +304,14 @@ type Handler interface {
 	//
 	// GET /workspaces/{slug}/memberships
 	SiteMembershipsList(ctx context.Context, params SiteMembershipsListParams) (SiteMembershipsListRes, error)
+	// SiteMembershipsResetSecondFactor implements SiteMemberships_resetSecondFactor operation.
+	//
+	// Reset the member's Second factor (owner/admin only; owner-only for an owner): clears the factor and
+	// its Recovery codes and ends every session of theirs. The acting session is untouched. 422 when the
+	// member has no Second factor or is the caller (who disables their own with a password and a code).
+	//
+	// POST /workspaces/{slug}/memberships/{id}/reset-second-factor
+	SiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (SiteMembershipsResetSecondFactorRes, error)
 	// SiteMembershipsUpdate implements SiteMemberships_update operation.
 	//
 	// Change a member's role (owner/admin only; owner-only to grant owner).
@@ -327,6 +358,46 @@ type Handler interface {
 	//
 	// POST /unsubscribes/{token}
 	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
+	// SiteSecondFactorConfirmEnrollment implements SiteSecondFactor_confirmEnrollment operation.
+	//
+	// Confirm the pending enrollment with the password and a code from the app. On success the Second
+	// factor is active, every other session ends and the acting one continues under the cookie set here;
+	// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+	// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
+	//
+	// POST /me/second-factor/enrollment/confirm
+	SiteSecondFactorConfirmEnrollment(ctx context.Context, req *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error)
+	// SiteSecondFactorDisable implements SiteSecondFactor_disable operation.
+	//
+	// Disable the Second factor, proving the password and a current code. Every other session ends; the
+	// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+	// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
+	//
+	// POST /me/second-factor/disable
+	SiteSecondFactorDisable(ctx context.Context, req *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error)
+	// SiteSecondFactorGetStatus implements SiteSecondFactor_getStatus operation.
+	//
+	// The authenticated User's Second factor status.
+	//
+	// GET /me/second-factor
+	SiteSecondFactorGetStatus(ctx context.Context) (*SiteSecondFactorStatus, error)
+	// SiteSecondFactorRegenerateRecoveryCodes implements SiteSecondFactor_regenerateRecoveryCodes operation.
+	//
+	// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
+	// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+	// Login throttle: 429 while its delay runs), 409 without an active Second factor.
+	//
+	// POST /me/second-factor/recovery-codes
+	SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, req *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error)
+	// SiteSecondFactorStartEnrollment implements SiteSecondFactor_startEnrollment operation.
+	//
+	// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+	// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+	// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+	// even for a correct one while its delay runs (ADR 0025).
+	//
+	// POST /me/second-factor/enrollment
+	SiteSecondFactorStartEnrollment(ctx context.Context, req *SiteSecondFactorStartInput) (SiteSecondFactorStartEnrollmentRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.
@@ -508,9 +579,18 @@ type Handler interface {
 	//
 	// POST /me/verification-email
 	SiteUserResendVerification(ctx context.Context) error
+	// SiteUserSignOutEverywhere implements SiteUser_signOutEverywhere operation.
+	//
+	// Sign out everywhere: end every session of the user, on every device, including the one making the
+	// request (its cookie is cleared).
+	//
+	// POST /me/sign-out-everywhere
+	SiteUserSignOutEverywhere(ctx context.Context) (*SiteUserSignOutEverywhereNoContent, error)
 	// SiteUserUpdateMe implements SiteUser_updateMe operation.
 	//
-	// Update the authenticated user's profile (name and/or password).
+	// Update the authenticated user's profile (name and/or password). A password change ends every session
+	// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+	// response.
 	//
 	// PUT /me
 	SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
@@ -550,6 +630,14 @@ type Handler interface {
 	//
 	// GET /workspaces
 	SiteWorkspacesList(ctx context.Context) ([]SiteWorkspaceResource, error)
+	// SiteWorkspacesSetSecondFactorRequirement implements SiteWorkspaces_setSecondFactorRequirement operation.
+	//
+	// Switch the Two-factor requirement on or off (owner and admin only). Switching it on while it is
+	// already on keeps the original start, so no one's grace restarts. A change is recorded as an Audit
+	// entry.
+	//
+	// PUT /workspaces/{slug}/second-factor-requirement
+	SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, req *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (SiteWorkspacesSetSecondFactorRequirementRes, error)
 	// SiteWorkspacesUpdate implements SiteWorkspaces_update operation.
 	//
 	// Rename a workspace owned by the authenticated user.

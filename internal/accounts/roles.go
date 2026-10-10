@@ -21,7 +21,7 @@ var (
 	ErrLastOwner = errors.New("accounts: a workspace keeps at least one owner")
 )
 
-// The three role decisions below are deliberately separate named functions, not one
+// The role decisions below are deliberately separate named functions, not one
 // shared predicate: they may diverge, and EE refines them with finer-grained RBAC. Every
 // caller (handlers, OAuth connection consent) goes through them; none keeps a copy.
 
@@ -41,6 +41,12 @@ func CanManageTokens(role membership.Role) bool {
 // CanErase reports whether role may erase a Contact (ADR 0021), an irreversible action
 // for the accountable roles.
 func CanErase(role membership.Role) bool {
+	return role == membership.RoleOwner || role == membership.RoleAdmin
+}
+
+// CanManageSecondFactor reports whether role may switch the Workspace's Two-factor
+// requirement and reset a member's Second factor (ADR 0020). Owner and admin may.
+func CanManageSecondFactor(role membership.Role) bool {
 	return role == membership.RoleOwner || role == membership.RoleAdmin
 }
 

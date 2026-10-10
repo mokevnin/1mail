@@ -9668,9 +9668,22 @@
         },
         "description": "Result of a segment preview"
       },
+      "ProblemCode": {
+        "type": "string",
+        "enum": ["second_factor_required"],
+        "description": "A machine-readable reason a client branches on, beyond the HTTP status"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProblemCode"
+              }
+            ],
+            "description": "Why the request was refused, when the client should act on it"
+          },
           "type": {
             "type": "string",
             "description": "A URI reference that identifies the problem type"

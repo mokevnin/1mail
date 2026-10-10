@@ -73,6 +73,12 @@ func (Workspace) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Positive(),
+		// Two-factor requirement (ADR 0020): when an Owner or Admin switched it on;
+		// NULL while off. Each member's grace ends secondfactor.GracePeriod after the
+		// later of this and their Membership's creation.
+		field.Time("second_factor_required_at").
+			Optional().
+			Nillable(),
 		field.Time("suspended_at").
 			Optional().
 			Nillable(),

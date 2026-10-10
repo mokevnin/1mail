@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewErrors, SiteAnalyticsOverviewResponses, SiteAuditExportData, SiteAuditExportErrors, SiteAuditExportResponses, SiteAuditGetRetentionData, SiteAuditGetRetentionErrors, SiteAuditGetRetentionResponses, SiteAuditListData, SiteAuditListErrors, SiteAuditListResponses, SiteAuditSetRetentionData, SiteAuditSetRetentionErrors, SiteAuditSetRetentionResponses, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeErrors, SiteAuthConfirmEmailChangeResponses, SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthForgotPasswordData, SiteAuthForgotPasswordErrors, SiteAuthForgotPasswordResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAuthResetPasswordData, SiteAuthResetPasswordErrors, SiteAuthResetPasswordResponses, SiteAuthVerifyEmailData, SiteAuthVerifyEmailErrors, SiteAuthVerifyEmailResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsExportData, SiteContactsExportErrors, SiteContactsExportResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteCustomFieldsListData, SiteCustomFieldsListErrors, SiteCustomFieldsListResponses, SiteEventsActionsData, SiteEventsActionsErrors, SiteEventsActionsResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteInvitationsCreateData, SiteInvitationsCreateErrors, SiteInvitationsCreateResponses, SiteInvitationsDeleteData, SiteInvitationsDeleteErrors, SiteInvitationsDeleteResponses, SiteInvitationsListData, SiteInvitationsListErrors, SiteInvitationsListResponses, SiteMembershipsDeleteData, SiteMembershipsDeleteErrors, SiteMembershipsDeleteResponses, SiteMembershipsListData, SiteMembershipsListErrors, SiteMembershipsListResponses, SiteMembershipsUpdateData, SiteMembershipsUpdateErrors, SiteMembershipsUpdateResponses, SiteOAuthDecideData, SiteOAuthDecideErrors, SiteOAuthDecideResponses, SiteOAuthDescribeData, SiteOAuthDescribeErrors, SiteOAuthDescribeResponses, SitePublicConfirmationsPerformData, SitePublicConfirmationsPerformErrors, SitePublicConfirmationsPerformResponses, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptErrors, SitePublicInvitationsAcceptResponses, SitePublicInvitationsLookupData, SitePublicInvitationsLookupErrors, SitePublicInvitationsLookupResponses, SitePublicUnsubscribesPerformData, SitePublicUnsubscribesPerformErrors, SitePublicUnsubscribesPerformResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteSendingDomainsCreateData, SiteSendingDomainsCreateErrors, SiteSendingDomainsCreateResponses, SiteSendingDomainsDeleteData, SiteSendingDomainsDeleteErrors, SiteSendingDomainsDeleteResponses, SiteSendingDomainsGetData, SiteSendingDomainsGetErrors, SiteSendingDomainsGetResponses, SiteSendingDomainsListData, SiteSendingDomainsListErrors, SiteSendingDomainsListResponses, SiteSendingDomainsVerifyData, SiteSendingDomainsVerifyErrors, SiteSendingDomainsVerifyResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateErrors, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteData, SiteSuppressionsDeleteErrors, SiteSuppressionsDeleteResponses, SiteSuppressionsListData, SiteSuppressionsListErrors, SiteSuppressionsListResponses, SiteTagsApplyData, SiteTagsApplyErrors, SiteTagsApplyResponses, SiteTagsListData, SiteTagsListErrors, SiteTagsListForContactData, SiteTagsListForContactErrors, SiteTagsListForContactResponses, SiteTagsListResponses, SiteTagsRemoveData, SiteTagsRemoveErrors, SiteTagsRemoveResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteTransactionalEmailsListData, SiteTransactionalEmailsListErrors, SiteTransactionalEmailsListResponses, SiteUserEmailChangeData, SiteUserEmailChangeErrors, SiteUserEmailChangeResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserResendVerificationData, SiteUserResendVerificationResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateErrors, SiteWebhooksCreateResponses, SiteWebhooksDeleteData, SiteWebhooksDeleteErrors, SiteWebhooksDeleteResponses, SiteWebhooksGetData, SiteWebhooksGetErrors, SiteWebhooksGetResponses, SiteWebhooksListData, SiteWebhooksListErrors, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateErrors, SiteWebhooksUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
-import { zSiteAnalyticsOverviewPath, zSiteAnalyticsOverviewQuery, zSiteAuditExportPath, zSiteAuditExportQuery, zSiteAuditGetRetentionPath, zSiteAuditListPath, zSiteAuditListQuery, zSiteAuditSetRetentionBody, zSiteAuditSetRetentionPath, zSiteAuthConfirmEmailChangeBody, zSiteAuthDirectLoginBody, zSiteAuthForgotPasswordBody, zSiteAuthRegisterBody, zSiteAuthResetPasswordBody, zSiteAuthVerifyEmailBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsExportPath, zSiteContactsExportQuery, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteCustomFieldsListPath, zSiteEventsActionsPath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteInvitationsCreateBody, zSiteInvitationsCreatePath, zSiteInvitationsDeletePath, zSiteInvitationsListPath, zSiteMembershipsDeletePath, zSiteMembershipsListPath, zSiteMembershipsUpdateBody, zSiteMembershipsUpdatePath, zSiteOAuthDecideBody, zSiteOAuthDescribeQuery, zSitePublicConfirmationsPerformPath, zSitePublicInvitationsAcceptBody, zSitePublicInvitationsAcceptPath, zSitePublicInvitationsLookupPath, zSitePublicUnsubscribesPerformPath, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteSendingDomainsCreateBody, zSiteSendingDomainsCreatePath, zSiteSendingDomainsDeletePath, zSiteSendingDomainsGetPath, zSiteSendingDomainsListPath, zSiteSendingDomainsListQuery, zSiteSendingDomainsVerifyPath, zSiteSuppressionsCreateBody, zSiteSuppressionsCreatePath, zSiteSuppressionsDeletePath, zSiteSuppressionsListPath, zSiteSuppressionsListQuery, zSiteTagsApplyBody, zSiteTagsApplyPath, zSiteTagsListForContactPath, zSiteTagsListForContactQuery, zSiteTagsListPath, zSiteTagsListQuery, zSiteTagsRemovePath, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteTransactionalEmailsListPath, zSiteTransactionalEmailsListQuery, zSiteUserEmailChangeBody, zSiteUserUpdateMeBody, zSiteWebhooksCreateBody, zSiteWebhooksCreatePath, zSiteWebhooksDeletePath, zSiteWebhooksGetPath, zSiteWebhooksListPath, zSiteWebhooksListQuery, zSiteWebhooksUpdateBody, zSiteWebhooksUpdatePath, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
+import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewErrors, SiteAnalyticsOverviewResponses, SiteAuditExportData, SiteAuditExportErrors, SiteAuditExportResponses, SiteAuditGetRetentionData, SiteAuditGetRetentionErrors, SiteAuditGetRetentionResponses, SiteAuditListData, SiteAuditListErrors, SiteAuditListResponses, SiteAuditSetRetentionData, SiteAuditSetRetentionErrors, SiteAuditSetRetentionResponses, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeErrors, SiteAuthConfirmEmailChangeResponses, SiteAuthForgotPasswordData, SiteAuthForgotPasswordErrors, SiteAuthForgotPasswordResponses, SiteAuthLoginData, SiteAuthLoginErrors, SiteAuthLoginResponses, SiteAuthLogoutData, SiteAuthLogoutResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAuthResetPasswordData, SiteAuthResetPasswordErrors, SiteAuthResetPasswordResponses, SiteAuthSecondFactorData, SiteAuthSecondFactorErrors, SiteAuthSecondFactorResponses, SiteAuthVerifyEmailData, SiteAuthVerifyEmailErrors, SiteAuthVerifyEmailResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsExportData, SiteContactsExportErrors, SiteContactsExportResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteCustomFieldsListData, SiteCustomFieldsListErrors, SiteCustomFieldsListResponses, SiteEventsActionsData, SiteEventsActionsErrors, SiteEventsActionsResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteInvitationsCreateData, SiteInvitationsCreateErrors, SiteInvitationsCreateResponses, SiteInvitationsDeleteData, SiteInvitationsDeleteErrors, SiteInvitationsDeleteResponses, SiteInvitationsListData, SiteInvitationsListErrors, SiteInvitationsListResponses, SiteMembershipsDeleteData, SiteMembershipsDeleteErrors, SiteMembershipsDeleteResponses, SiteMembershipsListData, SiteMembershipsListErrors, SiteMembershipsListResponses, SiteMembershipsResetSecondFactorData, SiteMembershipsResetSecondFactorErrors, SiteMembershipsResetSecondFactorResponses, SiteMembershipsUpdateData, SiteMembershipsUpdateErrors, SiteMembershipsUpdateResponses, SiteOAuthDecideData, SiteOAuthDecideErrors, SiteOAuthDecideResponses, SiteOAuthDescribeData, SiteOAuthDescribeErrors, SiteOAuthDescribeResponses, SitePublicConfirmationsPerformData, SitePublicConfirmationsPerformErrors, SitePublicConfirmationsPerformResponses, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptErrors, SitePublicInvitationsAcceptResponses, SitePublicInvitationsLookupData, SitePublicInvitationsLookupErrors, SitePublicInvitationsLookupResponses, SitePublicUnsubscribesPerformData, SitePublicUnsubscribesPerformErrors, SitePublicUnsubscribesPerformResponses, SiteSecondFactorConfirmEnrollmentData, SiteSecondFactorConfirmEnrollmentErrors, SiteSecondFactorConfirmEnrollmentResponses, SiteSecondFactorDisableData, SiteSecondFactorDisableErrors, SiteSecondFactorDisableResponses, SiteSecondFactorGetStatusData, SiteSecondFactorGetStatusResponses, SiteSecondFactorRegenerateRecoveryCodesData, SiteSecondFactorRegenerateRecoveryCodesErrors, SiteSecondFactorRegenerateRecoveryCodesResponses, SiteSecondFactorStartEnrollmentData, SiteSecondFactorStartEnrollmentErrors, SiteSecondFactorStartEnrollmentResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteSendingDomainsCreateData, SiteSendingDomainsCreateErrors, SiteSendingDomainsCreateResponses, SiteSendingDomainsDeleteData, SiteSendingDomainsDeleteErrors, SiteSendingDomainsDeleteResponses, SiteSendingDomainsGetData, SiteSendingDomainsGetErrors, SiteSendingDomainsGetResponses, SiteSendingDomainsListData, SiteSendingDomainsListErrors, SiteSendingDomainsListResponses, SiteSendingDomainsVerifyData, SiteSendingDomainsVerifyErrors, SiteSendingDomainsVerifyResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateErrors, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteData, SiteSuppressionsDeleteErrors, SiteSuppressionsDeleteResponses, SiteSuppressionsListData, SiteSuppressionsListErrors, SiteSuppressionsListResponses, SiteTagsApplyData, SiteTagsApplyErrors, SiteTagsApplyResponses, SiteTagsListData, SiteTagsListErrors, SiteTagsListForContactData, SiteTagsListForContactErrors, SiteTagsListForContactResponses, SiteTagsListResponses, SiteTagsRemoveData, SiteTagsRemoveErrors, SiteTagsRemoveResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteTransactionalEmailsListData, SiteTransactionalEmailsListErrors, SiteTransactionalEmailsListResponses, SiteUserEmailChangeData, SiteUserEmailChangeErrors, SiteUserEmailChangeResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserResendVerificationData, SiteUserResendVerificationResponses, SiteUserSignOutEverywhereData, SiteUserSignOutEverywhereResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateErrors, SiteWebhooksCreateResponses, SiteWebhooksDeleteData, SiteWebhooksDeleteErrors, SiteWebhooksDeleteResponses, SiteWebhooksGetData, SiteWebhooksGetErrors, SiteWebhooksGetResponses, SiteWebhooksListData, SiteWebhooksListErrors, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateErrors, SiteWebhooksUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesSetSecondFactorRequirementData, SiteWorkspacesSetSecondFactorRequirementErrors, SiteWorkspacesSetSecondFactorRequirementResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import { zSiteAnalyticsOverviewPath, zSiteAnalyticsOverviewQuery, zSiteAuditExportPath, zSiteAuditExportQuery, zSiteAuditGetRetentionPath, zSiteAuditListPath, zSiteAuditListQuery, zSiteAuditSetRetentionBody, zSiteAuditSetRetentionPath, zSiteAuthConfirmEmailChangeBody, zSiteAuthForgotPasswordBody, zSiteAuthLoginBody, zSiteAuthRegisterBody, zSiteAuthResetPasswordBody, zSiteAuthSecondFactorBody, zSiteAuthVerifyEmailBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsExportPath, zSiteContactsExportQuery, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteCustomFieldsListPath, zSiteEventsActionsPath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteInvitationsCreateBody, zSiteInvitationsCreatePath, zSiteInvitationsDeletePath, zSiteInvitationsListPath, zSiteMembershipsDeletePath, zSiteMembershipsListPath, zSiteMembershipsResetSecondFactorPath, zSiteMembershipsUpdateBody, zSiteMembershipsUpdatePath, zSiteOAuthDecideBody, zSiteOAuthDescribeQuery, zSitePublicConfirmationsPerformPath, zSitePublicInvitationsAcceptBody, zSitePublicInvitationsAcceptPath, zSitePublicInvitationsLookupPath, zSitePublicUnsubscribesPerformPath, zSiteSecondFactorConfirmEnrollmentBody, zSiteSecondFactorDisableBody, zSiteSecondFactorRegenerateRecoveryCodesBody, zSiteSecondFactorStartEnrollmentBody, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteSendingDomainsCreateBody, zSiteSendingDomainsCreatePath, zSiteSendingDomainsDeletePath, zSiteSendingDomainsGetPath, zSiteSendingDomainsListPath, zSiteSendingDomainsListQuery, zSiteSendingDomainsVerifyPath, zSiteSuppressionsCreateBody, zSiteSuppressionsCreatePath, zSiteSuppressionsDeletePath, zSiteSuppressionsListPath, zSiteSuppressionsListQuery, zSiteTagsApplyBody, zSiteTagsApplyPath, zSiteTagsListForContactPath, zSiteTagsListForContactQuery, zSiteTagsListPath, zSiteTagsListQuery, zSiteTagsRemovePath, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteTransactionalEmailsListPath, zSiteTransactionalEmailsListQuery, zSiteUserEmailChangeBody, zSiteUserUpdateMeBody, zSiteWebhooksCreateBody, zSiteWebhooksCreatePath, zSiteWebhooksDeletePath, zSiteWebhooksGetPath, zSiteWebhooksListPath, zSiteWebhooksListQuery, zSiteWebhooksUpdateBody, zSiteWebhooksUpdatePath, zSiteWorkspacesSetSecondFactorRequirementBody, zSiteWorkspacesSetSecondFactorRequirementPath, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
   /**
@@ -24,7 +24,10 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 /**
  * Confirm an email change from the token sent to the new address. Public:
- * the link is opened from the new inbox, which has no session.
+ * the link may be opened from a browser without a session. The change ends
+ * every session of the user (ADR 0020); when the request carries a valid
+ * session of that same user, it continues under the fresh cookie set in this
+ * response. The link alone never starts a session.
  */
 export const siteAuthConfirmEmailChange = <ThrowOnError extends boolean = false>(options: Options<SiteAuthConfirmEmailChangeData, ThrowOnError>): RequestResult<SiteAuthConfirmEmailChangeResponses, SiteAuthConfirmEmailChangeErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthConfirmEmailChangeResponses, SiteAuthConfirmEmailChangeErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
@@ -33,20 +36,6 @@ export const siteAuthConfirmEmailChange = <ThrowOnError extends boolean = false>
     query: z.never().optional()
   }).parseAsync(data),
   url: '/auth/confirm-email-change',
-  ...options,
-  headers: {
-    'Content-Type': 'application/json',
-    ...options.headers
-  }
-});
-
-export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(options: Options<SiteAuthDirectLoginData, ThrowOnError>): RequestResult<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError>({
-  requestValidator: async (data) => await z.object({
-    body: zSiteAuthDirectLoginBody,
-    path: z.never().optional(),
-    query: z.never().optional()
-  }).parseAsync(data),
-  url: '/auth/direct/login',
   ...options,
   headers: {
     'Content-Type': 'application/json',
@@ -74,6 +63,41 @@ export const siteAuthForgotPassword = <ThrowOnError extends boolean = false>(opt
   }
 });
 
+/**
+ * Check the password. A User without a Second factor gets a session (outcome
+ * `session`, the JWT cookie set here); a User with one gets outcome `challenge`,
+ * a short-lived single-use challenge for the second step and no cookie (ADR
+ * 0020). Unknown email and wrong password answer the same 401; failures feed the
+ * Login throttle, which answers 429 even for a correct password while its delay
+ * runs (ADR 0025). Only a started session resets the throttle's counter.
+ */
+export const siteAuthLogin = <ThrowOnError extends boolean = false>(options: Options<SiteAuthLoginData, ThrowOnError>): RequestResult<SiteAuthLoginResponses, SiteAuthLoginErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthLoginResponses, SiteAuthLoginErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteAuthLoginBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  url: '/auth/login',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * End the session on this browser: clears the session cookie.
+ */
+export const siteAuthLogout = <ThrowOnError extends boolean = false>(options?: Options<SiteAuthLogoutData, ThrowOnError>): RequestResult<SiteAuthLogoutResponses, unknown, ThrowOnError> => (options?.client ?? client).post<SiteAuthLogoutResponses, unknown, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  url: '/auth/logout',
+  ...options
+});
+
 export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: Options<SiteAuthRegisterData, ThrowOnError>): RequestResult<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
     body: zSiteAuthRegisterBody,
@@ -98,6 +122,27 @@ export const siteAuthResetPassword = <ThrowOnError extends boolean = false>(opti
     query: z.never().optional()
   }).parseAsync(data),
   url: '/auth/reset-password',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * The second login step of a User with a Second factor: verify the challenge
+ * and a TOTP or Recovery code, then start the session. An expired, reused or
+ * forged challenge and a wrong code answer the same 401; wrong codes feed the
+ * Login throttle of the User's address, which answers 429 even for a correct code
+ * while its delay runs (ADR 0020, ADR 0025).
+ */
+export const siteAuthSecondFactor = <ThrowOnError extends boolean = false>(options: Options<SiteAuthSecondFactorData, ThrowOnError>): RequestResult<SiteAuthSecondFactorResponses, SiteAuthSecondFactorErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthSecondFactorResponses, SiteAuthSecondFactorErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteAuthSecondFactorBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  url: '/auth/second-factor',
   ...options,
   headers: {
     'Content-Type': 'application/json',
@@ -186,7 +231,9 @@ export const siteUserGetMe = <ThrowOnError extends boolean = false>(options?: Op
 });
 
 /**
- * Update the authenticated user's profile (name and/or password)
+ * Update the authenticated user's profile (name and/or password). A password
+ * change ends every session of the user (ADR 0020); the acting one continues
+ * under the fresh session cookie set in this response.
  */
 export const siteUserUpdateMe = <ThrowOnError extends boolean = false>(options: Options<SiteUserUpdateMeData, ThrowOnError>): RequestResult<SiteUserUpdateMeResponses, SiteUserUpdateMeErrors, ThrowOnError> => (options.client ?? client).put<SiteUserUpdateMeResponses, SiteUserUpdateMeErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
@@ -228,6 +275,145 @@ export const siteUserEmailChange = <ThrowOnError extends boolean = false>(option
     'Content-Type': 'application/json',
     ...options.headers
   }
+});
+
+/**
+ * The authenticated User's Second factor status
+ */
+export const siteSecondFactorGetStatus = <ThrowOnError extends boolean = false>(options?: Options<SiteSecondFactorGetStatusData, ThrowOnError>): RequestResult<SiteSecondFactorGetStatusResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SiteSecondFactorGetStatusResponses, unknown, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/second-factor',
+  ...options
+});
+
+/**
+ * Disable the Second factor, proving the password and a current code. Every
+ * other session ends; the acting one continues under the cookie set here. 403 on
+ * a wrong password (it feeds the Login throttle: 429 while its delay runs), 422
+ * on a wrong code, 409 without an active Second factor.
+ */
+export const siteSecondFactorDisable = <ThrowOnError extends boolean = false>(options: Options<SiteSecondFactorDisableData, ThrowOnError>): RequestResult<SiteSecondFactorDisableResponses, SiteSecondFactorDisableErrors, ThrowOnError> => (options.client ?? client).post<SiteSecondFactorDisableResponses, SiteSecondFactorDisableErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteSecondFactorDisableBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/second-factor/disable',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Start enrolling a TOTP Second factor, proving the password: creates a pending
+ * secret (replacing an earlier pending one). It counts as a Second factor only
+ * once confirmed. 403 on a wrong password, 409 when a Second factor is already
+ * active. A wrong password feeds the Login throttle, which answers 429 even for a
+ * correct one while its delay runs (ADR 0025).
+ */
+export const siteSecondFactorStartEnrollment = <ThrowOnError extends boolean = false>(options: Options<SiteSecondFactorStartEnrollmentData, ThrowOnError>): RequestResult<SiteSecondFactorStartEnrollmentResponses, SiteSecondFactorStartEnrollmentErrors, ThrowOnError> => (options.client ?? client).post<SiteSecondFactorStartEnrollmentResponses, SiteSecondFactorStartEnrollmentErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteSecondFactorStartEnrollmentBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/second-factor/enrollment',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Confirm the pending enrollment with the password and a code from the app. On
+ * success the Second factor is active, every other session ends and the acting
+ * one continues under the cookie set here; the Recovery codes are returned once.
+ * 403 on a wrong password (it feeds the Login throttle: 429 while its delay
+ * runs), 422 on a wrong code, 409 without a pending enrollment.
+ */
+export const siteSecondFactorConfirmEnrollment = <ThrowOnError extends boolean = false>(options: Options<SiteSecondFactorConfirmEnrollmentData, ThrowOnError>): RequestResult<SiteSecondFactorConfirmEnrollmentResponses, SiteSecondFactorConfirmEnrollmentErrors, ThrowOnError> => (options.client ?? client).post<SiteSecondFactorConfirmEnrollmentResponses, SiteSecondFactorConfirmEnrollmentErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteSecondFactorConfirmEnrollmentBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/second-factor/enrollment/confirm',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Replace the Recovery codes with a fresh set (the previous set stops working).
+ * Every other session ends; the acting one continues under the cookie set here.
+ * 403 on a wrong password (it feeds the Login throttle: 429 while its delay
+ * runs), 409 without an active Second factor.
+ */
+export const siteSecondFactorRegenerateRecoveryCodes = <ThrowOnError extends boolean = false>(options: Options<SiteSecondFactorRegenerateRecoveryCodesData, ThrowOnError>): RequestResult<SiteSecondFactorRegenerateRecoveryCodesResponses, SiteSecondFactorRegenerateRecoveryCodesErrors, ThrowOnError> => (options.client ?? client).post<SiteSecondFactorRegenerateRecoveryCodesResponses, SiteSecondFactorRegenerateRecoveryCodesErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteSecondFactorRegenerateRecoveryCodesBody,
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/second-factor/recovery-codes',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Sign out everywhere: end every session of the user, on every device,
+ * including the one making the request (its cookie is cleared).
+ */
+export const siteUserSignOutEverywhere = <ThrowOnError extends boolean = false>(options?: Options<SiteUserSignOutEverywhereData, ThrowOnError>): RequestResult<SiteUserSignOutEverywhereResponses, unknown, ThrowOnError> => (options?.client ?? client).post<SiteUserSignOutEverywhereResponses, unknown, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: z.never().optional(),
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/me/sign-out-everywhere',
+  ...options
 });
 
 /**
@@ -1168,6 +1354,51 @@ export const siteMembershipsUpdate = <ThrowOnError extends boolean = false>(opti
       type: 'apiKey'
     }],
   url: '/workspaces/{slug}/memberships/{id}',
+  ...options,
+  headers: {
+    'Content-Type': 'application/json',
+    ...options.headers
+  }
+});
+
+/**
+ * Reset the member's Second factor (owner/admin only; owner-only for an owner):
+ * clears the factor and its Recovery codes and ends every session of theirs. The
+ * acting session is untouched. 422 when the member has no Second factor or is the
+ * caller (who disables their own with a password and a code).
+ */
+export const siteMembershipsResetSecondFactor = <ThrowOnError extends boolean = false>(options: Options<SiteMembershipsResetSecondFactorData, ThrowOnError>): RequestResult<SiteMembershipsResetSecondFactorResponses, SiteMembershipsResetSecondFactorErrors, ThrowOnError> => (options.client ?? client).post<SiteMembershipsResetSecondFactorResponses, SiteMembershipsResetSecondFactorErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: zSiteMembershipsResetSecondFactorPath,
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{slug}/memberships/{id}/reset-second-factor',
+  ...options
+});
+
+/**
+ * Switch the Two-factor requirement on or off (owner and admin only). Switching
+ * it on while it is already on keeps the original start, so no one's grace
+ * restarts. A change is recorded as an Audit entry.
+ */
+export const siteWorkspacesSetSecondFactorRequirement = <ThrowOnError extends boolean = false>(options: Options<SiteWorkspacesSetSecondFactorRequirementData, ThrowOnError>): RequestResult<SiteWorkspacesSetSecondFactorRequirementResponses, SiteWorkspacesSetSecondFactorRequirementErrors, ThrowOnError> => (options.client ?? client).put<SiteWorkspacesSetSecondFactorRequirementResponses, SiteWorkspacesSetSecondFactorRequirementErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: zSiteWorkspacesSetSecondFactorRequirementBody,
+    path: zSiteWorkspacesSetSecondFactorRequirementPath,
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{slug}/second-factor-requirement',
   ...options,
   headers: {
     'Content-Type': 'application/json',

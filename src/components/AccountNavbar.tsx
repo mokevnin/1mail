@@ -1,12 +1,12 @@
 import { NavLink, Stack } from '@mantine/core'
-import { IconArrowLeft, IconUser } from '@tabler/icons-react'
+import { IconArrowLeft, IconShieldLock, IconUser } from '@tabler/icons-react'
 import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { indexRoute, profileRoute } from '../router.tsx'
+import { indexRoute, profileRoute, securityRoute } from '../router.tsx'
 
 // AccountNavbar is the sidebar for the workspace-independent account area:
-// a way back to the workspace dashboard plus account sections (profile today).
+// a way back to the workspace dashboard plus account sections.
 export function AccountNavbar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -24,6 +24,12 @@ export function AccountNavbar() {
         leftSection={<IconUser size={18} />}
         active={Boolean(matchRoute({ to: profileRoute.to }))}
         onClick={() => navigate({ to: profileRoute.to })}
+      />
+      <NavLink
+        label={t(($) => $.account.security)}
+        leftSection={<IconShieldLock size={18} />}
+        active={Boolean(matchRoute({ to: securityRoute.to }))}
+        onClick={() => navigate({ to: securityRoute.to })}
       />
     </Stack>
   )

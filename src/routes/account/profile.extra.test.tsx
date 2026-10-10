@@ -5,9 +5,11 @@ import {
   handleSiteUserEmailChange,
   handleSiteUserGetMe,
   handleSiteUserResendVerification,
+  handleSiteUserSignOutEverywhere,
   handleSiteUserUpdateMe,
 } from '../../generated/site/msw.gen.ts'
 import type { SiteUserResource } from '../../generated/site/types.gen.ts'
+import { loginRoute } from '../../router.tsx'
 import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { worker } from '../../test/worker.ts'
@@ -23,7 +25,7 @@ const user: SiteUserResource = {
 
 const noContent = () => new Response(null, { status: 204 })
 
-type Op = 'get' | 'update' | 'emailChange' | 'resend'
+type Op = 'get' | 'update' | 'emailChange' | 'resend' | 'signOutEverywhere'
 type Call = { op: Op; body: unknown }
 type Handler = (req: Request) => Response | Promise<Response>
 
@@ -48,6 +50,9 @@ function serveProfile(
     handleSiteUserUpdateMe(({ request }) => serve('update', json)(request)),
     handleSiteUserEmailChange(({ request }) => serve('emailChange', noContent)(request)),
     handleSiteUserResendVerification(({ request }) => serve('resend', noContent)(request)),
+    handleSiteUserSignOutEverywhere(({ request }) =>
+      serve('signOutEverywhere', noContent)(request),
+    ),
   )
 }
 
@@ -155,4 +160,30 @@ test('shows an error when the profile fails to load', async () => {
   const { screen } = await renderWithRouter(<ProfilePage />)
 
   await expect.element(screen.getByText('Failed to load profile').first()).toBeInTheDocument()
+})
+
+test('signing out everywhere asks first, then ends the sessions and goes to login', async () => {
+  const calls: Call[] = []
+  serveProfile(calls)
+  const { screen, navigate } = await renderWithRouter(<ProfilePage />)
+
+  await screen.getByRole('button', { name: 'Sign out everywhere' }).click()
+  expect(calls).toEqual([])
+  await screen.getByRole('dialog').getByRole('button', { name: 'Sign out everywhere' }).click()
+
+  await expect.poll(() => calls.map((c) => c.op)).toEqual(['signOutEverywhere'])
+  await expect.poll(() => navigate).toHaveBeenCalledWith({ to: loginRoute.to })
+})
+
+test('reports a failed sign out everywhere and stays put', async () => {
+  serveProfile([], {
+    signOutEverywhere: () => problem(500, { detail: 'boom' }),
+  })
+  const { screen, navigate } = await renderWithRouter(<ProfilePage />)
+
+  await screen.getByRole('button', { name: 'Sign out everywhere' }).click()
+  await screen.getByRole('dialog').getByRole('button', { name: 'Sign out everywhere' }).click()
+
+  await expect.element(screen.getByText('Could not sign out everywhere')).toBeInTheDocument()
+  expect(navigate).not.toHaveBeenCalledWith({ to: loginRoute.to })
 })

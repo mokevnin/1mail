@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +19,7 @@ import (
 )
 
 const (
-	loginPath     = "/site/auth/direct/login"
+	loginPath     = "/site/auth/login"
 	loginFailures = 5
 	// An address no account has.
 	unknownLoginEmail = "nobody@nowhere.test"
@@ -42,14 +41,14 @@ func loginEnv(t *testing.T, ipLimit int) (*testhelper.TestEnv, *frozenClock) {
 
 func login(t *testing.T, env *testhelper.TestEnv, user, password string) *httptest.ResponseRecorder {
 	t.Helper()
-	return postJSON(t, env, loginPath, fmt.Sprintf(`{"user":%q,"passwd":%q}`, user, password), nil)
+	return postJSON(t, env, loginPath, fmt.Sprintf(`{"email":%q,"password":%q}`, user, password), nil)
 }
 
 func failLogins(t *testing.T, env *testhelper.TestEnv, user string, times int) {
 	t.Helper()
 	for i := range times {
 		rec := login(t, env, user, "wrong-password")
-		require.Equal(t, http.StatusForbidden, rec.Code, "failure %d", i+1)
+		require.Equal(t, http.StatusUnauthorized, rec.Code, "failure %d", i+1)
 	}
 }
 
@@ -109,43 +108,19 @@ func TestUnknownEmailsThrottleLikeKnownOnesAndLeaveRows(t *testing.T) {
 	assert.Equal(t, http.StatusTooManyRequests, login(t, env, fixtures.GhostLoginAttemptEmail, "whatever").Code)
 }
 
-func TestTheBodyStillReachesTheProvider(t *testing.T) {
-	env, _ := loginEnv(t, 0)
-
-	form := url.Values{"user": {fixtures.OwnerJohnEmail}, "passwd": {fixtures.OwnerJohnPassword}}
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, loginPath, strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
-	env.Server.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code, "form body")
-
-	assert.Equal(t, http.StatusOK, login(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword).Code, "json body")
-}
-
-// The provider also serves /auth/direct/login; throttling only the /site alias would
-// leave the other path as a bypass.
-func TestTheAuthPrefixedLoginRouteIsThrottledToo(t *testing.T) {
-	env, _ := loginEnv(t, 0)
-	body := fmt.Sprintf(`{"user":%q,"passwd":"wrong-password"}`, fixtures.OwnerJohnEmail)
-	for range loginFailures {
-		require.Equal(t, http.StatusForbidden, postJSON(t, env, "/auth/direct/login", body, nil).Code)
-	}
-	assert.Equal(t, http.StatusTooManyRequests, login(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword).Code)
-}
-
 func TestLoginIsLimitedPerIPAcrossAccounts(t *testing.T) {
 	const ipLimit = 3
 	env, _ := loginEnv(t, ipLimit)
 	for i := range ipLimit {
 		rec := login(t, env, fmt.Sprintf("spray%d@nowhere.test", i), "x")
-		require.Equal(t, http.StatusForbidden, rec.Code)
+		require.Equal(t, http.StatusUnauthorized, rec.Code)
 	}
 	rec := login(t, env, "spray-last@nowhere.test", "x")
 	require.Equal(t, http.StatusTooManyRequests, rec.Code)
 	assert.NotEmpty(t, rec.Header().Get("Retry-After"))
 
-	other := postJSON(t, env, loginPath, `{"user":"a@nowhere.test","passwd":"x"}`, map[string]string{"X-Forwarded-For": "203.0.113.9"})
-	assert.Equal(t, http.StatusForbidden, other.Code, "another address has its own budget")
+	other := postJSON(t, env, loginPath, `{"email":"a@nowhere.test","password":"x"}`, map[string]string{"X-Forwarded-For": "203.0.113.9"})
+	assert.Equal(t, http.StatusUnauthorized, other.Code, "another address has its own budget")
 }
 
 func TestDisabledLoginLimitsNeverThrottle(t *testing.T) {
@@ -161,4 +136,102 @@ func jwtOf(rec *httptest.ResponseRecorder) string {
 		}
 	}
 	return ""
+}
+
+// samChallenge passes Sam's password step (he has a Second factor) and returns the
+// challenge.
+func samChallenge(t *testing.T, env *testhelper.TestEnv) string {
+	t.Helper()
+	rec := login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var res struct {
+		Challenge string `json:"challenge"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &res))
+	require.NotEmpty(t, res.Challenge)
+	return res.Challenge
+}
+
+func secondStep(t *testing.T, env *testhelper.TestEnv, challenge, code string) *httptest.ResponseRecorder {
+	t.Helper()
+	return postJSON(t, env, "/site/auth/second-factor", fmt.Sprintf(`{"challenge":%q,"code":%q}`, challenge, code), nil)
+}
+
+func TestWrongSecondStepCodesFeedTheLoginThrottle(t *testing.T) {
+	env, clock := loginEnv(t, 0)
+	challenge := samChallenge(t, env)
+	for i := range loginFailures {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, challenge, "000000").Code, "failure %d", i+1)
+	}
+
+	good, err := totp.GenerateCode(fixtures.SecondFactorSamTotpSecret, clock.now())
+	require.NoError(t, err)
+	rec := secondStep(t, env, challenge, good)
+	assert.Equal(t, http.StatusTooManyRequests, rec.Code, "a correct code during the delay must not log in")
+	assert.Empty(t, jwtOf(rec))
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code, "one counter for both steps")
+}
+
+// Knowing the password must not buy a fresh round of code guesses: the password
+// step does not reset the counter of a User with a Second factor.
+func TestThePasswordStepDoesNotResetSecondStepFailures(t *testing.T) {
+	env, _ := loginEnv(t, 0)
+	for i := range loginFailures - 1 {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, samChallenge(t, env), "000000").Code, "failure %d", i+1)
+	}
+	require.Equal(t, http.StatusUnauthorized, secondStep(t, env, samChallenge(t, env), "000000").Code)
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code)
+}
+
+func TestASuccessfulSecondStepResetsTheCounter(t *testing.T) {
+	env, clock := loginEnv(t, 0)
+	challenge := samChallenge(t, env)
+	for range loginFailures - 1 {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, challenge, "000000").Code)
+	}
+	good, err := totp.GenerateCode(fixtures.SecondFactorSamTotpSecret, clock.now())
+	require.NoError(t, err)
+	rec := secondStep(t, env, challenge, good)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.NotEmpty(t, jwtOf(rec))
+
+	n, err := env.DB.AuthAttempt.Query().Where(authattempt.Email(fixtures.SecondFactorSamEmail)).Count(t.Context())
+	require.NoError(t, err)
+	assert.Zero(t, n)
+}
+
+func TestTheSecondStepSharesThePerIPLoginCap(t *testing.T) {
+	const ipLimit = 2
+	env, _ := loginEnv(t, ipLimit)
+	for range ipLimit {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, "forged", "000000").Code)
+	}
+	assert.Equal(t, http.StatusTooManyRequests, secondStep(t, env, "forged", "000000").Code)
+}
+
+// A session holder proving the password to manage the Second factor guesses the same
+// password as a login does: wrong ones feed the account's Login throttle, and while
+// its delay runs even the right one answers 429.
+func TestSecondFactorPasswordChecksFeedTheLoginThrottle(t *testing.T) {
+	env, _ := loginEnv(t, 0)
+	cookie := map[string]string{"Cookie": "JWT=" + env.SiteToken(t, fixtures.SecondFactorSamEmail, nil)}
+	regenerate := func(password string) int {
+		return postJSON(t, env, "/site/me/second-factor/recovery-codes",
+			fmt.Sprintf(`{"currentPassword":%q}`, password), cookie).Code
+	}
+	for i := range loginFailures {
+		require.Equal(t, http.StatusForbidden, regenerate("wrong-password"), "failure %d", i+1)
+	}
+
+	assert.Equal(t, http.StatusTooManyRequests, regenerate(fixtures.SecondFactorSamPassword))
+	for path, body := range map[string]string{
+		"/site/me/second-factor/disable":    fmt.Sprintf(`{"currentPassword":%q,"code":%q}`, fixtures.SecondFactorSamPassword, fixtures.SecondFactorSamRecoveryCode),
+		"/site/me/second-factor/enrollment": fmt.Sprintf(`{"currentPassword":%q}`, fixtures.SecondFactorSamPassword),
+	} {
+		assert.Equal(t, http.StatusTooManyRequests, postJSON(t, env, path, body, cookie).Code, path)
+	}
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code, "one counter with the login")
 }

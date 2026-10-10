@@ -3,7 +3,7 @@
 
 import { http, type HttpHandler, HttpResponse, type HttpResponseResolver, type RequestHandlerOptions as RequestHandlerOptions2 } from 'msw';
 
-import type { ClientOptions, SiteAnalyticsOverviewResponses, SiteAuditExportResponses, SiteAuditGetRetentionResponses, SiteAuditListResponses, SiteAuditSetRetentionData, SiteAuditSetRetentionResponses, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeResponses, SiteAuthDirectLoginData, SiteAuthDirectLoginResponses, SiteAuthForgotPasswordData, SiteAuthForgotPasswordResponses, SiteAuthRegisterData, SiteAuthRegisterResponses, SiteAuthResetPasswordData, SiteAuthResetPasswordResponses, SiteAuthVerifyEmailData, SiteAuthVerifyEmailResponses, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateResponses, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteResponses, SiteAutomationsGetResponses, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteResponses, SiteBroadcastsGetResponses, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleResponses, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateResponses, SiteContactsDeleteResponses, SiteContactsExportResponses, SiteContactsGetResponses, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateResponses, SiteCustomFieldsListResponses, SiteEventsActionsResponses, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteResponses, SiteIntegrationsGetResponses, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateResponses, SiteInvitationsCreateData, SiteInvitationsCreateResponses, SiteInvitationsDeleteResponses, SiteInvitationsListResponses, SiteMembershipsDeleteResponses, SiteMembershipsListResponses, SiteMembershipsUpdateData, SiteMembershipsUpdateResponses, SiteOAuthDecideData, SiteOAuthDecideResponses, SiteOAuthDescribeResponses, SitePublicConfirmationsPerformResponses, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptResponses, SitePublicInvitationsLookupResponses, SitePublicUnsubscribesPerformResponses, SiteSegmentsCreateData, SiteSegmentsCreateResponses, SiteSegmentsDeleteResponses, SiteSegmentsGetResponses, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateResponses, SiteSendingDomainsCreateData, SiteSendingDomainsCreateResponses, SiteSendingDomainsDeleteResponses, SiteSendingDomainsGetResponses, SiteSendingDomainsListResponses, SiteSendingDomainsVerifyResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteResponses, SiteSuppressionsListResponses, SiteTagsApplyData, SiteTagsApplyResponses, SiteTagsListForContactResponses, SiteTagsListResponses, SiteTagsRemoveResponses, SiteTemplatesCreateData, SiteTemplatesCreateResponses, SiteTemplatesDeleteResponses, SiteTemplatesGetResponses, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateResponses, SiteTokensDeleteResponses, SiteTokensListResponses, SiteTransactionalEmailsListResponses, SiteUserEmailChangeData, SiteUserEmailChangeResponses, SiteUserGetMeResponses, SiteUserResendVerificationResponses, SiteUserUpdateMeData, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateResponses, SiteWebhooksDeleteResponses, SiteWebhooksGetResponses, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateResponses, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import type { ClientOptions, SiteAnalyticsOverviewResponses, SiteAuditExportResponses, SiteAuditGetRetentionResponses, SiteAuditListResponses, SiteAuditSetRetentionData, SiteAuditSetRetentionResponses, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeResponses, SiteAuthForgotPasswordData, SiteAuthForgotPasswordResponses, SiteAuthLoginData, SiteAuthLoginResponses, SiteAuthLogoutResponses, SiteAuthRegisterData, SiteAuthRegisterResponses, SiteAuthResetPasswordData, SiteAuthResetPasswordResponses, SiteAuthSecondFactorData, SiteAuthSecondFactorResponses, SiteAuthVerifyEmailData, SiteAuthVerifyEmailResponses, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateResponses, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteResponses, SiteAutomationsGetResponses, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteResponses, SiteBroadcastsGetResponses, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleResponses, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateResponses, SiteContactsDeleteResponses, SiteContactsExportResponses, SiteContactsGetResponses, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateResponses, SiteCustomFieldsListResponses, SiteEventsActionsResponses, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteResponses, SiteIntegrationsGetResponses, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateResponses, SiteInvitationsCreateData, SiteInvitationsCreateResponses, SiteInvitationsDeleteResponses, SiteInvitationsListResponses, SiteMembershipsDeleteResponses, SiteMembershipsListResponses, SiteMembershipsResetSecondFactorResponses, SiteMembershipsUpdateData, SiteMembershipsUpdateResponses, SiteOAuthDecideData, SiteOAuthDecideResponses, SiteOAuthDescribeResponses, SitePublicConfirmationsPerformResponses, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptResponses, SitePublicInvitationsLookupResponses, SitePublicUnsubscribesPerformResponses, SiteSecondFactorConfirmEnrollmentData, SiteSecondFactorConfirmEnrollmentResponses, SiteSecondFactorDisableData, SiteSecondFactorDisableResponses, SiteSecondFactorGetStatusResponses, SiteSecondFactorRegenerateRecoveryCodesData, SiteSecondFactorRegenerateRecoveryCodesResponses, SiteSecondFactorStartEnrollmentData, SiteSecondFactorStartEnrollmentResponses, SiteSegmentsCreateData, SiteSegmentsCreateResponses, SiteSegmentsDeleteResponses, SiteSegmentsGetResponses, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateResponses, SiteSendingDomainsCreateData, SiteSendingDomainsCreateResponses, SiteSendingDomainsDeleteResponses, SiteSendingDomainsGetResponses, SiteSendingDomainsListResponses, SiteSendingDomainsVerifyResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteResponses, SiteSuppressionsListResponses, SiteTagsApplyData, SiteTagsApplyResponses, SiteTagsListForContactResponses, SiteTagsListResponses, SiteTagsRemoveResponses, SiteTemplatesCreateData, SiteTemplatesCreateResponses, SiteTemplatesDeleteResponses, SiteTemplatesGetResponses, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateResponses, SiteTokensDeleteResponses, SiteTokensListResponses, SiteTransactionalEmailsListResponses, SiteUserEmailChangeData, SiteUserEmailChangeResponses, SiteUserGetMeResponses, SiteUserResendVerificationResponses, SiteUserSignOutEverywhereResponses, SiteUserUpdateMeData, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateResponses, SiteWebhooksDeleteResponses, SiteWebhooksGetResponses, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateResponses, SiteWorkspacesListResponses, SiteWorkspacesSetSecondFactorRequirementData, SiteWorkspacesSetSecondFactorRequirementResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateResponses } from './types.gen.ts';
 
 export type RequestHandlerOptions = RequestHandlerOptions2 & {
   baseUrl?: ClientOptions['baseUrl'];
@@ -37,16 +37,43 @@ export function handleSiteAuthConfirmEmailChange(response?: HandleSiteAuthConfir
   }, options);
 }
 
-export type HandleSiteAuthDirectLoginResponse = {
-  body: SiteAuthDirectLoginResponses[200];
+export type HandleSiteAuthForgotPasswordResponse = {
+  body: SiteAuthForgotPasswordResponses[202];
+  status?: 202;
+};
+
+/**
+ * Handler for the `POST /auth/forgot-password` operation.
+ */
+export function handleSiteAuthForgotPassword(response?: HandleSiteAuthForgotPasswordResponse | HttpResponseResolver<never, SiteAuthForgotPasswordData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteAuthForgotPasswordData['body']>(`${options?.baseUrl ?? '*'}/auth/forgot-password`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return new HttpResponse(body, { status: response?.status ?? 202 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteAuthLoginResponse = {
+  body: SiteAuthLoginResponses[200];
   status?: 200;
 };
 
 /**
- * Handler for the `POST /auth/direct/login` operation.
+ * Handler for the `POST /auth/login` operation.
  */
-export function handleSiteAuthDirectLogin(response?: HandleSiteAuthDirectLoginResponse | HttpResponseResolver<never, SiteAuthDirectLoginData['body']>, options?: RequestHandlerOptions): HttpHandler {
-  return http.post<never, SiteAuthDirectLoginData['body']>(`${options?.baseUrl ?? '*'}/auth/direct/login`, info => {
+export function handleSiteAuthLogin(response?: HandleSiteAuthLoginResponse | HttpResponseResolver<never, SiteAuthLoginData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteAuthLoginData['body']>(`${options?.baseUrl ?? '*'}/auth/login`, info => {
     if (typeof response === 'function') {
       return response(info);
     }
@@ -64,22 +91,22 @@ export function handleSiteAuthDirectLogin(response?: HandleSiteAuthDirectLoginRe
   }, options);
 }
 
-export type HandleSiteAuthForgotPasswordResponse = {
-  body: SiteAuthForgotPasswordResponses[202];
-  status?: 202;
+export type HandleSiteAuthLogoutResponse = {
+  body: SiteAuthLogoutResponses[204];
+  status?: 204;
 };
 
 /**
- * Handler for the `POST /auth/forgot-password` operation.
+ * Handler for the `POST /auth/logout` operation.
  */
-export function handleSiteAuthForgotPassword(response?: HandleSiteAuthForgotPasswordResponse | HttpResponseResolver<never, SiteAuthForgotPasswordData['body']>, options?: RequestHandlerOptions): HttpHandler {
-  return http.post<never, SiteAuthForgotPasswordData['body']>(`${options?.baseUrl ?? '*'}/auth/forgot-password`, info => {
+export function handleSiteAuthLogout(response?: HandleSiteAuthLogoutResponse | HttpResponseResolver<never, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, never>(`${options?.baseUrl ?? '*'}/auth/logout`, info => {
     if (typeof response === 'function') {
       return response(info);
     }
     const body = response?.body;
     if (body !== undefined) {
-      return new HttpResponse(body, { status: response?.status ?? 202 });
+      return new HttpResponse(body, { status: response?.status ?? 204 });
     }
     if (options?.responseFallback === 'passthrough') {
       return;
@@ -134,6 +161,33 @@ export function handleSiteAuthResetPassword(response?: HandleSiteAuthResetPasswo
     const body = response?.body;
     if (body !== undefined) {
       return new HttpResponse(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteAuthSecondFactorResponse = {
+  body: SiteAuthSecondFactorResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /auth/second-factor` operation.
+ */
+export function handleSiteAuthSecondFactor(response?: HandleSiteAuthSecondFactorResponse | HttpResponseResolver<never, SiteAuthSecondFactorData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteAuthSecondFactorData['body']>(`${options?.baseUrl ?? '*'}/auth/second-factor`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
     }
     if (options?.responseFallback === 'passthrough') {
       return;
@@ -335,6 +389,168 @@ export function handleSiteUserEmailChange(response?: HandleSiteUserEmailChangeRe
     const body = response?.body;
     if (body !== undefined) {
       return new HttpResponse(body, { status: response?.status ?? 202 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteSecondFactorGetStatusResponse = {
+  body: SiteSecondFactorGetStatusResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `GET /me/second-factor` operation.
+ */
+export function handleSiteSecondFactorGetStatus(response?: HandleSiteSecondFactorGetStatusResponse | HttpResponseResolver<never, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.get<never, never>(`${options?.baseUrl ?? '*'}/me/second-factor`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteSecondFactorDisableResponse = {
+  body: SiteSecondFactorDisableResponses[204];
+  status?: 204;
+};
+
+/**
+ * Handler for the `POST /me/second-factor/disable` operation.
+ */
+export function handleSiteSecondFactorDisable(response?: HandleSiteSecondFactorDisableResponse | HttpResponseResolver<never, SiteSecondFactorDisableData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteSecondFactorDisableData['body']>(`${options?.baseUrl ?? '*'}/me/second-factor/disable`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return new HttpResponse(body, { status: response?.status ?? 204 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteSecondFactorStartEnrollmentResponse = {
+  body: SiteSecondFactorStartEnrollmentResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /me/second-factor/enrollment` operation.
+ */
+export function handleSiteSecondFactorStartEnrollment(response?: HandleSiteSecondFactorStartEnrollmentResponse | HttpResponseResolver<never, SiteSecondFactorStartEnrollmentData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteSecondFactorStartEnrollmentData['body']>(`${options?.baseUrl ?? '*'}/me/second-factor/enrollment`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteSecondFactorConfirmEnrollmentResponse = {
+  body: SiteSecondFactorConfirmEnrollmentResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /me/second-factor/enrollment/confirm` operation.
+ */
+export function handleSiteSecondFactorConfirmEnrollment(response?: HandleSiteSecondFactorConfirmEnrollmentResponse | HttpResponseResolver<never, SiteSecondFactorConfirmEnrollmentData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteSecondFactorConfirmEnrollmentData['body']>(`${options?.baseUrl ?? '*'}/me/second-factor/enrollment/confirm`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteSecondFactorRegenerateRecoveryCodesResponse = {
+  body: SiteSecondFactorRegenerateRecoveryCodesResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `POST /me/second-factor/recovery-codes` operation.
+ */
+export function handleSiteSecondFactorRegenerateRecoveryCodes(response?: HandleSiteSecondFactorRegenerateRecoveryCodesResponse | HttpResponseResolver<never, SiteSecondFactorRegenerateRecoveryCodesData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, SiteSecondFactorRegenerateRecoveryCodesData['body']>(`${options?.baseUrl ?? '*'}/me/second-factor/recovery-codes`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteUserSignOutEverywhereResponse = {
+  body: SiteUserSignOutEverywhereResponses[204];
+  status?: 204;
+};
+
+/**
+ * Handler for the `POST /me/sign-out-everywhere` operation.
+ */
+export function handleSiteUserSignOutEverywhere(response?: HandleSiteUserSignOutEverywhereResponse | HttpResponseResolver<never, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<never, never>(`${options?.baseUrl ?? '*'}/me/sign-out-everywhere`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return new HttpResponse(body, { status: response?.status ?? 204 });
     }
     if (options?.responseFallback === 'passthrough') {
       return;
@@ -1897,6 +2113,70 @@ export function handleSiteMembershipsUpdate(response?: HandleSiteMembershipsUpda
   }, options);
 }
 
+export type HandleSiteMembershipsResetSecondFactorResponse = {
+  body: SiteMembershipsResetSecondFactorResponses[204];
+  status?: 204;
+};
+
+/**
+ * Handler for the `POST /workspaces/{slug}/memberships/{id}/reset-second-factor` operation.
+ */
+export function handleSiteMembershipsResetSecondFactor(response?: HandleSiteMembershipsResetSecondFactorResponse | HttpResponseResolver<{
+  slug: string;
+  id: string;
+}, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.post<{
+    slug: string;
+    id: string;
+  }, never>(`${options?.baseUrl ?? '*'}/workspaces/:slug/memberships/:id/reset-second-factor`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return new HttpResponse(body, { status: response?.status ?? 204 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleSiteWorkspacesSetSecondFactorRequirementResponse = {
+  body: SiteWorkspacesSetSecondFactorRequirementResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `PUT /workspaces/{slug}/second-factor-requirement` operation.
+ */
+export function handleSiteWorkspacesSetSecondFactorRequirement(response?: HandleSiteWorkspacesSetSecondFactorRequirementResponse | HttpResponseResolver<{
+  slug: string;
+}, SiteWorkspacesSetSecondFactorRequirementData['body']>, options?: RequestHandlerOptions): HttpHandler {
+  return http.put<{
+    slug: string;
+  }, SiteWorkspacesSetSecondFactorRequirementData['body']>(`${options?.baseUrl ?? '*'}/workspaces/:slug/second-factor-requirement`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
 export type HandleSiteSegmentsListResponse = {
   body: SiteSegmentsListResponses[200];
   status?: 200;
@@ -2830,13 +3110,17 @@ export type MswHandlerFactories = {
    */
   siteAuthConfirmEmailChange: typeof handleSiteAuthConfirmEmailChange;
   /**
-   * Handler for the `POST /auth/direct/login` operation.
-   */
-  siteAuthDirectLogin: typeof handleSiteAuthDirectLogin;
-  /**
    * Handler for the `POST /auth/forgot-password` operation.
    */
   siteAuthForgotPassword: typeof handleSiteAuthForgotPassword;
+  /**
+   * Handler for the `POST /auth/login` operation.
+   */
+  siteAuthLogin: typeof handleSiteAuthLogin;
+  /**
+   * Handler for the `POST /auth/logout` operation.
+   */
+  siteAuthLogout: typeof handleSiteAuthLogout;
   /**
    * Handler for the `POST /auth/register` operation.
    */
@@ -2845,6 +3129,10 @@ export type MswHandlerFactories = {
    * Handler for the `POST /auth/reset-password` operation.
    */
   siteAuthResetPassword: typeof handleSiteAuthResetPassword;
+  /**
+   * Handler for the `POST /auth/second-factor` operation.
+   */
+  siteAuthSecondFactor: typeof handleSiteAuthSecondFactor;
   /**
    * Handler for the `POST /auth/verify-email` operation.
    */
@@ -2873,6 +3161,30 @@ export type MswHandlerFactories = {
    * Handler for the `POST /me/email-change` operation.
    */
   siteUserEmailChange: typeof handleSiteUserEmailChange;
+  /**
+   * Handler for the `GET /me/second-factor` operation.
+   */
+  siteSecondFactorGetStatus: typeof handleSiteSecondFactorGetStatus;
+  /**
+   * Handler for the `POST /me/second-factor/disable` operation.
+   */
+  siteSecondFactorDisable: typeof handleSiteSecondFactorDisable;
+  /**
+   * Handler for the `POST /me/second-factor/enrollment` operation.
+   */
+  siteSecondFactorStartEnrollment: typeof handleSiteSecondFactorStartEnrollment;
+  /**
+   * Handler for the `POST /me/second-factor/enrollment/confirm` operation.
+   */
+  siteSecondFactorConfirmEnrollment: typeof handleSiteSecondFactorConfirmEnrollment;
+  /**
+   * Handler for the `POST /me/second-factor/recovery-codes` operation.
+   */
+  siteSecondFactorRegenerateRecoveryCodes: typeof handleSiteSecondFactorRegenerateRecoveryCodes;
+  /**
+   * Handler for the `POST /me/sign-out-everywhere` operation.
+   */
+  siteUserSignOutEverywhere: typeof handleSiteUserSignOutEverywhere;
   /**
    * Handler for the `POST /me/verification-email` operation.
    */
@@ -3070,6 +3382,14 @@ export type MswHandlerFactories = {
    */
   siteMembershipsUpdate: typeof handleSiteMembershipsUpdate;
   /**
+   * Handler for the `POST /workspaces/{slug}/memberships/{id}/reset-second-factor` operation.
+   */
+  siteMembershipsResetSecondFactor: typeof handleSiteMembershipsResetSecondFactor;
+  /**
+   * Handler for the `PUT /workspaces/{slug}/second-factor-requirement` operation.
+   */
+  siteWorkspacesSetSecondFactorRequirement: typeof handleSiteWorkspacesSetSecondFactorRequirement;
+  /**
    * Handler for the `GET /workspaces/{slug}/segments` operation.
    */
   siteSegmentsList: typeof handleSiteSegmentsList;
@@ -3203,10 +3523,12 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
   }
   const pick: CreateMswHandlersResult['pick'] = {
     siteAuthConfirmEmailChange: wrap(handleSiteAuthConfirmEmailChange),
-    siteAuthDirectLogin: wrap(handleSiteAuthDirectLogin),
     siteAuthForgotPassword: wrap(handleSiteAuthForgotPassword),
+    siteAuthLogin: wrap(handleSiteAuthLogin),
+    siteAuthLogout: wrap(handleSiteAuthLogout),
     siteAuthRegister: wrap(handleSiteAuthRegister),
     siteAuthResetPassword: wrap(handleSiteAuthResetPassword),
+    siteAuthSecondFactor: wrap(handleSiteAuthSecondFactor),
     siteAuthVerifyEmail: wrap(handleSiteAuthVerifyEmail),
     sitePublicConfirmationsPerform: wrap(handleSitePublicConfirmationsPerform),
     sitePublicInvitationsLookup: wrap(handleSitePublicInvitationsLookup),
@@ -3214,6 +3536,12 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
     siteUserGetMe: wrap(handleSiteUserGetMe),
     siteUserUpdateMe: wrap(handleSiteUserUpdateMe),
     siteUserEmailChange: wrap(handleSiteUserEmailChange),
+    siteSecondFactorGetStatus: wrap(handleSiteSecondFactorGetStatus),
+    siteSecondFactorDisable: wrap(handleSiteSecondFactorDisable),
+    siteSecondFactorStartEnrollment: wrap(handleSiteSecondFactorStartEnrollment),
+    siteSecondFactorConfirmEnrollment: wrap(handleSiteSecondFactorConfirmEnrollment),
+    siteSecondFactorRegenerateRecoveryCodes: wrap(handleSiteSecondFactorRegenerateRecoveryCodes),
+    siteUserSignOutEverywhere: wrap(handleSiteUserSignOutEverywhere),
     siteUserResendVerification: wrap(handleSiteUserResendVerification),
     siteOAuthDescribe: wrap(handleSiteOAuthDescribe),
     siteOAuthDecide: wrap(handleSiteOAuthDecide),
@@ -3263,6 +3591,8 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
     siteMembershipsList: wrap(handleSiteMembershipsList),
     siteMembershipsDelete: wrap(handleSiteMembershipsDelete),
     siteMembershipsUpdate: wrap(handleSiteMembershipsUpdate),
+    siteMembershipsResetSecondFactor: wrap(handleSiteMembershipsResetSecondFactor),
+    siteWorkspacesSetSecondFactorRequirement: wrap(handleSiteWorkspacesSetSecondFactorRequirement),
     siteSegmentsList: wrap(handleSiteSegmentsList),
     siteSegmentsCreate: wrap(handleSiteSegmentsCreate),
     siteSegmentsPreview: wrap(handleSiteSegmentsPreview),
@@ -3311,7 +3641,9 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
       invoke(pick.siteBroadcastsTestSend, overrides.siteBroadcastsTestSend),
       invoke(pick.siteTagsListForContact, overrides.siteTagsListForContact),
       invoke(pick.siteTagsApply, overrides.siteTagsApply),
+      invoke(pick.siteMembershipsResetSecondFactor, overrides.siteMembershipsResetSecondFactor),
       invoke(pick.siteSendingDomainsVerify, overrides.siteSendingDomainsVerify),
+      invoke(pick.siteSecondFactorConfirmEnrollment, overrides.siteSecondFactorConfirmEnrollment),
       invoke(pick.siteAnalyticsOverview, overrides.siteAnalyticsOverview),
       invoke(pick.siteAuditExport, overrides.siteAuditExport),
       invoke(pick.siteAuditGetRetention, overrides.siteAuditGetRetention),
@@ -3347,7 +3679,9 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
       invoke(pick.siteWebhooksDelete, overrides.siteWebhooksDelete),
       invoke(pick.siteWebhooksGet, overrides.siteWebhooksGet),
       invoke(pick.siteWebhooksUpdate, overrides.siteWebhooksUpdate),
-      invoke(pick.siteAuthDirectLogin, overrides.siteAuthDirectLogin),
+      invoke(pick.siteSecondFactorDisable, overrides.siteSecondFactorDisable),
+      invoke(pick.siteSecondFactorStartEnrollment, overrides.siteSecondFactorStartEnrollment),
+      invoke(pick.siteSecondFactorRegenerateRecoveryCodes, overrides.siteSecondFactorRegenerateRecoveryCodes),
       invoke(pick.sitePublicInvitationsAccept, overrides.sitePublicInvitationsAccept),
       invoke(pick.siteAuditList, overrides.siteAuditList),
       invoke(pick.siteAutomationsList, overrides.siteAutomationsList),
@@ -3363,6 +3697,7 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
       invoke(pick.siteInvitationsList, overrides.siteInvitationsList),
       invoke(pick.siteInvitationsCreate, overrides.siteInvitationsCreate),
       invoke(pick.siteMembershipsList, overrides.siteMembershipsList),
+      invoke(pick.siteWorkspacesSetSecondFactorRequirement, overrides.siteWorkspacesSetSecondFactorRequirement),
       invoke(pick.siteSegmentsList, overrides.siteSegmentsList),
       invoke(pick.siteSegmentsCreate, overrides.siteSegmentsCreate),
       invoke(pick.siteSendingDomainsList, overrides.siteSendingDomainsList),
@@ -3379,10 +3714,15 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
       invoke(pick.siteWebhooksCreate, overrides.siteWebhooksCreate),
       invoke(pick.siteAuthConfirmEmailChange, overrides.siteAuthConfirmEmailChange),
       invoke(pick.siteAuthForgotPassword, overrides.siteAuthForgotPassword),
+      invoke(pick.siteAuthLogin, overrides.siteAuthLogin),
+      invoke(pick.siteAuthLogout, overrides.siteAuthLogout),
       invoke(pick.siteAuthRegister, overrides.siteAuthRegister),
       invoke(pick.siteAuthResetPassword, overrides.siteAuthResetPassword),
+      invoke(pick.siteAuthSecondFactor, overrides.siteAuthSecondFactor),
       invoke(pick.siteAuthVerifyEmail, overrides.siteAuthVerifyEmail),
       invoke(pick.siteUserEmailChange, overrides.siteUserEmailChange),
+      invoke(pick.siteSecondFactorGetStatus, overrides.siteSecondFactorGetStatus),
+      invoke(pick.siteUserSignOutEverywhere, overrides.siteUserSignOutEverywhere),
       invoke(pick.siteUserResendVerification, overrides.siteUserResendVerification),
       invoke(pick.siteOAuthDescribe, overrides.siteOAuthDescribe),
       invoke(pick.siteOAuthDecide, overrides.siteOAuthDecide),

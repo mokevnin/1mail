@@ -63,15 +63,13 @@ type Invoker interface {
 	SiteAuditSetRetention(ctx context.Context, request *SiteAuditRetention, params SiteAuditSetRetentionParams) (SiteAuditSetRetentionRes, error)
 	// SiteAuthConfirmEmailChange invokes SiteAuth_confirmEmailChange operation.
 	//
-	// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-	// new inbox, which has no session.
+	// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+	// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+	// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+	// The link alone never starts a session.
 	//
 	// POST /auth/confirm-email-change
-	SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
-	// SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
-	//
-	// POST /auth/direct/login
-	SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
+	SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (SiteAuthConfirmEmailChangeRes, error)
 	// SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
 	//
 	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
@@ -80,6 +78,22 @@ type Invoker interface {
 	//
 	// POST /auth/forgot-password
 	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
+	// SiteAuthLogin invokes SiteAuth_login operation.
+	//
+	// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+	// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+	// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+	// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+	// 0025). Only a started session resets the throttle's counter.
+	//
+	// POST /auth/login
+	SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error)
+	// SiteAuthLogout invokes SiteAuth_logout operation.
+	//
+	// End the session on this browser: clears the session cookie.
+	//
+	// POST /auth/logout
+	SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error)
 	// SiteAuthRegister invokes SiteAuth_register operation.
 	//
 	// POST /auth/register
@@ -90,6 +104,15 @@ type Invoker interface {
 	//
 	// POST /auth/reset-password
 	SiteAuthResetPassword(ctx context.Context, request *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthSecondFactor invokes SiteAuth_secondFactor operation.
+	//
+	// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+	// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+	// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+	// correct code while its delay runs (ADR 0020, ADR 0025).
+	//
+	// POST /auth/second-factor
+	SiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error)
 	// SiteAuthVerifyEmail invokes SiteAuth_verifyEmail operation.
 	//
 	// Confirm an email address from a verification token (signup verification).
@@ -302,6 +325,14 @@ type Invoker interface {
 	//
 	// GET /workspaces/{slug}/memberships
 	SiteMembershipsList(ctx context.Context, params SiteMembershipsListParams) (SiteMembershipsListRes, error)
+	// SiteMembershipsResetSecondFactor invokes SiteMemberships_resetSecondFactor operation.
+	//
+	// Reset the member's Second factor (owner/admin only; owner-only for an owner): clears the factor and
+	// its Recovery codes and ends every session of theirs. The acting session is untouched. 422 when the
+	// member has no Second factor or is the caller (who disables their own with a password and a code).
+	//
+	// POST /workspaces/{slug}/memberships/{id}/reset-second-factor
+	SiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (SiteMembershipsResetSecondFactorRes, error)
 	// SiteMembershipsUpdate invokes SiteMemberships_update operation.
 	//
 	// Change a member's role (owner/admin only; owner-only to grant owner).
@@ -348,6 +379,46 @@ type Invoker interface {
 	//
 	// POST /unsubscribes/{token}
 	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
+	// SiteSecondFactorConfirmEnrollment invokes SiteSecondFactor_confirmEnrollment operation.
+	//
+	// Confirm the pending enrollment with the password and a code from the app. On success the Second
+	// factor is active, every other session ends and the acting one continues under the cookie set here;
+	// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+	// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
+	//
+	// POST /me/second-factor/enrollment/confirm
+	SiteSecondFactorConfirmEnrollment(ctx context.Context, request *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error)
+	// SiteSecondFactorDisable invokes SiteSecondFactor_disable operation.
+	//
+	// Disable the Second factor, proving the password and a current code. Every other session ends; the
+	// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+	// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
+	//
+	// POST /me/second-factor/disable
+	SiteSecondFactorDisable(ctx context.Context, request *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error)
+	// SiteSecondFactorGetStatus invokes SiteSecondFactor_getStatus operation.
+	//
+	// The authenticated User's Second factor status.
+	//
+	// GET /me/second-factor
+	SiteSecondFactorGetStatus(ctx context.Context) (*SiteSecondFactorStatus, error)
+	// SiteSecondFactorRegenerateRecoveryCodes invokes SiteSecondFactor_regenerateRecoveryCodes operation.
+	//
+	// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
+	// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+	// Login throttle: 429 while its delay runs), 409 without an active Second factor.
+	//
+	// POST /me/second-factor/recovery-codes
+	SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, request *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error)
+	// SiteSecondFactorStartEnrollment invokes SiteSecondFactor_startEnrollment operation.
+	//
+	// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+	// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+	// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+	// even for a correct one while its delay runs (ADR 0025).
+	//
+	// POST /me/second-factor/enrollment
+	SiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (SiteSecondFactorStartEnrollmentRes, error)
 	// SiteSegmentsCreate invokes SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.
@@ -529,9 +600,18 @@ type Invoker interface {
 	//
 	// POST /me/verification-email
 	SiteUserResendVerification(ctx context.Context) error
+	// SiteUserSignOutEverywhere invokes SiteUser_signOutEverywhere operation.
+	//
+	// Sign out everywhere: end every session of the user, on every device, including the one making the
+	// request (its cookie is cleared).
+	//
+	// POST /me/sign-out-everywhere
+	SiteUserSignOutEverywhere(ctx context.Context) (*SiteUserSignOutEverywhereNoContent, error)
 	// SiteUserUpdateMe invokes SiteUser_updateMe operation.
 	//
-	// Update the authenticated user's profile (name and/or password).
+	// Update the authenticated user's profile (name and/or password). A password change ends every session
+	// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+	// response.
 	//
 	// PUT /me
 	SiteUserUpdateMe(ctx context.Context, request *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
@@ -571,6 +651,14 @@ type Invoker interface {
 	//
 	// GET /workspaces
 	SiteWorkspacesList(ctx context.Context) ([]SiteWorkspaceResource, error)
+	// SiteWorkspacesSetSecondFactorRequirement invokes SiteWorkspaces_setSecondFactorRequirement operation.
+	//
+	// Switch the Two-factor requirement on or off (owner and admin only). Switching it on while it is
+	// already on keeps the original start, so no one's grace restarts. A change is recorded as an Audit
+	// entry.
+	//
+	// PUT /workspaces/{slug}/second-factor-requirement
+	SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, request *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (SiteWorkspacesSetSecondFactorRequirementRes, error)
 	// SiteWorkspacesUpdate invokes SiteWorkspaces_update operation.
 	//
 	// Rename a workspace owned by the authenticated user.
@@ -1668,16 +1756,18 @@ func (c *Client) sendSiteAuditSetRetention(ctx context.Context, request *SiteAud
 
 // SiteAuthConfirmEmailChange invokes SiteAuth_confirmEmailChange operation.
 //
-// Confirm an email change from the token sent to the new address. Public: the link is opened from the
-// new inbox, which has no session.
+// Confirm an email change from the token sent to the new address. Public: the link may be opened from
+// a browser without a session. The change ends every session of the user (ADR 0020); when the request
+// carries a valid session of that same user, it continues under the fresh cookie set in this response.
+// The link alone never starts a session.
 //
 // POST /auth/confirm-email-change
-func (c *Client) SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error) {
-	res, err := c.sendSiteAuthConfirmEmailChange(ctx, request)
+func (c *Client) SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (SiteAuthConfirmEmailChangeRes, error) {
+	res, err := c.sendSiteAuthConfirmEmailChange(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (res SiteAuthConfirmEmailChangeRes, err error) {
+func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput, params SiteAuthConfirmEmailChangeParams) (res SiteAuthConfirmEmailChangeRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAuth_confirmEmailChange"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -1727,6 +1817,25 @@ func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *Si
 		return res, errors.Wrap(err, "encode request")
 	}
 
+	stage = "EncodeCookieParams"
+	cookie := uri.NewCookieEncoder(r)
+	{
+		// Encode "JWT" parameter.
+		cfg := uri.CookieParameterEncodingConfig{
+			Name:    "JWT",
+			Explode: false,
+		}
+
+		if err := cookie.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.JWT.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode cookie")
+		}
+	}
+
 	stage = "SendRequest"
 	resp, err := c.cfg.Client.Do(r)
 	if err != nil {
@@ -1743,87 +1852,6 @@ func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *Si
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthConfirmEmailChangeResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
-//
-// POST /auth/direct/login
-func (c *Client) SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error) {
-	res, err := c.sendSiteAuthDirectLogin(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendSiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (res SiteAuthDirectLoginRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("SiteAuth_directLogin"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/auth/direct/login"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthDirectLoginOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/auth/direct/login"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeSiteAuthDirectLoginRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	body := resp.Body
-	defer func() {
-		// Drain the body to EOF before closing, so the underlying
-		// connection can be reused by the Transport regardless of the
-		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
-		_, _ = io.Copy(io.Discard, body)
-		_ = body.Close()
-	}()
-
-	stage = "DecodeResponse"
-	result, err := decodeSiteAuthDirectLoginResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1909,6 +1937,173 @@ func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteFo
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthForgotPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthLogin invokes SiteAuth_login operation.
+//
+// Check the password. A User without a Second factor gets a session (outcome `session`, the JWT cookie
+// set here); a User with one gets outcome `challenge`, a short-lived single-use challenge for the
+// second step and no cookie (ADR 0020). Unknown email and wrong password answer the same 401; failures
+// feed the Login throttle, which answers 429 even for a correct password while its delay runs (ADR
+// 0025). Only a started session resets the throttle's counter.
+//
+// POST /auth/login
+func (c *Client) SiteAuthLogin(ctx context.Context, request *SiteLoginInput) (SiteAuthLoginRes, error) {
+	res, err := c.sendSiteAuthLogin(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthLogin(ctx context.Context, request *SiteLoginInput) (res SiteAuthLoginRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_login"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/login"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthLoginOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/login"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthLoginRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthLoginResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthLogout invokes SiteAuth_logout operation.
+//
+// End the session on this browser: clears the session cookie.
+//
+// POST /auth/logout
+func (c *Client) SiteAuthLogout(ctx context.Context) (*SiteAuthLogoutNoContent, error) {
+	res, err := c.sendSiteAuthLogout(ctx)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthLogout(ctx context.Context) (res *SiteAuthLogoutNoContent, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_logout"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/logout"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthLogoutOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/logout"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthLogoutResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -2073,6 +2268,92 @@ func (c *Client) sendSiteAuthResetPassword(ctx context.Context, request *SiteRes
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthResetPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthSecondFactor invokes SiteAuth_secondFactor operation.
+//
+// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+// correct code while its delay runs (ADR 0020, ADR 0025).
+//
+// POST /auth/second-factor
+func (c *Client) SiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error) {
+	res, err := c.sendSiteAuthSecondFactor(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (res SiteAuthSecondFactorRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_secondFactor"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/second-factor"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthSecondFactorOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/second-factor"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthSecondFactorRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthSecondFactorResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -7340,6 +7621,162 @@ func (c *Client) sendSiteMembershipsList(ctx context.Context, params SiteMembers
 	return result, nil
 }
 
+// SiteMembershipsResetSecondFactor invokes SiteMemberships_resetSecondFactor operation.
+//
+// Reset the member's Second factor (owner/admin only; owner-only for an owner): clears the factor and
+// its Recovery codes and ends every session of theirs. The acting session is untouched. 422 when the
+// member has no Second factor or is the caller (who disables their own with a password and a code).
+//
+// POST /workspaces/{slug}/memberships/{id}/reset-second-factor
+func (c *Client) SiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (SiteMembershipsResetSecondFactorRes, error) {
+	res, err := c.sendSiteMembershipsResetSecondFactor(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendSiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (res SiteMembershipsResetSecondFactorRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteMemberships_resetSecondFactor"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/memberships/{id}/reset-second-factor"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteMembershipsResetSecondFactorOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/workspaces/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Slug))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/memberships/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.ID); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/reset-second-factor"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteMembershipsResetSecondFactorOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteMembershipsResetSecondFactorResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SiteMembershipsUpdate invokes SiteMemberships_update operation.
 //
 // Change a member's role (owner/admin only; owner-only to grant owner).
@@ -8167,6 +8604,593 @@ func (c *Client) sendSitePublicUnsubscribesPerform(ctx context.Context, params S
 
 	stage = "DecodeResponse"
 	result, err := decodeSitePublicUnsubscribesPerformResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteSecondFactorConfirmEnrollment invokes SiteSecondFactor_confirmEnrollment operation.
+//
+// Confirm the pending enrollment with the password and a code from the app. On success the Second
+// factor is active, every other session ends and the acting one continues under the cookie set here;
+// the Recovery codes are returned once. 403 on a wrong password (it feeds the Login throttle: 429
+// while its delay runs), 422 on a wrong code, 409 without a pending enrollment.
+//
+// POST /me/second-factor/enrollment/confirm
+func (c *Client) SiteSecondFactorConfirmEnrollment(ctx context.Context, request *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error) {
+	res, err := c.sendSiteSecondFactorConfirmEnrollment(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteSecondFactorConfirmEnrollment(ctx context.Context, request *SiteSecondFactorConfirmInput) (res SiteSecondFactorConfirmEnrollmentRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteSecondFactor_confirmEnrollment"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/second-factor/enrollment/confirm"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteSecondFactorConfirmEnrollmentOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/second-factor/enrollment/confirm"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteSecondFactorConfirmEnrollmentRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteSecondFactorConfirmEnrollmentOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteSecondFactorConfirmEnrollmentResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteSecondFactorDisable invokes SiteSecondFactor_disable operation.
+//
+// Disable the Second factor, proving the password and a current code. Every other session ends; the
+// acting one continues under the cookie set here. 403 on a wrong password (it feeds the Login
+// throttle: 429 while its delay runs), 422 on a wrong code, 409 without an active Second factor.
+//
+// POST /me/second-factor/disable
+func (c *Client) SiteSecondFactorDisable(ctx context.Context, request *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error) {
+	res, err := c.sendSiteSecondFactorDisable(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteSecondFactorDisable(ctx context.Context, request *SiteSecondFactorDisableInput) (res SiteSecondFactorDisableRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteSecondFactor_disable"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/second-factor/disable"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteSecondFactorDisableOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/second-factor/disable"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteSecondFactorDisableRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteSecondFactorDisableOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteSecondFactorDisableResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteSecondFactorGetStatus invokes SiteSecondFactor_getStatus operation.
+//
+// The authenticated User's Second factor status.
+//
+// GET /me/second-factor
+func (c *Client) SiteSecondFactorGetStatus(ctx context.Context) (*SiteSecondFactorStatus, error) {
+	res, err := c.sendSiteSecondFactorGetStatus(ctx)
+	return res, err
+}
+
+func (c *Client) sendSiteSecondFactorGetStatus(ctx context.Context) (res *SiteSecondFactorStatus, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteSecondFactor_getStatus"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/me/second-factor"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteSecondFactorGetStatusOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/second-factor"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteSecondFactorGetStatusOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteSecondFactorGetStatusResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteSecondFactorRegenerateRecoveryCodes invokes SiteSecondFactor_regenerateRecoveryCodes operation.
+//
+// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
+// ends; the acting one continues under the cookie set here. 403 on a wrong password (it feeds the
+// Login throttle: 429 while its delay runs), 409 without an active Second factor.
+//
+// POST /me/second-factor/recovery-codes
+func (c *Client) SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, request *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error) {
+	res, err := c.sendSiteSecondFactorRegenerateRecoveryCodes(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, request *SiteRecoveryCodesInput) (res SiteSecondFactorRegenerateRecoveryCodesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteSecondFactor_regenerateRecoveryCodes"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/second-factor/recovery-codes"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteSecondFactorRegenerateRecoveryCodesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/second-factor/recovery-codes"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteSecondFactorRegenerateRecoveryCodesRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteSecondFactorRegenerateRecoveryCodesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteSecondFactorRegenerateRecoveryCodesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteSecondFactorStartEnrollment invokes SiteSecondFactor_startEnrollment operation.
+//
+// Start enrolling a TOTP Second factor, proving the password: creates a pending secret (replacing an
+// earlier pending one). It counts as a Second factor only once confirmed. 403 on a wrong password, 409
+// when a Second factor is already active. A wrong password feeds the Login throttle, which answers 429
+// even for a correct one while its delay runs (ADR 0025).
+//
+// POST /me/second-factor/enrollment
+func (c *Client) SiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (SiteSecondFactorStartEnrollmentRes, error) {
+	res, err := c.sendSiteSecondFactorStartEnrollment(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteSecondFactorStartEnrollment(ctx context.Context, request *SiteSecondFactorStartInput) (res SiteSecondFactorStartEnrollmentRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteSecondFactor_startEnrollment"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/second-factor/enrollment"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteSecondFactorStartEnrollmentOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/second-factor/enrollment"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteSecondFactorStartEnrollmentRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteSecondFactorStartEnrollmentOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteSecondFactorStartEnrollmentResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -12690,9 +13714,125 @@ func (c *Client) sendSiteUserResendVerification(ctx context.Context) (res *SiteU
 	return result, nil
 }
 
+// SiteUserSignOutEverywhere invokes SiteUser_signOutEverywhere operation.
+//
+// Sign out everywhere: end every session of the user, on every device, including the one making the
+// request (its cookie is cleared).
+//
+// POST /me/sign-out-everywhere
+func (c *Client) SiteUserSignOutEverywhere(ctx context.Context) (*SiteUserSignOutEverywhereNoContent, error) {
+	res, err := c.sendSiteUserSignOutEverywhere(ctx)
+	return res, err
+}
+
+func (c *Client) sendSiteUserSignOutEverywhere(ctx context.Context) (res *SiteUserSignOutEverywhereNoContent, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteUser_signOutEverywhere"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/sign-out-everywhere"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteUserSignOutEverywhereOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/sign-out-everywhere"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteUserSignOutEverywhereOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteUserSignOutEverywhereResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SiteUserUpdateMe invokes SiteUser_updateMe operation.
 //
-// Update the authenticated user's profile (name and/or password).
+// Update the authenticated user's profile (name and/or password). A password change ends every session
+// of the user (ADR 0020); the acting one continues under the fresh session cookie set in this
+// response.
 //
 // PUT /me
 func (c *Client) SiteUserUpdateMe(ctx context.Context, request *SiteUpdateMeInput) (SiteUserUpdateMeRes, error) {
@@ -13679,6 +14819,143 @@ func (c *Client) sendSiteWorkspacesList(ctx context.Context) (res []SiteWorkspac
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteWorkspacesListResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteWorkspacesSetSecondFactorRequirement invokes SiteWorkspaces_setSecondFactorRequirement operation.
+//
+// Switch the Two-factor requirement on or off (owner and admin only). Switching it on while it is
+// already on keeps the original start, so no one's grace restarts. A change is recorded as an Audit
+// entry.
+//
+// PUT /workspaces/{slug}/second-factor-requirement
+func (c *Client) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, request *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (SiteWorkspacesSetSecondFactorRequirementRes, error) {
+	res, err := c.sendSiteWorkspacesSetSecondFactorRequirement(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendSiteWorkspacesSetSecondFactorRequirement(ctx context.Context, request *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (res SiteWorkspacesSetSecondFactorRequirementRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteWorkspaces_setSecondFactorRequirement"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/second-factor-requirement"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteWorkspacesSetSecondFactorRequirementOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/workspaces/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Slug))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/second-factor-requirement"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteWorkspacesSetSecondFactorRequirementRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteWorkspacesSetSecondFactorRequirementOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteWorkspacesSetSecondFactorRequirementResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

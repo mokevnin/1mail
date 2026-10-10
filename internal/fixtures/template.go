@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/secrets"
 )
 
@@ -45,6 +46,9 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 		// Invitation tokens are stored only as a SHA-256 hash; fixtures express the
 		// raw token and hash it at load time so tests can present the raw value.
 		"inviteHash": accounts.HashInviteToken,
+		// Recovery codes are stored only as a hash (ADR 0020); the fixture states the
+		// code and the generator lifts it into the catalog (fixtures.<Name>Code).
+		"recoveryCodeHash": credentials.HashRecoveryCode,
 		// Anchor credentials: the fixture states the plaintext and the hash is derived
 		// at load time, so hash and secret cannot drift apart. The fixture generator
 		// lifts the plaintext literal into the catalog (e.g. fixtures.OwnerJohnPassword).

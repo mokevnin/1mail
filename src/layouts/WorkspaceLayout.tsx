@@ -1,13 +1,20 @@
 import { Alert, Group, Select } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppNavbar } from '../components/AppNavbar.tsx'
+import {
+  SecondFactorBlocked,
+  SecondFactorGraceBanner,
+  secondFactorStanding,
+} from '../components/SecondFactorNotice.tsx'
 import { UserMenu } from '../components/UserMenu.tsx'
 import { siteWorkspacesListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWorkspaceResource } from '../generated/site/types.gen.ts'
 import { overviewRoute, workspaceRoute } from '../router.tsx'
+import { isSecondFactorRequiredError } from '../utils/apiErrors.ts'
 import { DashboardShell } from './DashboardShell.tsx'
 
 // WorkspaceSwitcher changes the active workspace by navigating to its
@@ -49,19 +56,50 @@ function SuspensionBanner({ reason }: { reason: string | null | undefined }) {
   )
 }
 
+// useSecondFactorRefused reports whether any query of the Workspace was refused
+// with 403 second_factor_required since the Workspace list last loaded (listedAt):
+// the server's word that the grace is over, even when this browser's clock says
+// otherwise. A reload of the list after the refusal (the requirement was turned off,
+// or the User enrolled) lifts it; a page still refused refuses again.
+function useSecondFactorRefused(slug: string, listedAt: number) {
+  const queryCache = useQueryClient().getQueryCache()
+  const [refused, setRefused] = useState<{ slug: string; at: number }>()
+  useEffect(
+    () =>
+      queryCache.subscribe((event) => {
+        if (event.type === 'updated' && isSecondFactorRequiredError(event.query.state.error)) {
+          setRefused({ slug, at: event.query.state.errorUpdatedAt })
+        }
+      }),
+    [queryCache, slug],
+  )
+  return refused?.slug === slug && refused.at >= listedAt
+}
+
 // WorkspaceLayout is the shell for workspace-scoped pages (overview, contacts,
-// activity, workspace settings): workspace sidebar + switcher.
+// activity, workspace settings): workspace sidebar + switcher. Under a Two-factor
+// requirement it shows the grace banner, and once the grace is over it replaces
+// the page with the screen that leads to enrollment.
 export function WorkspaceLayout() {
   const { slug } = workspaceRoute.useParams()
   const workspacesQuery = useQuery(siteWorkspacesListOptions())
   const workspaces = workspacesQuery.data ?? []
   const current = workspaces.find((w) => w.slug === slug)
+  const [now] = useState(() => Date.now())
+  const refused = useSecondFactorRefused(slug, workspacesQuery.dataUpdatedAt)
+  const standing = refused ? { kind: 'blocked' as const } : secondFactorStanding(current, now)
 
   return (
     <DashboardShell
       sidebar={<AppNavbar slug={slug} />}
       banner={
-        current?.suspendedAt ? <SuspensionBanner reason={current.suspensionReason} /> : undefined
+        <>
+          {current?.suspendedAt ? <SuspensionBanner reason={current.suspensionReason} /> : null}
+          {standing.kind === 'grace' ? <SecondFactorGraceBanner endsAt={standing.endsAt} /> : null}
+        </>
+      }
+      content={
+        standing.kind === 'blocked' ? <SecondFactorBlocked workspace={current} /> : undefined
       }
       headerRight={
         <Group gap="sm">

@@ -38,8 +38,8 @@ func encodeSiteAuthConfirmEmailChangeRequest(
 	return nil
 }
 
-func encodeSiteAuthDirectLoginRequest(
-	req *SiteDirectLoginInput,
+func encodeSiteAuthForgotPasswordRequest(
+	req *SiteForgotPasswordInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -52,8 +52,8 @@ func encodeSiteAuthDirectLoginRequest(
 	return nil
 }
 
-func encodeSiteAuthForgotPasswordRequest(
-	req *SiteForgotPasswordInput,
+func encodeSiteAuthLoginRequest(
+	req *SiteLoginInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -82,6 +82,20 @@ func encodeSiteAuthRegisterRequest(
 
 func encodeSiteAuthResetPasswordRequest(
 	req *SiteResetPasswordInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteAuthSecondFactorRequest(
+	req *SiteLoginSecondFactorInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -304,6 +318,62 @@ func encodeSitePublicInvitationsAcceptRequest(
 	return nil
 }
 
+func encodeSiteSecondFactorConfirmEnrollmentRequest(
+	req *SiteSecondFactorConfirmInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteSecondFactorDisableRequest(
+	req *SiteSecondFactorDisableInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteSecondFactorRegenerateRecoveryCodesRequest(
+	req *SiteRecoveryCodesInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteSecondFactorStartEnrollmentRequest(
+	req *SiteSecondFactorStartInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteSegmentsCreateRequest(
 	req *SiteCreateSegmentInput,
 	r *http.Request,
@@ -474,6 +544,20 @@ func encodeSiteWebhooksCreateRequest(
 
 func encodeSiteWebhooksUpdateRequest(
 	req *SiteUpdateWebhookEndpointInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteWorkspacesSetSecondFactorRequirementRequest(
+	req *SiteSecondFactorRequirementInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

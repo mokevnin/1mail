@@ -172,21 +172,6 @@ func WriteProblem(w http.ResponseWriter) {
 	_ = json.NewEncoder(w).Encode(body)
 }
 
-// Wait answers 429 for a limit that is a delay rather than a window budget (the
-// per-account login delay): the caller must wait `wait` from now. limit is the
-// budget reported in X-RateLimit-Limit; Remaining is always 0. It counts and logs the
-// rejection under policy.
-func Wait(w http.ResponseWriter, r *http.Request, policy string, limit int, wait time.Duration, now time.Time) {
-	secs := int(math.Ceil(wait.Seconds()))
-	h := w.Header()
-	h.Set("Retry-After", strconv.Itoa(secs))
-	h.Set("X-RateLimit-Limit", strconv.Itoa(limit))
-	h.Set("X-RateLimit-Remaining", "0")
-	h.Set("X-RateLimit-Reset", strconv.FormatInt(now.Add(wait).Unix(), 10))
-	Rejected(r.Context(), policy)
-	WriteProblem(w)
-}
-
 // Limiter holds every policy built from the configured limits.
 type Limiter struct {
 	human      *Policy
@@ -280,6 +265,24 @@ func (e *Exchange) AuthFailed(ctx context.Context) error {
 	return e.limiter.failedAuth.Reject(e.w, e.r, ipOf(ctx))
 }
 
+// Delay refuses a request that must wait out a delay rather than a window budget
+// (the per-account login delay, ADR 0025): the caller may retry `wait` from now.
+// limit is the budget reported in X-RateLimit-Limit; Remaining is always 0. Like
+// the other rejections it sets the 429 headers on the shared writer, counts and logs
+// the rejection under policy, and returns the *LimitedError the error handler
+// renders.
+func (e *Exchange) Delay(ctx context.Context, policy string, limit int, wait time.Duration, now time.Time) error {
+	if e != nil {
+		h := e.w.Header()
+		h.Set("Retry-After", strconv.Itoa(int(math.Ceil(wait.Seconds()))))
+		h.Set("X-RateLimit-Limit", strconv.Itoa(limit))
+		h.Set("X-RateLimit-Remaining", "0")
+		h.Set("X-RateLimit-Reset", strconv.FormatInt(now.Add(wait).Unix(), 10))
+	}
+	Rejected(ctx, policy)
+	return &LimitedError{Policy: policy}
+}
+
 func ipOf(ctx context.Context) string {
 	return httprate.CanonicalizeIP(clientip.FromContext(ctx))
 }
@@ -291,10 +294,6 @@ func (l *Limiter) RecordsTracking(r *http.Request) bool {
 	return !l.tracking.Exceeded(r, httprate.CanonicalizeIP(clientip.FromContext(r.Context())))
 }
 
-// LoginIP is the per-IP login limiter (nil when disabled). The login route's wrapper
-// applies it, because that wrapper owns the route.
-func (l *Limiter) LoginIP() *Policy { return l.loginIP }
-
 // Middleware applies the policy of the request's route. It sits after the client
 // address middleware (the key is clientip, never a raw header) and before timeout.
 // Operational endpoints are never limited, whatever policies exist.
@@ -304,6 +303,12 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 		if r.Method == http.MethodPost && r.URL.Path == "/site/auth/forgot-password" &&
 			!l.forgotIP.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
+			return
+		}
+		// The per-IP login cap spans accounts (password spraying) and both login
+		// steps; the per-account delay follows in the operations, which know the address.
+		if r.Method == http.MethodPost && (r.URL.Path == "/site/auth/login" || r.URL.Path == "/site/auth/second-factor") &&
+			!l.loginIP.Allow(w, r, "login|"+httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
 			return
 		}
 		if !exempt(r.URL.Path) {

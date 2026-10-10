@@ -1513,6 +1513,69 @@ func decodeSiteAuditSetRetentionParams(args [1]string, argsEscaped bool, r *http
 	return params, nil
 }
 
+// SiteAuthConfirmEmailChangeParams is parameters of SiteAuth_confirmEmailChange operation.
+type SiteAuthConfirmEmailChangeParams struct {
+	// The confirming browser's session, if any.
+	JWT OptString `json:",omitempty,omitzero"`
+}
+
+func unpackSiteAuthConfirmEmailChangeParams(packed middleware.Parameters) (params SiteAuthConfirmEmailChangeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "JWT",
+			In:   "cookie",
+		}
+		if v, ok := packed[key]; ok {
+			params.JWT = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeSiteAuthConfirmEmailChangeParams(args [0]string, argsEscaped bool, r *http.Request) (params SiteAuthConfirmEmailChangeParams, _ error) {
+	c := uri.NewCookieDecoder(r)
+	// Decode cookie: JWT.
+	if err := func() error {
+		cfg := uri.CookieParameterDecodingConfig{
+			Name:    "JWT",
+			Explode: false,
+		}
+		if err := c.HasParam(cfg); err == nil {
+			if err := c.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotJWTVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotJWTVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.JWT.SetTo(paramsDotJWTVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "JWT",
+			In:   "cookie",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteAutomationsActivateParams is parameters of SiteAutomations_activate operation.
 type SiteAutomationsActivateParams struct {
 	// URL-safe unique slug; the route key for nested workspace resources.
@@ -5848,6 +5911,141 @@ func decodeSiteMembershipsListParams(args [1]string, argsEscaped bool, r *http.R
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteMembershipsResetSecondFactorParams is parameters of SiteMemberships_resetSecondFactor operation.
+type SiteMembershipsResetSecondFactorParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// Unique identifier.
+	ID EntityId
+}
+
+func unpackSiteMembershipsResetSecondFactorParams(packed middleware.Parameters) (params SiteMembershipsResetSecondFactorParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(EntityId)
+	}
+	return params
+}
+
+func decodeSiteMembershipsResetSecondFactorParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteMembershipsResetSecondFactorParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				var paramsDotIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID = EntityId(paramsDotIDVal)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.ID.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
 			In:   "path",
 			Err:  err,
 		}
@@ -10646,6 +10844,71 @@ func decodeSiteWebhooksUpdateParams(args [2]string, argsEscaped bool, r *http.Re
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteWorkspacesSetSecondFactorRequirementParams is parameters of SiteWorkspaces_setSecondFactorRequirement operation.
+type SiteWorkspacesSetSecondFactorRequirementParams struct {
+	Slug string
+}
+
+func unpackSiteWorkspacesSetSecondFactorRequirementParams(packed middleware.Parameters) (params SiteWorkspacesSetSecondFactorRequirementParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteWorkspacesSetSecondFactorRequirementParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteWorkspacesSetSecondFactorRequirementParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
 			In:   "path",
 			Err:  err,
 		}

@@ -361,6 +361,8 @@ const (
 	GlobexName = "Globex"
 	// GlobexOwnerMembershipID is from fixtures/memberships.
 	GlobexOwnerMembershipID = 2
+	// GlobexSamMembershipID is from fixtures/memberships.
+	GlobexSamMembershipID = 9
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
 	// InitechAdminAdaEmail is from fixtures/users.
@@ -411,6 +413,8 @@ const (
 	InitechOwnerOlgaName = "Olga"
 	// InitechOwnerOlgaPassword is from fixtures/users.
 	InitechOwnerOlgaPassword = "olga-test-password"
+	// InitechRitaMembershipID is from fixtures/memberships.
+	InitechRitaMembershipID = 13
 	// InitechSlug is from fixtures/workspaces.
 	InitechSlug = "initech"
 	// IntegrationAcmeDefaultID is from fixtures/integrations.
@@ -481,6 +485,24 @@ const (
 	OwnerJohnName = "John"
 	// OwnerJohnPassword is from fixtures/users.
 	OwnerJohnPassword = "password"
+	// SecondFactorSamEmail is from fixtures/users.
+	SecondFactorSamEmail = "sam@globex.test"
+	// SecondFactorSamID is from fixtures/users.
+	SecondFactorSamID = 9
+	// SecondFactorSamName is from fixtures/users.
+	SecondFactorSamName = "Sam"
+	// SecondFactorSamPassword is from fixtures/users.
+	SecondFactorSamPassword = "sam-test-password"
+	// SecondFactorSamRecoveryCode is from fixtures/recovery_codes.
+	SecondFactorSamRecoveryCode = "sam01-unusd"
+	// SecondFactorSamRecoveryID is from fixtures/recovery_codes.
+	SecondFactorSamRecoveryID = 1
+	// SecondFactorSamSpentRecoveryCode is from fixtures/recovery_codes.
+	SecondFactorSamSpentRecoveryCode = "sam02-spent"
+	// SecondFactorSamSpentRecoveryID is from fixtures/recovery_codes.
+	SecondFactorSamSpentRecoveryID = 2
+	// SecondFactorSamTotpSecret is from fixtures/users.
+	SecondFactorSamTotpSecret = "JBSWY3DPEHPK3PXP"
 	// SegmentActiveID is from fixtures/segments.
 	SegmentActiveID = 1
 	// SegmentActiveName is from fixtures/segments.
@@ -559,6 +581,38 @@ const (
 	TokenGlobexName = "Globex token"
 	// TokenGlobexPrefix is from fixtures/api_tokens.
 	TokenGlobexPrefix = "globextok001"
+	// UmbrellaCollectKey is from fixtures/workspaces.
+	UmbrellaCollectKey = "omck_test_umbrella_collect_key"
+	// UmbrellaID is from fixtures/workspaces.
+	UmbrellaID = 4
+	// UmbrellaIngestKey is from fixtures/workspaces.
+	UmbrellaIngestKey = "omik_test_umbrella_ingest_key"
+	// UmbrellaMemberNinaEmail is from fixtures/users.
+	UmbrellaMemberNinaEmail = "nina@umbrella.test"
+	// UmbrellaMemberNinaID is from fixtures/users.
+	UmbrellaMemberNinaID = 11
+	// UmbrellaMemberNinaName is from fixtures/users.
+	UmbrellaMemberNinaName = "Nina"
+	// UmbrellaMemberNinaPassword is from fixtures/users.
+	UmbrellaMemberNinaPassword = "nina-test-password"
+	// UmbrellaName is from fixtures/workspaces.
+	UmbrellaName = "Umbrella"
+	// UmbrellaNinaMembershipID is from fixtures/memberships.
+	UmbrellaNinaMembershipID = 11
+	// UmbrellaOwnerRitaEmail is from fixtures/users.
+	UmbrellaOwnerRitaEmail = "rita@umbrella.test"
+	// UmbrellaOwnerRitaID is from fixtures/users.
+	UmbrellaOwnerRitaID = 10
+	// UmbrellaOwnerRitaName is from fixtures/users.
+	UmbrellaOwnerRitaName = "Rita"
+	// UmbrellaOwnerRitaPassword is from fixtures/users.
+	UmbrellaOwnerRitaPassword = "rita-test-password"
+	// UmbrellaRitaMembershipID is from fixtures/memberships.
+	UmbrellaRitaMembershipID = 10
+	// UmbrellaSamMembershipID is from fixtures/memberships.
+	UmbrellaSamMembershipID = 12
+	// UmbrellaSlug is from fixtures/workspaces.
+	UmbrellaSlug = "umbrella"
 	// UnsubscribeErasableDestination is from fixtures/unsubscribes.
 	UnsubscribeErasableDestination = "erin@initech.test"
 	// UnsubscribeErasableID is from fixtures/unsubscribes.

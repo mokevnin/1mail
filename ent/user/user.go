@@ -26,10 +26,20 @@ const (
 	FieldPasswordHash = "password_hash"
 	// FieldEmailVerifiedAt holds the string denoting the email_verified_at field in the database.
 	FieldEmailVerifiedAt = "email_verified_at"
+	// FieldSessionEpoch holds the string denoting the session_epoch field in the database.
+	FieldSessionEpoch = "session_epoch"
+	// FieldSecondFactorSecretEncrypted holds the string denoting the second_factor_secret_encrypted field in the database.
+	FieldSecondFactorSecretEncrypted = "second_factor_secret_encrypted"
+	// FieldSecondFactorConfirmedAt holds the string denoting the second_factor_confirmed_at field in the database.
+	FieldSecondFactorConfirmedAt = "second_factor_confirmed_at"
+	// FieldSecondFactorLastStep holds the string denoting the second_factor_last_step field in the database.
+	FieldSecondFactorLastStep = "second_factor_last_step"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
 	EdgeMemberships = "memberships"
 	// EdgeSentInvitations holds the string denoting the sent_invitations edge name in mutations.
 	EdgeSentInvitations = "sent_invitations"
+	// EdgeRecoveryCodes holds the string denoting the recovery_codes edge name in mutations.
+	EdgeRecoveryCodes = "recovery_codes"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// MembershipsTable is the table that holds the memberships relation/edge.
@@ -46,6 +56,13 @@ const (
 	SentInvitationsInverseTable = "invitations"
 	// SentInvitationsColumn is the table column denoting the sent_invitations relation/edge.
 	SentInvitationsColumn = "invited_by"
+	// RecoveryCodesTable is the table that holds the recovery_codes relation/edge.
+	RecoveryCodesTable = "recovery_codes"
+	// RecoveryCodesInverseTable is the table name for the RecoveryCode entity.
+	// It exists in this package in order to avoid circular dependency with the "recoverycode" package.
+	RecoveryCodesInverseTable = "recovery_codes"
+	// RecoveryCodesColumn is the table column denoting the recovery_codes relation/edge.
+	RecoveryCodesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -57,6 +74,10 @@ var Columns = []string{
 	FieldEmail,
 	FieldPasswordHash,
 	FieldEmailVerifiedAt,
+	FieldSessionEpoch,
+	FieldSecondFactorSecretEncrypted,
+	FieldSecondFactorConfirmedAt,
+	FieldSecondFactorLastStep,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -80,6 +101,10 @@ var (
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultSessionEpoch holds the default value on creation for the "session_epoch" field.
+	DefaultSessionEpoch int64
+	// DefaultSecondFactorLastStep holds the default value on creation for the "second_factor_last_step" field.
+	DefaultSecondFactorLastStep int64
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -120,6 +145,26 @@ func ByEmailVerifiedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmailVerifiedAt, opts...).ToFunc()
 }
 
+// BySessionEpoch orders the results by the session_epoch field.
+func BySessionEpoch(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSessionEpoch, opts...).ToFunc()
+}
+
+// BySecondFactorSecretEncrypted orders the results by the second_factor_secret_encrypted field.
+func BySecondFactorSecretEncrypted(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecondFactorSecretEncrypted, opts...).ToFunc()
+}
+
+// BySecondFactorConfirmedAt orders the results by the second_factor_confirmed_at field.
+func BySecondFactorConfirmedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecondFactorConfirmedAt, opts...).ToFunc()
+}
+
+// BySecondFactorLastStep orders the results by the second_factor_last_step field.
+func BySecondFactorLastStep(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecondFactorLastStep, opts...).ToFunc()
+}
+
 // ByMembershipsCount orders the results by memberships count.
 func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -147,6 +192,20 @@ func BySentInvitations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSentInvitationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRecoveryCodesCount orders the results by recovery_codes count.
+func ByRecoveryCodesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRecoveryCodesStep(), opts...)
+	}
+}
+
+// ByRecoveryCodes orders the results by recovery_codes terms.
+func ByRecoveryCodes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRecoveryCodesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newMembershipsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -159,5 +218,12 @@ func newSentInvitationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SentInvitationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SentInvitationsTable, SentInvitationsColumn),
+	)
+}
+func newRecoveryCodesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RecoveryCodesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RecoveryCodesTable, RecoveryCodesColumn),
 	)
 }

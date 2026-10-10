@@ -1,8 +1,17 @@
+import { useQuery } from '@tanstack/react-query'
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import { handleSiteWorkspacesList } from '../generated/site/msw.gen.ts'
+import { siteTagsListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
+import {
+  handleSiteTagsList,
+  handleSiteWorkspacesList,
+  handleSiteWorkspacesSetSecondFactorRequirement,
+} from '../generated/site/msw.gen.ts'
 import type { SiteWorkspaceResource } from '../generated/site/types.gen.ts'
-import { overviewRoute, workspaceRoute } from '../router.tsx'
+import { overviewRoute, securityRoute, workspaceRoute } from '../router.tsx'
+import { page } from '../test/payloads.ts'
+import { problem } from '../test/problem.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
 import { routeMount } from '../test/routeMount.ts'
 import { worker } from '../test/worker.ts'
@@ -17,6 +26,7 @@ const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource 
   collectKey: 'ck',
   ingestKey: 'ik',
   postalAddress: '',
+  role: 'member',
   createdAt: '2026-01-01T00:00:00Z',
   ...over,
 })
@@ -55,4 +65,110 @@ test('the switcher navigates to the chosen workspace overview', async () => {
   await screen.getByRole('option', { name: 'Beta' }).click()
 
   expect(navigate).toHaveBeenCalledWith({ to: overviewRoute.to, params: { slug: 'beta' } })
+})
+
+// TagsProbe stands in for a workspace page whose query the server refuses.
+function TagsProbe() {
+  useQuery({ ...siteTagsListOptions({ path: { slug: 'acme' } }), retry: false })
+  return null
+}
+
+const DAY = 24 * 60 * 60 * 1000
+
+test('during the grace of a Two-factor requirement a banner leads to enrollment', async () => {
+  const endsAt = new Date(Date.now() + 3 * DAY).toISOString()
+  worker.use(list([workspace({ secondFactorGraceEndsAt: endsAt })]))
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect
+    .element(screen.getByText('This workspace requires two-factor authentication'))
+    .toBeInTheDocument()
+  await expect
+    .element(screen.getByRole('link', { name: 'Set up two-factor authentication' }))
+    .toHaveAttribute('href', securityRoute.to)
+  await expect
+    .element(screen.getByText('Two-factor authentication required'))
+    .not.toBeInTheDocument()
+})
+
+test('after the grace the workspace is replaced by the screen that leads to enrollment', async () => {
+  const endsAt = new Date(Date.now() - DAY).toISOString()
+  worker.use(list([workspace({ secondFactorGraceEndsAt: endsAt })]))
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  await expect
+    .element(screen.getByRole('link', { name: 'Set up two-factor authentication' }))
+    .toHaveAttribute('href', securityRoute.to)
+})
+
+test('a 403 second_factor_required from the workspace shows the blocked screen', async () => {
+  worker.use(
+    list([workspace({})]),
+    handleSiteTagsList(() => problem(403, { title: 'Forbidden', code: 'second_factor_required' })),
+  )
+  const { screen } = await renderWithRouter(
+    <>
+      <WorkspaceLayout />
+      <TagsProbe />
+    </>,
+    MOUNT,
+  )
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+})
+
+// Story 35: an Owner or Admin withheld by the requirement can still lift it.
+test('a withheld owner can turn the requirement off from the blocked screen', async () => {
+  const bodies: string[] = []
+  let current = workspace({
+    role: 'owner',
+    secondFactorRequiredAt: '2026-03-01T00:00:00Z',
+    secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
+  })
+  worker.use(
+    handleSiteWorkspacesList(() => HttpResponse.json([current])),
+    handleSiteWorkspacesSetSecondFactorRequirement(async ({ request }) => {
+      bodies.push(await request.text())
+      current = workspace({ role: 'owner' })
+      return HttpResponse.json(current)
+    }),
+    handleSiteTagsList(() =>
+      bodies.length > 0
+        ? HttpResponse.json(page([]))
+        : problem(403, { title: 'Forbidden', code: 'second_factor_required' }),
+    ),
+  )
+  const { screen } = await renderWithRouter(
+    <>
+      <WorkspaceLayout />
+      <TagsProbe />
+    </>,
+    MOUNT,
+  )
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  await screen.getByRole('button', { name: 'Turn off the requirement' }).click()
+
+  await expect.poll(() => bodies).toEqual(['{"required":false}'])
+  await expect
+    .element(screen.getByText('Two-factor authentication required'))
+    .not.toBeInTheDocument()
+})
+
+test('a withheld member is not offered to turn the requirement off', async () => {
+  worker.use(
+    list([
+      workspace({
+        secondFactorRequiredAt: '2026-03-01T00:00:00Z',
+        secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
+      }),
+    ]),
+  )
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Turn off the requirement' }).elements()).toHaveLength(
+    0,
+  )
 })
