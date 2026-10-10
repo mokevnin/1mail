@@ -283,6 +283,7 @@
     "editTitle": "Editar contacto"
   },
   "login": {
+    "codeLabel": "Código de autenticación",
     "emailLabel": "Correo",
     "errorMessage": "Correo o contraseña no válidos. Inténtalo de nuevo.",
     "errorTitle": "Error al iniciar sesión",
@@ -297,8 +298,12 @@
     "rateLimitedSeconds_many": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundos.",
     "rateLimitedSeconds_other": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundos.",
     "registerLink": "Crear cuenta",
+    "secondStepDescription": "Introduce el código de tu aplicación de autenticación o uno de tus códigos de recuperación.",
+    "secondStepTitle": "Verificación en dos pasos",
+    "startOver": "Empezar de nuevo",
     "submitButton": "Iniciar sesión",
-    "title": "Iniciar sesión"
+    "title": "Iniciar sesión",
+    "verifyButton": "Verificar"
   },
   "nav": {
     "activity": "Actividad",

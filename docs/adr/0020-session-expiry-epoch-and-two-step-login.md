@@ -35,4 +35,10 @@ attempts all feed the existing per-account counter of ADR 0025 (rate limiting): 
 
 - Revocation is all-or-nothing per User; per-device revocation would need a session table later.
 - A bump logs out the acting User's other sessions too; the acting session is reissued.
+- The challenge is an `authtoken` JWT (purpose `login_challenge`, 5 minutes) whose signing key is
+  derived from the User's session epoch, password hash, last accepted TOTP step and count of unused
+  Recovery codes. Every successful second step moves one of them, so the challenge works once
+  without a store of spent challenges and holds across instances. Only the second step resets the
+  Login throttle counter: resetting it on the password step would let a password holder guess codes
+  without end.
 - SMS and trusted-device ("remember me") factors are deliberately absent.

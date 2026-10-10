@@ -1,8 +1,15 @@
-import { expect, test } from 'vitest'
+import { notifications } from '@mantine/notifications'
+import { afterEach, expect, test } from 'vitest'
 
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import type { SiteAuthLoginData, SiteAuthSecondFactorData } from '../../generated/site/types.gen.ts'
+import { jsonResponse, mockClientFetch, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { LoginPage } from './login.tsx'
+
+// Toasts live in a global store and would cover the form's buttons in the next test.
+afterEach(() => {
+  notifications.clean()
+})
 
 test('navigates home after a successful login', async () => {
   mockClientFetch(() => jsonResponse({}))
@@ -49,4 +56,65 @@ test('shows the wait in seconds when it is under a minute', async () => {
   await screen.getByRole('button', { name: 'Sign in' }).click()
 
   await expect.element(screen.getByText(/Try again in 4 seconds/)).toBeInTheDocument()
+})
+
+test('asks for the second step only when the login answers with a challenge', async () => {
+  const secondStepBodies: unknown[] = []
+  mockClientRoutes([
+    route<SiteAuthLoginData>('POST', '/auth/login', {}, () =>
+      jsonResponse({ outcome: 'challenge', challenge: 'signed-challenge' }),
+    ),
+    route<SiteAuthSecondFactorData>('POST', '/auth/second-factor', {}, async (req) => {
+      secondStepBodies.push(await req.json())
+      return jsonResponse({ outcome: 'session' })
+    }),
+  ])
+  const { screen, navigate } = await renderWithRouter(<LoginPage />)
+
+  await screen.getByLabelText(/^Email/).fill('sam@example.com')
+  await screen.getByLabelText(/^Password/).fill('secret')
+  await screen.getByRole('button', { name: 'Sign in' }).click()
+
+  await screen.getByLabelText(/^Authentication code/).fill('123456')
+  expect(navigate).not.toHaveBeenCalled()
+  await screen.getByRole('button', { name: 'Verify' }).click()
+
+  await expect.poll(() => navigate.mock.calls).toContainEqual([{ to: '/' }])
+  expect(secondStepBodies).toEqual([{ challenge: 'signed-challenge', code: '123456' }])
+})
+
+test('a session outcome skips the second step', async () => {
+  mockClientRoutes([
+    route<SiteAuthLoginData>('POST', '/auth/login', {}, () => jsonResponse({ outcome: 'session' })),
+  ])
+  const { screen, navigate } = await renderWithRouter(<LoginPage />)
+
+  await screen.getByLabelText(/^Email/).fill('user@example.com')
+  await screen.getByLabelText(/^Password/).fill('secret')
+  await screen.getByRole('button', { name: 'Sign in' }).click()
+
+  await expect.poll(() => navigate.mock.calls).toContainEqual([{ to: '/' }])
+  expect(screen.getByLabelText(/^Authentication code/).query()).toBeNull()
+})
+
+test('shows an error and stays on the second step when the code is wrong', async () => {
+  mockClientRoutes([
+    route<SiteAuthLoginData>('POST', '/auth/login', {}, () =>
+      jsonResponse({ outcome: 'challenge', challenge: 'signed-challenge' }),
+    ),
+    route<SiteAuthSecondFactorData>('POST', '/auth/second-factor', {}, () =>
+      jsonResponse({ detail: 'the code is not valid' }, { status: 401 }),
+    ),
+  ])
+  const { screen, navigate } = await renderWithRouter(<LoginPage />)
+
+  await screen.getByLabelText(/^Email/).fill('sam@example.com')
+  await screen.getByLabelText(/^Password/).fill('secret')
+  await screen.getByRole('button', { name: 'Sign in' }).click()
+  await screen.getByLabelText(/^Authentication code/).fill('000000')
+  await screen.getByRole('button', { name: 'Verify' }).click()
+
+  await expect.element(screen.getByText('the code is not valid')).toBeInTheDocument()
+  await expect.element(screen.getByLabelText(/^Authentication code/)).toBeInTheDocument()
+  expect(navigate).not.toHaveBeenCalled()
 })

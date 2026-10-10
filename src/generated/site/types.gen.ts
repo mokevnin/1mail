@@ -1551,19 +1551,37 @@ export type SiteLoginInput = {
 };
 
 /**
- * What a login granted. `session`: the session cookie is set. A User with a
- * Second factor will get a challenge outcome instead (ADR 0020).
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
  */
-export const SiteLoginOutcome = { SESSION: 'session' } as const;
+export const SiteLoginOutcome = { SESSION: 'session', CHALLENGE: 'challenge' } as const;
 
 /**
- * What a login granted. `session`: the session cookie is set. A User with a
- * Second factor will get a challenge outcome instead (ADR 0020).
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
  */
 export type SiteLoginOutcome = typeof SiteLoginOutcome[keyof typeof SiteLoginOutcome];
 
 export type SiteLoginResult = {
   outcome: SiteLoginOutcome;
+  /**
+   * The signed challenge, present when the outcome is `challenge`. It is bound to
+   * the User, valid for 5 minutes and works for one successful second step.
+   */
+  challenge?: string;
+};
+
+/**
+ * The second login step: the challenge from the password step and a code
+ */
+export type SiteLoginSecondFactorInput = {
+  challenge: string;
+  /**
+   * A current TOTP code from the authenticator app, or an unused Recovery code
+   */
+  code: string;
 };
 
 /**
@@ -2868,6 +2886,35 @@ export type SiteAuthResetPasswordResponses = {
    */
   200: unknown;
 };
+
+export type SiteAuthSecondFactorData = {
+  body: SiteLoginSecondFactorInput;
+  path?: never;
+  query?: never;
+  url: '/auth/second-factor';
+};
+
+export type SiteAuthSecondFactorErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthSecondFactorError = SiteAuthSecondFactorErrors[keyof SiteAuthSecondFactorErrors];
+
+export type SiteAuthSecondFactorResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteLoginResult;
+};
+
+export type SiteAuthSecondFactorResponse = SiteAuthSecondFactorResponses[keyof SiteAuthSecondFactorResponses];
 
 export type SiteAuthVerifyEmailData = {
   body: SiteVerifyEmailInput;

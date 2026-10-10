@@ -2925,6 +2925,7 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 func (*ProblemDetails) siteAnalyticsOverviewRes()           {}
 func (*ProblemDetails) siteAuthLoginRes()                   {}
 func (*ProblemDetails) siteAuthResetPasswordRes()           {}
+func (*ProblemDetails) siteAuthSecondFactorRes()            {}
 func (*ProblemDetails) siteAuthVerifyEmailRes()             {}
 func (*ProblemDetails) siteEventsActionsRes()               {}
 func (*ProblemDetails) siteEventsListRes()                  {}
@@ -3022,6 +3023,7 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
 func (*ProblemDetailsHeaders) siteAuthLoginRes()                  {}
 func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
+func (*ProblemDetailsHeaders) siteAuthSecondFactorRes()           {}
 func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
 func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
 
@@ -7219,19 +7221,22 @@ func (s *SiteLoginInput) SetPassword(val string) {
 	s.Password = val
 }
 
-// What a login granted. `session`: the session cookie is set. A User with a Second factor will get a
-// challenge outcome instead (ADR 0020).
+// What a login granted (ADR 0020). `session`: the session cookie is set. `challenge`: the password was
+// right but the User has a Second factor; no session exists yet, and the `challenge` goes with a code
+// to `/auth/second-factor`.
 // Ref: #/components/schemas/SiteLoginOutcome
 type SiteLoginOutcome string
 
 const (
-	SiteLoginOutcomeSession SiteLoginOutcome = "session"
+	SiteLoginOutcomeSession   SiteLoginOutcome = "session"
+	SiteLoginOutcomeChallenge SiteLoginOutcome = "challenge"
 )
 
 // AllValues returns all SiteLoginOutcome values.
 func (SiteLoginOutcome) AllValues() []SiteLoginOutcome {
 	return []SiteLoginOutcome{
 		SiteLoginOutcomeSession,
+		SiteLoginOutcomeChallenge,
 	}
 }
 
@@ -7239,6 +7244,8 @@ func (SiteLoginOutcome) AllValues() []SiteLoginOutcome {
 func (s SiteLoginOutcome) MarshalText() ([]byte, error) {
 	switch s {
 	case SiteLoginOutcomeSession:
+		return []byte(s), nil
+	case SiteLoginOutcomeChallenge:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -7251,6 +7258,9 @@ func (s *SiteLoginOutcome) UnmarshalText(data []byte) error {
 	case SiteLoginOutcomeSession:
 		*s = SiteLoginOutcomeSession
 		return nil
+	case SiteLoginOutcomeChallenge:
+		*s = SiteLoginOutcomeChallenge
+		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
@@ -7259,6 +7269,9 @@ func (s *SiteLoginOutcome) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/SiteLoginResult
 type SiteLoginResult struct {
 	Outcome SiteLoginOutcome `json:"outcome"`
+	// The signed challenge, present when the outcome is `challenge`. It is bound to the User, valid for 5
+	// minutes and works for one successful second step.
+	Challenge OptString `json:"challenge"`
 }
 
 // GetOutcome returns the value of Outcome.
@@ -7266,9 +7279,19 @@ func (s *SiteLoginResult) GetOutcome() SiteLoginOutcome {
 	return s.Outcome
 }
 
+// GetChallenge returns the value of Challenge.
+func (s *SiteLoginResult) GetChallenge() OptString {
+	return s.Challenge
+}
+
 // SetOutcome sets the value of Outcome.
 func (s *SiteLoginResult) SetOutcome(val SiteLoginOutcome) {
 	s.Outcome = val
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *SiteLoginResult) SetChallenge(val OptString) {
+	s.Challenge = val
 }
 
 // SiteLoginResultHeaders wraps SiteLoginResult with response headers.
@@ -7297,7 +7320,36 @@ func (s *SiteLoginResultHeaders) SetResponse(val SiteLoginResult) {
 	s.Response = val
 }
 
-func (*SiteLoginResultHeaders) siteAuthLoginRes() {}
+func (*SiteLoginResultHeaders) siteAuthLoginRes()        {}
+func (*SiteLoginResultHeaders) siteAuthSecondFactorRes() {}
+
+// The second login step: the challenge from the password step and a code.
+// Ref: #/components/schemas/SiteLoginSecondFactorInput
+type SiteLoginSecondFactorInput struct {
+	Challenge string `json:"challenge"`
+	// A current TOTP code from the authenticator app, or an unused Recovery code.
+	Code string `json:"code"`
+}
+
+// GetChallenge returns the value of Challenge.
+func (s *SiteLoginSecondFactorInput) GetChallenge() string {
+	return s.Challenge
+}
+
+// GetCode returns the value of Code.
+func (s *SiteLoginSecondFactorInput) GetCode() string {
+	return s.Code
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *SiteLoginSecondFactorInput) SetChallenge(val string) {
+	s.Challenge = val
+}
+
+// SetCode sets the value of Code.
+func (s *SiteLoginSecondFactorInput) SetCode(val string) {
+	s.Code = val
+}
 
 type SiteMaxPerDay int32
 

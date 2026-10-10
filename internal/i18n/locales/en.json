@@ -17,6 +17,7 @@
   "errors.register_required": "name, email and password are required",
   "errors.email_exists": "email already exists",
   "errors.invalid_credentials": "invalid email or password",
+  "errors.login_challenge_invalid": "the sign-in step expired, sign in again",
   "errors.phone_exists": "phone already exists",
   "errors.subject_id_exists": "subject id already exists",
   "errors.reset_link_invalid": "invalid or expired reset link",

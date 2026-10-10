@@ -85,6 +85,8 @@ type Handlers struct {
 	sessions       *auth.Sessions
 	secondFactor   *secondfactor.Module
 	now            func() time.Time
+	// challenges signs the login challenge on the env clock (ADR 0020).
+	challenges *authtoken.Signer
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -150,6 +152,7 @@ func NewHandlers(d Deps) *Handlers {
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions, secondFactor: d.SecondFactor, now: now,
+		challenges: d.Tokens.WithClock(d.Clock),
 	}
 }
 

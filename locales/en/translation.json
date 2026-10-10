@@ -279,6 +279,7 @@
     "editTitle": "Edit contact"
   },
   "login": {
+    "codeLabel": "Authentication code",
     "emailLabel": "Email",
     "errorMessage": "Invalid email or password. Please try again.",
     "errorTitle": "Sign in failed",
@@ -291,8 +292,12 @@
     "rateLimitedSeconds_one": "Too many sign-in attempts. Try again in {{count}} second.",
     "rateLimitedSeconds_other": "Too many sign-in attempts. Try again in {{count}} seconds.",
     "registerLink": "Create account",
+    "secondStepDescription": "Enter the code from your authenticator app, or one of your recovery codes.",
+    "secondStepTitle": "Two-step verification",
+    "startOver": "Start over",
     "submitButton": "Sign in",
-    "title": "Sign in"
+    "title": "Sign in",
+    "verifyButton": "Verify"
   },
   "nav": {
     "activity": "Activity",

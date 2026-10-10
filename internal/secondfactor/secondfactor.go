@@ -17,6 +17,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"image/png"
 	"strings"
 	"time"
@@ -282,6 +283,26 @@ func (m *Module) Verify(ctx context.Context, userID int64, code string) (Method,
 		return err
 	})
 	return method, err
+}
+
+// ChallengeBinding is the value a login challenge (ADR 0020) is keyed to: it
+// changes on every successful Verify (a TOTP success moves the last accepted time
+// step, a Recovery code success lowers the count of unused codes), on a password
+// change and on every session epoch bump (enroll, regenerate, disable, reset).
+// Keying the challenge's signature to it makes the challenge single-use without a
+// store of spent challenges, so it holds across instances. ErrNotActive without a
+// Second factor.
+func (m *Module) ChallengeBinding(ctx context.Context, u *ent.User) (string, error) {
+	if !Active(u) {
+		return "", ErrNotActive
+	}
+	unused, err := m.ent.RecoveryCode.Query().
+		Where(recoverycode.UserID(u.ID), recoverycode.UsedAtIsNil()).
+		Count(ctx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d|%d|%d|%s", u.SessionEpoch, u.SecondFactorLastStep, unused, u.PasswordHash), nil
 }
 
 // Reset clears the User's Second factor and Recovery codes and bumps the session

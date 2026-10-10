@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -135,4 +136,77 @@ func jwtOf(rec *httptest.ResponseRecorder) string {
 		}
 	}
 	return ""
+}
+
+// samChallenge passes Sam's password step (he has a Second factor) and returns the
+// challenge.
+func samChallenge(t *testing.T, env *testhelper.TestEnv) string {
+	t.Helper()
+	rec := login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var res struct {
+		Challenge string `json:"challenge"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &res))
+	require.NotEmpty(t, res.Challenge)
+	return res.Challenge
+}
+
+func secondStep(t *testing.T, env *testhelper.TestEnv, challenge, code string) *httptest.ResponseRecorder {
+	t.Helper()
+	return postJSON(t, env, "/site/auth/second-factor", fmt.Sprintf(`{"challenge":%q,"code":%q}`, challenge, code), nil)
+}
+
+func TestWrongSecondStepCodesFeedTheLoginThrottle(t *testing.T) {
+	env, clock := loginEnv(t, 0)
+	challenge := samChallenge(t, env)
+	for i := range loginFailures {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, challenge, "000000").Code, "failure %d", i+1)
+	}
+
+	good, err := totp.GenerateCode(fixtures.SecondFactorSamTotpSecret, clock.now())
+	require.NoError(t, err)
+	rec := secondStep(t, env, challenge, good)
+	assert.Equal(t, http.StatusTooManyRequests, rec.Code, "a correct code during the delay must not log in")
+	assert.Empty(t, jwtOf(rec))
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code, "one counter for both steps")
+}
+
+// Knowing the password must not buy a fresh round of code guesses: the password
+// step does not reset the counter of a User with a Second factor.
+func TestThePasswordStepDoesNotResetSecondStepFailures(t *testing.T) {
+	env, _ := loginEnv(t, 0)
+	for i := range loginFailures - 1 {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, samChallenge(t, env), "000000").Code, "failure %d", i+1)
+	}
+	require.Equal(t, http.StatusUnauthorized, secondStep(t, env, samChallenge(t, env), "000000").Code)
+	assert.Equal(t, http.StatusTooManyRequests,
+		login(t, env, fixtures.SecondFactorSamEmail, fixtures.SecondFactorSamPassword).Code)
+}
+
+func TestASuccessfulSecondStepResetsTheCounter(t *testing.T) {
+	env, clock := loginEnv(t, 0)
+	challenge := samChallenge(t, env)
+	for range loginFailures - 1 {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, challenge, "000000").Code)
+	}
+	good, err := totp.GenerateCode(fixtures.SecondFactorSamTotpSecret, clock.now())
+	require.NoError(t, err)
+	rec := secondStep(t, env, challenge, good)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.NotEmpty(t, jwtOf(rec))
+
+	n, err := env.DB.AuthAttempt.Query().Where(authattempt.Email(fixtures.SecondFactorSamEmail)).Count(t.Context())
+	require.NoError(t, err)
+	assert.Zero(t, n)
+}
+
+func TestTheSecondStepSharesThePerIPLoginCap(t *testing.T) {
+	const ipLimit = 2
+	env, _ := loginEnv(t, ipLimit)
+	for range ipLimit {
+		require.Equal(t, http.StatusUnauthorized, secondStep(t, env, "forged", "000000").Code)
+	}
+	assert.Equal(t, http.StatusTooManyRequests, secondStep(t, env, "forged", "000000").Code)
 }

@@ -41,6 +41,10 @@ type SiteAuthResetPasswordRes interface {
 	siteAuthResetPasswordRes()
 }
 
+type SiteAuthSecondFactorRes interface {
+	siteAuthSecondFactorRes()
+}
+
 type SiteAuthVerifyEmailRes interface {
 	siteAuthVerifyEmailRes()
 }

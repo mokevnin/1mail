@@ -31,6 +31,9 @@ const (
 	PurposePasswordReset Purpose = "pwreset"
 	PurposeEmailVerify   Purpose = "email_verify"
 	PurposeEmailChange   Purpose = "email_change"
+	// PurposeLoginChallenge is the challenge between the password step and the
+	// Second factor step of a login (ADR 0020).
+	PurposeLoginChallenge Purpose = "login_challenge"
 )
 
 // claims are the token's typed payload. The user id travels as a JSON string
@@ -46,11 +49,23 @@ type claims struct {
 // Signer mints and parses authtoken JWTs against a single secret.
 type Signer struct {
 	secret []byte
+	now    func() time.Time
 }
 
-// New builds a Signer from the shared JWT secret.
+// New builds a Signer from the shared JWT secret, on the wall clock.
 func New(secret string) *Signer {
-	return &Signer{secret: []byte(secret)}
+	return &Signer{secret: []byte(secret), now: time.Now}
+}
+
+// WithClock returns a copy of the Signer that mints and checks expiry against now
+// (tests move it past a token's lifetime instead of sleeping). nil keeps the clock.
+func (s *Signer) WithClock(now func() time.Time) *Signer {
+	if now == nil {
+		return s
+	}
+	c := *s
+	c.now = now
+	return &c
 }
 
 // Mint signs a token for purpose + userID, keyed to binding (the value that
@@ -59,7 +74,7 @@ func New(secret string) *Signer {
 // email for a change); nil is fine.
 func (s *Signer) Mint(purpose Purpose, userID int64, binding string, ttl time.Duration, extra map[string]string) (string, error) {
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims{
-		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl))},
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(s.now().Add(ttl))},
 		UserID:           userID,
 		Purpose:          purpose,
 		Extra:            extra,
@@ -91,7 +106,7 @@ func (s *Signer) Parse(token string, purpose Purpose, bindingFor func(userID int
 			return nil, err
 		}
 		return s.deriveKey(purpose, cl.UserID, binding), nil
-	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired(), jwt.WithTimeFunc(s.now))
 	if err != nil {
 		return 0, nil, err
 	}
