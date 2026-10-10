@@ -117,7 +117,9 @@ Daemons:
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
 > self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.
 > The old Grafana/OTLP dev container is gone: leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset
-> (metrics are always exposed at `/metrics`) or point it at your own collector.
+> (the dev stack serves Prometheus metrics on `127.0.0.1:9090/metrics` via the opt-in
+> `METRICS_ADDR`; see [ADR 0018](docs/adr/0018-metrics-opt-in-internal-listener.md)) or point it
+> at your own collector.
 
 ## Deployment (production)
 

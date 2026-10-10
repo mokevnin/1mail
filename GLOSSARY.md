@@ -65,6 +65,14 @@ system-generated actions — so engagement is segmentable through the very same 
 customer-tracked actions, with no parallel event stream.
 _Avoid_: Activity, log entry, signal
 
+**Retention**:
+How long an Event is kept before it is deleted. Events split by purpose: **evidentiary** Events
+(consent proof such as `marketing.confirmed`, permanent bounces and complaints, unsubscribes)
+are the audit and dispute record and are never deleted by age; **analytical** Events (opens, clicks,
+deliveries, customer-tracked actions) are deleted once older than the instance's retention window,
+so segment conditions cannot look back past it.
+_Avoid_: TTL, expiry, purge, archive
+
 **Segment**:
 A named, reusable definition of "which contacts match these conditions" — the one
 targeting primitive. Stores a rule query (combinator + nested rules over contact fields,
@@ -185,6 +193,21 @@ Unsubscribe, or missing Confirmation), or a permanent failure of that one messag
 **per-source** and reversible: a **Hold** (Workspace suspension, Billing hold, an unverified
 Sending domain, or no Integration), after which the same messages may still be sent.
 _Avoid_: Status, result (unqualified)
+
+**Send rate limit**:
+The ceiling an Integration puts on how fast mail may leave it: a maximum messages per second and a
+maximum messages per rolling 24 hours, mirroring what the external provider account allows.
+Defaults come from the provider where it reports them (SES), and an operator-set value overrides
+them; with neither, the Integration is unlimited. Applies to Broadcast and Automation sends;
+Transactional sends are never delayed by it but still count against the 24-hour total.
+_Avoid_: Throttle (as a noun for the limit), quota (quota is enforcement of billing, not this)
+
+**Deferral**:
+The reversible, per-source Outcome of an Outbound send that found its Integration's Send rate
+limit spent: the message is not consumed and is retried when capacity returns. Unlike a _Hold_,
+nothing is wrong with the source — it is simply busy — so it carries no hold reason and a
+Broadcast stays _sending_ with a progress estimate instead of a blocked state.
+_Avoid_: Throttled, rate-limited (as an outcome), delay
 
 **Hold**:
 The reversible, per-source Outcome that stops sending without consuming recipients: a Broadcast
@@ -370,6 +393,32 @@ _Avoid_: Webhook (unqualified), inbound webhook
 A human who authenticates (email + password). A User reaches Workspaces through Memberships,
 each carrying a Role — a Workspace is never owned by a single User directly.
 _Avoid_: Account, member, customer, owner
+
+**Second factor**:
+A time-based one-time code (TOTP) a User enrolls in addition to their password, proving possession
+of their authenticator app at login. Email-based and SMS factors do not exist.
+_Avoid_: 2FA code, MFA, OTP (unqualified)
+
+**Recovery code**:
+One of a fixed set of single-use codes issued when a User enrolls a Second factor, accepted in
+place of it when the authenticator is lost. Regenerating the set invalidates the old codes.
+_Avoid_: Backup code
+
+**Two-factor requirement**:
+A Workspace-level policy, set by an Owner or Admin, that every User with a Membership in it must have a
+Second factor; Users without one get a 7-day grace period before access is withheld.
+_Avoid_: Enforced 2FA, mandatory MFA
+
+**Second factor reset**:
+An Owner or Admin removing another User's Second factor so they can re-enroll after losing both
+authenticator and Recovery codes. Recorded in the audit trail.
+_Avoid_: Unlock, disable 2FA
+
+**Login throttle**:
+The temporary refusal of login attempts after repeated failures, counted per (email, IP) and per
+IP across password, Second factor and Recovery code attempts, with the delay growing. It never
+permanently locks a User, and answers identically for unknown emails.
+_Avoid_: Lockout, ban, account lock (a hard lock would let an attacker deny a victim access)
 
 **Membership**:
 The join that grants a User access to a Workspace with a Role — Workspaces are reached through

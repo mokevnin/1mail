@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"sync"
@@ -40,6 +42,7 @@ import (
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tags"
+	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
 
@@ -49,6 +52,9 @@ import (
 type App struct {
 	Config *config.Config
 	Server *http.Server
+	// Metrics is the opt-in Prometheus listener (ADR 0018); nil when METRICS_ADDR
+	// is empty and for the operator app.
+	Metrics *telemetry.MetricsServer
 
 	injector       *do.RootScope
 	events         *eventsRuntime
@@ -167,8 +173,14 @@ func New(env string) (*App, error) {
 		return nil, err
 	}
 
+	var metrics *telemetry.MetricsServer
+	if cfg.MetricsAddr != "" {
+		metrics = telemetry.NewMetricsServer(cfg.MetricsAddr)
+	}
+
 	return &App{
-		Config: cfg,
+		Config:  cfg,
+		Metrics: metrics,
 		Server: &http.Server{
 			Addr:              ":" + cfg.Port,
 			Handler:           handler,
@@ -180,6 +192,30 @@ func New(env string) (*App, error) {
 		events:   evRuntime,
 		jobs:     jobsCli,
 	}, nil
+}
+
+// BindMetrics binds the metrics listener when one is configured. Call it before
+// Serve (ideally before anything else starts) so a bind failure is fatal and
+// synchronous rather than a silently unmonitored instance.
+func (a *App) BindMetrics() error { return a.Metrics.Listen() }
+
+// Serve serves the metrics listener (bound by BindMetrics) and the public server.
+// It blocks until the public server stops; Stop shuts both down.
+func (a *App) Serve() error {
+	go func() {
+		if err := a.Metrics.Serve(); err != nil {
+			slog.Error("metrics server stopped", "err", err)
+		}
+	}()
+	if err := a.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// Stop gracefully stops the HTTP servers (public and metrics), under one context.
+func (a *App) Stop(ctx context.Context) error {
+	return errors.Join(a.Server.Shutdown(ctx), a.Metrics.Shutdown(ctx))
 }
 
 // NewOperator builds the minimal app the operator commands need (config, database,

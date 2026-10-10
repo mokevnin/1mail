@@ -9,8 +9,8 @@
 // metrics from the globals alone.
 //
 // Metrics are exposed two ways off a single MeterProvider:
-//   - a Prometheus /metrics endpoint (pull) — always on, the canonical interface
-//     for self-hosted operators (VictoriaMetrics/Prometheus scrape it directly);
+//   - a Prometheus /metrics endpoint (pull) — served only by the opt-in listener
+//     on METRICS_ADDR (see MetricsServer, ADR 0018), never on the public port;
 //   - an OTLP push exporter — enabled only when the standard OTEL_EXPORTER_OTLP_*
 //     env vars point at a collector (dev grafana/otel-lgtm, or any OTLP backend).
 //
@@ -51,7 +51,9 @@ type BuildInfo struct {
 // metricsHandler is the handler mounted at /metrics. It defaults to a 503 stub
 // so server.New can mount it unconditionally even when Setup was never called
 // (e.g. the test harness); Setup replaces it with the real Prometheus handler.
-var metricsHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+var metricsHandler http.Handler = stubMetricsHandler
+
+var stubMetricsHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "telemetry not configured", http.StatusServiceUnavailable)
 })
 
@@ -127,6 +129,7 @@ func Setup(ctx context.Context, cfg *config.Config, env string, build BuildInfo)
 	metricsHandler = promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 
 	return func(ctx context.Context) error {
+		metricsHandler = stubMetricsHandler
 		return shutdown(ctx, tp, mp)
 	}, nil
 }
