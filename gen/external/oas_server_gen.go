@@ -223,12 +223,36 @@ type Handler interface {
 	//
 	// POST /events
 	EventsCreate(ctx context.Context, req *RecordEventsInput) (EventsCreateRes, error)
+	// IntegrationsCreate implements Integrations_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /integrations
+	IntegrationsCreate(ctx context.Context, req *CreateIntegrationInput) (IntegrationsCreateRes, error)
+	// IntegrationsDelete implements Integrations_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /integrations/{id}
+	IntegrationsDelete(ctx context.Context, params IntegrationsDeleteParams) (IntegrationsDeleteRes, error)
+	// IntegrationsGet implements Integrations_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /integrations/{id}
+	IntegrationsGet(ctx context.Context, params IntegrationsGetParams) (IntegrationsGetRes, error)
 	// IntegrationsList implements Integrations_list operation.
 	//
-	// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+	// List resources with pagination.
 	//
 	// GET /integrations
 	IntegrationsList(ctx context.Context, params IntegrationsListParams) (IntegrationsListRes, error)
+	// IntegrationsUpdate implements Integrations_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /integrations/{id}
+	IntegrationsUpdate(ctx context.Context, req *UpdateIntegrationInput, params IntegrationsUpdateParams) (IntegrationsUpdateRes, error)
 	// SegmentsCreate implements Segments_create operation.
 	//
 	// Create a resource.

@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -590,6 +591,26 @@ func register(injector do.Injector, env string) {
 		return erasure.New(bus.Bus), nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*integrations.Module, error) {
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return integrations.New(bus.Bus, cipher, catalog, jc.Client), nil
+	})
+
 	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
 		return tags.New(), nil
 	})
@@ -747,10 +768,14 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	integ, err := do.Invoke[*integrations.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken,
+		Broadcasts: bc, Reputation: rep, Integrations: integ, BootstrapToken: cfg.BootstrapToken,
 	}, nil
 }
 
@@ -773,10 +798,6 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	cipher, err := do.Invoke[*secrets.Cipher](i)
-	if err != nil {
-		return apisite.Deps{}, err
-	}
-	catalog, err := do.Invoke[*messaging.Catalog](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -831,10 +852,14 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	integ, err := do.Invoke[*integrations.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
-		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, QuotaRefresh: jc.Client,
+		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, Integrations: integ,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,
 	}, nil
 }

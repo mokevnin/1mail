@@ -67,7 +67,8 @@ var (
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"events_record", "events_actions_list", "whoami",
-		"custom_fields_list", "sending_domains_list", "sending_domains_rates", "integrations_list",
+		"custom_fields_list", "sending_domains_list", "sending_domains_rates",
+		"integrations_list", "integrations_create", "integrations_get", "integrations_update", "integrations_delete",
 		"suppressions_create", "unsubscribes_create",
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
 		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",
@@ -329,4 +330,37 @@ func TestMCPConsentOnlyNarrows(t *testing.T) {
 	res = call(t, s, "suppressions_create", map[string]any{"destination": "alice@example.com"})
 	require.False(t, res.IsError, text(t, res))
 	assert.Contains(t, text(t, res), `"reason":"manual"`)
+}
+
+// An agent manages an Integration over MCP with the /api scopes; the credential is
+// write-only on this surface too.
+func TestMCPIntegrationsAreManagedWithoutLeakingSecrets(t *testing.T) {
+	env := testhelper.Setup(t)
+	read := env.MCPClient(t, env.ScopedBearer(t, "integrations:read"))
+	s := env.MCPClient(t, env.ScopedBearer(t, "integrations:read", "integrations:write"))
+
+	denied := call(t, read, "integrations_create", map[string]any{
+		"name": "x", "config": map[string]any{"kind": "smtp", "host": "smtp.example.com", "port": 587, "from": "a@acme.test"},
+	})
+	assert.True(t, denied.IsError, "integrations:write is required")
+
+	res := call(t, s, "integrations_create", map[string]any{
+		"name": "Agent SMTP",
+		"config": map[string]any{
+			"kind": "smtp", "host": "smtp.example.com", "port": 587, "from": "a@acme.test", "password": "mcp-secret-pw",
+		},
+	})
+	require.False(t, res.IsError, text(t, res))
+	assert.NotContains(t, text(t, res), "mcp-secret-pw")
+	var created struct {
+		ID string `json:"id"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(text(t, res)), &created))
+
+	res = call(t, s, "integrations_get", map[string]any{"id": created.ID})
+	require.False(t, res.IsError, text(t, res))
+	assert.NotContains(t, text(t, res), "mcp-secret-pw")
+
+	res = call(t, s, "integrations_delete", map[string]any{"id": created.ID})
+	require.False(t, res.IsError, text(t, res))
 }

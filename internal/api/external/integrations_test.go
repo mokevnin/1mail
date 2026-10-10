@@ -68,9 +68,9 @@ func TestExternalIntegrationsListIsPaginatedAndWorkspaceScoped(t *testing.T) {
 	}
 }
 
-// The resource never carries the provider config or any credential: the serialized
-// response names no config field and holds nothing of the stored secrets.
-func TestExternalIntegrationsListOmitsConfigAndSecrets(t *testing.T) {
+// The resource carries the provider config redacted: the serialized response names no
+// credential field and holds nothing of the stored secrets.
+func TestExternalIntegrationsListRedactsSecrets(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
@@ -88,13 +88,13 @@ func TestExternalIntegrationsListOmitsConfigAndSecrets(t *testing.T) {
 	require.NotEmpty(t, decoded.Items)
 	for _, item := range decoded.Items {
 		for key := range item {
-			assert.NotContains(t, []string{"config", "configEncrypted", "secret", "password", "secretAccessKey"}, key)
+			assert.NotContains(t, []string{"configEncrypted", "secret", "password", "secretAccessKey"}, key)
 		}
 	}
 	for _, row := range env.DB.Integration.Query().AllX(ctx) {
 		assert.NotContains(t, string(body), row.ConfigEncrypted, "the sealed config is not echoed")
 	}
-	for _, needle := range []string{"AKIAEXAMPLE", "mailpit"} {
-		assert.NotContains(t, string(body), needle, "provider config values never appear")
+	for _, needle := range []string{"AKIAEXAMPLE", "secretAccessKey", "password"} {
+		assert.NotContains(t, string(body), needle, "credentials never appear")
 	}
 }
