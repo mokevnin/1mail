@@ -308,6 +308,7 @@ depends = [
   "check:adr",
   "check:env",
   "check:helm",
+  "check:infra",
 ]
 
 ["check:fe"]
@@ -400,6 +401,14 @@ for alert in $(sed -n 's/^ *- alert: *//p' "$chart/files/alerts.yaml"); do
   grep -q "^## $alert\$" docs/operations/runbook.md || { echo "error: no runbook section for $alert"; exit 1; }
 done
 '''
+
+["check:infra"]
+description = "Terraform (infra/): fmt --check and validate (init without the backend, so no credentials or network state are needed)"
+run = [
+  "terraform -chdir=infra fmt -check -diff -recursive",
+  "terraform -chdir=infra init -backend=false -input=false -lockfile=readonly",
+  "terraform -chdir=infra validate",
+]
 
 ["check:security"]
 description = "Secrets and workflow linters"
