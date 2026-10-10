@@ -246,6 +246,46 @@
     "expiredTitle": "Enlace caducado",
     "title": "Confirma tu suscripción"
   },
+  "console": {
+    "home": {
+      "description": "Aquí aparecerán las herramientas de los espacios de trabajo.",
+      "title": "Consola de operador"
+    },
+    "login": {
+      "codeLabel": "Código de autenticación",
+      "confirmButton": "Confirmar e iniciar sesión",
+      "emailLabel": "Correo electrónico",
+      "enrolmentDescription": "Escanea el código QR con una aplicación de autenticación, o introduce la clave a mano, y escribe el código que muestra la aplicación.",
+      "enrolmentTitle": "Configura la verificación en dos pasos",
+      "errorMessage": "No se pudo iniciar sesión. Revisa tus datos e inténtalo de nuevo.",
+      "errorTitle": "Error al iniciar sesión",
+      "passwordLabel": "Contraseña",
+      "qrAlt": "Código QR para la aplicación de autenticación",
+      "rateLimitedMinutes": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} minutos.",
+      "rateLimitedMinutes_one": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} minuto.",
+      "rateLimitedMinutes_many": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} minutos.",
+      "rateLimitedMinutes_other": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} minutos.",
+      "rateLimitedSeconds": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundos.",
+      "rateLimitedSeconds_one": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundo.",
+      "rateLimitedSeconds_many": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundos.",
+      "rateLimitedSeconds_other": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {{count}} segundos.",
+      "secondStepDescription": "Introduce el código de tu aplicación de autenticación.",
+      "secondStepTitle": "Verificación en dos pasos",
+      "secretLabel": "O introduce esta clave",
+      "startOver": "Empezar de nuevo",
+      "submitButton": "Iniciar sesión",
+      "title": "Acceso de operador",
+      "verifyButton": "Verificar"
+    },
+    "menu": {
+      "logout": "Cerrar sesión",
+      "logoutErrorMessage": "No se pudo cerrar la sesión. Inténtalo de nuevo.",
+      "logoutErrorTitle": "Error al cerrar sesión"
+    },
+    "nav": {
+      "home": "Inicio"
+    }
+  },
   "contacts": {
     "addContact": "Añadir contacto",
     "customFields": "Campos personalizados",

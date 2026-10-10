@@ -244,6 +244,44 @@
     "expiredTitle": "Link expired",
     "title": "Confirm your subscription"
   },
+  "console": {
+    "home": {
+      "description": "Workspace tools will appear here.",
+      "title": "Operator console"
+    },
+    "login": {
+      "codeLabel": "Authentication code",
+      "confirmButton": "Confirm and sign in",
+      "emailLabel": "Email",
+      "enrolmentDescription": "Scan the QR code with an authenticator app, or enter the key by hand, then type the code the app shows.",
+      "enrolmentTitle": "Set up two-step verification",
+      "errorMessage": "Sign in failed. Check your details and try again.",
+      "errorTitle": "Sign in failed",
+      "passwordLabel": "Password",
+      "qrAlt": "QR code for the authenticator app",
+      "rateLimitedMinutes": "Too many sign-in attempts. Try again in {{count}} minutes.",
+      "rateLimitedMinutes_one": "Too many sign-in attempts. Try again in {{count}} minute.",
+      "rateLimitedMinutes_other": "Too many sign-in attempts. Try again in {{count}} minutes.",
+      "rateLimitedSeconds": "Too many sign-in attempts. Try again in {{count}} seconds.",
+      "rateLimitedSeconds_one": "Too many sign-in attempts. Try again in {{count}} second.",
+      "rateLimitedSeconds_other": "Too many sign-in attempts. Try again in {{count}} seconds.",
+      "secondStepDescription": "Enter the code from your authenticator app.",
+      "secondStepTitle": "Two-step verification",
+      "secretLabel": "Or enter this key",
+      "startOver": "Start over",
+      "submitButton": "Sign in",
+      "title": "Operator sign in",
+      "verifyButton": "Verify"
+    },
+    "menu": {
+      "logout": "Sign out",
+      "logoutErrorMessage": "Could not sign out. Try again.",
+      "logoutErrorTitle": "Sign out failed"
+    },
+    "nav": {
+      "home": "Home"
+    }
+  },
   "contacts": {
     "addContact": "Add contact",
     "customFields": "Custom fields",
