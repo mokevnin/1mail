@@ -21,6 +21,7 @@ enum ApiTokenScope {
   customFieldsRead: "custom_fields:read",
   sendingDomainsRead: "sending_domains:read",
   integrationsRead: "integrations:read",
+  integrationsWrite: "integrations:write",
   emailsSend: "emails:send",
   broadcastsSend: "broadcasts:send",
   automationsActivate: "automations:activate",

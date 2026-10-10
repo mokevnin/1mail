@@ -16,7 +16,7 @@ import (
 	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
@@ -62,24 +62,16 @@ type SendingDomainVerifyEnqueuer interface {
 	EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error
 }
 
-// IntegrationQuotaEnqueuer schedules a read of one Integration's provider send quota
-// (SES GetSendQuota) when it is saved. Same jobs enqueue seam (river prod, inline
-// tests); a failed read is recorded on the Integration, never returned to the save.
-type IntegrationQuotaEnqueuer interface {
-	EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error
-}
-
 type Handlers struct {
 	accounts     *accounts.Accounts
 	attempts     *accounts.Attempts
 	bus          *events.Bus
 	cipher       *secrets.Cipher
-	catalog      *messaging.Catalog
 	broadcasts   *broadcasts.Module
 	welcome      WelcomeEnqueuer
 	sysmail      SystemMailEnqueuer
 	domainVerify SendingDomainVerifyEnqueuer
-	quotaRefresh IntegrationQuotaEnqueuer
+	integrations *integrations.Module
 	tokens       *authtoken.Signer
 	tracker      *tracking.Tracker
 	appURL       string
@@ -105,7 +97,6 @@ type Deps struct {
 	OAuth        *oauthserver.Service
 	Bus          *events.Bus
 	Cipher       *secrets.Cipher
-	Catalog      *messaging.Catalog
 	Outbound     *outbound.Module
 	Segments     *segments.Module
 	EventLog     *eventlog.Module
@@ -117,7 +108,7 @@ type Deps struct {
 	Welcome      WelcomeEnqueuer
 	SysMail      SystemMailEnqueuer
 	DomainVerify SendingDomainVerifyEnqueuer
-	QuotaRefresh IntegrationQuotaEnqueuer
+	Integrations *integrations.Module
 	Tokens       *authtoken.Signer
 	Tracker      *tracking.Tracker
 	AppURL       string
@@ -125,10 +116,10 @@ type Deps struct {
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
+		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
-		sysmail: d.SysMail, domainVerify: d.DomainVerify, quotaRefresh: d.QuotaRefresh, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
+		sysmail: d.SysMail, domainVerify: d.DomainVerify, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth,
 	}
 }

@@ -333,12 +333,48 @@ func (UnimplementedHandler) EventsCreate(ctx context.Context, req *RecordEventsI
 	return r, ht.ErrNotImplemented
 }
 
+// IntegrationsCreate implements Integrations_create operation.
+//
+// Create a resource.
+//
+// POST /integrations
+func (UnimplementedHandler) IntegrationsCreate(ctx context.Context, req *CreateIntegrationInput) (r IntegrationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsDelete implements Integrations_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /integrations/{id}
+func (UnimplementedHandler) IntegrationsDelete(ctx context.Context, params IntegrationsDeleteParams) (r IntegrationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsGet implements Integrations_get operation.
+//
+// Get a resource by ID.
+//
+// GET /integrations/{id}
+func (UnimplementedHandler) IntegrationsGet(ctx context.Context, params IntegrationsGetParams) (r IntegrationsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // IntegrationsList implements Integrations_list operation.
 //
-// List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage.
+// List resources with pagination.
 //
 // GET /integrations
 func (UnimplementedHandler) IntegrationsList(ctx context.Context, params IntegrationsListParams) (r IntegrationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// IntegrationsUpdate implements Integrations_update operation.
+//
+// Update a resource.
+//
+// PUT /integrations/{id}
+func (UnimplementedHandler) IntegrationsUpdate(ctx context.Context, req *UpdateIntegrationInput, params IntegrationsUpdateParams) (r IntegrationsUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

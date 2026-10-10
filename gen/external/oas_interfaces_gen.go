@@ -141,8 +141,24 @@ type EventsCreateRes interface {
 	eventsCreateRes()
 }
 
+type IntegrationsCreateRes interface {
+	integrationsCreateRes()
+}
+
+type IntegrationsDeleteRes interface {
+	integrationsDeleteRes()
+}
+
+type IntegrationsGetRes interface {
+	integrationsGetRes()
+}
+
 type IntegrationsListRes interface {
 	integrationsListRes()
+}
+
+type IntegrationsUpdateRes interface {
+	integrationsUpdateRes()
 }
 
 type SegmentsCreateRes interface {

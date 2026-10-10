@@ -47,6 +47,7 @@ const SCOPE_OPTIONS = [
   'custom_fields:read',
   'sending_domains:read',
   'integrations:read',
+  'integrations:write',
   'emails:send',
   'broadcasts:send',
   'automations:activate',

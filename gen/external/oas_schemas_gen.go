@@ -143,6 +143,7 @@ const (
 	ApiTokenScopeCustomFieldsRead    ApiTokenScope = "custom_fields:read"
 	ApiTokenScopeSendingDomainsRead  ApiTokenScope = "sending_domains:read"
 	ApiTokenScopeIntegrationsRead    ApiTokenScope = "integrations:read"
+	ApiTokenScopeIntegrationsWrite   ApiTokenScope = "integrations:write"
 	ApiTokenScopeEmailsSend          ApiTokenScope = "emails:send"
 	ApiTokenScopeBroadcastsSend      ApiTokenScope = "broadcasts:send"
 	ApiTokenScopeAutomationsActivate ApiTokenScope = "automations:activate"
@@ -172,6 +173,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeCustomFieldsRead,
 		ApiTokenScopeSendingDomainsRead,
 		ApiTokenScopeIntegrationsRead,
+		ApiTokenScopeIntegrationsWrite,
 		ApiTokenScopeEmailsSend,
 		ApiTokenScopeBroadcastsSend,
 		ApiTokenScopeAutomationsActivate,
@@ -219,6 +221,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeSendingDomainsRead:
 		return []byte(s), nil
 	case ApiTokenScopeIntegrationsRead:
+		return []byte(s), nil
+	case ApiTokenScopeIntegrationsWrite:
 		return []byte(s), nil
 	case ApiTokenScopeEmailsSend:
 		return []byte(s), nil
@@ -293,6 +297,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeIntegrationsRead:
 		*s = ApiTokenScopeIntegrationsRead
+		return nil
+	case ApiTokenScopeIntegrationsWrite:
+		*s = ApiTokenScopeIntegrationsWrite
 		return nil
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
@@ -3149,6 +3156,79 @@ func (s *CreateContactInputCustomFields) init() CreateContactInputCustomFields {
 	return m
 }
 
+// Create an Integration. The provider and channel are derived from `config.kind`.
+// Ref: #/components/schemas/CreateIntegrationInput
+type CreateIntegrationInput struct {
+	Name      string  `json:"name"`
+	Enabled   OptBool `json:"enabled"`
+	IsDefault OptBool `json:"isDefault"`
+	// Most messages per second (1 to 10 000); omit or null for no limit.
+	MaxPerSecond OptNilMaxPerSecond `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit.
+	MaxPerDay OptNilMaxPerDay        `json:"maxPerDay"`
+	Config    IntegrationConfigInput `json:"config"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateIntegrationInput) GetName() string {
+	return s.Name
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *CreateIntegrationInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *CreateIntegrationInput) GetIsDefault() OptBool {
+	return s.IsDefault
+}
+
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *CreateIntegrationInput) GetMaxPerSecond() OptNilMaxPerSecond {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *CreateIntegrationInput) GetMaxPerDay() OptNilMaxPerDay {
+	return s.MaxPerDay
+}
+
+// GetConfig returns the value of Config.
+func (s *CreateIntegrationInput) GetConfig() IntegrationConfigInput {
+	return s.Config
+}
+
+// SetName sets the value of Name.
+func (s *CreateIntegrationInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *CreateIntegrationInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *CreateIntegrationInput) SetIsDefault(val OptBool) {
+	s.IsDefault = val
+}
+
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *CreateIntegrationInput) SetMaxPerSecond(val OptNilMaxPerSecond) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *CreateIntegrationInput) SetMaxPerDay(val OptNilMaxPerDay) {
+	s.MaxPerDay = val
+}
+
+// SetConfig sets the value of Config.
+func (s *CreateIntegrationInput) SetConfig(val IntegrationConfigInput) {
+	s.Config = val
+}
+
 // Request body for creating a segment.
 // Ref: #/components/schemas/CreateSegmentInput
 type CreateSegmentInput struct {
@@ -3860,6 +3940,172 @@ func (s *IntegrationChannel) UnmarshalText(data []byte) error {
 	}
 }
 
+// Provider config as returned, discriminated by `kind`. Secrets are omitted.
+// Ref: #/components/schemas/IntegrationConfig
+type IntegrationConfig struct {
+	OneOf IntegrationConfigSum
+}
+
+// GetOneOf returns the value of OneOf.
+func (s *IntegrationConfig) GetOneOf() IntegrationConfigSum {
+	return s.OneOf
+}
+
+// SetOneOf sets the value of OneOf.
+func (s *IntegrationConfig) SetOneOf(val IntegrationConfigSum) {
+	s.OneOf = val
+}
+
+// Provider config submitted by the caller, discriminated by `kind`.
+// Ref: #/components/schemas/IntegrationConfigInput
+type IntegrationConfigInput struct {
+	OneOf IntegrationConfigInputSum
+}
+
+// GetOneOf returns the value of OneOf.
+func (s *IntegrationConfigInput) GetOneOf() IntegrationConfigInputSum {
+	return s.OneOf
+}
+
+// SetOneOf sets the value of OneOf.
+func (s *IntegrationConfigInput) SetOneOf(val IntegrationConfigInputSum) {
+	s.OneOf = val
+}
+
+// IntegrationConfigInputSum represents sum type.
+type IntegrationConfigInputSum struct {
+	// Type selects the active sum variant, switch on this field.
+	Type            IntegrationConfigInputSumType
+	SmtpConfigInput SmtpConfigInput
+	SesConfigInput  SesConfigInput
+}
+
+// IntegrationConfigInputSumType is oneOf type of IntegrationConfigInputSum.
+type IntegrationConfigInputSumType string
+
+// Possible values for IntegrationConfigInputSumType.
+const (
+	SmtpConfigInputIntegrationConfigInputSum IntegrationConfigInputSumType = "smtp"
+	SesConfigInputIntegrationConfigInputSum  IntegrationConfigInputSumType = "ses"
+)
+
+// IsSmtpConfigInput reports whether IntegrationConfigInputSum is SmtpConfigInput.
+func (s IntegrationConfigInputSum) IsSmtpConfigInput() bool {
+	return s.Type == SmtpConfigInputIntegrationConfigInputSum
+}
+
+// IsSesConfigInput reports whether IntegrationConfigInputSum is SesConfigInput.
+func (s IntegrationConfigInputSum) IsSesConfigInput() bool {
+	return s.Type == SesConfigInputIntegrationConfigInputSum
+}
+
+// SetSmtpConfigInput sets IntegrationConfigInputSum to SmtpConfigInput.
+func (s *IntegrationConfigInputSum) SetSmtpConfigInput(v SmtpConfigInput) {
+	s.Type = SmtpConfigInputIntegrationConfigInputSum
+	s.SmtpConfigInput = v
+}
+
+// GetSmtpConfigInput returns SmtpConfigInput and true boolean if IntegrationConfigInputSum is SmtpConfigInput.
+func (s IntegrationConfigInputSum) GetSmtpConfigInput() (v SmtpConfigInput, ok bool) {
+	if !s.IsSmtpConfigInput() {
+		return v, false
+	}
+	return s.SmtpConfigInput, true
+}
+
+// NewSmtpConfigInputIntegrationConfigInputSum returns new IntegrationConfigInputSum from SmtpConfigInput.
+func NewSmtpConfigInputIntegrationConfigInputSum(v SmtpConfigInput) IntegrationConfigInputSum {
+	var s IntegrationConfigInputSum
+	s.SetSmtpConfigInput(v)
+	return s
+}
+
+// SetSesConfigInput sets IntegrationConfigInputSum to SesConfigInput.
+func (s *IntegrationConfigInputSum) SetSesConfigInput(v SesConfigInput) {
+	s.Type = SesConfigInputIntegrationConfigInputSum
+	s.SesConfigInput = v
+}
+
+// GetSesConfigInput returns SesConfigInput and true boolean if IntegrationConfigInputSum is SesConfigInput.
+func (s IntegrationConfigInputSum) GetSesConfigInput() (v SesConfigInput, ok bool) {
+	if !s.IsSesConfigInput() {
+		return v, false
+	}
+	return s.SesConfigInput, true
+}
+
+// NewSesConfigInputIntegrationConfigInputSum returns new IntegrationConfigInputSum from SesConfigInput.
+func NewSesConfigInputIntegrationConfigInputSum(v SesConfigInput) IntegrationConfigInputSum {
+	var s IntegrationConfigInputSum
+	s.SetSesConfigInput(v)
+	return s
+}
+
+// IntegrationConfigSum represents sum type.
+type IntegrationConfigSum struct {
+	// Type selects the active sum variant, switch on this field.
+	Type       IntegrationConfigSumType
+	SmtpConfig SmtpConfig
+	SesConfig  SesConfig
+}
+
+// IntegrationConfigSumType is oneOf type of IntegrationConfigSum.
+type IntegrationConfigSumType string
+
+// Possible values for IntegrationConfigSumType.
+const (
+	SmtpConfigIntegrationConfigSum IntegrationConfigSumType = "smtp"
+	SesConfigIntegrationConfigSum  IntegrationConfigSumType = "ses"
+)
+
+// IsSmtpConfig reports whether IntegrationConfigSum is SmtpConfig.
+func (s IntegrationConfigSum) IsSmtpConfig() bool { return s.Type == SmtpConfigIntegrationConfigSum }
+
+// IsSesConfig reports whether IntegrationConfigSum is SesConfig.
+func (s IntegrationConfigSum) IsSesConfig() bool { return s.Type == SesConfigIntegrationConfigSum }
+
+// SetSmtpConfig sets IntegrationConfigSum to SmtpConfig.
+func (s *IntegrationConfigSum) SetSmtpConfig(v SmtpConfig) {
+	s.Type = SmtpConfigIntegrationConfigSum
+	s.SmtpConfig = v
+}
+
+// GetSmtpConfig returns SmtpConfig and true boolean if IntegrationConfigSum is SmtpConfig.
+func (s IntegrationConfigSum) GetSmtpConfig() (v SmtpConfig, ok bool) {
+	if !s.IsSmtpConfig() {
+		return v, false
+	}
+	return s.SmtpConfig, true
+}
+
+// NewSmtpConfigIntegrationConfigSum returns new IntegrationConfigSum from SmtpConfig.
+func NewSmtpConfigIntegrationConfigSum(v SmtpConfig) IntegrationConfigSum {
+	var s IntegrationConfigSum
+	s.SetSmtpConfig(v)
+	return s
+}
+
+// SetSesConfig sets IntegrationConfigSum to SesConfig.
+func (s *IntegrationConfigSum) SetSesConfig(v SesConfig) {
+	s.Type = SesConfigIntegrationConfigSum
+	s.SesConfig = v
+}
+
+// GetSesConfig returns SesConfig and true boolean if IntegrationConfigSum is SesConfig.
+func (s IntegrationConfigSum) GetSesConfig() (v SesConfig, ok bool) {
+	if !s.IsSesConfig() {
+		return v, false
+	}
+	return s.SesConfig, true
+}
+
+// NewSesConfigIntegrationConfigSum returns new IntegrationConfigSum from SesConfig.
+func NewSesConfigIntegrationConfigSum(v SesConfig) IntegrationConfigSum {
+	var s IntegrationConfigSum
+	s.SetSesConfig(v)
+	return s
+}
+
 // Concrete sending provider.
 // Ref: #/components/schemas/IntegrationProvider
 type IntegrationProvider string
@@ -3903,7 +4149,8 @@ func (s *IntegrationProvider) UnmarshalText(data []byte) error {
 	}
 }
 
-// A sending-provider Integration, read-only: no credentials or provider config are exposed.
+// A sending-provider Integration. Credentials are write-only: the config is returned with secrets
+// redacted.
 // Ref: #/components/schemas/IntegrationResource
 type IntegrationResource struct {
 	// Unique identifier.
@@ -3918,10 +4165,18 @@ type IntegrationResource struct {
 	Enabled bool `json:"enabled"`
 	// Whether this is the default provider for its channel.
 	IsDefault bool `json:"isDefault"`
+	// Send rate limit set on the Integration: most messages per second; null means none.
+	MaxPerSecond NilInt32 `json:"maxPerSecond"`
+	// Send rate limit set on the Integration: most messages per rolling 24 hours; null means none.
+	MaxPerDay NilInt32 `json:"maxPerDay"`
 	// The Send rate limit as enforced and 24-hour usage.
 	SendLimit SendLimitStatus `json:"sendLimit"`
+	// Provider config (secrets redacted).
+	Config IntegrationConfig `json:"config"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
 }
 
 // GetID returns the value of ID.
@@ -3954,14 +4209,34 @@ func (s *IntegrationResource) GetIsDefault() bool {
 	return s.IsDefault
 }
 
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *IntegrationResource) GetMaxPerSecond() NilInt32 {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *IntegrationResource) GetMaxPerDay() NilInt32 {
+	return s.MaxPerDay
+}
+
 // GetSendLimit returns the value of SendLimit.
 func (s *IntegrationResource) GetSendLimit() SendLimitStatus {
 	return s.SendLimit
 }
 
+// GetConfig returns the value of Config.
+func (s *IntegrationResource) GetConfig() IntegrationConfig {
+	return s.Config
+}
+
 // GetCreatedAt returns the value of CreatedAt.
 func (s *IntegrationResource) GetCreatedAt() Timestamp {
 	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *IntegrationResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
 }
 
 // SetID sets the value of ID.
@@ -3994,15 +4269,84 @@ func (s *IntegrationResource) SetIsDefault(val bool) {
 	s.IsDefault = val
 }
 
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *IntegrationResource) SetMaxPerSecond(val NilInt32) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *IntegrationResource) SetMaxPerDay(val NilInt32) {
+	s.MaxPerDay = val
+}
+
 // SetSendLimit sets the value of SendLimit.
 func (s *IntegrationResource) SetSendLimit(val SendLimitStatus) {
 	s.SendLimit = val
+}
+
+// SetConfig sets the value of Config.
+func (s *IntegrationResource) SetConfig(val IntegrationConfig) {
+	s.Config = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
 func (s *IntegrationResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *IntegrationResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*IntegrationResource) integrationsCreateRes() {}
+func (*IntegrationResource) integrationsGetRes()    {}
+func (*IntegrationResource) integrationsUpdateRes() {}
+
+type IntegrationsCreateConflict ProblemDetails
+
+func (*IntegrationsCreateConflict) integrationsCreateRes() {}
+
+type IntegrationsCreateUnauthorized ProblemDetails
+
+func (*IntegrationsCreateUnauthorized) integrationsCreateRes() {}
+
+type IntegrationsCreateUnprocessableEntity ProblemDetails
+
+func (*IntegrationsCreateUnprocessableEntity) integrationsCreateRes() {}
+
+type IntegrationsDeleteBadRequest ProblemDetails
+
+func (*IntegrationsDeleteBadRequest) integrationsDeleteRes() {}
+
+// IntegrationsDeleteNoContent is response for IntegrationsDelete operation.
+type IntegrationsDeleteNoContent struct{}
+
+func (*IntegrationsDeleteNoContent) integrationsDeleteRes() {}
+
+type IntegrationsDeleteNotFound ProblemDetails
+
+func (*IntegrationsDeleteNotFound) integrationsDeleteRes() {}
+
+type IntegrationsDeleteUnauthorized ProblemDetails
+
+func (*IntegrationsDeleteUnauthorized) integrationsDeleteRes() {}
+
+type IntegrationsDeleteUnprocessableEntity ProblemDetails
+
+func (*IntegrationsDeleteUnprocessableEntity) integrationsDeleteRes() {}
+
+type IntegrationsGetBadRequest ProblemDetails
+
+func (*IntegrationsGetBadRequest) integrationsGetRes() {}
+
+type IntegrationsGetNotFound ProblemDetails
+
+func (*IntegrationsGetNotFound) integrationsGetRes() {}
+
+type IntegrationsGetUnauthorized ProblemDetails
+
+func (*IntegrationsGetUnauthorized) integrationsGetRes() {}
 
 type IntegrationsListBadRequest ProblemDetails
 
@@ -4077,6 +4421,34 @@ func (*IntegrationsListOK) integrationsListRes() {}
 type IntegrationsListUnauthorized ProblemDetails
 
 func (*IntegrationsListUnauthorized) integrationsListRes() {}
+
+type IntegrationsListUnprocessableEntity ProblemDetails
+
+func (*IntegrationsListUnprocessableEntity) integrationsListRes() {}
+
+type IntegrationsUpdateBadRequest ProblemDetails
+
+func (*IntegrationsUpdateBadRequest) integrationsUpdateRes() {}
+
+type IntegrationsUpdateConflict ProblemDetails
+
+func (*IntegrationsUpdateConflict) integrationsUpdateRes() {}
+
+type IntegrationsUpdateNotFound ProblemDetails
+
+func (*IntegrationsUpdateNotFound) integrationsUpdateRes() {}
+
+type IntegrationsUpdateUnauthorized ProblemDetails
+
+func (*IntegrationsUpdateUnauthorized) integrationsUpdateRes() {}
+
+type IntegrationsUpdateUnprocessableEntity ProblemDetails
+
+func (*IntegrationsUpdateUnprocessableEntity) integrationsUpdateRes() {}
+
+type MaxPerDay int32
+
+type MaxPerSecond int32
 
 // NewNilEntityId returns new NilEntityId with value set to v.
 func NewNilEntityId(v EntityId) NilEntityId {
@@ -4918,6 +5290,210 @@ func (o OptNilInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewOptNilIntegrationConfigInput returns new OptNilIntegrationConfigInput with value set to v.
+func NewOptNilIntegrationConfigInput(v IntegrationConfigInput) OptNilIntegrationConfigInput {
+	return OptNilIntegrationConfigInput{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilIntegrationConfigInput is optional nullable IntegrationConfigInput.
+type OptNilIntegrationConfigInput struct {
+	Value IntegrationConfigInput
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilIntegrationConfigInput was set.
+func (o OptNilIntegrationConfigInput) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilIntegrationConfigInput) Reset() {
+	var v IntegrationConfigInput
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilIntegrationConfigInput) SetTo(v IntegrationConfigInput) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilIntegrationConfigInput) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilIntegrationConfigInput) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v IntegrationConfigInput
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilIntegrationConfigInput) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilIntegrationConfigInput) Get() (v IntegrationConfigInput, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilIntegrationConfigInput) Or(d IntegrationConfigInput) IntegrationConfigInput {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilMaxPerDay returns new OptNilMaxPerDay with value set to v.
+func NewOptNilMaxPerDay(v MaxPerDay) OptNilMaxPerDay {
+	return OptNilMaxPerDay{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilMaxPerDay is optional nullable MaxPerDay.
+type OptNilMaxPerDay struct {
+	Value MaxPerDay
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilMaxPerDay was set.
+func (o OptNilMaxPerDay) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilMaxPerDay) Reset() {
+	var v MaxPerDay
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilMaxPerDay) SetTo(v MaxPerDay) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilMaxPerDay) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilMaxPerDay) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v MaxPerDay
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilMaxPerDay) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilMaxPerDay) Get() (v MaxPerDay, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilMaxPerDay) Or(d MaxPerDay) MaxPerDay {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilMaxPerSecond returns new OptNilMaxPerSecond with value set to v.
+func NewOptNilMaxPerSecond(v MaxPerSecond) OptNilMaxPerSecond {
+	return OptNilMaxPerSecond{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilMaxPerSecond is optional nullable MaxPerSecond.
+type OptNilMaxPerSecond struct {
+	Value MaxPerSecond
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilMaxPerSecond was set.
+func (o OptNilMaxPerSecond) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilMaxPerSecond) Reset() {
+	var v MaxPerSecond
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilMaxPerSecond) SetTo(v MaxPerSecond) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilMaxPerSecond) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilMaxPerSecond) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v MaxPerSecond
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilMaxPerSecond) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilMaxPerSecond) Get() (v MaxPerSecond, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilMaxPerSecond) Or(d MaxPerSecond) MaxPerSecond {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilString returns new OptNilString with value set to v.
 func NewOptNilString(v string) OptNilString {
 	return OptNilString{
@@ -5709,6 +6285,11 @@ func (*ProblemDetailsHeaders) emailsSendRes()             {}
 func (*ProblemDetailsHeaders) eventActionsListRes()       {}
 func (*ProblemDetailsHeaders) eventsBatchSubmitRes()      {}
 func (*ProblemDetailsHeaders) eventsCreateRes()           {}
+func (*ProblemDetailsHeaders) integrationsCreateRes()     {}
+func (*ProblemDetailsHeaders) integrationsDeleteRes()     {}
+func (*ProblemDetailsHeaders) integrationsGetRes()        {}
+func (*ProblemDetailsHeaders) integrationsListRes()       {}
+func (*ProblemDetailsHeaders) integrationsUpdateRes()     {}
 func (*ProblemDetailsHeaders) segmentsCreateRes()         {}
 func (*ProblemDetailsHeaders) segmentsDeleteRes()         {}
 func (*ProblemDetailsHeaders) segmentsGetRes()            {}
@@ -6606,6 +7187,230 @@ type SendingDomainsListUnauthorized ProblemDetails
 
 func (*SendingDomainsListUnauthorized) sendingDomainsListRes() {}
 
+// SES config without the secret access key.
+// Ref: #/components/schemas/SesConfig
+type SesConfig struct {
+	Kind     SesConfigKind `json:"kind"`
+	Region   string        `json:"region"`
+	From     EmailAddress  `json:"from"`
+	FromName OptNilString  `json:"fromName"`
+	// Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS.
+	Endpoint OptNilString `json:"endpoint"`
+	// Last 4 chars of the access key id, for recognition.
+	AccessKeyIdLast4 OptNilString `json:"accessKeyIdLast4"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SesConfig) GetKind() SesConfigKind {
+	return s.Kind
+}
+
+// GetRegion returns the value of Region.
+func (s *SesConfig) GetRegion() string {
+	return s.Region
+}
+
+// GetFrom returns the value of From.
+func (s *SesConfig) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SesConfig) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetEndpoint returns the value of Endpoint.
+func (s *SesConfig) GetEndpoint() OptNilString {
+	return s.Endpoint
+}
+
+// GetAccessKeyIdLast4 returns the value of AccessKeyIdLast4.
+func (s *SesConfig) GetAccessKeyIdLast4() OptNilString {
+	return s.AccessKeyIdLast4
+}
+
+// SetKind sets the value of Kind.
+func (s *SesConfig) SetKind(val SesConfigKind) {
+	s.Kind = val
+}
+
+// SetRegion sets the value of Region.
+func (s *SesConfig) SetRegion(val string) {
+	s.Region = val
+}
+
+// SetFrom sets the value of From.
+func (s *SesConfig) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SesConfig) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetEndpoint sets the value of Endpoint.
+func (s *SesConfig) SetEndpoint(val OptNilString) {
+	s.Endpoint = val
+}
+
+// SetAccessKeyIdLast4 sets the value of AccessKeyIdLast4.
+func (s *SesConfig) SetAccessKeyIdLast4(val OptNilString) {
+	s.AccessKeyIdLast4 = val
+}
+
+// SES credentials.
+// Ref: #/components/schemas/SesConfigInput
+type SesConfigInput struct {
+	Kind            SesConfigInputKind `json:"kind"`
+	Region          string             `json:"region"`
+	AccessKeyId     string             `json:"accessKeyId"`
+	SecretAccessKey string             `json:"secretAccessKey"`
+	From            EmailAddress       `json:"from"`
+	FromName        OptNilString       `json:"fromName"`
+	// Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS.
+	Endpoint OptNilString `json:"endpoint"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SesConfigInput) GetKind() SesConfigInputKind {
+	return s.Kind
+}
+
+// GetRegion returns the value of Region.
+func (s *SesConfigInput) GetRegion() string {
+	return s.Region
+}
+
+// GetAccessKeyId returns the value of AccessKeyId.
+func (s *SesConfigInput) GetAccessKeyId() string {
+	return s.AccessKeyId
+}
+
+// GetSecretAccessKey returns the value of SecretAccessKey.
+func (s *SesConfigInput) GetSecretAccessKey() string {
+	return s.SecretAccessKey
+}
+
+// GetFrom returns the value of From.
+func (s *SesConfigInput) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SesConfigInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetEndpoint returns the value of Endpoint.
+func (s *SesConfigInput) GetEndpoint() OptNilString {
+	return s.Endpoint
+}
+
+// SetKind sets the value of Kind.
+func (s *SesConfigInput) SetKind(val SesConfigInputKind) {
+	s.Kind = val
+}
+
+// SetRegion sets the value of Region.
+func (s *SesConfigInput) SetRegion(val string) {
+	s.Region = val
+}
+
+// SetAccessKeyId sets the value of AccessKeyId.
+func (s *SesConfigInput) SetAccessKeyId(val string) {
+	s.AccessKeyId = val
+}
+
+// SetSecretAccessKey sets the value of SecretAccessKey.
+func (s *SesConfigInput) SetSecretAccessKey(val string) {
+	s.SecretAccessKey = val
+}
+
+// SetFrom sets the value of From.
+func (s *SesConfigInput) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SesConfigInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetEndpoint sets the value of Endpoint.
+func (s *SesConfigInput) SetEndpoint(val OptNilString) {
+	s.Endpoint = val
+}
+
+type SesConfigInputKind string
+
+const (
+	SesConfigInputKindSes SesConfigInputKind = "ses"
+)
+
+// AllValues returns all SesConfigInputKind values.
+func (SesConfigInputKind) AllValues() []SesConfigInputKind {
+	return []SesConfigInputKind{
+		SesConfigInputKindSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SesConfigInputKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SesConfigInputKindSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SesConfigInputKind) UnmarshalText(data []byte) error {
+	switch SesConfigInputKind(data) {
+	case SesConfigInputKindSes:
+		*s = SesConfigInputKindSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SesConfigKind string
+
+const (
+	SesConfigKindSes SesConfigKind = "ses"
+)
+
+// AllValues returns all SesConfigKind values.
+func (SesConfigKind) AllValues() []SesConfigKind {
+	return []SesConfigKind{
+		SesConfigKindSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SesConfigKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SesConfigKindSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SesConfigKind) UnmarshalText(data []byte) error {
+	switch SesConfigKind(data) {
+	case SesConfigKindSes:
+		*s = SesConfigKindSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Request body for setting a broadcast's audience.
 // Ref: #/components/schemas/SetBroadcastAudienceInput
 type SetBroadcastAudienceInput struct {
@@ -6621,6 +7426,227 @@ func (s *SetBroadcastAudienceInput) GetSegmentId() NilEntityId {
 // SetSegmentId sets the value of SegmentId.
 func (s *SetBroadcastAudienceInput) SetSegmentId(val NilEntityId) {
 	s.SegmentId = val
+}
+
+// SMTP config without the password.
+// Ref: #/components/schemas/SmtpConfig
+type SmtpConfig struct {
+	Kind     SmtpConfigKind `json:"kind"`
+	Host     string         `json:"host"`
+	Port     int32          `json:"port"`
+	Username OptNilString   `json:"username"`
+	From     EmailAddress   `json:"from"`
+	FromName OptNilString   `json:"fromName"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SmtpConfig) GetKind() SmtpConfigKind {
+	return s.Kind
+}
+
+// GetHost returns the value of Host.
+func (s *SmtpConfig) GetHost() string {
+	return s.Host
+}
+
+// GetPort returns the value of Port.
+func (s *SmtpConfig) GetPort() int32 {
+	return s.Port
+}
+
+// GetUsername returns the value of Username.
+func (s *SmtpConfig) GetUsername() OptNilString {
+	return s.Username
+}
+
+// GetFrom returns the value of From.
+func (s *SmtpConfig) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SmtpConfig) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// SetKind sets the value of Kind.
+func (s *SmtpConfig) SetKind(val SmtpConfigKind) {
+	s.Kind = val
+}
+
+// SetHost sets the value of Host.
+func (s *SmtpConfig) SetHost(val string) {
+	s.Host = val
+}
+
+// SetPort sets the value of Port.
+func (s *SmtpConfig) SetPort(val int32) {
+	s.Port = val
+}
+
+// SetUsername sets the value of Username.
+func (s *SmtpConfig) SetUsername(val OptNilString) {
+	s.Username = val
+}
+
+// SetFrom sets the value of From.
+func (s *SmtpConfig) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SmtpConfig) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SMTP credentials.
+// Ref: #/components/schemas/SmtpConfigInput
+type SmtpConfigInput struct {
+	Kind     SmtpConfigInputKind `json:"kind"`
+	Host     string              `json:"host"`
+	Port     int32               `json:"port"`
+	Username OptNilString        `json:"username"`
+	Password OptNilString        `json:"password"`
+	From     EmailAddress        `json:"from"`
+	FromName OptNilString        `json:"fromName"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SmtpConfigInput) GetKind() SmtpConfigInputKind {
+	return s.Kind
+}
+
+// GetHost returns the value of Host.
+func (s *SmtpConfigInput) GetHost() string {
+	return s.Host
+}
+
+// GetPort returns the value of Port.
+func (s *SmtpConfigInput) GetPort() int32 {
+	return s.Port
+}
+
+// GetUsername returns the value of Username.
+func (s *SmtpConfigInput) GetUsername() OptNilString {
+	return s.Username
+}
+
+// GetPassword returns the value of Password.
+func (s *SmtpConfigInput) GetPassword() OptNilString {
+	return s.Password
+}
+
+// GetFrom returns the value of From.
+func (s *SmtpConfigInput) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SmtpConfigInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// SetKind sets the value of Kind.
+func (s *SmtpConfigInput) SetKind(val SmtpConfigInputKind) {
+	s.Kind = val
+}
+
+// SetHost sets the value of Host.
+func (s *SmtpConfigInput) SetHost(val string) {
+	s.Host = val
+}
+
+// SetPort sets the value of Port.
+func (s *SmtpConfigInput) SetPort(val int32) {
+	s.Port = val
+}
+
+// SetUsername sets the value of Username.
+func (s *SmtpConfigInput) SetUsername(val OptNilString) {
+	s.Username = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SmtpConfigInput) SetPassword(val OptNilString) {
+	s.Password = val
+}
+
+// SetFrom sets the value of From.
+func (s *SmtpConfigInput) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SmtpConfigInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+type SmtpConfigInputKind string
+
+const (
+	SmtpConfigInputKindSMTP SmtpConfigInputKind = "smtp"
+)
+
+// AllValues returns all SmtpConfigInputKind values.
+func (SmtpConfigInputKind) AllValues() []SmtpConfigInputKind {
+	return []SmtpConfigInputKind{
+		SmtpConfigInputKindSMTP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SmtpConfigInputKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SmtpConfigInputKindSMTP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SmtpConfigInputKind) UnmarshalText(data []byte) error {
+	switch SmtpConfigInputKind(data) {
+	case SmtpConfigInputKindSMTP:
+		*s = SmtpConfigInputKindSMTP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SmtpConfigKind string
+
+const (
+	SmtpConfigKindSMTP SmtpConfigKind = "smtp"
+)
+
+// AllValues returns all SmtpConfigKind values.
+func (SmtpConfigKind) AllValues() []SmtpConfigKind {
+	return []SmtpConfigKind{
+		SmtpConfigKindSMTP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SmtpConfigKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SmtpConfigKindSMTP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SmtpConfigKind) UnmarshalText(data []byte) error {
+	switch SmtpConfigKind(data) {
+	case SmtpConfigKindSMTP:
+		*s = SmtpConfigKindSMTP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Why a destination is on the suppression (do-not-send) list.
@@ -7518,6 +8544,80 @@ func (s *UpdateContactInputCustomFields) init() UpdateContactInputCustomFields {
 		*s = m
 	}
 	return m
+}
+
+// Update an Integration. Omit `config` to keep stored credentials; blank secret fields inside it keep
+// the stored secret.
+// Ref: #/components/schemas/UpdateIntegrationInput
+type UpdateIntegrationInput struct {
+	Name      OptString `json:"name"`
+	Enabled   OptBool   `json:"enabled"`
+	IsDefault OptBool   `json:"isDefault"`
+	// Most messages per second (1 to 10 000); null clears the limit, omit to keep.
+	MaxPerSecond OptNilMaxPerSecond `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep.
+	MaxPerDay OptNilMaxPerDay              `json:"maxPerDay"`
+	Config    OptNilIntegrationConfigInput `json:"config"`
+}
+
+// GetName returns the value of Name.
+func (s *UpdateIntegrationInput) GetName() OptString {
+	return s.Name
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *UpdateIntegrationInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *UpdateIntegrationInput) GetIsDefault() OptBool {
+	return s.IsDefault
+}
+
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *UpdateIntegrationInput) GetMaxPerSecond() OptNilMaxPerSecond {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *UpdateIntegrationInput) GetMaxPerDay() OptNilMaxPerDay {
+	return s.MaxPerDay
+}
+
+// GetConfig returns the value of Config.
+func (s *UpdateIntegrationInput) GetConfig() OptNilIntegrationConfigInput {
+	return s.Config
+}
+
+// SetName sets the value of Name.
+func (s *UpdateIntegrationInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *UpdateIntegrationInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *UpdateIntegrationInput) SetIsDefault(val OptBool) {
+	s.IsDefault = val
+}
+
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *UpdateIntegrationInput) SetMaxPerSecond(val OptNilMaxPerSecond) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *UpdateIntegrationInput) SetMaxPerDay(val OptNilMaxPerDay) {
+	s.MaxPerDay = val
+}
+
+// SetConfig sets the value of Config.
+func (s *UpdateIntegrationInput) SetConfig(val OptNilIntegrationConfigInput) {
+	s.Config = val
 }
 
 // Request body for updating a segment.
