@@ -1,6 +1,6 @@
 # One Application Load Balancer routes the three hosts to the one service by Host header (ECS
 # Express Mode could not express this: no listener rules, no URL rewrite). One ACM certificate
-# covers the three hosts, validated through DNS in the zone of dns.tf.
+# covers the three hosts (the apex and two subdomains), validated through DNS in the zone of dns.tf.
 
 resource "aws_acm_certificate" "this" {
   domain_name               = local.app_host
@@ -70,7 +70,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# Anything not matched below (the apex, an unknown host, other paths on the tracker host) is a 404.
+# Anything not matched below (an unknown host, other paths on the tracker host) is a 404.
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.this.arn
   port              = 443

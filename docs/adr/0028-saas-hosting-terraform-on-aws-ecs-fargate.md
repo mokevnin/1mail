@@ -4,7 +4,7 @@ status: accepted
 
 # The SaaS runs on AWS (ECS Fargate, RDS, SES), provisioned only through Terraform
 
-The hosted offering (Sphericon, `getsphericon.com`) is described entirely in Terraform under
+The hosted offering (Sphericon, `getsphericon.app`) is described entirely in Terraform under
 `infra/`: nothing is created by hand in the console or through an MCP server. The application
 shape: one service (HTTP, river and watermill in one process, no worker), migrations applied once
 before new instances start with `AUTO_MIGRATE` unset, no transaction-mode pooler (river uses
@@ -21,12 +21,11 @@ standby).
 - **Plain ECS on Fargate (ARM64) behind an Application Load Balancer.** App Runner is closed to new
   customers. ECS Express Mode (`aws_ecs_express_gateway_service`) was evaluated and rejected: it
   owns its load balancer and exposes no listener rules, so it cannot express the three hosts or the
-  API path rewrite. The ALB routes by `Host`: `app.getsphericon.com` (SPA and `/site/*`),
-  `api.getsphericon.com` (rewritten to the `/api` prefix by a listener-rule URL transform) and
-  `t.getsphericon.com` (`/t.js` and `/collect/*` only). Anything else is a 404. One ACM certificate
-  for the three hosts, validated by DNS in Route 53. The apex is reserved for a marketing site:
-  the app creates no apex record; the apex keeps the Google Workspace records, the SES records
-  and DMARC. Task: 0.5 vCPU / 1 GB, one task, rolling deploy (new task first, circuit breaker with
+  API path rewrite. The ALB routes by `Host`: the apex `getsphericon.app` (SPA and `/site/*`; `APP_URL` is
+  `https://getsphericon.app`), `api.getsphericon.app` (rewritten to the `/api` prefix by a
+  listener-rule URL transform) and `t.getsphericon.app` (`/t.js` and `/collect/*` only). Anything
+  else is a 404. One ACM certificate with the three hosts as names, validated by DNS in Route 53.
+  Task: 0.5 vCPU / 1 GB, one task, rolling deploy (new task first, circuit breaker with
   rollback), health check `/readyz`.
 - **No NAT gateway** (cost): tasks run in public subnets with public IPs and a security group that
   admits only the load balancer; the database is in subnets with no internet route and admits only
@@ -40,8 +39,17 @@ standby).
   created once by `mise run infra:bootstrap` and never touched by Terraform, which reads only its
   ARN. `sphericon/runtime` (`DATABASE_URL`, the SES key) is composed by Terraform: the app reads one
   `DATABASE_URL`, and ECS cannot assemble a URL from parts. Those values are therefore in the state.
-- **SES in `us-east-2`**: a domain identity with Easy DKIM and a MAIL FROM subdomain (`mail.`, SPF
-  there only: the apex SPF belongs to Google Workspace), DMARC `p=none`, all in Route 53. The
+- **A separate product domain, `getsphericon.app`, wholly managed by Terraform.** The whole domain
+  is a Route 53 hosted zone; the registrar's nameservers are pointed at it once, by hand.
+  `getsphericon.com` stays outside Terraform: it keeps the marketing site and Google Workspace
+  mail. Why a second domain: product mail reputation and cookies are isolated from the marketing
+  site and Google Workspace; the apex can be an ALIAS to the load balancer with no conflicting
+  records (a marketing apex and mail records would clash); and `.app` is on the browser HSTS
+  preload list, so HTTPS is enforced from the first request.
+- **SES in `us-east-2`**: a domain identity for `getsphericon.app` with Easy DKIM and a MAIL FROM
+  subdomain (`mail.getsphericon.app`, MX and SPF there only; SES needs no SPF at the apex, DMARC
+  passes through the aligned DKIM), DMARC `p=none` at `_dmarc`, all in Route 53;
+  `SYSTEM_EMAIL_FROM` defaults to `noreply@getsphericon.app`. The
   app's SES provider signs with static keys, so Terraform creates a send-only IAM user and stores
   its key in `sphericon/runtime`. A new SES account is in the sandbox; production access is a
   manual request.

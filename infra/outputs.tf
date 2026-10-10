@@ -1,5 +1,5 @@
 output "app_url" {
-  description = "Public URL of the web app (APP_URL). The apex domain is not served by the app."
+  description = "Public URL of the web app (APP_URL)."
   value       = "https://${local.app_host}"
 }
 

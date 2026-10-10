@@ -42,7 +42,8 @@ resource "aws_route53_record" "ses_mail_from_mx" {
   records = ["10 feedback-smtp.${var.region}.amazonses.com"]
 }
 
-# SPF of the MAIL FROM subdomain only. The apex keeps the single Google Workspace SPF (dns.tf).
+# SPF of the MAIL FROM subdomain only. SES needs no apex SPF: DMARC passes through the aligned DKIM
+# of the apex identity, and SPF is checked on the envelope sender (the MAIL FROM subdomain).
 resource "aws_route53_record" "ses_mail_from_spf" {
   zone_id = aws_route53_zone.this.zone_id
   name    = local.mail_from_domain

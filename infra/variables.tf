@@ -32,15 +32,9 @@ variable "otel_service_name" {
 }
 
 variable "domain" {
-  description = "Apex domain. The Route 53 zone is created for it; point the registrar's nameservers at it once (infra/README.md). The apex is reserved for the marketing site and carries mail records only."
+  description = "Apex domain. The Route 53 zone is created for it; point the registrar's nameservers at it once (infra/README.md). The apex serves the web app and the site API; api.<domain> and t.<domain> serve the external API and the tracker."
   type        = string
-  default     = "getsphericon.com"
-}
-
-variable "app_host_label" {
-  description = "Label of the web app host: <label>.<domain> serves the SPA and /site/*. APP_URL is https://<label>.<domain>."
-  type        = string
-  default     = "app"
+  default     = "getsphericon.app"
 }
 
 variable "api_host_label" {
@@ -106,7 +100,7 @@ variable "app_secret_name" {
 # System email through SES.
 
 variable "mail_from_label" {
-  description = "Label of the SES MAIL FROM subdomain: <label>.<domain>. SPF for SES lives here, never on the apex (the apex SPF belongs to Google Workspace)."
+  description = "Label of the SES MAIL FROM subdomain: <label>.<domain>. SPF for SES lives here."
   type        = string
   default     = "mail"
 }

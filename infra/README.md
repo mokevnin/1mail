@@ -15,7 +15,7 @@ Every change goes through Terraform, otherwise the state drifts and the next app
 - An AWS account with the CLI profile `sphericon` (region `us-east-2`), signed in with
   `aws login --profile sphericon`. The session is short lived: sign in again when `mise run infra`
   says there are no credentials. No access keys are stored.
-- The registrar of `getsphericon.com`, and the GitHub package settings of the image.
+- The registrar of `getsphericon.app`, and the GitHub package settings of the image.
 - `mise run check:infra` (fmt, `init -backend=false`, `validate`) and `mise run check:shell` need
   no credentials; CI and the git hooks run them.
 
@@ -33,7 +33,8 @@ secret is printed or put in arguments.
 - [ ] **Make the GHCR package public** (GitHub, the `sphericon` package, Package settings, Change
       visibility). ECS pulls anonymously; this cannot be done with Terraform, and a private package
       makes the tasks fail with an image pull error.
-- [ ] **Registrar nameservers**: after the zone exists (section 5), set the four `name_servers`
+- [ ] **Registrar nameservers** (the only manual DNS step: everything else in `getsphericon.app` is
+      Terraform): after the zone exists (section 5), set the four Route 53 `name_servers`
       at the registrar.
 - [ ] **SES production access**: a new account starts in the SES sandbox (delivers only to
       verified addresses, low quota). Request production access in the SES console (Account
@@ -63,7 +64,7 @@ image_tag = "0.1.0" # the released version
 ```
 
 Optional: `image_repository` (default `ghcr.io/getsphericon/sphericon`), `otel_service_name`,
-`domain` (`getsphericon.com`), `app_host_label` (`app`), `api_host_label` (`api`),
+`domain` (`getsphericon.app`, also the app host), `api_host_label` (`api`),
 `tracker_host_label` (`t`), `region`, `name`, `task_cpu`, `task_memory`, `db_instance_class`,
 `db_allocated_storage`, `db_max_open_conns`, `pgx_max_conns`, `mail_from_label` (`mail`),
 `system_email_from` (default `noreply@<domain>`), `dmarc_rua`. There are no secret variables.
@@ -86,7 +87,7 @@ mise run infra -- apply -target=aws_route53_zone.this     # the zone only
 mise run infra -- output name_servers
 ```
 
-Set those nameservers at the registrar (propagation can take hours; `dig NS getsphericon.com`).
+Set those nameservers at the registrar (propagation can take hours; `dig NS getsphericon.app`).
 Then the full apply:
 
 ```sh
@@ -107,25 +108,25 @@ To deploy a new release: set `image_tag` in `production.tfvars`, plan, apply.
 
 ## 6. Smoke test
 
-`curl` the ALB before DNS if needed: `curl -sk -H 'Host: app.getsphericon.com'
+`curl` the ALB before DNS if needed: `curl -sk -H 'Host: getsphericon.app'
 https://$(mise run infra -- output -raw alb_dns_name)/readyz`.
 
-- [ ] Readiness: `curl -s https://app.getsphericon.com/readyz` returns `200` (database reachable);
+- [ ] Readiness: `curl -s https://getsphericon.app/readyz` returns `200` (database reachable);
       `/healthz` as well.
-- [ ] App host: `curl -sI https://app.getsphericon.com/` returns `200` with a valid certificate.
-- [ ] HTTP redirects: `curl -sI http://app.getsphericon.com/` returns `301` to HTTPS.
-- [ ] Apex not served by the app: `dig +short A getsphericon.com` returns no ALB address.
-- [ ] API host rewrite: `curl -si https://api.getsphericon.com/contacts` returns `401` with
+- [ ] App host: `curl -sI https://getsphericon.app/` returns `200` with a valid certificate.
+- [ ] HTTP redirects: `curl -sI http://getsphericon.app/` returns `301` to HTTPS.
+- [ ] Apex is the load balancer: `dig +short A getsphericon.app` returns the ALB addresses.
+- [ ] API host rewrite: `curl -si https://api.getsphericon.app/contacts` returns `401` with
       `content-type: application/problem+json` (the external API at `/api/contacts`, not the SPA).
-- [ ] Tracker host: `curl -sI https://t.getsphericon.com/t.js` returns `200` with a JavaScript
-      content type; `curl -si -X POST https://t.getsphericon.com/collect/<path>` without a key
-      returns `401` problem+json; `curl -si https://t.getsphericon.com/` returns `404`.
+- [ ] Tracker host: `curl -sI https://t.getsphericon.app/t.js` returns `200` with a JavaScript
+      content type; `curl -si -X POST https://t.getsphericon.app/collect/<path>` without a key
+      returns `401` problem+json; `curl -si https://t.getsphericon.app/` returns `404`.
 - [ ] Email: trigger a password reset (in the SES sandbox, to a verified address). The message
       arrives and its original headers show `dkim=pass`, `spf=pass`, `dmarc=pass`. The SES
       console (`us-east-2`) shows identity Verified, DKIM Successful, MAIL FROM Success.
-- [ ] Google records: `dig +short MX getsphericon.com`, `dig +short TXT getsphericon.com` (exactly
-      one SPF), `dig +short TXT google._domainkey.getsphericon.com` (complete value),
-      `dig +short MX mail.getsphericon.com`, `dig +short TXT _dmarc.getsphericon.com`.
+- [ ] Mail records: `dig +short MX mail.getsphericon.app` (`feedback-smtp.us-east-2.amazonses.com`),
+      `dig +short TXT mail.getsphericon.app` (the SES SPF), `dig +short TXT _dmarc.getsphericon.app`
+      (`p=none`), and the three DKIM CNAMEs `<token>._domainkey.getsphericon.app`.
 - [ ] Database private: it has no public address (`aws rds describe-db-instances` shows
       `PubliclyAccessible: false`) and the plan output showed no secret values.
 
@@ -167,8 +168,6 @@ and a password-reset email passing DKIM and SPF need the operator's account and 
   (`^/(.*)$` to `/api/$1`, `alb.tf`). `200` with HTML means the host fell through to the app rule;
   `404` problem+json means the rewrite did not apply (check the rule's transform in the console).
 - **The tracker host serves the SPA.** It must not: only `/t.js` and `/collect` have a rule.
-- **Google DKIM TXT missing or truncated.** The value is stored as two quoted strings (Route 53
-  limit of 255 characters per string); resolvers join them.
 - **Connection budget.** `db.t4g.micro` allows about 85-110 connections (read `SHOW
   max_connections`). Each process opens two pools, 10 + 10; old plus new task during a deploy is 40
   and the migrate task adds about 4 (goose and river's migrator, 1-2 connections each). Before a
