@@ -189,8 +189,28 @@ type SendingDomainRatesListRes interface {
 	sendingDomainRatesListRes()
 }
 
+type SendingDomainsCreateRes interface {
+	sendingDomainsCreateRes()
+}
+
+type SendingDomainsDeleteRes interface {
+	sendingDomainsDeleteRes()
+}
+
+type SendingDomainsGetRes interface {
+	sendingDomainsGetRes()
+}
+
 type SendingDomainsListRes interface {
 	sendingDomainsListRes()
+}
+
+type SendingDomainsUpdateRes interface {
+	sendingDomainsUpdateRes()
+}
+
+type SendingDomainsVerifyRes interface {
+	sendingDomainsVerifyRes()
 }
 
 type SuppressionsCreateRes interface {

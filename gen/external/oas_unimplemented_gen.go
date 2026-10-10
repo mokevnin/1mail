@@ -441,12 +441,59 @@ func (UnimplementedHandler) SendingDomainRatesList(ctx context.Context, params S
 	return r, ht.ErrNotImplemented
 }
 
+// SendingDomainsCreate implements SendingDomains_create operation.
+//
+// Create a resource.
+//
+// POST /sending-domains
+func (UnimplementedHandler) SendingDomainsCreate(ctx context.Context, req *CreateSendingDomainInput) (r SendingDomainsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsDelete implements SendingDomains_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsDelete(ctx context.Context, params SendingDomainsDeleteParams) (r SendingDomainsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsGet implements SendingDomains_get operation.
+//
+// Get a resource by ID.
+//
+// GET /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsGet(ctx context.Context, params SendingDomainsGetParams) (r SendingDomainsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SendingDomainsList implements SendingDomains_list operation.
 //
-// List the workspace's sending domains.
+// List resources with pagination.
 //
 // GET /sending-domains
 func (UnimplementedHandler) SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (r SendingDomainsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsUpdate implements SendingDomains_update operation.
+//
+// Update a resource.
+//
+// PUT /sending-domains/{id}
+func (UnimplementedHandler) SendingDomainsUpdate(ctx context.Context, req *UpdateSendingDomainInput, params SendingDomainsUpdateParams) (r SendingDomainsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsVerify implements SendingDomains_verify operation.
+//
+// Trigger a live DKIM DNS check. The check runs in the background: the response is the domain as it
+// stands now, 202 Accepted; read it again for the outcome (`verified`, `lastCheckedAt`). Verification
+// is never set by the caller.
+//
+// POST /sending-domains/{id}/verify
+func (UnimplementedHandler) SendingDomainsVerify(ctx context.Context, params SendingDomainsVerifyParams) (r SendingDomainsVerifyRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

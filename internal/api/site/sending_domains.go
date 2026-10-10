@@ -2,41 +2,32 @@ package site
 
 import (
 	"context"
-	"net"
+	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/sending"
-	"github.com/mokevnin/1mail/internal/service"
-	"golang.org/x/net/idna"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 )
-
-// defaultDKIMSelector is used when the client does not supply one.
-const defaultDKIMSelector = "1mail"
 
 // sendingDomainResource builds the API resource, computing the DNS records the
 // user publishes. Built by hand (not goverter) because the records are derived,
 // and the private key is never exposed.
 func sendingDomainResource(d *ent.SendingDomain) siteapi.SiteSendingDomainResource {
-	dkimHost, dkimValue := sending.DKIMRecord(d.DkimSelector, d.Domain, d.DkimPublicKey)
-	spfHost, spfValue := sending.SPFRecord(d.Domain)
-	dmarcHost, dmarcValue := sending.DMARCRecord(d.Domain)
+	rec := sendingdomains.Records(d)
 
 	res := siteapi.SiteSendingDomainResource{
 		ID:           siteapi.EntityId(strconv.FormatInt(d.ID, 10)),
 		Domain:       d.Domain,
 		DkimSelector: d.DkimSelector,
 		Verified:     d.Verified,
-		DkimRecord:   dnsRecord(dkimHost, dkimValue),
-		SpfRecord:    dnsRecord(spfHost, spfValue),
-		DmarcRecord:  dnsRecord(dmarcHost, dmarcValue),
+		DkimRecord:   dnsRecord(rec.DKIM),
+		SpfRecord:    dnsRecord(rec.SPF),
+		DmarcRecord:  dnsRecord(rec.DMARC),
 		CreatedAt:    siteapi.Timestamp(d.CreatedAt),
 		UpdatedAt:    siteapi.Timestamp(d.UpdatedAt),
 	}
@@ -49,8 +40,8 @@ func sendingDomainResource(d *ent.SendingDomain) siteapi.SiteSendingDomainResour
 	return res
 }
 
-func dnsRecord(host, value string) siteapi.SiteDnsRecord {
-	return siteapi.SiteDnsRecord{Type: siteapi.SiteDnsRecordTypeTXT, Host: host, Value: value}
+func dnsRecord(r sendingdomains.Record) siteapi.SiteDnsRecord {
+	return siteapi.SiteDnsRecord{Type: siteapi.SiteDnsRecordTypeTXT, Host: r.Host, Value: r.Value}
 }
 
 func (h *Handlers) SiteSendingDomainsList(ctx context.Context, params siteapi.SiteSendingDomainsListParams) (siteapi.SiteSendingDomainsListRes, error) {
@@ -108,45 +99,18 @@ func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.Si
 		return nil, err
 	}
 
-	domain, ok := sendingDomain(req.Domain)
-	if !ok {
+	d, err := h.sendingDomains.Create(ctx, s, sendingdomains.CreateInput{Domain: req.Domain, Selector: req.DkimSelector.Or("")})
+	var verr *sendingdomains.ValidationError
+	switch {
+	case errors.As(err, &verr):
 		v := siteapi.SiteSendingDomainsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.validation_failed", nil), map[string][]string{
-			"domain": {i18n.T("errors.sending_domain_invalid", nil)},
+			verr.Field: {verr.Message},
 		}))
 		return &v, nil
-	}
-	selector := defaultDKIMSelector
-	if v, ok := req.DkimSelector.Get(); ok && strings.TrimSpace(v) != "" {
-		selector = strings.TrimSpace(v)
-	}
-
-	privPEM, pubTXT, err := sending.GenerateKeypair()
-	if err != nil {
-		return nil, err
-	}
-	encrypted, err := h.cipher.Encrypt(privPEM)
-	if err != nil {
-		return nil, err
-	}
-
-	// Wrap the insert in a savepoint so a unique-violation (duplicate domain)
-	// rolls back only this write, not the caller's surrounding transaction.
-	var d *ent.SendingDomain
-	err = h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
-		var cerr error
-		d, cerr = ts.SendingDomain().Create().
-			SetDomain(domain).
-			SetDkimSelector(selector).
-			SetDkimPrivateKeyEncrypted(encrypted).
-			SetDkimPublicKey(pubTXT).
-			Save(ctx)
-		return cerr
-	})
-	if service.IsUniqueViolation(err) {
+	case errors.Is(err, sendingdomains.ErrAlreadyExists):
 		v := siteapi.SiteSendingDomainsCreateConflict(problem(http.StatusConflict, "this domain is already added"))
 		return &v, nil
-	}
-	if err != nil {
+	case err != nil:
 		return nil, err
 	}
 	res := sendingDomainResource(d)
@@ -195,7 +159,7 @@ func (h *Handlers) SiteSendingDomainsDelete(ctx context.Context, params siteapi.
 		v := siteapi.SiteSendingDomainsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = s.SendingDomain().DeleteOneID(id).Exec(ctx)
+	err = h.sendingDomains.Delete(ctx, s, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsDeleteNotFound(problem(http.StatusNotFound, "sending domain not found"))
 		return &v, nil
@@ -221,37 +185,13 @@ func (h *Handlers) SiteSendingDomainsVerify(ctx context.Context, params siteapi.
 		v := siteapi.SiteSendingDomainsVerifyBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	// Confirm the domain exists in this workspace before enqueuing.
-	exists, err := s.SendingDomain().Query().Where(sendingdomain.IDEQ(id)).Exist(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
+	err = h.sendingDomains.Verify(ctx, s, id)
+	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsVerifyNotFound(problem(http.StatusNotFound, "sending domain not found"))
 		return &v, nil
 	}
-	if err := h.domainVerify.EnqueueSendingDomainVerify(ctx, id); err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return &siteapi.SiteSendingDomainsVerifyNoContent{}, nil
-}
-
-// normalizeDomain lowercases and trims a domain and strips a trailing dot.
-func normalizeDomain(raw string) string {
-	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(raw)), ".")
-}
-
-// sendingDomain validates raw as a registrable domain name (IDNA registration
-// rules: label syntax, length limits, punycode) with at least one dot and not an IP
-// address, and returns its ASCII (punycode) form — the form DNS and DKIM use.
-func sendingDomain(raw string) (string, bool) {
-	d := normalizeDomain(raw)
-	if !strings.Contains(d, ".") || net.ParseIP(d) != nil {
-		return "", false
-	}
-	ascii, err := idna.Registration.ToASCII(d)
-	if err != nil {
-		return "", false
-	}
-	return ascii, true
 }

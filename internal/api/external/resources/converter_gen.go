@@ -190,17 +190,6 @@ func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentR
 	}
 	return externalapiSegmentResource
 }
-func (c *ConverterImpl) SendingDomainToResource(source *ent.SendingDomain) external.SendingDomainResource {
-	var externalapiSendingDomainResource external.SendingDomainResource
-	if source != nil {
-		externalapiSendingDomainResource.ID = entityID((*source).ID)
-		externalapiSendingDomainResource.Domain = (*source).Domain
-		externalapiSendingDomainResource.Verified = (*source).Verified
-		externalapiSendingDomainResource.VerifiedAt = optNilTimestamp((*source).VerifiedAt)
-		externalapiSendingDomainResource.CreatedAt = timestamp((*source).CreatedAt)
-	}
-	return externalapiSendingDomainResource
-}
 func (c *ConverterImpl) SuppressionToExport(source *ent.Suppression) external.ContactExportSuppression {
 	var externalapiContactExportSuppression external.ContactExportSuppression
 	if source != nil {

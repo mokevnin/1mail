@@ -35,24 +35,6 @@ model CustomFieldResource {
   updatedAt: Timestamp;
 }
 
-/** Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed */
-model SendingDomainResource {
-  /** Unique identifier */
-  id: EntityId;
-
-  /** The authenticated domain, e.g. "mail.acme.com" */
-  domain: string;
-
-  /** Whether the DKIM DNS is currently published and matches our key */
-  verified: boolean;
-
-  /** When the domain most recently became verified (null = never) */
-  verifiedAt?: Timestamp | null;
-
-  /** Creation timestamp */
-  createdAt: Timestamp;
-}
-
 /** Delivery channel an integration belongs to */
 enum IntegrationChannel {
   email,
@@ -150,18 +132,6 @@ namespace CustomFields {
   @get
   op list():
     | Page<CustomFieldResource>
-    | UnauthorizedProblem
-    | TooManyRequestsProblem;
-}
-
-@route("/sending-domains")
-@tag("Sending domains")
-namespace SendingDomains {
-  /** List the workspace's sending domains */
-  @get
-  op list(...PageQuery):
-    | Page<SendingDomainResource>
-    | BadRequestProblem
     | UnauthorizedProblem
     | TooManyRequestsProblem;
 }

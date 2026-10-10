@@ -5330,7 +5330,7 @@
     "/sending-domains": {
       "get": {
         "operationId": "SendingDomains_list",
-        "description": "List the workspace's sending domains",
+        "description": "List resources with pagination",
         "parameters": [
           {
             "$ref": "#/components/parameters/PageQuery.page"
@@ -5401,6 +5401,16 @@
               }
             }
           },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "429": {
             "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
             "headers": {
@@ -5449,6 +5459,108 @@
         "tags": ["Sending domains"],
         "x-mcp": {
           "name": "sending_domains_list"
+        }
+      },
+      "post": {
+        "operationId": "SendingDomains_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendingDomainResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSendingDomainInput"
+              }
+            }
+          }
         }
       }
     },
@@ -5581,6 +5693,427 @@
         "x-mcp": {
           "name": "sending_domains_rates"
         }
+      }
+    },
+    "/sending-domains/{id}": {
+      "get": {
+        "operationId": "SendingDomains_get",
+        "description": "Get a resource by ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SendingDomainResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendingDomainResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"]
+      },
+      "put": {
+        "operationId": "SendingDomains_update",
+        "description": "Update a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SendingDomainResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendingDomainResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSendingDomainInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SendingDomains_delete",
+        "description": "Delete a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SendingDomainResourceKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"]
+      }
+    },
+    "/sending-domains/{id}/verify": {
+      "post": {
+        "operationId": "SendingDomains_verify",
+        "description": "Trigger a live DKIM DNS check. The check runs in the background: the response is the domain as it stands now, 202 Accepted; read it again for the outcome (`verified`, `lastCheckedAt`). Verification is never set by the caller.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SendingDomainResourceKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted for processing, but processing has not yet completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendingDomainResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"]
       }
     },
     "/suppressions": {
@@ -7054,6 +7587,15 @@
           "$ref": "#/components/schemas/EntityId"
         }
       },
+      "SendingDomainResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
       "TemplateResourceKey": {
         "name": "id",
         "in": "path",
@@ -7157,6 +7699,7 @@
           "webhooks:write",
           "custom_fields:read",
           "sending_domains:read",
+          "sending_domains:write",
           "integrations:read",
           "integrations:write",
           "emails:send",
@@ -8338,6 +8881,21 @@
         },
         "description": "Request body for creating a segment"
       },
+      "CreateSendingDomainInput": {
+        "type": "object",
+        "required": ["domain"],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The domain to authenticate, e.g. \"mail.acme.com\" (normalized to lowercase ASCII)"
+          },
+          "dkimSelector": {
+            "type": "string",
+            "description": "DKIM selector; defaults to \"1mail\" when omitted"
+          }
+        },
+        "description": "Add a Sending domain; mints the DKIM keypair and returns the DNS records to publish."
+      },
       "CreateSuppressionInput": {
         "type": "object",
         "required": ["destination"],
@@ -8466,6 +9024,26 @@
         "type": "string",
         "enum": ["string", "number", "bool", "datetime"],
         "description": "A Custom field's value type"
+      },
+      "DnsRecord": {
+        "type": "object",
+        "required": ["type", "host", "value"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["TXT"],
+            "description": "The record type (always TXT for the records we generate)"
+          },
+          "host": {
+            "type": "string",
+            "description": "The host / name to create the record at"
+          },
+          "value": {
+            "type": "string",
+            "description": "The record value to publish"
+          }
+        },
+        "description": "A DNS record the caller publishes to authenticate a Sending domain"
       },
       "EmailAddress": {
         "type": "string",
@@ -9098,7 +9676,17 @@
       },
       "SendingDomainResource": {
         "type": "object",
-        "required": ["id", "domain", "verified", "createdAt"],
+        "required": [
+          "id",
+          "domain",
+          "dkimSelector",
+          "verified",
+          "dkimRecord",
+          "spfRecord",
+          "dmarcRecord",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -9112,9 +9700,47 @@
             "type": "string",
             "description": "The authenticated domain, e.g. \"mail.acme.com\""
           },
+          "dkimSelector": {
+            "type": "string",
+            "description": "DKIM selector; the record host is \"<selector>._domainkey.<domain>\""
+          },
           "verified": {
             "type": "boolean",
             "description": "Whether the DKIM DNS is currently published and matches our key"
+          },
+          "dkimRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DnsRecord"
+              }
+            ],
+            "description": "The required DKIM TXT record"
+          },
+          "spfRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DnsRecord"
+              }
+            ],
+            "description": "The suggested SPF TXT record (advisory: does not gate sending)"
+          },
+          "dmarcRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DnsRecord"
+              }
+            ],
+            "description": "The suggested DMARC TXT record (advisory bulk-readiness signal)"
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the DKIM DNS was most recently checked (null = never)"
           },
           "verifiedAt": {
             "type": "string",
@@ -9133,9 +9759,17 @@
               }
             ],
             "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
           }
         },
-        "description": "Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed"
+        "description": "Sending domain (ADR 0010). 1mail generates the DKIM keypair; the caller publishes the\nDKIM TXT record. The private key is never returned. `verified` is a live property\nre-checked in the background: it can flip back if the DNS record disappears."
       },
       "SesConfig": {
         "type": "object",
@@ -9604,6 +10238,16 @@
           }
         },
         "description": "Request body for updating a segment"
+      },
+      "UpdateSendingDomainInput": {
+        "type": "object",
+        "properties": {
+          "dkimSelector": {
+            "type": "string",
+            "description": "New DKIM selector"
+          }
+        },
+        "description": "Change a Sending domain. The domain name is immutable; changing the selector moves the DKIM record, so the domain becomes unverified until the new record is published."
       },
       "UpdateTemplateInput": {
         "type": "object",

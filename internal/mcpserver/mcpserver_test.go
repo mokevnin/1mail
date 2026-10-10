@@ -67,7 +67,7 @@ var (
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"events_record", "events_actions_list", "whoami",
-		"custom_fields_list", "sending_domains_list", "sending_domains_rates",
+		"custom_fields_list", "sending_domains_list", "sending_domains_create", "sending_domains_get", "sending_domains_update", "sending_domains_delete", "sending_domains_verify", "sending_domains_rates",
 		"integrations_list", "integrations_create", "integrations_get", "integrations_update", "integrations_delete",
 		"suppressions_create", "unsubscribes_create",
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
@@ -362,5 +362,34 @@ func TestMCPIntegrationsAreManagedWithoutLeakingSecrets(t *testing.T) {
 	assert.NotContains(t, text(t, res), "mcp-secret-pw")
 
 	res = call(t, s, "integrations_delete", map[string]any{"id": created.ID})
+	require.False(t, res.IsError, text(t, res))
+}
+
+// An agent sets up a Sending domain over MCP: create, verify, read back. The DKIM
+// private key never appears, and writes need sending_domains:write.
+func TestMCPSendingDomainsAreManagedWithoutLeakingTheKey(t *testing.T) {
+	env := testhelper.Setup(t)
+	read := env.MCPClient(t, env.ScopedBearer(t, "sending_domains:read"))
+	s := env.MCPClient(t, env.ScopedBearer(t, "sending_domains:read", "sending_domains:write"))
+
+	denied := call(t, read, "sending_domains_create", map[string]any{"domain": "agent.example.com"})
+	assert.True(t, denied.IsError, "sending_domains:write is required")
+
+	res := call(t, s, "sending_domains_create", map[string]any{"domain": "agent.example.com"})
+	require.False(t, res.IsError, text(t, res))
+	assert.NotContains(t, text(t, res), "PRIVATE KEY")
+	var created struct {
+		ID string `json:"id"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(text(t, res)), &created))
+
+	res = call(t, s, "sending_domains_verify", map[string]any{"id": created.ID})
+	require.False(t, res.IsError, text(t, res))
+
+	res = call(t, s, "sending_domains_get", map[string]any{"id": created.ID})
+	require.False(t, res.IsError, text(t, res))
+	assert.NotContains(t, text(t, res), "PRIVATE KEY")
+
+	res = call(t, s, "sending_domains_delete", map[string]any{"id": created.ID})
 	require.False(t, res.IsError, text(t, res))
 }

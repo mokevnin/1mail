@@ -295,12 +295,44 @@ type Handler interface {
 	//
 	// GET /sending-domains/rates
 	SendingDomainRatesList(ctx context.Context, params SendingDomainRatesListParams) (SendingDomainRatesListRes, error)
+	// SendingDomainsCreate implements SendingDomains_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /sending-domains
+	SendingDomainsCreate(ctx context.Context, req *CreateSendingDomainInput) (SendingDomainsCreateRes, error)
+	// SendingDomainsDelete implements SendingDomains_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /sending-domains/{id}
+	SendingDomainsDelete(ctx context.Context, params SendingDomainsDeleteParams) (SendingDomainsDeleteRes, error)
+	// SendingDomainsGet implements SendingDomains_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /sending-domains/{id}
+	SendingDomainsGet(ctx context.Context, params SendingDomainsGetParams) (SendingDomainsGetRes, error)
 	// SendingDomainsList implements SendingDomains_list operation.
 	//
-	// List the workspace's sending domains.
+	// List resources with pagination.
 	//
 	// GET /sending-domains
 	SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (SendingDomainsListRes, error)
+	// SendingDomainsUpdate implements SendingDomains_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /sending-domains/{id}
+	SendingDomainsUpdate(ctx context.Context, req *UpdateSendingDomainInput, params SendingDomainsUpdateParams) (SendingDomainsUpdateRes, error)
+	// SendingDomainsVerify implements SendingDomains_verify operation.
+	//
+	// Trigger a live DKIM DNS check. The check runs in the background: the response is the domain as it
+	// stands now, 202 Accepted; read it again for the outcome (`verified`, `lastCheckedAt`). Verification
+	// is never set by the caller.
+	//
+	// POST /sending-domains/{id}/verify
+	SendingDomainsVerify(ctx context.Context, params SendingDomainsVerifyParams) (SendingDomainsVerifyRes, error)
 	// SuppressionsCreate implements Suppressions_create operation.
 	//
 	// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an

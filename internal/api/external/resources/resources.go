@@ -79,7 +79,6 @@ type Converter interface {
 	SegmentToResource(source *ent.Segment) externalapi.SegmentResource
 	EmailTemplateToResource(source *ent.EmailTemplate) externalapi.TemplateResource
 	CustomFieldToResource(source *ent.CustomField) externalapi.CustomFieldResource
-	SendingDomainToResource(source *ent.SendingDomain) externalapi.SendingDomainResource
 	TagToResource(source *ent.Tag) externalapi.TagResource
 	// goverter:map Definition Steps | automationSteps
 	AutomationToResource(source *ent.Automation) externalapi.AutomationResource

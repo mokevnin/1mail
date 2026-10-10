@@ -142,6 +142,7 @@ const (
 	ApiTokenScopeWebhooksWrite       ApiTokenScope = "webhooks:write"
 	ApiTokenScopeCustomFieldsRead    ApiTokenScope = "custom_fields:read"
 	ApiTokenScopeSendingDomainsRead  ApiTokenScope = "sending_domains:read"
+	ApiTokenScopeSendingDomainsWrite ApiTokenScope = "sending_domains:write"
 	ApiTokenScopeIntegrationsRead    ApiTokenScope = "integrations:read"
 	ApiTokenScopeIntegrationsWrite   ApiTokenScope = "integrations:write"
 	ApiTokenScopeEmailsSend          ApiTokenScope = "emails:send"
@@ -172,6 +173,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeWebhooksWrite,
 		ApiTokenScopeCustomFieldsRead,
 		ApiTokenScopeSendingDomainsRead,
+		ApiTokenScopeSendingDomainsWrite,
 		ApiTokenScopeIntegrationsRead,
 		ApiTokenScopeIntegrationsWrite,
 		ApiTokenScopeEmailsSend,
@@ -219,6 +221,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeCustomFieldsRead:
 		return []byte(s), nil
 	case ApiTokenScopeSendingDomainsRead:
+		return []byte(s), nil
+	case ApiTokenScopeSendingDomainsWrite:
 		return []byte(s), nil
 	case ApiTokenScopeIntegrationsRead:
 		return []byte(s), nil
@@ -294,6 +298,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeSendingDomainsRead:
 		*s = ApiTokenScopeSendingDomainsRead
+		return nil
+	case ApiTokenScopeSendingDomainsWrite:
+		*s = ApiTokenScopeSendingDomainsWrite
 		return nil
 	case ApiTokenScopeIntegrationsRead:
 		*s = ApiTokenScopeIntegrationsRead
@@ -3259,6 +3266,35 @@ func (s *CreateSegmentInput) SetDefinition(val string) {
 	s.Definition = val
 }
 
+// Add a Sending domain; mints the DKIM keypair and returns the DNS records to publish.
+// Ref: #/components/schemas/CreateSendingDomainInput
+type CreateSendingDomainInput struct {
+	// The domain to authenticate, e.g. "mail.acme.com" (normalized to lowercase ASCII).
+	Domain string `json:"domain"`
+	// DKIM selector; defaults to "1mail" when omitted.
+	DkimSelector OptString `json:"dkimSelector"`
+}
+
+// GetDomain returns the value of Domain.
+func (s *CreateSendingDomainInput) GetDomain() string {
+	return s.Domain
+}
+
+// GetDkimSelector returns the value of DkimSelector.
+func (s *CreateSendingDomainInput) GetDkimSelector() OptString {
+	return s.DkimSelector
+}
+
+// SetDomain sets the value of Domain.
+func (s *CreateSendingDomainInput) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetDkimSelector sets the value of DkimSelector.
+func (s *CreateSendingDomainInput) SetDkimSelector(val OptString) {
+	s.DkimSelector = val
+}
+
 // Request body for suppressing a destination.
 // Ref: #/components/schemas/CreateSuppressionInput
 type CreateSuppressionInput struct {
@@ -3587,6 +3623,82 @@ func (s *CustomFieldsListOK) SetTotalPages(val int32) {
 }
 
 func (*CustomFieldsListOK) customFieldsListRes() {}
+
+// A DNS record the caller publishes to authenticate a Sending domain.
+// Ref: #/components/schemas/DnsRecord
+type DnsRecord struct {
+	// The record type (always TXT for the records we generate).
+	Type DnsRecordType `json:"type"`
+	// The host / name to create the record at.
+	Host string `json:"host"`
+	// The record value to publish.
+	Value string `json:"value"`
+}
+
+// GetType returns the value of Type.
+func (s *DnsRecord) GetType() DnsRecordType {
+	return s.Type
+}
+
+// GetHost returns the value of Host.
+func (s *DnsRecord) GetHost() string {
+	return s.Host
+}
+
+// GetValue returns the value of Value.
+func (s *DnsRecord) GetValue() string {
+	return s.Value
+}
+
+// SetType sets the value of Type.
+func (s *DnsRecord) SetType(val DnsRecordType) {
+	s.Type = val
+}
+
+// SetHost sets the value of Host.
+func (s *DnsRecord) SetHost(val string) {
+	s.Host = val
+}
+
+// SetValue sets the value of Value.
+func (s *DnsRecord) SetValue(val string) {
+	s.Value = val
+}
+
+// The record type (always TXT for the records we generate).
+type DnsRecordType string
+
+const (
+	DnsRecordTypeTXT DnsRecordType = "TXT"
+)
+
+// AllValues returns all DnsRecordType values.
+func (DnsRecordType) AllValues() []DnsRecordType {
+	return []DnsRecordType{
+		DnsRecordTypeTXT,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DnsRecordType) MarshalText() ([]byte, error) {
+	switch s {
+	case DnsRecordTypeTXT:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DnsRecordType) UnmarshalText(data []byte) error {
+	switch DnsRecordType(data) {
+	case DnsRecordTypeTXT:
+		*s = DnsRecordTypeTXT
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type EmailAddress string
 
@@ -6297,7 +6409,12 @@ func (*ProblemDetailsHeaders) segmentsListRes()           {}
 func (*ProblemDetailsHeaders) segmentsPreviewRes()        {}
 func (*ProblemDetailsHeaders) segmentsUpdateRes()         {}
 func (*ProblemDetailsHeaders) sendingDomainRatesListRes() {}
+func (*ProblemDetailsHeaders) sendingDomainsCreateRes()   {}
+func (*ProblemDetailsHeaders) sendingDomainsDeleteRes()   {}
+func (*ProblemDetailsHeaders) sendingDomainsGetRes()      {}
 func (*ProblemDetailsHeaders) sendingDomainsListRes()     {}
+func (*ProblemDetailsHeaders) sendingDomainsUpdateRes()   {}
+func (*ProblemDetailsHeaders) sendingDomainsVerifyRes()   {}
 func (*ProblemDetailsHeaders) suppressionsCreateRes()     {}
 func (*ProblemDetailsHeaders) tagsApplyRes()              {}
 func (*ProblemDetailsHeaders) tagsListForContactRes()     {}
@@ -7048,19 +7165,33 @@ func (s *SendingDomainRatesResource) SetBounceRate(val RateTriple) {
 	s.BounceRate = val
 }
 
-// Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed.
+// Sending domain (ADR 0010). 1mail generates the DKIM keypair; the caller publishes the DKIM TXT
+// record. The private key is never returned. `verified` is a live property re-checked in the
+// background: it can flip back if the DNS record disappears.
 // Ref: #/components/schemas/SendingDomainResource
 type SendingDomainResource struct {
 	// Unique identifier.
 	ID EntityId `json:"id"`
 	// The authenticated domain, e.g. "mail.acme.com".
 	Domain string `json:"domain"`
+	// DKIM selector; the record host is "._domainkey.".
+	DkimSelector string `json:"dkimSelector"`
 	// Whether the DKIM DNS is currently published and matches our key.
 	Verified bool `json:"verified"`
+	// The required DKIM TXT record.
+	DkimRecord DnsRecord `json:"dkimRecord"`
+	// The suggested SPF TXT record (advisory: does not gate sending).
+	SpfRecord DnsRecord `json:"spfRecord"`
+	// The suggested DMARC TXT record (advisory bulk-readiness signal).
+	DmarcRecord DnsRecord `json:"dmarcRecord"`
+	// When the DKIM DNS was most recently checked (null = never).
+	LastCheckedAt OptNilTimestamp `json:"lastCheckedAt"`
 	// When the domain most recently became verified (null = never).
 	VerifiedAt OptNilTimestamp `json:"verifiedAt"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
 }
 
 // GetID returns the value of ID.
@@ -7073,9 +7204,34 @@ func (s *SendingDomainResource) GetDomain() string {
 	return s.Domain
 }
 
+// GetDkimSelector returns the value of DkimSelector.
+func (s *SendingDomainResource) GetDkimSelector() string {
+	return s.DkimSelector
+}
+
 // GetVerified returns the value of Verified.
 func (s *SendingDomainResource) GetVerified() bool {
 	return s.Verified
+}
+
+// GetDkimRecord returns the value of DkimRecord.
+func (s *SendingDomainResource) GetDkimRecord() DnsRecord {
+	return s.DkimRecord
+}
+
+// GetSpfRecord returns the value of SpfRecord.
+func (s *SendingDomainResource) GetSpfRecord() DnsRecord {
+	return s.SpfRecord
+}
+
+// GetDmarcRecord returns the value of DmarcRecord.
+func (s *SendingDomainResource) GetDmarcRecord() DnsRecord {
+	return s.DmarcRecord
+}
+
+// GetLastCheckedAt returns the value of LastCheckedAt.
+func (s *SendingDomainResource) GetLastCheckedAt() OptNilTimestamp {
+	return s.LastCheckedAt
 }
 
 // GetVerifiedAt returns the value of VerifiedAt.
@@ -7088,6 +7244,11 @@ func (s *SendingDomainResource) GetCreatedAt() Timestamp {
 	return s.CreatedAt
 }
 
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SendingDomainResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
 // SetID sets the value of ID.
 func (s *SendingDomainResource) SetID(val EntityId) {
 	s.ID = val
@@ -7098,9 +7259,34 @@ func (s *SendingDomainResource) SetDomain(val string) {
 	s.Domain = val
 }
 
+// SetDkimSelector sets the value of DkimSelector.
+func (s *SendingDomainResource) SetDkimSelector(val string) {
+	s.DkimSelector = val
+}
+
 // SetVerified sets the value of Verified.
 func (s *SendingDomainResource) SetVerified(val bool) {
 	s.Verified = val
+}
+
+// SetDkimRecord sets the value of DkimRecord.
+func (s *SendingDomainResource) SetDkimRecord(val DnsRecord) {
+	s.DkimRecord = val
+}
+
+// SetSpfRecord sets the value of SpfRecord.
+func (s *SendingDomainResource) SetSpfRecord(val DnsRecord) {
+	s.SpfRecord = val
+}
+
+// SetDmarcRecord sets the value of DmarcRecord.
+func (s *SendingDomainResource) SetDmarcRecord(val DnsRecord) {
+	s.DmarcRecord = val
+}
+
+// SetLastCheckedAt sets the value of LastCheckedAt.
+func (s *SendingDomainResource) SetLastCheckedAt(val OptNilTimestamp) {
+	s.LastCheckedAt = val
 }
 
 // SetVerifiedAt sets the value of VerifiedAt.
@@ -7112,6 +7298,61 @@ func (s *SendingDomainResource) SetVerifiedAt(val OptNilTimestamp) {
 func (s *SendingDomainResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SendingDomainResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SendingDomainResource) sendingDomainsCreateRes() {}
+func (*SendingDomainResource) sendingDomainsGetRes()    {}
+func (*SendingDomainResource) sendingDomainsUpdateRes() {}
+func (*SendingDomainResource) sendingDomainsVerifyRes() {}
+
+type SendingDomainsCreateConflict ProblemDetails
+
+func (*SendingDomainsCreateConflict) sendingDomainsCreateRes() {}
+
+type SendingDomainsCreateUnauthorized ProblemDetails
+
+func (*SendingDomainsCreateUnauthorized) sendingDomainsCreateRes() {}
+
+type SendingDomainsCreateUnprocessableEntity ProblemDetails
+
+func (*SendingDomainsCreateUnprocessableEntity) sendingDomainsCreateRes() {}
+
+type SendingDomainsDeleteBadRequest ProblemDetails
+
+func (*SendingDomainsDeleteBadRequest) sendingDomainsDeleteRes() {}
+
+// SendingDomainsDeleteNoContent is response for SendingDomainsDelete operation.
+type SendingDomainsDeleteNoContent struct{}
+
+func (*SendingDomainsDeleteNoContent) sendingDomainsDeleteRes() {}
+
+type SendingDomainsDeleteNotFound ProblemDetails
+
+func (*SendingDomainsDeleteNotFound) sendingDomainsDeleteRes() {}
+
+type SendingDomainsDeleteUnauthorized ProblemDetails
+
+func (*SendingDomainsDeleteUnauthorized) sendingDomainsDeleteRes() {}
+
+type SendingDomainsDeleteUnprocessableEntity ProblemDetails
+
+func (*SendingDomainsDeleteUnprocessableEntity) sendingDomainsDeleteRes() {}
+
+type SendingDomainsGetBadRequest ProblemDetails
+
+func (*SendingDomainsGetBadRequest) sendingDomainsGetRes() {}
+
+type SendingDomainsGetNotFound ProblemDetails
+
+func (*SendingDomainsGetNotFound) sendingDomainsGetRes() {}
+
+type SendingDomainsGetUnauthorized ProblemDetails
+
+func (*SendingDomainsGetUnauthorized) sendingDomainsGetRes() {}
 
 type SendingDomainsListBadRequest ProblemDetails
 
@@ -7186,6 +7427,42 @@ func (*SendingDomainsListOK) sendingDomainsListRes() {}
 type SendingDomainsListUnauthorized ProblemDetails
 
 func (*SendingDomainsListUnauthorized) sendingDomainsListRes() {}
+
+type SendingDomainsListUnprocessableEntity ProblemDetails
+
+func (*SendingDomainsListUnprocessableEntity) sendingDomainsListRes() {}
+
+type SendingDomainsUpdateBadRequest ProblemDetails
+
+func (*SendingDomainsUpdateBadRequest) sendingDomainsUpdateRes() {}
+
+type SendingDomainsUpdateConflict ProblemDetails
+
+func (*SendingDomainsUpdateConflict) sendingDomainsUpdateRes() {}
+
+type SendingDomainsUpdateNotFound ProblemDetails
+
+func (*SendingDomainsUpdateNotFound) sendingDomainsUpdateRes() {}
+
+type SendingDomainsUpdateUnauthorized ProblemDetails
+
+func (*SendingDomainsUpdateUnauthorized) sendingDomainsUpdateRes() {}
+
+type SendingDomainsUpdateUnprocessableEntity ProblemDetails
+
+func (*SendingDomainsUpdateUnprocessableEntity) sendingDomainsUpdateRes() {}
+
+type SendingDomainsVerifyBadRequest ProblemDetails
+
+func (*SendingDomainsVerifyBadRequest) sendingDomainsVerifyRes() {}
+
+type SendingDomainsVerifyNotFound ProblemDetails
+
+func (*SendingDomainsVerifyNotFound) sendingDomainsVerifyRes() {}
+
+type SendingDomainsVerifyUnauthorized ProblemDetails
+
+func (*SendingDomainsVerifyUnauthorized) sendingDomainsVerifyRes() {}
 
 // SES config without the secret access key.
 // Ref: #/components/schemas/SesConfig
@@ -8648,6 +8925,24 @@ func (s *UpdateSegmentInput) SetName(val OptString) {
 // SetDefinition sets the value of Definition.
 func (s *UpdateSegmentInput) SetDefinition(val OptString) {
 	s.Definition = val
+}
+
+// Change a Sending domain. The domain name is immutable; changing the selector moves the DKIM record,
+// so the domain becomes unverified until the new record is published.
+// Ref: #/components/schemas/UpdateSendingDomainInput
+type UpdateSendingDomainInput struct {
+	// New DKIM selector.
+	DkimSelector OptString `json:"dkimSelector"`
+}
+
+// GetDkimSelector returns the value of DkimSelector.
+func (s *UpdateSendingDomainInput) GetDkimSelector() OptString {
+	return s.DkimSelector
+}
+
+// SetDkimSelector sets the value of DkimSelector.
+func (s *UpdateSendingDomainInput) SetDkimSelector(val OptString) {
+	s.DkimSelector = val
 }
 
 // Request body for updating a template.

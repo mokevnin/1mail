@@ -23,10 +23,10 @@ modelled and stay out.
   operations have no handlers). It is extended, additively and without a new version, to: contacts
   (+ batch upsert by alias keys, ADR 0002), tags, segments, broadcasts (drafts, `schedule`,
   `unschedule`, `test-send`, audience, report), automations (CRUD, `activate`/`deactivate`),
-  templates, events (+ batch), webhooks, and read-only custom fields, sending domains and the
-  complaint/bounce rates (ADR 0011), and integrations (ADR 0024: credentials are write-only and never
-  returned; `integrations:write` is not OAuth-grantable). **Not exposed:** sending-domain mutations
-  (DNS/DKIM; revisited by ADR 0024), API tokens. Batches take up to 1000 items and
+  templates, events (+ batch), webhooks, and read-only custom fields and the
+  complaint/bounce rates (ADR 0011), integrations and sending domains (ADR 0024: credentials and the DKIM
+  private key are never returned; `integrations:write` and `sending_domains:write` are not OAuth-grantable;
+  verification stays a live DKIM check that the API only triggers and reports). **Not exposed:** API tokens. Batches take up to 1000 items and
   return a per-item result; one failure does not roll back the rest.
 - **Use-case modules before the contract grows.** `/site` and `/api` re-implement contact
   create/update and diverge: `/api` creates contacts without publishing `ContactCreated`, so they
@@ -61,7 +61,7 @@ Decisions taken while building it, so the contract and code are not the only rec
 - **Scopes.** The `ApiTokenScope` enum is the complete vocabulary and a test keeps it so (every
   scope an `/api` handler checks must be grantable): `contacts`, `events`, `segments`,
   `broadcasts`, `automations`, `templates`, `webhooks` each as `:read` / `:write`;
-  `custom_fields:read`, `sending_domains:read`, `integrations:read` / `integrations:write`; the send class `emails:send`, `broadcasts:send`,
+  `custom_fields:read`, `sending_domains:read` / `sending_domains:write`, `integrations:read` / `integrations:write`; the send class `emails:send`, `broadcasts:send`,
   `automations:activate`, `mcp:send`; and `tokens:read` / `tokens:write` for `/api` token
   management, which is hidden from MCP.
 - **`x-mcp`.** Declared in `typespec/external/mcp.tsp` with three keys: `name` (override of the
