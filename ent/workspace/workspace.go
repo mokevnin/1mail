@@ -30,6 +30,8 @@ const (
 	FieldRequireConfirmedOptIn = "require_confirmed_opt_in"
 	// FieldPostalAddress holds the string denoting the postal_address field in the database.
 	FieldPostalAddress = "postal_address"
+	// FieldRetentionDays holds the string denoting the retention_days field in the database.
+	FieldRetentionDays = "retention_days"
 	// FieldSuspendedAt holds the string denoting the suspended_at field in the database.
 	FieldSuspendedAt = "suspended_at"
 	// FieldSuspendedBy holds the string denoting the suspended_by field in the database.
@@ -249,6 +251,7 @@ var Columns = []string{
 	FieldIngestKey,
 	FieldRequireConfirmedOptIn,
 	FieldPostalAddress,
+	FieldRetentionDays,
 	FieldSuspendedAt,
 	FieldSuspendedBy,
 	FieldSuspensionReason,
@@ -283,6 +286,8 @@ var (
 	DefaultRequireConfirmedOptIn bool
 	// DefaultPostalAddress holds the default value on creation for the "postal_address" field.
 	DefaultPostalAddress string
+	// RetentionDaysValidator is a validator for the "retention_days" field. It is called by the builders before save.
+	RetentionDaysValidator func(int) error
 )
 
 // OrderOption defines the ordering options for the Workspace queries.
@@ -331,6 +336,11 @@ func ByRequireConfirmedOptIn(opts ...sql.OrderTermOption) OrderOption {
 // ByPostalAddress orders the results by the postal_address field.
 func ByPostalAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPostalAddress, opts...).ToFunc()
+}
+
+// ByRetentionDays orders the results by the retention_days field.
+func ByRetentionDays(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRetentionDays, opts...).ToFunc()
 }
 
 // BySuspendedAt orders the results by the suspended_at field.

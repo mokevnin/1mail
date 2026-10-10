@@ -23665,6 +23665,8 @@ type WorkspaceMutation struct {
 	ingest_key                  *string
 	require_confirmed_opt_in    *bool
 	postal_address              *string
+	retention_days              *int
+	addretention_days           *int
 	suspended_at                *time.Time
 	suspended_by                *string
 	suspension_reason           *string
@@ -24143,6 +24145,76 @@ func (m *WorkspaceMutation) PostalAddressCleared() bool {
 func (m *WorkspaceMutation) ResetPostalAddress() {
 	m.postal_address = nil
 	delete(m.clearedFields, workspace.FieldPostalAddress)
+}
+
+// SetRetentionDays sets the "retention_days" field.
+func (m *WorkspaceMutation) SetRetentionDays(i int) {
+	m.retention_days = &i
+	m.addretention_days = nil
+}
+
+// RetentionDays returns the value of the "retention_days" field in the mutation.
+func (m *WorkspaceMutation) RetentionDays() (r int, exists bool) {
+	v := m.retention_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRetentionDays returns the old "retention_days" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldRetentionDays(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRetentionDays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRetentionDays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRetentionDays: %w", err)
+	}
+	return oldValue.RetentionDays, nil
+}
+
+// AddRetentionDays adds i to the "retention_days" field.
+func (m *WorkspaceMutation) AddRetentionDays(i int) {
+	if m.addretention_days != nil {
+		*m.addretention_days += i
+	} else {
+		m.addretention_days = &i
+	}
+}
+
+// AddedRetentionDays returns the value that was added to the "retention_days" field in this mutation.
+func (m *WorkspaceMutation) AddedRetentionDays() (r int, exists bool) {
+	v := m.addretention_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (m *WorkspaceMutation) ClearRetentionDays() {
+	m.retention_days = nil
+	m.addretention_days = nil
+	m.clearedFields[workspace.FieldRetentionDays] = struct{}{}
+}
+
+// RetentionDaysCleared returns if the "retention_days" field was cleared in this mutation.
+func (m *WorkspaceMutation) RetentionDaysCleared() bool {
+	_, ok := m.clearedFields[workspace.FieldRetentionDays]
+	return ok
+}
+
+// ResetRetentionDays resets all changes to the "retention_days" field.
+func (m *WorkspaceMutation) ResetRetentionDays() {
+	m.retention_days = nil
+	m.addretention_days = nil
+	delete(m.clearedFields, workspace.FieldRetentionDays)
 }
 
 // SetSuspendedAt sets the "suspended_at" field.
@@ -25514,7 +25586,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, workspace.FieldCreatedAt)
 	}
@@ -25538,6 +25610,9 @@ func (m *WorkspaceMutation) Fields() []string {
 	}
 	if m.postal_address != nil {
 		fields = append(fields, workspace.FieldPostalAddress)
+	}
+	if m.retention_days != nil {
+		fields = append(fields, workspace.FieldRetentionDays)
 	}
 	if m.suspended_at != nil {
 		fields = append(fields, workspace.FieldSuspendedAt)
@@ -25572,6 +25647,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.RequireConfirmedOptIn()
 	case workspace.FieldPostalAddress:
 		return m.PostalAddress()
+	case workspace.FieldRetentionDays:
+		return m.RetentionDays()
 	case workspace.FieldSuspendedAt:
 		return m.SuspendedAt()
 	case workspace.FieldSuspendedBy:
@@ -25603,6 +25680,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldRequireConfirmedOptIn(ctx)
 	case workspace.FieldPostalAddress:
 		return m.OldPostalAddress(ctx)
+	case workspace.FieldRetentionDays:
+		return m.OldRetentionDays(ctx)
 	case workspace.FieldSuspendedAt:
 		return m.OldSuspendedAt(ctx)
 	case workspace.FieldSuspendedBy:
@@ -25674,6 +25753,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPostalAddress(v)
 		return nil
+	case workspace.FieldRetentionDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRetentionDays(v)
+		return nil
 	case workspace.FieldSuspendedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -25702,13 +25788,21 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *WorkspaceMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addretention_days != nil {
+		fields = append(fields, workspace.FieldRetentionDays)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *WorkspaceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workspace.FieldRetentionDays:
+		return m.AddedRetentionDays()
+	}
 	return nil, false
 }
 
@@ -25717,6 +25811,13 @@ func (m *WorkspaceMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *WorkspaceMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case workspace.FieldRetentionDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRetentionDays(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Workspace numeric field %s", name)
 }
@@ -25727,6 +25828,9 @@ func (m *WorkspaceMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(workspace.FieldPostalAddress) {
 		fields = append(fields, workspace.FieldPostalAddress)
+	}
+	if m.FieldCleared(workspace.FieldRetentionDays) {
+		fields = append(fields, workspace.FieldRetentionDays)
 	}
 	if m.FieldCleared(workspace.FieldSuspendedAt) {
 		fields = append(fields, workspace.FieldSuspendedAt)
@@ -25753,6 +25857,9 @@ func (m *WorkspaceMutation) ClearField(name string) error {
 	switch name {
 	case workspace.FieldPostalAddress:
 		m.ClearPostalAddress()
+		return nil
+	case workspace.FieldRetentionDays:
+		m.ClearRetentionDays()
 		return nil
 	case workspace.FieldSuspendedAt:
 		m.ClearSuspendedAt()
@@ -25794,6 +25901,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 		return nil
 	case workspace.FieldPostalAddress:
 		m.ResetPostalAddress()
+		return nil
+	case workspace.FieldRetentionDays:
+		m.ResetRetentionDays()
 		return nil
 	case workspace.FieldSuspendedAt:
 		m.ResetSuspendedAt()

@@ -140,7 +140,8 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   `internal/oauthserver`, `internal/service` (suspension, slug resolution), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
-  subscriber: its envelope carries only a Workspace id, ADR 0022) and the composition roots
+  subscriber: its envelope carries only a Workspace id, ADR 0022), `ee/retention` (the
+  periodic prune job: a job entry point that lists Workspaces, then scopes) and the composition roots
   (`internal/app`, `internal/db`, `internal/testhelper`). Needing raw access anywhere else
   means a new small package in this list, not a field on `Handlers`.
   `internal/eligibility` holds no raw client: it takes a `*ent.Scoped` and passes
@@ -159,6 +160,8 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   (`site.AuditLog`, `events.Consumer`). The audit table's ent schema sits in `ent/schema`
   (ent has one schema package) but is written and read only by `ee/audit`. An Audit entry is
   an unprojected event (`events.Unprojected`): persist, automations and webhooks skip it.
+  The Audit table's only remover is `ee/retention` (the `retention` license feature, a
+  Workspace `retention_days` window, one hourly river job registered through `Edition.Jobs()`).
   Publish through `events.RecordAudit` inside the mutation's transaction. In tests the router
   does not run, so call `env.DeliverToEE(t)` to hand the outbox to the EE subscribers.
   **Audit capture in the scoped client (ADR 0022):** an `*ent.Scoped` carries its actor

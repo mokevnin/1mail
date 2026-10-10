@@ -7,15 +7,20 @@
 package ee
 
 import (
+	"github.com/riverqueue/river"
+
 	"github.com/mokevnin/1mail/ee/audit"
 	"github.com/mokevnin/1mail/ee/licensekey"
+	"github.com/mokevnin/1mail/ee/retention"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/jobs"
 )
 
 // Edition is the Enterprise surface of one running instance.
 type Edition struct {
-	lic *licensekey.License
+	lic    *licensekey.License
+	client *ent.Client
 
 	// Audit is the read side of the Audit log; unlicensed, it reports so and the
 	// /site page answers 402.
@@ -30,8 +35,20 @@ type Edition struct {
 func New(client *ent.Client, lic *licensekey.License) *Edition {
 	return &Edition{
 		lic:       lic,
+		client:    client,
 		Audit:     audit.NewLog(lic),
 		Consumers: []events.Consumer{audit.Consumer(client, lic)},
+	}
+}
+
+// Jobs is the Edition's river extension: the advanced-retention prune job (ADR 0014),
+// which removes nothing without the retention license.
+func (e *Edition) Jobs() jobs.Extension {
+	return jobs.Extension{
+		Workers: func(w *river.Workers) {
+			river.AddWorker(w, retention.NewWorker(e.client, e.lic))
+		},
+		PeriodicJobs: []*river.PeriodicJob{retention.Periodic()},
 	}
 }
 
