@@ -132,6 +132,8 @@ func main() {
 
 	shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 	defer cancel()
+	// Also covers a public listener that failed at boot: the metrics server is up.
+	_ = application.Stop(shutdownCtx)
 	report := application.Shutdown(shutdownCtx)
 	if !report.Succeed {
 		slog.Error("shutdown incomplete", "report", report)

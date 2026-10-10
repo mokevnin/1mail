@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
 var otlpEnvKeys = []string{
@@ -24,19 +25,9 @@ var otlpEnvKeys = []string{
 // isolate restores the process-wide state Setup mutates and clears the OTLP env.
 func isolate(t *testing.T) {
 	t.Helper()
+	testhelper.IsolateOtel(t)
 	prevHandler := metricsHandler
-	prevTP := otel.GetTracerProvider()
-	prevMP := otel.GetMeterProvider()
-	prevProp := otel.GetTextMapPropagator()
-	t.Cleanup(func() {
-		metricsHandler = prevHandler
-		otel.SetTracerProvider(prevTP)
-		otel.SetMeterProvider(prevMP)
-		otel.SetTextMapPropagator(prevProp)
-	})
-	for _, k := range otlpEnvKeys {
-		t.Setenv(k, "")
-	}
+	t.Cleanup(func() { metricsHandler = prevHandler })
 }
 
 func scrape(t *testing.T) (int, string) {

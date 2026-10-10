@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,9 +19,6 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
@@ -50,11 +46,9 @@ func TestMetricsExpositionCarriesNoTenantLabels(t *testing.T) {
 	require.NoError(t, err)
 
 	// Global providers must be installed before the instrumented components are built.
-	prevMP, prevTP := otelGlobals()
-	t.Cleanup(func() { restoreOtelGlobals(prevMP, prevTP) })
-	stop, err := telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = stop(context.Background()) })
+	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
+		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
+	})
 
 	srv := telemetry.NewMetricsServer("127.0.0.1:0")
 	require.NoError(t, srv.Listen())
@@ -63,12 +57,13 @@ func TestMetricsExpositionCarriesNoTenantLabels(t *testing.T) {
 
 	env := testhelper.Setup(t)
 	workspace := env.DB.Workspace.GetX(ctx, fixtures.AcmeID)
-	const contactEmail = "label-policy@example.com"
+	contactEmail := fixtures.ContactAliceEmail
 
-	runHandledDomainEvent(t, cfg, contactEmail)
-	runJob(t, env, cfg, contactEmail)
+	runHandledDomainEvent(t, cfg, srv.Addr(), contactEmail)
+	runJob(t, env, cfg, srv.Addr(), contactEmail)
 
-	body := scrapeBody(t, "http://"+srv.Addr().String()+"/metrics")
+	code, body := testhelper.HTTPGet(t, "http://"+srv.Addr()+"/metrics")
+	require.Equal(t, http.StatusOK, code)
 
 	// Proof that the instrumented paths ran: their metrics are in the exposition.
 	require.Contains(t, body, "watermill_messages_processed", "domain-event handler metrics missing")
@@ -90,22 +85,9 @@ func TestMetricsExpositionCarriesNoTenantLabels(t *testing.T) {
 	}
 }
 
-func scrapeBody(t *testing.T, url string) string {
-	t.Helper()
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	defer func() { _ = resp.Body.Close() }()
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	return string(body)
-}
-
 // runHandledDomainEvent publishes a tenant-bearing event through the outbox and waits
 // until the real router (with the OTel middleware) has handled it.
-func runHandledDomainEvent(t *testing.T, cfg *config.Config, contactEmail string) {
+func runHandledDomainEvent(t *testing.T, cfg *config.Config, srvAddr, contactEmail string) {
 	t.Helper()
 	ctx := context.Background()
 	sqlDB, err := sql.Open("pgx", cfg.DatabaseURL)
@@ -145,11 +127,11 @@ func runHandledDomainEvent(t *testing.T, cfg *config.Config, contactEmail string
 		t.Fatal("domain event was not handled within 10s")
 	}
 	// The middleware records its metrics right after the handler returns.
-	time.Sleep(200 * time.Millisecond)
+	require.Eventually(t, func() bool { return exposes(t, srvAddr, "watermill_messages_processed") }, 10*time.Second, 50*time.Millisecond)
 }
 
 // runJob runs a real river runtime and waits for a job to be worked.
-func runJob(t *testing.T, env *testhelper.TestEnv, cfg *config.Config, contactEmail string) {
+func runJob(t *testing.T, env *testhelper.TestEnv, cfg *config.Config, srvAddr, contactEmail string) {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
@@ -163,11 +145,11 @@ func runJob(t *testing.T, env *testhelper.TestEnv, cfg *config.Config, contactEm
 	require.NoError(t, err)
 	admin, err := river.NewClient(riverpgxv5.New(pool), &river.Config{})
 	require.NoError(t, err)
-	clear := func() {
+	purge := func() {
 		_, _ = admin.JobDeleteMany(context.Background(), river.NewJobDeleteManyParams().Queues(river.QueueDefault, jobs.QueueBroadcasts, jobs.QueueWebhooks))
 	}
-	clear()
-	t.Cleanup(clear)
+	purge()
+	t.Cleanup(purge)
 	require.NoError(t, client.Start(ctx))
 	t.Cleanup(func() { _ = client.Stop(context.Background()) })
 
@@ -180,14 +162,12 @@ func runJob(t *testing.T, env *testhelper.TestEnv, cfg *config.Config, contactEm
 		}
 		return false
 	}, 10*time.Second, 50*time.Millisecond)
-	time.Sleep(200 * time.Millisecond)
+	require.Eventually(t, func() bool { return exposes(t, srvAddr, "river_") }, 10*time.Second, 50*time.Millisecond)
 }
 
-func otelGlobals() (metric.MeterProvider, trace.TracerProvider) {
-	return otel.GetMeterProvider(), otel.GetTracerProvider()
-}
-
-func restoreOtelGlobals(mp metric.MeterProvider, tp trace.TracerProvider) {
-	otel.SetMeterProvider(mp)
-	otel.SetTracerProvider(tp)
+// exposes reports whether the live exposition at addr contains substr.
+func exposes(t *testing.T, addr, substr string) bool {
+	t.Helper()
+	code, body, err := testhelper.TryHTTPGet(t.Context(), "http://"+addr+"/metrics")
+	return err == nil && code == http.StatusOK && strings.Contains(body, substr)
 }

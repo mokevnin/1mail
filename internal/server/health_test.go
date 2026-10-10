@@ -10,8 +10,6 @@ import (
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
 )
 
 func TestHealthz(t *testing.T) {
@@ -39,24 +37,25 @@ func TestReadyz(t *testing.T) {
 
 // Metrics live on the opt-in internal listener (ADR 0018), never on the public
 // port. Telemetry is set up so that a re-mounted route would serve the exposition.
-// (The catch-all answers unknown paths with the SPA shell or the not-embedded hint.)
+// The catch-all answers unknown paths with the SPA shell or the not-embedded hint,
+// so /metrics must answer exactly like any other unknown path.
 func TestPublicHandlerDoesNotServeMetrics(t *testing.T) {
-	prevMP, prevTP, prevProp := otel.GetMeterProvider(), otel.GetTracerProvider(), otel.GetTextMapPropagator()
-	t.Cleanup(func() {
-		otel.SetMeterProvider(prevMP)
-		otel.SetTracerProvider(prevTP)
-		otel.SetTextMapPropagator(prevProp)
+	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
+		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
 	})
-	stop, err := telemetry.Setup(t.Context(), &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = stop(context.Background()) })
-
 	env := testhelper.Setup(t)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/metrics", nil)
-	w := httptest.NewRecorder()
-	env.Server.ServeHTTP(w, req)
+	serve := func(path string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil))
+		return w
+	}
 
-	assert.NotContains(t, w.Body.String(), "go_goroutine_count")
-	assert.NotContains(t, w.Body.String(), "target_info")
+	assert.Equal(t, http.StatusOK, serve("/healthz").Code, "the server is up and routing")
+
+	metrics, unknown := serve("/metrics"), serve("/definitely-unknown")
+	assert.Equal(t, unknown.Code, metrics.Code)
+	assert.Equal(t, unknown.Body.String(), metrics.Body.String())
+	assert.NotContains(t, metrics.Body.String(), "go_goroutine_count")
+	assert.NotContains(t, metrics.Body.String(), "target_info")
 }
