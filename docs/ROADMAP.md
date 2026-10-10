@@ -35,10 +35,10 @@ onsite forms/popups, a visual MJML editor, A/B testing, an outbound
 SES-compatible send API, more provider adapters (Yandex/SendGrid/…), SMS channel, e-commerce.
 
 For a detailed competitive feature breakdown of drip.com, see
-[research/drip-com-feature-analysis.md](research/drip-com-feature-analysis.md). For an
+`research/drip-com-feature-analysis.md`. For an
 analysis of the incumbent open-source competitor's pain points (Mautic) mapped to 1mail's
 position — and the net-new items it surfaced — see
-[research/mautic-pain-points-analysis.md](research/mautic-pain-points-analysis.md).
+`research/mautic-pain-points-analysis.md`.
 
 ## Guiding principle: lean on maintained libraries
 
@@ -135,7 +135,7 @@ The core model is in place; the open work is feature breadth on top of it:
 ### Surfaced by the Mautic pain-point analysis
 
 Three items below are **not** feature-breadth parity — they come from the incumbent
-competitor analysis ([research/mautic-pain-points-analysis.md](research/mautic-pain-points-analysis.md)),
+competitor analysis (`research/mautic-pain-points-analysis.md`),
 which maps Mautic's most-repeated complaints to 1mail's position. Most of Mautic's systemic
 pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated UI) 1mail
 already neutralises by design; these three are the ones still open for us:

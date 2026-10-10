@@ -12,7 +12,12 @@ const config: KnipConfig = {
   ignoreExportsUsedInFile: true,
   workspaces: {
     '.': {
-      entry: ['i18next.config.ts', 'docs/.vitepress/config.ts'],
+      entry: [
+        'i18next.config.ts',
+        'docs/.vitepress/config.ts',
+        'docs/.vitepress/theme/index.ts',
+        'docs/api/*.paths.ts',
+      ],
     },
   },
 }

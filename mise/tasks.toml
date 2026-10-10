@@ -93,7 +93,7 @@ run = 'go run ./cmd/db generate "${usage_name}"'
 
 ["gen:encryption-key"]
 description = "Mint a fresh ENCRYPTION_KEY (base64 Tink keyset) to paste into your .env"
-run = "go run ./cmd/genkey"
+run = "go run ./cmd/server genkey"
 
 # --- tests -----------------------------------------------------------------------
 
