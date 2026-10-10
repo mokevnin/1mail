@@ -190,11 +190,17 @@ type setup struct {
 	cfg        *config.Config
 	now        func() time.Time
 	unlicensed bool
+	// volumeFloor is the Operator console's rate floor; zero is the default.
+	volumeFloor int
 }
 
 // WithoutLicense builds the instance with no EE license key, like a plain core
 // self-host. Setup's default is an instance licensed for every EE feature.
 func WithoutLicense() Option { return func(s *setup) { s.unlicensed = true } }
+
+// WithOperatorVolumeFloor sets the fewest sends in the Operator console's window for a
+// rate to be defined, so a test crosses the floor with a handful of fixture Events.
+func WithOperatorVolumeFloor(n int) Option { return func(s *setup) { s.volumeFloor = n } }
 
 // WithConfig edits a private copy of the test config before the server is built.
 func WithConfig(edit func(*config.Config)) Option { return func(s *setup) { edit(s.cfg) } }
@@ -295,7 +301,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		accounts.WithRateLimits(cfg.RateLimits))
 	edition, err := ee.New(client, lic, cipher, cfg.JWTSecret, operator.Config{
 		Secret: newOperatorSecret(), SessionTTL: cfg.OperatorSessionTTL, SecureCookies: cfg.SecureCookies(), Clock: st.now,
-		Attempts: attempts,
+		Attempts: attempts, VolumeFloor: st.volumeFloor,
 	})
 	require.NoError(t, err, "build edition")
 	tagsModule := tags.New()

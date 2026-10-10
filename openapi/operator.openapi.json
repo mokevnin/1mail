@@ -322,7 +322,7 @@
     "/workspaces/{workspaceId}": {
       "get": {
         "operationId": "OperatorWorkspaces_get",
-        "description": "One Workspace's metadata and suspension state",
+        "description": "One Workspace's metadata, suspension state, rates and send volume",
         "parameters": [
           {
             "name": "workspaceId",
@@ -339,7 +339,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OperatorWorkspaceResource"
+                  "$ref": "#/components/schemas/OperatorWorkspaceDetailResource"
                 }
               }
             }
@@ -578,6 +578,70 @@
         },
         "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
       },
+      "OperatorDeliverability": {
+        "type": "object",
+        "required": ["windowHours", "volumeFloor", "sendVolume", "domains"],
+        "properties": {
+          "windowHours": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Length of the trailing window, in hours"
+          },
+          "volumeFloor": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Fewest sends in the window (per Sending domain) for a rate to be defined"
+          },
+          "sendVolume": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent in the window across all Sending domains"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperatorDomainRates"
+            },
+            "description": "One entry per Sending domain, oldest first"
+          }
+        },
+        "description": "A Workspace's deliverability over the trailing window: the rates of ADR 0011 per\nSending domain, and how much it sent. Counts only, never message content."
+      },
+      "OperatorDomainRates": {
+        "type": "object",
+        "required": ["sendingDomainId", "domain", "complaintRate", "bounceRate"],
+        "properties": {
+          "sendingDomainId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Sending domain id"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The domain the rates are for"
+          },
+          "complaintRate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorRate"
+              }
+            ],
+            "description": "Complaints over sent minus hard bounces"
+          },
+          "bounceRate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorRate"
+              }
+            ],
+            "description": "Hard bounces over sent"
+          }
+        },
+        "description": "The Complaint and Bounce rates of one Sending domain over the trailing window"
+      },
       "OperatorEnrolment": {
         "type": "object",
         "required": ["secret", "uri", "qrCode"],
@@ -635,6 +699,29 @@
             "description": "Present when the outcome is `enrolment`"
           }
         }
+      },
+      "OperatorRate": {
+        "type": "object",
+        "required": ["numerator", "denominator", "rate"],
+        "properties": {
+          "numerator": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Events counted against the rate"
+          },
+          "denominator": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The population the rate is over"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "numerator / denominator; null (undefined) when fewer sends than the volume floor\nwere made in the window, never reported as 0"
+          }
+        },
+        "description": "A rate as the (numerator, denominator, rate) triple (ADR 0011)"
       },
       "OperatorResource": {
         "type": "object",
@@ -745,6 +832,48 @@
           }
         },
         "description": "The outcome of a suspend or unsuspend: the Workspace as it now stands, and whether\nanything changed (suspending a suspended Workspace and unsuspending an active one\nchange nothing)."
+      },
+      "OperatorWorkspaceDetailResource": {
+        "type": "object",
+        "required": ["id", "slug", "name", "createdAt", "deliverability"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the Workspace was created"
+          },
+          "suspension": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorSuspension"
+              }
+            ],
+            "nullable": true,
+            "description": "Present only while sending is suspended"
+          },
+          "deliverability": {
+            "$ref": "#/components/schemas/OperatorDeliverability"
+          }
+        },
+        "description": "A Workspace with its deliverability, as the detail page shows it"
       },
       "OperatorWorkspaceResource": {
         "type": "object",

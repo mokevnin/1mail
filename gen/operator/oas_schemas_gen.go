@@ -37,6 +37,51 @@ type EmailAddress string
 
 type EntityId string
 
+// NewNilFloat64 returns new NilFloat64 with value set to v.
+func NewNilFloat64(v float64) NilFloat64 {
+	return NilFloat64{
+		Value: v,
+	}
+}
+
+// NilFloat64 is nullable float64.
+type NilFloat64 struct {
+	Value float64
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilFloat64) SetTo(v float64) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilFloat64) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilFloat64) SetToNull() {
+	o.Null = true
+	var v float64
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilFloat64) Get() (v float64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // OperatorAuthLogoutNoContent is response for OperatorAuthLogout operation.
 type OperatorAuthLogoutNoContent struct {
 	SetCookie string
@@ -50,6 +95,113 @@ func (s *OperatorAuthLogoutNoContent) GetSetCookie() string {
 // SetSetCookie sets the value of SetCookie.
 func (s *OperatorAuthLogoutNoContent) SetSetCookie(val string) {
 	s.SetCookie = val
+}
+
+// A Workspace's deliverability over the trailing window: the rates of ADR 0011 per Sending domain, and
+// how much it sent. Counts only, never message content.
+// Ref: #/components/schemas/OperatorDeliverability
+type OperatorDeliverability struct {
+	// Length of the trailing window, in hours.
+	WindowHours int32 `json:"windowHours"`
+	// Fewest sends in the window (per Sending domain) for a rate to be defined.
+	VolumeFloor int32 `json:"volumeFloor"`
+	// Messages sent in the window across all Sending domains.
+	SendVolume int32 `json:"sendVolume"`
+	// One entry per Sending domain, oldest first.
+	Domains []OperatorDomainRates `json:"domains"`
+}
+
+// GetWindowHours returns the value of WindowHours.
+func (s *OperatorDeliverability) GetWindowHours() int32 {
+	return s.WindowHours
+}
+
+// GetVolumeFloor returns the value of VolumeFloor.
+func (s *OperatorDeliverability) GetVolumeFloor() int32 {
+	return s.VolumeFloor
+}
+
+// GetSendVolume returns the value of SendVolume.
+func (s *OperatorDeliverability) GetSendVolume() int32 {
+	return s.SendVolume
+}
+
+// GetDomains returns the value of Domains.
+func (s *OperatorDeliverability) GetDomains() []OperatorDomainRates {
+	return s.Domains
+}
+
+// SetWindowHours sets the value of WindowHours.
+func (s *OperatorDeliverability) SetWindowHours(val int32) {
+	s.WindowHours = val
+}
+
+// SetVolumeFloor sets the value of VolumeFloor.
+func (s *OperatorDeliverability) SetVolumeFloor(val int32) {
+	s.VolumeFloor = val
+}
+
+// SetSendVolume sets the value of SendVolume.
+func (s *OperatorDeliverability) SetSendVolume(val int32) {
+	s.SendVolume = val
+}
+
+// SetDomains sets the value of Domains.
+func (s *OperatorDeliverability) SetDomains(val []OperatorDomainRates) {
+	s.Domains = val
+}
+
+// The Complaint and Bounce rates of one Sending domain over the trailing window.
+// Ref: #/components/schemas/OperatorDomainRates
+type OperatorDomainRates struct {
+	// Sending domain id.
+	SendingDomainId EntityId `json:"sendingDomainId"`
+	// The domain the rates are for.
+	Domain string `json:"domain"`
+	// Complaints over sent minus hard bounces.
+	ComplaintRate OperatorRate `json:"complaintRate"`
+	// Hard bounces over sent.
+	BounceRate OperatorRate `json:"bounceRate"`
+}
+
+// GetSendingDomainId returns the value of SendingDomainId.
+func (s *OperatorDomainRates) GetSendingDomainId() EntityId {
+	return s.SendingDomainId
+}
+
+// GetDomain returns the value of Domain.
+func (s *OperatorDomainRates) GetDomain() string {
+	return s.Domain
+}
+
+// GetComplaintRate returns the value of ComplaintRate.
+func (s *OperatorDomainRates) GetComplaintRate() OperatorRate {
+	return s.ComplaintRate
+}
+
+// GetBounceRate returns the value of BounceRate.
+func (s *OperatorDomainRates) GetBounceRate() OperatorRate {
+	return s.BounceRate
+}
+
+// SetSendingDomainId sets the value of SendingDomainId.
+func (s *OperatorDomainRates) SetSendingDomainId(val EntityId) {
+	s.SendingDomainId = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *OperatorDomainRates) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetComplaintRate sets the value of ComplaintRate.
+func (s *OperatorDomainRates) SetComplaintRate(val OperatorRate) {
+	s.ComplaintRate = val
+}
+
+// SetBounceRate sets the value of BounceRate.
+func (s *OperatorDomainRates) SetBounceRate(val OperatorRate) {
+	s.BounceRate = val
 }
 
 // A TOTP secret awaiting its first confirming code.
@@ -208,6 +360,48 @@ func (s *OperatorLoginResult) SetEnrolment(val OptOperatorEnrolment) {
 }
 
 func (*OperatorLoginResult) operatorAuthLoginRes() {}
+
+// A rate as the (numerator, denominator, rate) triple (ADR 0011).
+// Ref: #/components/schemas/OperatorRate
+type OperatorRate struct {
+	// Events counted against the rate.
+	Numerator int32 `json:"numerator"`
+	// The population the rate is over.
+	Denominator int32 `json:"denominator"`
+	// Numerator / denominator; null (undefined) when fewer sends than the volume floor were made in the
+	// window, never reported as 0.
+	Rate NilFloat64 `json:"rate"`
+}
+
+// GetNumerator returns the value of Numerator.
+func (s *OperatorRate) GetNumerator() int32 {
+	return s.Numerator
+}
+
+// GetDenominator returns the value of Denominator.
+func (s *OperatorRate) GetDenominator() int32 {
+	return s.Denominator
+}
+
+// GetRate returns the value of Rate.
+func (s *OperatorRate) GetRate() NilFloat64 {
+	return s.Rate
+}
+
+// SetNumerator sets the value of Numerator.
+func (s *OperatorRate) SetNumerator(val int32) {
+	s.Numerator = val
+}
+
+// SetDenominator sets the value of Denominator.
+func (s *OperatorRate) SetDenominator(val int32) {
+	s.Denominator = val
+}
+
+// SetRate sets the value of Rate.
+func (s *OperatorRate) SetRate(val NilFloat64) {
+	s.Rate = val
+}
 
 // The authenticated platform Operator (shown to customers only as "sphericon staff").
 // Ref: #/components/schemas/OperatorResource
@@ -463,6 +657,82 @@ func (s *OperatorSuspensionChange) SetWorkspace(val OperatorWorkspaceResource) {
 func (*OperatorSuspensionChange) operatorWorkspacesSuspendRes()   {}
 func (*OperatorSuspensionChange) operatorWorkspacesUnsuspendRes() {}
 
+// A Workspace with its deliverability, as the detail page shows it.
+// Ref: #/components/schemas/OperatorWorkspaceDetailResource
+type OperatorWorkspaceDetailResource struct {
+	// Unique identifier.
+	ID   EntityId `json:"id"`
+	Slug string   `json:"slug"`
+	Name string   `json:"name"`
+	// When the Workspace was created.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Present only while sending is suspended.
+	Suspension     OptNilOperatorSuspension `json:"suspension"`
+	Deliverability OperatorDeliverability   `json:"deliverability"`
+}
+
+// GetID returns the value of ID.
+func (s *OperatorWorkspaceDetailResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetSlug returns the value of Slug.
+func (s *OperatorWorkspaceDetailResource) GetSlug() string {
+	return s.Slug
+}
+
+// GetName returns the value of Name.
+func (s *OperatorWorkspaceDetailResource) GetName() string {
+	return s.Name
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *OperatorWorkspaceDetailResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetSuspension returns the value of Suspension.
+func (s *OperatorWorkspaceDetailResource) GetSuspension() OptNilOperatorSuspension {
+	return s.Suspension
+}
+
+// GetDeliverability returns the value of Deliverability.
+func (s *OperatorWorkspaceDetailResource) GetDeliverability() OperatorDeliverability {
+	return s.Deliverability
+}
+
+// SetID sets the value of ID.
+func (s *OperatorWorkspaceDetailResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetSlug sets the value of Slug.
+func (s *OperatorWorkspaceDetailResource) SetSlug(val string) {
+	s.Slug = val
+}
+
+// SetName sets the value of Name.
+func (s *OperatorWorkspaceDetailResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *OperatorWorkspaceDetailResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetSuspension sets the value of Suspension.
+func (s *OperatorWorkspaceDetailResource) SetSuspension(val OptNilOperatorSuspension) {
+	s.Suspension = val
+}
+
+// SetDeliverability sets the value of Deliverability.
+func (s *OperatorWorkspaceDetailResource) SetDeliverability(val OperatorDeliverability) {
+	s.Deliverability = val
+}
+
+func (*OperatorWorkspaceDetailResource) operatorWorkspacesGetRes() {}
+
 // A Workspace as the Operator console sees it: metadata only, never Contacts, content or Events (ADR
 // 0026).
 // Ref: #/components/schemas/OperatorWorkspaceResource
@@ -526,8 +796,6 @@ func (s *OperatorWorkspaceResource) SetCreatedAt(val Timestamp) {
 func (s *OperatorWorkspaceResource) SetSuspension(val OptNilOperatorSuspension) {
 	s.Suspension = val
 }
-
-func (*OperatorWorkspaceResource) operatorWorkspacesGetRes() {}
 
 type OperatorWorkspacesGetNotFound ProblemDetails
 

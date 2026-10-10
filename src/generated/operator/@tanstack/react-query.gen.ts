@@ -193,7 +193,7 @@ export const operatorWorkspacesListInfiniteOptions = (options?: Options<Operator
 export const operatorWorkspacesGetQueryKey = (options: Options<OperatorWorkspacesGetData>) => createQueryKey('operatorWorkspacesGet', options);
 
 /**
- * One Workspace's metadata and suspension state
+ * One Workspace's metadata, suspension state, rates and send volume
  */
 export const operatorWorkspacesGetOptions = (options: Options<OperatorWorkspacesGetData>) => queryOptions<OperatorWorkspacesGetResponse, OperatorWorkspacesGetError, OperatorWorkspacesGetResponse, ReturnType<typeof operatorWorkspacesGetQueryKey>>({
   queryFn: async ({ queryKey, signal }) => {

@@ -10,6 +10,7 @@ import { operatorWorkspacesGetOptions } from '../generated/operator/@tanstack/re
 import type { OperatorSuspension } from '../generated/operator/types.gen.ts'
 import { consoleHomeRoute, consoleWorkspaceRoute } from '../router.tsx'
 import { formatDateTime } from '../utils/datetime.ts'
+import { DeliverabilityCard } from './deliverability.tsx'
 import { SuspensionActions } from './SuspensionActions.tsx'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -115,6 +116,7 @@ export function ConsoleWorkspacePage() {
             </Stack>
           </Card>
           <SuspensionCard workspaceId={workspace.id} suspension={workspace.suspension} />
+          <DeliverabilityCard deliverability={workspace.deliverability} />
         </>
       ) : null}
     </Stack>
