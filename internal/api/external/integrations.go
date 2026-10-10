@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
 	externalapi "github.com/mokevnin/1mail/gen/external"
@@ -76,13 +78,7 @@ func sendLimitStatus(row *ent.Integration, usage map[int64]int) externalapi.Send
 		PerSecond:   sendLimitValue(eff.PerSecond),
 		PerDay:      sendLimitValue(eff.PerDay),
 		SentLast24h: int32(usage[row.ID]),
-		Warnings:    []externalapi.SendLimitWarning{},
-	}
-	if eff.Unlimited() {
-		out.Warnings = append(out.Warnings, externalapi.SendLimitWarningUnlimited)
-	}
-	if eff.ProviderQuotaUnavailable {
-		out.Warnings = append(out.Warnings, externalapi.SendLimitWarningProviderQuotaUnavailable)
+		Warnings:    lo.Map(eff.Warnings(), func(w sendlimit.Warning, _ int) externalapi.SendLimitWarning { return externalapi.SendLimitWarning(w) }),
 	}
 	return out
 }

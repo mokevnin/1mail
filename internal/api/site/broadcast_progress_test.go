@@ -55,6 +55,14 @@ func TestSiteBroadcastProgressAndETA(t *testing.T) {
 	require.True(t, ok)
 	assert.WithinDuration(t, eta, time.Time(got), time.Second, "timestamps are served to the second")
 
+	list, err := c.SiteBroadcastsList(ctx, siteapi.SiteBroadcastsListParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	listed, ok := list.(*siteapi.SiteBroadcastsListOK)
+	require.Truef(t, ok, "got %T", list)
+	for _, item := range listed.Items {
+		assert.False(t, item.Progress.IsSet(), "the list leaves progress to get and send")
+	}
+
 	require.NoError(t, s.Broadcast().UpdateOneID(id).SetHoldReason("unverified_domain").Exec(ctx))
 	res := get()
 	assert.Equal(t, "unverified_domain", res.HoldReason.Value)

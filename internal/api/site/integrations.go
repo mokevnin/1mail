@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -595,13 +597,7 @@ func sendLimitStatus(row *ent.Integration, usage map[int64]int) siteapi.SiteSend
 		PerSecond:   sendLimitValue(eff.PerSecond),
 		PerDay:      sendLimitValue(eff.PerDay),
 		SentLast24h: int32(usage[row.ID]),
-		Warnings:    []siteapi.SiteSendLimitWarning{},
-	}
-	if eff.Unlimited() {
-		out.Warnings = append(out.Warnings, siteapi.SiteSendLimitWarningUnlimited)
-	}
-	if eff.ProviderQuotaUnavailable {
-		out.Warnings = append(out.Warnings, siteapi.SiteSendLimitWarningProviderQuotaUnavailable)
+		Warnings:    lo.Map(eff.Warnings(), func(w sendlimit.Warning, _ int) siteapi.SiteSendLimitWarning { return siteapi.SiteSendLimitWarning(w) }),
 	}
 	return out
 }

@@ -67,6 +67,29 @@ func (e Effective) Limits() Limits {
 // Unlimited reports whether no ceiling applies at all.
 func (e Effective) Unlimited() bool { return !e.Limits().Any() }
 
+// Warning names something an operator should look at on an Integration's limit. The
+// values are the API's warning enum, so each surface converts with a plain cast.
+type Warning string
+
+const (
+	// WarningUnlimited: no ceiling applies, so sends are not paced.
+	WarningUnlimited Warning = "unlimited"
+	// WarningProviderQuotaUnavailable: the provider's quota could not be read.
+	WarningProviderQuotaUnavailable Warning = "providerQuotaUnavailable"
+)
+
+// Warnings lists what is worth flagging about the ceilings, in a stable order; never nil.
+func (e Effective) Warnings() []Warning {
+	out := []Warning{}
+	if e.Unlimited() {
+		out = append(out, WarningUnlimited)
+	}
+	if e.ProviderQuotaUnavailable {
+		out = append(out, WarningProviderQuotaUnavailable)
+	}
+	return out
+}
+
 // window is the trailing period Usage counts over.
 const window = 24 * time.Hour
 

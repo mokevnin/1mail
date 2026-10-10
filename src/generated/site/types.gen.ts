@@ -400,7 +400,7 @@ export type SiteBroadcastResource = {
    */
   stats: SiteBroadcastStats;
   /**
-   * Progress and ETA while the broadcast is sending; null otherwise
+   * Progress and ETA while the broadcast is sending; null otherwise. Returned by get and send only, never by the list
    */
   progress?: SiteBroadcastProgress | null;
   /**
