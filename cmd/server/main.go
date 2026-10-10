@@ -13,9 +13,11 @@ import (
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/internal/app"
+	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/telemetry"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -176,8 +178,17 @@ func applyMigrations(cfg *config.Config) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	_, err = provider.Up(ctx)
-	return err
+	if _, err = provider.Up(ctx); err != nil {
+		return err
+	}
+
+	// river owns its own schema (river_job, ...), which goose does not carry.
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+	return jobs.Migrate(ctx, pool)
 }
 
 // runWorkspaceCommand boots the minimal operator app (no listener, no event router,
