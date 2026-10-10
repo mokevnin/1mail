@@ -151,6 +151,15 @@ type Handler interface {
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
+	// ContactsExport implements Contacts_export operation.
+	//
+	// Export everything held about one contact as a streamed JSON download: the contact, its custom
+	// fields, tags, visitors, all events, its opt-outs (unsubscribes, suppressions, confirmations) and
+	// delivery metadata. Rendered message bodies are not included. Identify the contact by exactly one of
+	// `id` or `email`.
+	//
+	// POST /contacts/export
+	ContactsExport(ctx context.Context, params ContactsExportParams) (ContactsExportRes, error)
 	// ContactsGet implements Contacts_get operation.
 	//
 	// Get a resource by ID.

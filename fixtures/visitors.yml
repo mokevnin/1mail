@@ -48,3 +48,19 @@
   last_seen_at: '2026-01-01 00:00:00'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+
+# Export subject (contact 800): two known devices.
+- id: 800
+  visitor_id: vis-export-laptop
+  contact_id: 800
+  workspace_id: 1
+  last_seen_at: '2026-02-02 00:00:00'
+  created_at: '2026-02-01 00:00:00'
+  updated_at: '2026-02-02 00:00:00'
+- id: 801
+  visitor_id: vis-export-phone
+  contact_id: 800
+  workspace_id: 1
+  last_seen_at: '2026-02-03 00:00:00'
+  created_at: '2026-02-01 00:00:00'
+  updated_at: '2026-02-03 00:00:00'

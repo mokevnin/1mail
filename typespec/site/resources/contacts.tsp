@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -88,10 +89,34 @@ model SiteUpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
+/** Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20) */
+model SiteContactExportDownload {
+  @header contentType: "application/octet-stream";
+  @header("Content-Disposition") contentDisposition: string;
+  @body body: bytes;
+}
+
 @tag("Site Contacts")
 interface SiteContacts
   extends WorkspaceCrudUnique<
       SiteContactResource,
       SiteCreateContactInput,
       SiteUpdateContactInput
-    > {}
+    > {
+  /**
+   * Export everything held about one contact as a streamed JSON download.
+   * Identify the contact by exactly one of `id` or `email`. Available to any
+   * Workspace member (contact read access).
+   */
+  @collectionAction(SiteContactResource, "export")
+  @autoRoute
+  export(
+    ...ResourceCollectionParameters<SiteContactResource>,
+
+    /** The contact's id */
+    @query id?: EntityId,
+
+    /** The contact's email address */
+    @query email?: EmailAddress,
+  ): SiteContactExportDownload | BadRequestProblem | NotFoundProblem;
+}

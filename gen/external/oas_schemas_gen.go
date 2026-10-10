@@ -3,6 +3,7 @@
 package externalapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -1690,6 +1691,60 @@ func (*ContactsDeleteUnauthorized) contactsDeleteRes() {}
 type ContactsDeleteUnprocessableEntity ProblemDetails
 
 func (*ContactsDeleteUnprocessableEntity) contactsDeleteRes() {}
+
+type ContactsExportBadRequest ProblemDetails
+
+func (*ContactsExportBadRequest) contactsExportRes() {}
+
+type ContactsExportNotFound ProblemDetails
+
+func (*ContactsExportNotFound) contactsExportRes() {}
+
+type ContactsExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s ContactsExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// ContactsExportOKHeaders wraps ContactsExportOK with response headers.
+type ContactsExportOKHeaders struct {
+	ContentDisposition string
+	Response           ContactsExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *ContactsExportOKHeaders) GetResponse() ContactsExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ContactsExportOKHeaders) SetResponse(val ContactsExportOK) {
+	s.Response = val
+}
+
+func (*ContactsExportOKHeaders) contactsExportRes() {}
+
+type ContactsExportUnauthorized ProblemDetails
+
+func (*ContactsExportUnauthorized) contactsExportRes() {}
 
 type ContactsGetBadRequest ProblemDetails
 

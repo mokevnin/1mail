@@ -5,3 +5,8 @@
   tag_id: 1
 - contact_id: 1
   tag_id: 2
+# Export subject (contact 800): vip + newsletter.
+- contact_id: 800
+  tag_id: 1
+- contact_id: 800
+  tag_id: 2

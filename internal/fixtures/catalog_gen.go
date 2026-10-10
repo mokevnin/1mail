@@ -99,6 +99,10 @@ const (
 	ContactCarolEmail = "carol@example.com"
 	// ContactCarolID is from fixtures/contacts.
 	ContactCarolID = 3
+	// ContactExportSubjectEmail is from fixtures/contacts.
+	ContactExportSubjectEmail = "export.subject@example.com"
+	// ContactExportSubjectID is from fixtures/contacts.
+	ContactExportSubjectID = 800
 	// ContactGlobexEmail is from fixtures/contacts.
 	ContactGlobexEmail = "pat@globex.test"
 	// ContactGlobexID is from fixtures/contacts.
@@ -121,6 +125,12 @@ const (
 	CustomFieldGlobexKey = "globex_only"
 	// CustomFieldGlobexName is from fixtures/custom_fields.
 	CustomFieldGlobexName = "Globex only"
+	// EventExportCustomAction is from fixtures/events.
+	EventExportCustomAction = "export_subject_custom"
+	// EventExportCustomEmail is from fixtures/events.
+	EventExportCustomEmail = "export.subject@example.com"
+	// EventExportCustomID is from fixtures/events.
+	EventExportCustomID = 800
 	// EventGlobexAction is from fixtures/events.
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.

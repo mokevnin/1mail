@@ -231,6 +231,18 @@ func (UnimplementedHandler) ContactsDelete(ctx context.Context, params ContactsD
 	return r, ht.ErrNotImplemented
 }
 
+// ContactsExport implements Contacts_export operation.
+//
+// Export everything held about one contact as a streamed JSON download: the contact, its custom
+// fields, tags, visitors, all events, its opt-outs (unsubscribes, suppressions, confirmations) and
+// delivery metadata. Rendered message bodies are not included. Identify the contact by exactly one of
+// `id` or `email`.
+//
+// POST /contacts/export
+func (UnimplementedHandler) ContactsExport(ctx context.Context, params ContactsExportParams) (r ContactsExportRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ContactsGet implements Contacts_get operation.
 //
 // Get a resource by ID.

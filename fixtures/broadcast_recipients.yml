@@ -663,3 +663,15 @@
     created_at: '2026-01-01 00:00:00',
     updated_at: '2026-01-01 00:00:00',
   }
+
+# Export subject (contact 800) on sent broadcast 200.
+- {
+    id: 800,
+    broadcast_id: 200,
+    contact_id: 800,
+    workspace_id: 1,
+    status: sent,
+    sent_at: '{{daysAgo 3}}',
+    created_at: '{{daysAgo 3}}',
+    updated_at: '{{daysAgo 3}}',
+  }
