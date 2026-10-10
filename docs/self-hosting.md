@@ -21,6 +21,7 @@ the binary). `APP_ENV` selects the environment (`development` by default; set it
 | `ENCRYPTION_KEY`                                                    | **yes**         | —                         | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `1mail`-side tooling). Boot fails if missing.                                                            |
 | `APP_URL`                                                           | no              | `http://localhost:3000`   | Public base URL — used when issuing auth tokens and building tracking/unsubscribe links. Set to your real origin.                                                                                                    |
 | `PORT`                                                              | no              | `3000`                    | HTTP listen port.                                                                                                                                                                                                    |
+| `METRICS_ADDR`                                                      | no              | — (off)                   | `host:port` for the opt-in Prometheus listener. Must differ from `PORT`; see [Prometheus metrics](#prometheus-metrics).                                                                                              |
 | `AUTO_MIGRATE`                                                      | no              | `false`                   | Apply embedded migrations on startup. Convenient for single-replica; see below.                                                                                                                                      |
 | `CORS_ORIGINS`                                                      | no              | —                         | Comma/space-separated origins allowed credentialed CORS on the cookie-authenticated API (`/site`, `/auth`). Empty means same-origin only, which is what the bundled SPA needs; the bearer-token APIs are unaffected. |
 | `MAX_BODY_BYTES`                                                    | no              | `1048576`                 | Largest accepted request body (bytes) on every surface except `/collect`; larger bodies get `413`.                                                                                                                   |
@@ -91,3 +92,26 @@ export APP_URL="https://mail.example.com"
 
 Wire `/healthz` to liveness and `/readyz` to readiness probes (Kubernetes, load
 balancers, the Docker `HEALTHCHECK`).
+
+## Prometheus metrics
+
+Metrics are off by default and are never served on the public port. Set `METRICS_ADDR` to
+start a dedicated listener that serves `GET /metrics` (Prometheus exposition) and nothing
+else. There is no token and no allowlist: the network boundary is the control (ADR 0018).
+
+- Single host: `METRICS_ADDR=127.0.0.1:9090` so only local scrapers can reach it.
+- Container: `METRICS_ADDR=0.0.0.0:9090`, and publish that port only to your Prometheus
+  (a network policy or an internal network), never through the public ingress.
+
+A `METRICS_ADDR` using the same port as `PORT`, or a malformed value, fails startup, as does
+a metrics address that is already in use. The Dockerfiles need no change (`EXPOSE 3000` and
+the `HEALTHCHECK` stay). Scrape example:
+
+```yaml
+scrape_configs:
+  - job_name: 1mail
+    static_configs:
+      - targets: ['1mail:9090']
+```
+
+OTLP push (`OTEL_EXPORTER_OTLP_*`) is independent of this and unchanged.
