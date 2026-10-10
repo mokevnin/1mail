@@ -16,10 +16,12 @@ service and outbound SMTP is blocked: system mail goes through SES over HTTPS. T
 from GHCR; the image repository and tag and `OTEL_SERVICE_NAME` are Terraform variables, so the
 infra does not depend on the rename of the product.
 
-Hosts: the apex serves the SPA and `/site/*`; `api.getsphericon.com` reaches `/api/*` through an
+Hosts: `app.getsphericon.com` serves the SPA and `/site/*` (`APP_URL` is that origin); `api.getsphericon.com` reaches `/api/*` through an
 ingress rule that matches the authority and rewrites the path (the edge rewrite described for
 `api.sphericon.localhost`); the tracker (`/t.js`, `/collect/*`) gets its own hostname so it can move to
-another edge later.
+another edge later. The apex `getsphericon.com` is reserved for a marketing site hosted elsewhere:
+the app creates no apex record, and the apex keeps only the Google Workspace mail records and the
+SES identity and DMARC.
 
 ## Considered Options
 

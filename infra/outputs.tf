@@ -12,3 +12,8 @@ output "database_cluster_id" {
   description = "Managed Postgres cluster id."
   value       = digitalocean_database_cluster.pg.id
 }
+
+output "app_url" {
+  description = "Public URL of the web app (APP_URL). The apex domain is not served by the app."
+  value       = "https://${local.app_host}"
+}

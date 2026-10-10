@@ -87,7 +87,8 @@ is attached through the app spec, so `DATABASE_URL` is injected as `${db.DATABAS
 
 Plain values go in `production.tfvars` (copy `production.tfvars.example`; gitignored):
 `image_registry` (GHCR owner), `image_repository`, `image_tag`, and optionally `otel_service_name`,
-`domain` (defaults to `getsphericon.com`; `APP_URL` is `https://<domain>`), `api_host_label`
+`domain` (defaults to `getsphericon.com`), `app_host_label` (`app`; `APP_URL` is
+`https://<app_host_label>.<domain>`), `api_host_label`
 (`api`), `tracker_host` (empty means `t.<domain>`), `region` and `name`, and for email `ses_region` (default `eu-central-1`), `mail_from_label`
 (`mail`), `system_email_from` (default `noreply@getsphericon.com`, on the apex) and `dmarc_rua`
 (report mailbox, empty omits `rua`).
@@ -153,28 +154,32 @@ and destroy followed by re-apply recreates the environment.
 `google._domainkey` DKIM TXT). The apex SPF is the only one: SES (ticket #204) authenticates
 through its MAIL FROM subdomain and must not add a second apex SPF record.
 
-`app.tf` attaches three domains to the app, each with `zone` set so the platform creates the DNS
+`app.tf` attaches three domains (the apex is not one of them: it is reserved for the marketing site, hosted elsewhere, and the app creates no apex A or CNAME record) to the app, each with `zone` set so the platform creates the DNS
 records itself and issues the TLS certificate (no record or certificate is handled by hand), and an
 ingress that routes by authority and path to the one service:
 
-| Host              | Paths               | Service path                        |
-| ----------------- | ------------------- | ----------------------------------- |
-| `<domain>` (apex) | `/`                 | unchanged: SPA, `/site/*`           |
-| `api.<domain>`    | `/`                 | rewritten to the `/api` prefix      |
-| `t.<domain>`      | `/t.js`, `/collect` | unchanged; other paths have no rule |
+| Host           | Paths               | Service path                        |
+| -------------- | ------------------- | ----------------------------------- |
+| `app.<domain>` | `/`                 | unchanged: SPA, `/site/*`           |
+| `api.<domain>` | `/`                 | rewritten to the `/api` prefix      |
+| `t.<domain>`   | `/t.js`, `/collect` | unchanged; other paths have no rule |
 
 The provider schema expresses the host match (`match.authority.exact`) together with the rewrite
 (`component.rewrite`), so nothing is missing at the schema level. What the schema cannot show is
 how the platform joins the rewrite to the trimmed path for a `/` prefix (`/api` + `x` versus
-`/api/x`); that, and the tracker rules, are confirmed only by the smoke test below. The apex also
-reaches `/api/*` (the binary is path-based); that is accepted. `APP_URL` is `https://<domain>`;
+`/api/x`); that, and the tracker rules, are confirmed only by the smoke test below. The app host also
+reaches `/api/*` (the binary is path-based); that is accepted. `APP_URL` is `https://app.<domain>`
+(the session cookie has no Domain attribute, so it is bound to that host, and the cross-origin
+guard trusts the same origin);
 there are no new environment variables (the app reads only `APP_URL`).
 
 ### Pointing the registrar at DigitalOcean (manual, once)
 
 After the first apply, read the zone's nameservers and set them at the registrar of
 `getsphericon.com` (the zone stays unresolvable, and platform certificates are not issued, until
-then):
+then). Delegating the whole zone also moves the apex to DigitalOcean DNS: until the marketing site
+exists the apex has no A record, and when it is hosted elsewhere its apex record is added in
+`dns.tf` or at that host, never by the app:
 
 ```sh
 doctl compute domain get getsphericon.com   # or: dig NS getsphericon.com @1.1.1.1
@@ -188,8 +193,11 @@ Propagation can take hours.
 Run after the nameservers have propagated and the deployment is active. Replace the domain if
 `domain` was overridden.
 
-- [ ] `curl -sI https://getsphericon.com/` returns `200` over HTTPS with a platform certificate
-      (the SPA); `curl -s https://getsphericon.com/readyz` returns `200`.
+- [ ] `curl -sI https://app.getsphericon.com/` returns `200` over HTTPS with a platform
+      certificate (the SPA); `curl -s https://app.getsphericon.com/readyz` returns `200`.
+- [ ] The apex is intentionally not served by the app: `getsphericon.com` has no app A or CNAME
+      record (it is reserved for the marketing site), and `dig +short A getsphericon.com` does not
+      return an App Platform address.
 - [ ] `curl -si https://api.getsphericon.com/contacts` returns `401` with
       `content-type: application/problem+json` (the external API, not the SPA's HTML). A `200`
       with HTML means the rewrite did not apply; a `404` with problem+json means it produced a wrong
@@ -206,7 +214,7 @@ Run after the nameservers have propagated and the deployment is active. Replace 
 
 ### Pending live verification (DNS and hostnames)
 
-Not covered by `mise run check:infra` and needs the operator's account and registrar: apex over
+Not covered by `mise run check:infra` and needs the operator's account and registrar: app host over
 HTTPS, the api host rewrite verified live, the tracker host serving `/t.js` and accepting collect,
 platform-issued certificates, the platform-created records, and the Google records resolving.
 

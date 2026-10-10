@@ -25,7 +25,7 @@ locals {
   }
 
   plain_env = {
-    APP_URL           = "https://${var.domain}"
+    APP_URL           = "https://${local.app_host}"
     PORT              = tostring(var.app_port)
     OTEL_SERVICE_NAME = var.otel_service_name
     DB_MAX_OPEN_CONNS = tostring(var.db_max_open_conns)
@@ -38,6 +38,7 @@ locals {
 
   registry_credentials = var.registry_credentials != "" ? var.registry_credentials : null
 
+  app_host     = "${var.app_host_label}.${var.domain}"
   api_host     = "${var.api_host_label}.${var.domain}"
   tracker_host = var.tracker_host != "" ? var.tracker_host : "t.${var.domain}"
 }
@@ -86,9 +87,10 @@ resource "digitalocean_app" "this" {
     }
 
     # Hostnames. `zone` makes the platform create and manage the DNS record in the zone of
-    # dns.tf, and it issues a TLS certificate for each name. The apex is the primary domain.
+    # dns.tf, and it issues a TLS certificate for each name. The app host is the primary domain. The
+    # apex is reserved for the marketing site hosted elsewhere: the app creates no apex record.
     domain {
-      name = var.domain
+      name = local.app_host
       type = "PRIMARY"
       zone = digitalocean_domain.this.name
     }
@@ -156,11 +158,11 @@ resource "digitalocean_app" "this" {
         }
       }
 
-      # The apex serves the SPA and /site/*.
+      # The app host serves the SPA and /site/* (no rewrite). The apex has no rule on purpose.
       rule {
         match {
           authority {
-            exact = var.domain
+            exact = local.app_host
           }
           path {
             prefix = "/"

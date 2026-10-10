@@ -43,9 +43,15 @@ variable "otel_service_name" {
 }
 
 variable "domain" {
-  description = "Apex domain of the deployment. The zone is created in DigitalOcean DNS; point the registrar's nameservers at it once (README.md). APP_URL is https://<domain>."
+  description = "Apex domain of the deployment. The zone is created in DigitalOcean DNS; point the registrar's nameservers at it once (README.md). The apex itself is reserved for the marketing site and carries mail records only; the app is served from <app_host_label>.<domain>."
   type        = string
   default     = "getsphericon.com"
+}
+
+variable "app_host_label" {
+  description = "Label of the web app host: <label>.<domain> serves the SPA and /site/*. APP_URL is https://<label>.<domain>."
+  type        = string
+  default     = "app"
 }
 
 variable "api_host_label" {
