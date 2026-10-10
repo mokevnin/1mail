@@ -63,3 +63,71 @@ terraform -chdir=infra init \
 Or copy `backend.hcl.example` to `backend.hcl` (gitignored) and pass `-backend-config=backend.hcl`.
 State holds sensitive variables, so the bucket stays private; `*.tfstate*`, `*.tfvars` and
 `backend.hcl` are gitignored.
+
+## Application and database
+
+`database.tf` creates the Managed Postgres cluster (PostgreSQL 18, `db-s-1vcpu-1gb`, one node, fra1)
+and a firewall whose only rule is the app. `app.tf` creates the App Platform app: one service
+(`web`, shared CPU 1 vCPU / 1 GB, readiness on `/readyz`) and one `PRE_DEPLOY` job (`migrate`) that
+runs `sphericon migrate` from the same image before each new service instance starts. The database
+is attached through the app spec, so `DATABASE_URL` is injected as `${db.DATABASE_URL}`.
+`AUTO_MIGRATE` stays unset and there is no worker component: river and watermill run in the service.
+
+### Variables
+
+Plain values go in `production.tfvars` (copy `production.tfvars.example`; gitignored):
+`image_registry` (GHCR owner), `image_repository`, `image_tag`, and optionally `otel_service_name`,
+`app_url` (defaults to `https://getsphericon.com`; the apex is attached in a later step), `region`
+and `name`.
+
+Secrets are sensitive variables, passed through the environment so they never touch a file:
+
+```sh
+export TF_VAR_registry_credentials='<github user>:<token with read:packages>'
+export TF_VAR_jwt_secret="$(openssl rand -hex 32)"
+export TF_VAR_bootstrap_token="$(openssl rand -hex 32)"
+export TF_VAR_license_key='<license key, or empty for the open-source core>'
+export TF_VAR_encryption_key='<see below>'
+```
+
+`ENCRYPTION_KEY` is generated **once**, outside Terraform, and kept in your password manager. It
+protects stored provider credentials: a new key makes them unreadable, so never regenerate it for
+an existing environment (the same value is supplied again on every re-apply):
+
+```sh
+docker run --rm ghcr.io/<owner>/<image>:<tag> genkey   # or: go run ./cmd/genkey
+```
+
+All secrets become `SECRET` env values in the app spec (encrypted by the platform) and are
+redacted in `plan` output, but they are stored in state, which is why the bucket is private.
+
+### Plan and apply
+
+```sh
+terraform -chdir=infra plan  -var-file=production.tfvars -out=tfplan
+terraform -chdir=infra apply tfplan
+terraform -chdir=infra output default_url
+```
+
+Read the plan before applying. The first apply takes several minutes (cluster, then app, then the
+firewall rule that references the app id). Smoke test: `curl <default_url>/healthz` and `/readyz`;
+the deployment log of the app shows the `migrate` job running first.
+
+### Connection budget
+
+A 1 GB Postgres plan allows 22 backend connections. Every process opens two pools, so one process
+uses at most `DB_MAX_OPEN_CONNS + PGX_MAX_CONNS` = 5 + 5 = 10 (the app defaults of 15 + 25 would
+not fit). Peaks: the old service plus the migrate job (10 + 10 at the pool caps, really about 2
+for the job), then the old plus the new service during a rolling deploy (10 + 10). The new service
+starts only after the job exits, so at most two full processes run at once: 20 of 22, leaving 2
+for administration. Three concurrent processes (3 x 10 = 30) do not fit: before adding a second
+service instance, lower both pools (for example 3 + 3). river's 20 workers share a 5-connection
+pool, so jobs queue on the pool instead of running in parallel. No transaction-mode pooler is
+used because river needs LISTEN/NOTIFY.
+
+### Pending live verification
+
+Needs the operator's account and is not covered by `mise run check:infra`: the default URL answers
+liveness and readiness after apply, the pre-deploy job applied the migrations (including river's
+schema), the database is unreachable from outside the app, secrets are redacted in plan output,
+and destroy followed by re-apply recreates the environment.
