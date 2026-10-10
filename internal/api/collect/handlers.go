@@ -57,7 +57,7 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.Coll
 		return evt
 	})
 
-	if err := visitors.CollectEvents(ctx, h.bus, auth.CollectScoped(ctx), evts); err != nil {
+	if err := visitors.Collect(ctx, h.bus, auth.CollectScoped(ctx), evts); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectEventsCreateNoContent{}, nil
@@ -83,7 +83,7 @@ func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.Co
 		input.Traits = rawMap(traits)
 	}
 
-	if err := visitors.IdentifyVisitor(ctx, h.bus, auth.CollectScoped(ctx), input); err != nil {
+	if err := visitors.Identify(ctx, h.bus, auth.CollectScoped(ctx), input); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectOkResponse{Ok: collectapi.CollectOkResponseOkTrue}, nil

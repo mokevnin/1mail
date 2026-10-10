@@ -30,7 +30,7 @@ func outboxCollected(t *testing.T, env *testhelper.TestEnv) []*events.CollectedE
 	return out
 }
 
-func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(t *testing.T) {
+func TestIdentifyCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
@@ -40,7 +40,7 @@ func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(
 		require.NoError(t, err)
 	}
 
-	err := visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
+	err := visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
 		VisitorID: "  dev-1 ",
 		Email:     lo.ToPtr("Visitor@Example.com"),
 		Traits:    map[string]any{"plan": "pro"},
@@ -63,13 +63,13 @@ func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(
 	assert.Nil(t, other.ContactID, "another device stays anonymous")
 }
 
-func TestIdentifyVisitorReusesAnExistingContactAndDevice(t *testing.T) {
+func TestIdentifyReusesAnExistingContactAndDevice(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	input := visitors.IdentifyInput{VisitorID: "dev-known", Email: lo.ToPtr(fixtures.ContactAliceEmail)}
 
-	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input))
-	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input), "identify is idempotent")
+	require.NoError(t, visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input))
+	require.NoError(t, visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input), "identify is idempotent")
 
 	v, err := env.DB.Visitor.Query().Where(visitor.WorkspaceID(fixtures.AcmeID), visitor.VisitorID("dev-known")).Only(ctx)
 	require.NoError(t, err)
@@ -79,30 +79,30 @@ func TestIdentifyVisitorReusesAnExistingContactAndDevice(t *testing.T) {
 	assert.Equal(t, 1, n, "no duplicate contact")
 }
 
-func TestIdentifyVisitorRefusesWhatCannotBeIdentified(t *testing.T) {
+func TestIdentifyRefusesWhatCannotBeIdentified(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	err := visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "   ", Email: lo.ToPtr("a@example.com")})
+	err := visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "   ", Email: lo.ToPtr("a@example.com")})
 	require.EqualError(t, err, "visitorId is required")
 
-	err = visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-x"})
+	err = visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-x"})
 	require.EqualError(t, err, "identify requires subjectId, email, or phone")
 	n, err := env.DB.Visitor.Query().Where(visitor.VisitorID("dev-x")).Count(ctx)
 	require.NoError(t, err)
 	assert.Zero(t, n, "a refused identify leaves no device behind")
 }
 
-func TestCollectEventsCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
+func TestCollectCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	at := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
 
-	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
+	require.NoError(t, visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
 		VisitorID: "dev-id", Email: lo.ToPtr(fixtures.ContactAliceEmail), SubjectID: lo.ToPtr("alice-1"),
 	}))
 
-	require.NoError(t, visitors.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{
+	require.NoError(t, visitors.Collect(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{
 		{VisitorID: " dev-id ", Action: "signup", Properties: map[string]any{"plan": "pro"}, OccurredAt: &at},
 		{VisitorID: "dev-anon", Action: "page_view"},
 	}))
@@ -128,14 +128,14 @@ func TestCollectEventsCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
 	assert.Equal(t, 1, n, "an unseen device is recorded on first event")
 }
 
-func TestCollectEventsTreatsAVanishedContactAsAnonymous(t *testing.T) {
+func TestCollectTreatsAVanishedContactAsAnonymous(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-gone", Email: lo.ToPtr("gone@example.com")}))
+	require.NoError(t, visitors.Identify(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-gone", Email: lo.ToPtr("gone@example.com")}))
 	_, err := env.DB.Contact.Delete().Where(contact.Email("gone@example.com")).Exec(ctx)
 	require.NoError(t, err)
 
-	require.NoError(t, visitors.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{{VisitorID: "dev-gone", Action: "login"}}))
+	require.NoError(t, visitors.Collect(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{{VisitorID: "dev-gone", Action: "login"}}))
 	got := outboxCollected(t, env)
 	require.Len(t, got, 1)
 	assert.Zero(t, got[0].ContactID)

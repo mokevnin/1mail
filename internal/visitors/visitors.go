@@ -29,12 +29,12 @@ type CollectEventInput struct {
 	OccurredAt *time.Time
 }
 
-// IdentifyVisitor binds a Visitor to a Contact and asserts that Contact's alias keys
+// Identify binds a Visitor to a Contact and asserts that Contact's alias keys
 // (subject_id / email / phone). It upserts the Contact by any present alias key,
 // auto-creates typed Custom fields from the traits, binds the device, and stitches
 // the device's earlier anonymous Events onto the Contact so pre-identify behavior
 // becomes visible to segmentation. A newly created Contact emits contact.created.
-func IdentifyVisitor(ctx context.Context, bus *events.Bus, s *ent.Scoped, input IdentifyInput) error {
+func Identify(ctx context.Context, bus *events.Bus, s *ent.Scoped, input IdentifyInput) error {
 	visitorID := strings.TrimSpace(input.VisitorID)
 	if visitorID == "" {
 		return errors.New("visitorId is required")
@@ -81,7 +81,7 @@ func IdentifyVisitor(ctx context.Context, bus *events.Bus, s *ent.Scoped, input 
 	})
 }
 
-func CollectEvents(ctx context.Context, bus *events.Bus, s *ent.Scoped, evts []CollectEventInput) error {
+func Collect(ctx context.Context, bus *events.Bus, s *ent.Scoped, evts []CollectEventInput) error {
 	for _, evt := range evts {
 		visitorID := strings.TrimSpace(evt.VisitorID)
 		// Resolve identity and publish in one transaction: the visitor upsert and the
