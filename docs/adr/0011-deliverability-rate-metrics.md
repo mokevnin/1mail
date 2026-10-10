@@ -29,7 +29,7 @@ scope, in the separate Deliverability-observability backlog item.
 ### Complaint rate = `complaints / (sent − hard bounces)`
 
 The load-bearing decision. Mailbox providers (Gmail/Yahoo 2024+) define complaint rate over
-**delivered** mail and expect it held **< 0.3%**. But 1mail records only `email.sent`
+**delivered** mail and expect it held **< 0.3%**. But sphericon records only `email.sent`
 (_accepted by provider_, not delivered — see CONTEXT _Sent vs delivered_), and the SES→SNS hook
 **discards** `Delivery` notifications. A rate over raw `sent` therefore **systematically
 understates** versus the provider's own figure — and worst for exactly the senders the detector
@@ -60,7 +60,7 @@ complaint-rate denominator, and it is the bounce-rate numerator.
 
 ### Grain = per-(Workspace, Sending domain)
 
-Mailbox providers attribute reputation to the **DKIM signing domain** — which in 1mail is the
+Mailbox providers attribute reputation to the **DKIM signing domain** — which in sphericon is the
 **Sending domain** (ADR 0010 _sending-domains_). So the metric is grained per-(Workspace, Sending domain), not a
 workspace-wide average: an average would mask one dirty domain behind a clean one — precisely the
 sender the detector must catch. Per-workspace is just the roll-up of the per-domain rates for the

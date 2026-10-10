@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent/apitoken"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent/apitoken"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // tokenActor is the actor of the one fresh token `ExternalScoped` just minted.

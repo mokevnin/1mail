@@ -6,12 +6,12 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ include "1mail.fullname" . }}
+  name: {{ include "sphericon.fullname" . }}
   labels:
-    {{- include "1mail.labels" . | nindent 4 }}
+    {{- include "sphericon.labels" . | nindent 4 }}
     {{- with .Values.metrics.prometheusRule.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  {{- .Files.Get "files/alerts.yaml" | replace "https://mokevnin.github.io/1mail/operations/runbook" .Values.metrics.prometheusRule.runbookUrl | nindent 2 }}
+  {{- .Files.Get "files/alerts.yaml" | replace "https://mokevnin.github.io/sphericon/operations/runbook" .Values.metrics.prometheusRule.runbookUrl | nindent 2 }}
 {{- end }}

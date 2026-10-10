@@ -1,10 +1,10 @@
 # Answering a GDPR request
 
-If you send to people in the EU, your Workspace is the data controller and 1mail is your processor.
+If you send to people in the EU, your Workspace is the data controller and sphericon is your processor.
 When a contact asks what you hold about them (access, GDPR Art. 15/20) or asks you to delete them
 (erasure, Art. 17), you answer it from your Workspace. There is no self-service form for the
 contact: both actions are operator actions. The design is recorded in
-[ADR 0021](https://github.com/mokevnin/1mail/blob/main/docs/adr/0021-gdpr-erasure-and-export.md).
+[ADR 0021](https://github.com/mokevnin/sphericon/blob/main/docs/adr/0021-gdpr-erasure-and-export.md).
 
 ## Access request: export one contact
 
@@ -108,7 +108,7 @@ select `contact.erased`). The delivery body is the standard webhook payload; its
 ```
 
 `data.subjectId` is the contact's own `subject_id` (your user id for the person) or, when the
-contact had none, its 1mail contact id. It exists only in the delivered payload and is never stored
+contact had none, its sphericon contact id. It exists only in the delivered payload and is never stored
 on the event. Deliveries are retried, so a receiver may see duplicates; dedupe on the delivery id
 (the `webhook-id` header).
 

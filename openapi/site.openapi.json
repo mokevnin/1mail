@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "OneMail Site API",
+    "title": "Sphericon Site API",
     "version": "1.0.0"
   },
   "tags": [
@@ -7548,7 +7548,7 @@
                 "$ref": "#/components/schemas/SiteAuditActorKind"
               }
             ],
-            "description": "The kind of actor; an operator is shown to the customer as \"1mail staff\""
+            "description": "The kind of actor; an operator is shown to the customer as \"sphericon staff\""
           },
           "id": {
             "type": "string",
@@ -8353,7 +8353,7 @@
           },
           "dkimSelector": {
             "type": "string",
-            "description": "DKIM selector; defaults to \"1mail\" when omitted"
+            "description": "DKIM selector; defaults to \"sphericon\" when omitted"
           }
         },
         "description": "Site request body for adding a sending domain"
@@ -8814,7 +8814,7 @@
           },
           "hasAccount": {
             "type": "boolean",
-            "description": "True when that email already has a 1mail account (accept needs no signup)"
+            "description": "True when that email already has a sphericon account (accept needs no signup)"
           }
         },
         "description": "What an invite link reveals before acceptance, for rendering the accept page"
@@ -9003,7 +9003,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Scopes the client asked for that 1mail will grant by default"
+            "description": "Scopes the client asked for that sphericon will grant by default"
           },
           "sendScopes": {
             "type": "array",
@@ -9463,7 +9463,7 @@
             "description": "Last update timestamp"
           }
         },
-        "description": "Sending domain resource used by the site UI (ADR 0010). 1mail generates the\nDKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The\nprivate key is never exposed. `verified` is a live property re-checked in the\nbackground — it can flip back if the DNS record disappears."
+        "description": "Sending domain resource used by the site UI (ADR 0010). sphericon generates the\nDKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The\nprivate key is never exposed. `verified` is a live property re-checked in the\nbackground — it can flip back if the DNS record disappears."
       },
       "SiteSesConfig": {
         "type": "object",
@@ -10092,7 +10092,7 @@
           },
           "secret": {
             "type": "string",
-            "description": "HMAC signing secret (used to verify the X-1mail-Signature header)"
+            "description": "HMAC signing secret (used to verify the X-sphericon-Signature header)"
           },
           "eventTypes": {
             "type": "array",

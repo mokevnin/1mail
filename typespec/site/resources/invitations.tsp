@@ -2,7 +2,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Roles that may be invited. owner is never invited — it is transferred. */
 enum SiteInvitableRole {
@@ -98,7 +98,7 @@ model SiteInvitationLookupResult {
   /** The address the invite was sent to */
   email: EmailAddress;
 
-  /** True when that email already has a 1mail account (accept needs no signup) */
+  /** True when that email already has a sphericon account (accept needs no signup) */
   hasAccount: boolean;
 }
 

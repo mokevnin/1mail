@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 // Public, session-less actions behind the signed tokens in marketing emails. The
 // token is the credential, so these are NoAuth and not workspace-scoped. The email

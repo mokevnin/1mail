@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/auditapi"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/auditapi"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // exportPageSize is how many entries one query fetches while an export streams.
@@ -24,7 +24,7 @@ var exportHeader = []string{
 
 // ExportCSV streams the scoped Workspace's Audit log entries matching the filter, newest first, to w as CSV: a
 // header row, then one row per entry. It pages through Entries, so a long log never
-// sits in memory, and it shows an Operator as "1mail staff" like every read surface.
+// sits in memory, and it shows an Operator as "sphericon staff" like every read surface.
 // The caller has already checked Licensed and the reader's role.
 func (l *Log) ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter, w io.Writer) error {
 	cw := csv.NewWriter(w)

@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/internal/erasure"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/internal/erasure"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // A send queued before its Contact was erased must not leave (ADR 0021): the Request

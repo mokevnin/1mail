@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/eventlog"
-	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/eventlog"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 // SiteEventsList returns the workspace's events, most recent first.

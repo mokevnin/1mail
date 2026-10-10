@@ -1,4 +1,4 @@
-// Package i18n localizes 1mail's own system-generated text — the platform
+// Package i18n localizes sphericon's own system-generated text — the platform
 // (transactional) emails and the API validation messages. It is NOT for
 // recipient-facing campaign content, which is authored per workspace.
 //

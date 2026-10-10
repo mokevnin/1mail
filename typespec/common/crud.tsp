@@ -5,7 +5,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 
-namespace OneMail;
+namespace Sphericon;
 
 /**
  * Declarative CRUD for a workspace-scoped resource (the Rails `resources`

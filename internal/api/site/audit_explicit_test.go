@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/suspension"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/suspension"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // entriesNamed delivers the outbox to the EE subscriber and returns the entries of
@@ -153,7 +153,7 @@ func TestAuditPasswordResetIsRecorded(t *testing.T) {
 	assert.Equal(t, "Mary", got[0].Actor.Name.Value)
 }
 
-func TestAuditOperatorSuspensionShowsOnlyOneMailStaff(t *testing.T) {
+func TestAuditOperatorSuspensionShowsOnlySphericonStaff(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
@@ -166,7 +166,7 @@ func TestAuditOperatorSuspensionShowsOnlyOneMailStaff(t *testing.T) {
 		got := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, action)
 		require.Lenf(t, got, 1, action)
 		assert.Equal(t, siteapi.SiteAuditActorKindOperator, got[0].Actor.Kind)
-		assert.Equal(t, "1mail staff", got[0].Actor.Name.Value)
+		assert.Equal(t, "sphericon staff", got[0].Actor.Name.Value)
 		assert.False(t, got[0].Actor.ID.IsSet() && got[0].Actor.ID.Value != "", "the Operator's identity is never exposed")
 		diff, err := json.Marshal(got[0].Diff.Value)
 		require.NoError(t, err)

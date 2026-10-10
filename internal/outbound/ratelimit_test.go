@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/sendlimiter"
-	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/sendlimit"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/ent/sendlimiter"
+	"github.com/mokevnin/sphericon/internal/eligibility"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/sendlimit"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // Send rate limit (ADR 0023), observed at the Outbound send seam under testing/synctest

@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 var otlpEnvKeys = []string{
@@ -68,14 +68,14 @@ func TestSetupPullOnly(t *testing.T) {
 	isolate(t)
 	tpBefore := otel.GetTracerProvider()
 
-	stop, err := Setup(context.Background(), &config.Config{OtelServiceName: "1mail-test"}, "test", BuildInfo{Version: "v1", Commit: "abc"})
+	stop, err := Setup(context.Background(), &config.Config{OtelServiceName: "sphericon-test"}, "test", BuildInfo{Version: "v1", Commit: "abc"})
 	require.NoError(t, err)
 
 	code, body := scrape(t)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Contains(t, body, "go_goroutine_count", "runtime metrics are exported on /metrics")
 	assert.Contains(t, body, "target_info")
-	assert.Contains(t, body, `service_name="1mail-test"`)
+	assert.Contains(t, body, `service_name="sphericon-test"`)
 	assert.Contains(t, body, `service_version="v1"`)
 	assert.Contains(t, body, `service_commit="abc"`)
 
@@ -100,7 +100,7 @@ func TestSetupWithOTLPPush(t *testing.T) {
 	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", collector.URL)
 
 	ctx := context.Background()
-	stop, err := Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", BuildInfo{})
+	stop, err := Setup(ctx, &config.Config{OtelServiceName: "sphericon-test"}, "test", BuildInfo{})
 	require.NoError(t, err)
 
 	_, span := otel.Tracer("test").Start(ctx, "work")

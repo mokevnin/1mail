@@ -5,17 +5,17 @@ import (
 	"errors"
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/accounts"
 	"net/http"
 	"strconv"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/erasure"
-	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/convert"
+	"github.com/mokevnin/sphericon/internal/erasure"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteContactsListParams) (siteapi.SiteContactsListRes, error) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/analytics"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/analytics"
 )
 
 // analyticsWindow maps the selectable range to the module's window; 30d is the

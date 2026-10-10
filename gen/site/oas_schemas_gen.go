@@ -3507,7 +3507,7 @@ func (s *SiteApplyTagInput) SetName(val string) {
 // The actor of an Audit entry.
 // Ref: #/components/schemas/SiteAuditActor
 type SiteAuditActor struct {
-	// The kind of actor; an operator is shown to the customer as "1mail staff".
+	// The kind of actor; an operator is shown to the customer as "sphericon staff".
 	Kind SiteAuditActorKind `json:"kind"`
 	// The actor's id (a User id or an API token id); absent for the system.
 	ID OptNilString `json:"id"`
@@ -5783,7 +5783,7 @@ func (s *SiteCreateSegmentInput) SetDefinition(val string) {
 type SiteCreateSendingDomainInput struct {
 	// The domain to authenticate, e.g. "mail.acme.com".
 	Domain string `json:"domain"`
-	// DKIM selector; defaults to "1mail" when omitted.
+	// DKIM selector; defaults to "sphericon" when omitted.
 	DkimSelector OptString `json:"dkimSelector"`
 }
 
@@ -7050,7 +7050,7 @@ type SiteInvitationLookupResult struct {
 	WorkspaceName string `json:"workspaceName"`
 	// The address the invite was sent to.
 	Email EmailAddress `json:"email"`
-	// True when that email already has a 1mail account (accept needs no signup).
+	// True when that email already has a sphericon account (accept needs no signup).
 	HasAccount bool `json:"hasAccount"`
 }
 
@@ -7545,7 +7545,7 @@ type SiteOAuthAuthorizationRequest struct {
 	ClientName string `json:"clientName"`
 	// The URL the user is sent back to.
 	RedirectUri string `json:"redirectUri"`
-	// Scopes the client asked for that 1mail will grant by default.
+	// Scopes the client asked for that sphericon will grant by default.
 	Scopes []string `json:"scopes"`
 	// Requested send-class scopes: granted only when the user opts in explicitly.
 	SendScopes []string `json:"sendScopes"`
@@ -8596,9 +8596,9 @@ func (s *SiteSendLimitWarning) UnmarshalText(data []byte) error {
 	}
 }
 
-// Sending domain resource used by the site UI (ADR 0010). 1mail generates the DKIM keypair; the user
-// publishes the DKIM TXT to authenticate the domain. The private key is never exposed. `verified` is a
-// live property re-checked in the background — it can flip back if the DNS record disappears.
+// Sending domain resource used by the site UI (ADR 0010). sphericon generates the DKIM keypair; the
+// user publishes the DKIM TXT to authenticate the domain. The private key is never exposed. `verified`
+// is a live property re-checked in the background — it can flip back if the DNS record disappears.
 // Ref: #/components/schemas/SiteSendingDomainResource
 type SiteSendingDomainResource struct {
 	// Unique identifier.
@@ -10892,7 +10892,7 @@ type SiteWebhookEndpointResource struct {
 	ID EntityId `json:"id"`
 	// Destination URL events are POSTed to.
 	URL string `json:"url"`
-	// HMAC signing secret (used to verify the X-1mail-Signature header).
+	// HMAC signing secret (used to verify the X-sphericon-Signature header).
 	Secret string `json:"secret"`
 	// Event names this endpoint receives; empty means all events.
 	EventTypes []string `json:"eventTypes"`

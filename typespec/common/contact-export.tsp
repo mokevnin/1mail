@@ -1,4 +1,4 @@
-namespace OneMail;
+namespace Sphericon;
 
 /** An arbitrary JSON object: typed custom field values or event properties */
 model ContactExportJson is Record<unknown>;

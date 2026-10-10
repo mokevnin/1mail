@@ -12,11 +12,11 @@ a restore, which is why every upgrade starts with a backup.
    unchanged; see [Backup and restore](./backup).
 
    ```sh
-   pg_dump --format=custom --file="1mail-pre-upgrade.dump" \
-     "postgres://backup_user@db.example.com:5432/1mail?sslmode=require"
+   pg_dump --format=custom --file="sphericon-pre-upgrade.dump" \
+     "postgres://backup_user@db.example.com:5432/sphericon?sslmode=require"
    ```
 
-3. Note the version you are running (`./1mail version`, or the image tag), so you can go back.
+3. Note the version you are running (`./sphericon version`, or the image tag), so you can go back.
 
 ## Upgrade {#migrate}
 
@@ -32,16 +32,16 @@ then roll the servers.
    ```sh
    docker run --rm \
      -e APP_ENV=production \
-     -e DATABASE_URL="postgres://app@db.example.com:5432/1mail?sslmode=require" \
+     -e DATABASE_URL="postgres://app@db.example.com:5432/sphericon?sslmode=require" \
      -e JWT_SECRET="$JWT_SECRET" \
-     ghcr.io/mokevnin/1mail:<new-version> migrate
+     ghcr.io/mokevnin/sphericon:<new-version> migrate
    ```
 
-   For the plain binary run `./1mail migrate` with the same environment. Use it as a
+   For the plain binary run `./sphericon migrate` with the same environment. Use it as a
    pre-deploy job or an init container. It applies the application migrations and river's
    own job-queue schema.
 
-   On Kubernetes use the in-repo Helm chart (`charts/1mail`): it runs `migrate` as a
+   On Kubernetes use the in-repo Helm chart (`charts/sphericon`): it runs `migrate` as a
    pre-install/pre-upgrade hook Job, so the Deployment only rolls after it succeeds. Create a
    Secret with `DATABASE_URL`, `JWT_SECRET` and `ENCRYPTION_KEY` first and pass its name as
    `existingSecret` (the chart refuses to render without it). Metrics stay off unless you set
@@ -70,9 +70,9 @@ whether fixing forward is cheaper than losing that window.
 
 ## Per-version notes {#per-version-notes}
 
-1mail is versioned with release-please from Conventional Commits. The authoritative list of
+sphericon is versioned with release-please from Conventional Commits. The authoritative list of
 changes for each release is the
-[GitHub releases page](https://github.com/mokevnin/1mail/releases). The table below records
+[GitHub releases page](https://github.com/mokevnin/sphericon/releases). The table below records
 only what needs an operator's attention beyond "run `migrate`": a new required setting, a
 removed one, a slow migration, a changed default.
 
@@ -85,7 +85,7 @@ Read any row added here before you upgrade past that version.
 ## PostgreSQL major upgrades {#postgres}
 
 A PostgreSQL major upgrade (for example 16 to 17) is a database administration task,
-independent of 1mail releases. Do not combine it with an application upgrade: change one
+independent of sphericon releases. Do not combine it with an application upgrade: change one
 thing at a time, so a failure has one suspect.
 
 1. Check that the target major version is supported (see [Self-hosting](../self-hosting) for
@@ -94,7 +94,7 @@ thing at a time, so a failure has one suspect.
 3. Upgrade in place with `pg_upgrade`, or dump from the old server and restore into a new
    server on the new major version (`pg_dump` then `pg_restore`). Managed services offer
    their own major-version upgrade.
-4. Stop 1mail during the switch, repoint `DATABASE_URL` if the server changed, start it, and
+4. Stop sphericon during the switch, repoint `DATABASE_URL` if the server changed, start it, and
    check `GET /readyz`.
 5. Run `ANALYZE` on the new cluster: planner statistics are not always carried over.
 

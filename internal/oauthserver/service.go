@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/oauthclient"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/oauthclient"
 )
 
 var (

@@ -12,11 +12,11 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqljson"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // Rate is a numerator over a denominator. Rate is nil when Denominator is zero.

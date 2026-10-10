@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // An empty subscription list means "all customer-facing events": an Audit entry must

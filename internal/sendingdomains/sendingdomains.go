@@ -20,18 +20,18 @@ import (
 
 	"golang.org/x/net/idna"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/sending"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
+	"github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/pagination"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/sending"
 )
 
 // DefaultSelector is the DKIM selector used when the caller supplies none.
-const DefaultSelector = "1mail"
+const DefaultSelector = "sphericon"
 
 // ErrAlreadyExists means the Workspace already has this domain.
 var ErrAlreadyExists = errors.New("this domain is already added")

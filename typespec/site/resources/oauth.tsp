@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** What an MCP client (dynamically registered) is asking permission for, as
  * validated by the authorization server. Rendered on the consent screen. */
@@ -11,7 +11,7 @@ model SiteOAuthAuthorizationRequest {
   /** The URL the user is sent back to */
   redirectUri: string;
 
-  /** Scopes the client asked for that 1mail will grant by default */
+  /** Scopes the client asked for that sphericon will grant by default */
   scopes: string[];
 
   /** Requested send-class scopes: granted only when the user opts in explicitly */

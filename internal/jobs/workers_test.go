@@ -19,19 +19,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automation"
-	"github.com/mokevnin/1mail/ent/automationrun"
-	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/internal/dnstest"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/suspension"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/automation"
+	"github.com/mokevnin/sphericon/ent/automationrun"
+	"github.com/mokevnin/sphericon/ent/broadcast"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/internal/dnstest"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/suspension"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // riverEnv is a real river client over the test database. The workers read and
@@ -222,7 +222,7 @@ func TestMemberInviteWorker(t *testing.T) {
 	require.Len(t, msgs, 2)
 	assert.Contains(t, msgs[0].Text, "Jane invited you")
 	assert.Contains(t, msgs[1].Text, "Someone invited you")
-	assert.Equal(t, "You're invited to Acme on 1mail", msgs[0].Subject)
+	assert.Equal(t, "You're invited to Acme on sphericon", msgs[0].Subject)
 
 	require.Error(t, jobs.NewMemberInviteWorker(nil).Work(context.Background(), job(jobs.SendMemberInviteArgs{})))
 }

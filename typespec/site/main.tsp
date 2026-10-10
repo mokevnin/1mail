@@ -35,8 +35,8 @@ import "./resources/audit.tsp";
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;
 
-@service(#{ title: "OneMail Site API" })
+@service(#{ title: "Sphericon Site API" })
 @info(#{ version: "1.0.0" })
 @server("http://localhost:3000", "Local development site API")
 @useAuth(ApiKeyAuth<ApiKeyLocation.cookie, "JWT">)
-namespace OneMail;
+namespace Sphericon;

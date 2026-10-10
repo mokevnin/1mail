@@ -6,10 +6,10 @@ package segments
 // this file stays behind in the app.
 
 import (
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/tag"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/tag"
 )
 
 // ContactSchema whitelists the contact fields a segment rule may target and maps

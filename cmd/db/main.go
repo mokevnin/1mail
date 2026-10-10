@@ -16,9 +16,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent/migrate"
-	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ent/migrate"
+	"github.com/mokevnin/sphericon/internal/jobs"
 )
 
 func main() {

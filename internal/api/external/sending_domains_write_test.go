@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func createDomain(t *testing.T, c *externalapi.Client, in externalapi.CreateSendingDomainInput) *externalapi.SendingDomainResource {
@@ -57,9 +57,9 @@ func TestExternalSendingDomainsCreateReturnsRecordsNeverTheKey(t *testing.T) {
 
 	created := createDomain(t, c, externalapi.CreateSendingDomainInput{Domain: " Marketing.Example.COM. "})
 	assert.Equal(t, "marketing.example.com", created.Domain)
-	assert.Equal(t, "1mail", created.DkimSelector)
+	assert.Equal(t, "sphericon", created.DkimSelector)
 	assert.False(t, created.Verified)
-	assert.Equal(t, "1mail._domainkey.marketing.example.com", created.DkimRecord.Host)
+	assert.Equal(t, "sphericon._domainkey.marketing.example.com", created.DkimRecord.Host)
 	assert.Contains(t, created.DkimRecord.Value, "v=DKIM1; k=rsa; p=")
 	assert.Equal(t, "_dmarc.marketing.example.com", created.DmarcRecord.Host)
 

@@ -16,7 +16,7 @@ const SUPPORTED_LOCALES = ['en', 'ru', 'es']
 // replace at runtime. Drives off APP_LOCALE — the same env var the backend uses.
 function devLocalePlugin(): Plugin {
   return {
-    name: '1mail:dev-locale',
+    name: 'sphericon:dev-locale',
     apply: 'serve',
     transformIndexHtml(html) {
       const env = process.env.APP_LOCALE ?? 'en'
@@ -31,7 +31,7 @@ function devLocalePlugin(): Plugin {
 // ship in the production bundle). Applied only under Vitest.
 function mswWorkerPlugin(): Plugin {
   return {
-    name: '1mail:msw-worker',
+    name: 'sphericon:msw-worker',
     apply: () => Boolean(process.env.VITEST),
     configureServer(server) {
       server.middlewares.use('/mockServiceWorker.js', (_req, res) => {
@@ -42,14 +42,14 @@ function mswWorkerPlugin(): Plugin {
   }
 }
 
-// The app is reached via Caddy at https://1mail.localhost (a linked worktree has its own
+// The app is reached via Caddy at https://sphericon.localhost (a linked worktree has its own
 // origin, see .mise.toml), which terminates TLS
 // and is the single place that routes API paths (/site, /collect, /auth, /mcp, /oauth, /.well-known,
 // /avatar, /api) to the Go backend. Vite serves only the SPA + HMR here.
 export default defineConfig({
   plugins: [react(), devLocalePlugin(), mswWorkerPlugin()],
   // Under Vitest browser mode the page loads @vite/client, which would try to open
-  // the dev HMR websocket below (wss://1mail.localhost:443 — unreachable in CI) and
+  // the dev HMR websocket below (wss://sphericon.localhost:443 — unreachable in CI) and
   // race the teardown with an unhandled "WebSocket closed without opened" rejection.
   // Disable HMR entirely during tests; keep the Caddy dev config for `make dev`.
   server: process.env.VITEST
@@ -62,13 +62,13 @@ export default defineConfig({
         strictPort: true,
         // Agent worktrees are full repo copies; watching them triggers spurious reloads.
         watch: { ignored: ['**/.claude/worktrees/**'] },
-        // The primary checkout is 1mail.localhost, a linked worktree <dir>.1mail.localhost.
-        allowedHosts: ['.1mail.localhost'],
+        // The primary checkout is sphericon.localhost, a linked worktree <dir>.sphericon.localhost.
+        allowedHosts: ['.sphericon.localhost'],
         // HMR runs through Caddy's HTTPS origin, so the client connects over wss to the
         // stack's host and Caddy port (APP_HOST / CADDY_PORT, set in .mise.toml).
         hmr: {
           protocol: 'wss',
-          host: process.env.APP_HOST ?? '1mail.localhost',
+          host: process.env.APP_HOST ?? 'sphericon.localhost',
           clientPort: Number(process.env.CADDY_PORT ?? 443),
         },
       },

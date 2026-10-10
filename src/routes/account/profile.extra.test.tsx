@@ -18,7 +18,7 @@ import { ProfilePage } from './profile.tsx'
 const user: SiteUserResource = {
   id: '1',
   name: 'John',
-  email: 'info@1mail.com',
+  email: 'info@getsphericon.com',
   emailVerified: false,
   createdAt: '2026-01-01T00:00:00Z',
 }
@@ -122,7 +122,7 @@ test('requests an email change and clears the form', async () => {
   serveProfile(calls)
   const { screen } = await renderWithRouter(<ProfilePage />)
 
-  await screen.getByLabelText(/^New email/).fill(' next@1mail.com ')
+  await screen.getByLabelText(/^New email/).fill(' next@getsphericon.com ')
   await screen
     .getByLabelText(/^Current password/)
     .last()
@@ -133,7 +133,7 @@ test('requests an email change and clears the form', async () => {
     .element(screen.getByText('Check your new inbox for a confirmation link.'))
     .toBeInTheDocument()
   expect(calls.find((c) => c.op === 'emailChange')?.body).toEqual({
-    newEmail: 'next@1mail.com',
+    newEmail: 'next@getsphericon.com',
     currentPassword: 'pw-123456',
   })
   await expect.element(screen.getByLabelText(/^New email/)).toHaveValue('')
@@ -145,7 +145,7 @@ test('reports a failed email change', async () => {
   })
   const { screen } = await renderWithRouter(<ProfilePage />)
 
-  await screen.getByLabelText(/^New email/).fill('next@1mail.com')
+  await screen.getByLabelText(/^New email/).fill('next@getsphericon.com')
   await screen
     .getByLabelText(/^Current password/)
     .last()

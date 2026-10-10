@@ -9,12 +9,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/telemetry"
-	"github.com/mokevnin/1mail/internal/testhelper"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/eligibility"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/telemetry"
+	"github.com/mokevnin/sphericon/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/tracking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,7 +107,7 @@ func TestASkippedRecordingIsCountedUnderTheTrackingPolicy(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
 	t.Cleanup(func() { slog.SetDefault(prev) })
 	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
-		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
+		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "sphericon-test"}, "test", telemetry.BuildInfo{})
 	})
 
 	env := testhelper.Setup(t, withTrackingLimit(1))

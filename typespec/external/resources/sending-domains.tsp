@@ -3,7 +3,7 @@ using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 using TypeSpec.OpenAPI;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** A DNS record the caller publishes to authenticate a Sending domain */
 model DnsRecord {
@@ -18,7 +18,7 @@ model DnsRecord {
 }
 
 /**
- * Sending domain (ADR 0010). 1mail generates the DKIM keypair; the caller publishes the
+ * Sending domain (ADR 0010). sphericon generates the DKIM keypair; the caller publishes the
  * DKIM TXT record. The private key is never returned. `verified` is a live property
  * re-checked in the background: it can flip back if the DNS record disappears.
  */
@@ -65,7 +65,7 @@ model CreateSendingDomainInput {
   /** The domain to authenticate, e.g. "mail.acme.com" (normalized to lowercase ASCII) */
   domain: string;
 
-  /** DKIM selector; defaults to "1mail" when omitted */
+  /** DKIM selector; defaults to "sphericon" when omitted */
   dkimSelector?: string;
 }
 

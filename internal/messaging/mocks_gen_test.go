@@ -5,7 +5,7 @@ package messaging_test
 
 import (
 	"context"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging"
 	"sync"
 )
 

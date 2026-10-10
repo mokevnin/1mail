@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "OneMail External API",
+    "title": "Sphericon External API",
     "version": "1.0.0"
   },
   "tags": [
@@ -7928,7 +7928,7 @@
                 "$ref": "#/components/schemas/AuditActorKind"
               }
             ],
-            "description": "The kind of actor; an operator is shown as \"1mail staff\""
+            "description": "The kind of actor; an operator is shown as \"sphericon staff\""
           },
           "id": {
             "type": "string",
@@ -9221,7 +9221,7 @@
           },
           "dkimSelector": {
             "type": "string",
-            "description": "DKIM selector; defaults to \"1mail\" when omitted"
+            "description": "DKIM selector; defaults to \"sphericon\" when omitted"
           }
         },
         "description": "Add a Sending domain; mints the DKIM keypair and returns the DNS records to publish."
@@ -10112,7 +10112,7 @@
             "description": "Last update timestamp"
           }
         },
-        "description": "Sending domain (ADR 0010). 1mail generates the DKIM keypair; the caller publishes the\nDKIM TXT record. The private key is never returned. `verified` is a live property\nre-checked in the background: it can flip back if the DNS record disappears."
+        "description": "Sending domain (ADR 0010). sphericon generates the DKIM keypair; the caller publishes the\nDKIM TXT record. The private key is never returned. `verified` is a live property\nre-checked in the background: it can flip back if the DNS record disappears."
       },
       "SesConfig": {
         "type": "object",
@@ -10778,7 +10778,7 @@
       "variables": {}
     },
     {
-      "url": "https://api.onemail.dev",
+      "url": "https://api.getsphericon.com",
       "description": "Production API",
       "variables": {}
     }

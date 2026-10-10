@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/emailtemplate"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // EmailTemplate is the model entity for the EmailTemplate schema.

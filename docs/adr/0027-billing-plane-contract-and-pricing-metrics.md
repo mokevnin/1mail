@@ -13,7 +13,7 @@ and `docs/research/billing-enforcement-prior-art.md`.
 - **Price on `emails_sent`; contacts are unlimited.** A base subscription with an included send
   volume and metered overage. `contacts` is still snapshotted (a high-water-mark of identified
   Contacts, ADR 0009) but is not a price dimension. In v1 every Workspace sends through its own
-  Integration (SES/SMTP); 1mail does not resell delivery, so the price is for the software only.
+  Integration (SES/SMTP); sphericon does not resell delivery, so the price is for the software only.
   Managed sending, if it comes, is a separate paid add-on.
 - **Billing period is the calendar month in UTC, closed by the core**, so the Usage snapshot is
   final before the plane invoices it. Stripe may not bill usage that arrives after an invoice is

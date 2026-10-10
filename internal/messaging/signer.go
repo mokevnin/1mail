@@ -8,9 +8,9 @@ import (
 
 	"github.com/wneessen/go-mail"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
-	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
+	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
 // ErrUnverifiedSendingDomain is returned by the send path when a workspace

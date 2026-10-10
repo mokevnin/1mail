@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Reusable pagination query parameters */
 model PageQuery {

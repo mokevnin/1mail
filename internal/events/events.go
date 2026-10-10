@@ -144,7 +144,7 @@ func (e *ContactCreated) Project() Projection {
 
 // ContactErased is emitted once per Erasure (ADR 0021): the PII-free accountability
 // record, and the signal the customer's webhook uses to erase downstream copies.
-// SubjectID is the Contact's own subject_id, or its 1mail id when it had none. It
+// SubjectID is the Contact's own subject_id, or its sphericon id when it had none. It
 // exists only in this message (so the webhook payload carries it): Project() leaves
 // it, and any Contact reference or address, off the stored Event.
 type ContactErased struct {

@@ -1,4 +1,4 @@
-name: 1mail CodeQL
+name: sphericon CodeQL
 # Generated code is owned by the generators, not reviewed by hand.
 paths-ignore:
   - gen

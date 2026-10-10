@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/api/external/resources"
-	"github.com/mokevnin/1mail/internal/contactexport"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/api/external/resources"
+	"github.com/mokevnin/sphericon/internal/contactexport"
 )
 
 // ContactsExport streams the subject-access Data export of one contact (ADR 0021),

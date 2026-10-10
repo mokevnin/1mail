@@ -19,7 +19,7 @@ The Operator, its console and the detector ship under a single license feature, 
 ### Operator identity and surface
 
 - Own ent table `operator`, written and read only from `ee/`. No self-signup: the first Operator
-  and every later one is created by `1mail operator create <email>`.
+  and every later one is created by `sphericon operator create <email>`.
 - Password plus mandatory TOTP (two-step login of [[0020-session-expiry-epoch-and-two-step-login]]),
   a separate cookie and JWT secret, a shorter session than a customer's with no "remember me",
   attempts limited by [[0025-rate-limiting-hybrid-store-workspace-key]]. A lost TOTP is reset
@@ -39,7 +39,7 @@ detector exemption. No Contacts, content or Events; impersonation stays deferred
 ### Actor attribution
 
 `suspended_by` becomes a structured actor: `system`, `cli`, or an Operator id. The customer
-sees an Operator action as "1mail staff" (Audit, glossary); the internal record keeps the real
+sees an Operator action as "sphericon staff" (Audit, glossary); the internal record keeps the real
 id. Operator becomes a kind of actor in `ee/audit`.
 
 ### Detector

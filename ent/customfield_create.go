@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/customfield"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/customfield"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // CustomFieldCreate is the builder for creating a CustomField entity.

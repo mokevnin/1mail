@@ -87,7 +87,7 @@ func SPFRecord(domain string) (host, value string) {
 }
 
 // DMARCRecord returns the suggested _dmarc TXT. Advisory bulk-readiness signal
-// (ADR 0012): Gmail/Yahoo require at least p=none for bulk senders, but 1mail
+// (ADR 0012): Gmail/Yahoo require at least p=none for bulk senders, but sphericon
 // never mandates the stricter policies, which live on the organizational domain.
 func DMARCRecord(domain string) (host, value string) {
 	return "_dmarc." + domain, "v=DMARC1; p=none;"

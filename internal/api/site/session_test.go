@@ -8,10 +8,10 @@ import (
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/config"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	apiauth "github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

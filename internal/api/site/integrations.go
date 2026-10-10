@@ -9,12 +9,12 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/integration"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/integrations"
-	"github.com/mokevnin/1mail/internal/sendlimit"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/integration"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/convert"
+	"github.com/mokevnin/sphericon/internal/integrations"
+	"github.com/mokevnin/sphericon/internal/sendlimit"
 )
 
 // SiteIntegrationsList returns the workspace's sending-provider integrations

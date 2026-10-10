@@ -6,8 +6,8 @@ import (
 
 	"github.com/gosimple/slug"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // Slugify converts an arbitrary string into a URL-safe slug: lowercased, with

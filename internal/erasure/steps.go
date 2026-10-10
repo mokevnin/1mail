@@ -6,17 +6,17 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automationrun"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/confirmation"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/visitor"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/automationrun"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/ent/confirmation"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/suppression"
+	"github.com/mokevnin/sphericon/ent/unsubscribe"
+	"github.com/mokevnin/sphericon/ent/visitor"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // idChunk bounds how many ids go into one IN (...) list, well below the driver's

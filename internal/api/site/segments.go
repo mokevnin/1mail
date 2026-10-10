@@ -8,11 +8,11 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/convert"
+	"github.com/mokevnin/sphericon/internal/pagination"
+	"github.com/mokevnin/sphericon/internal/segments"
 )
 
 func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegmentsListParams) (siteapi.SiteSegmentsListRes, error) {

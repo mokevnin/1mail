@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/oauthcode"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func TestSiteContactsErrorBranches(t *testing.T) {

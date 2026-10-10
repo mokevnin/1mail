@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/api/site/resources"
-	"github.com/mokevnin/1mail/internal/contactexport"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/api/site/resources"
+	"github.com/mokevnin/sphericon/internal/contactexport"
 )
 
 // SiteContactsExport streams the subject-access Data export of one contact (ADR

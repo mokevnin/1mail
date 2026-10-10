@@ -1,6 +1,6 @@
 # MCP for agents
 
-1mail serves a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/mcp`, so an
+sphericon serves a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/mcp`, so an
 AI agent (Claude, or any MCP client) can operate a workspace: read contacts, draft broadcasts,
 build segments, author automations. It is the same binary and the same data as `/api`.
 
@@ -13,13 +13,13 @@ bodies are the `/api` ones.
 
 The endpoint speaks Streamable HTTP and is stateless. Create an API token under
 **Settings → API keys** (see [scopes](/guide/api#tokens-and-scopes)), then point your client at
-`https://1mail.example.com/mcp` with the token as a Bearer credential.
+`https://sphericon.example.com/mcp` with the token as a Bearer credential.
 
 Claude Code:
 
 ```sh
-claude mcp add --transport http 1mail https://1mail.example.com/mcp \
-  --header "Authorization: Bearer $ONEMAIL_TOKEN"
+claude mcp add --transport http sphericon https://sphericon.example.com/mcp \
+  --header "Authorization: Bearer $SPHERICON_TOKEN"
 ```
 
 Any client that takes a JSON configuration:
@@ -27,9 +27,9 @@ Any client that takes a JSON configuration:
 ```json
 {
   "mcpServers": {
-    "1mail": {
+    "sphericon": {
       "type": "http",
-      "url": "https://1mail.example.com/mcp",
+      "url": "https://sphericon.example.com/mcp",
       "headers": { "Authorization": "Bearer <token>" }
     }
   }
@@ -39,8 +39,8 @@ Any client that takes a JSON configuration:
 ### Connectors that sign in (OAuth)
 
 Clients that cannot hold a static header, such as claude.ai custom connectors, use OAuth 2.1:
-add `https://1mail.example.com/mcp` as the connector URL and approve the consent screen in the
-1mail app. 1mail serves the discovery metadata (RFC 9728 and RFC 8414), dynamic client
+add `https://sphericon.example.com/mcp` as the connector URL and approve the consent screen in the
+sphericon app. sphericon serves the discovery metadata (RFC 9728 and RFC 8414), dynamic client
 registration and PKCE (S256 only).
 
 - Only a workspace **owner or admin** can approve, because approval mints a token.

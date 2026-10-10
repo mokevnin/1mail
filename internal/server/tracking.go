@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/internal/consent"
-	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/ratelimit"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/internal/consent"
+	"github.com/mokevnin/sphericon/internal/eligibility"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/logging"
+	"github.com/mokevnin/sphericon/internal/ratelimit"
+	"github.com/mokevnin/sphericon/internal/tracking"
 	"github.com/samber/lo"
 )
 

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/messaging"
 )
 
 // NotifyWorkspaceSuspended tells the workspace owner(s) that outbound sending is

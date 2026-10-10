@@ -18,12 +18,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/visitor"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/ent/visitor"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // ErrNotFound means the identifier resolves to nothing in the Workspace.
@@ -86,7 +86,7 @@ type Target struct {
 	// Destinations are the Contact's addresses.
 	Destinations []string
 	// SubjectID is the customer's own id for the person (the Contact's subject_id, or
-	// its 1mail id when it has none); only the contact.erased delivery carries it.
+	// its sphericon id when it has none); only the contact.erased delivery carries it.
 	SubjectID string
 	// IdentifierKind is what the Identifier was.
 	IdentifierKind string

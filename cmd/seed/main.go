@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-testfixtures/testfixtures/v3"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
 func main() {

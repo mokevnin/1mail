@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/authtoken"
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/ratelimit"
-	"github.com/mokevnin/1mail/internal/secondfactor"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/authtoken"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/ratelimit"
+	"github.com/mokevnin/sphericon/internal/secondfactor"
 )
 
 // loginChallengeTTL is how long the password step's challenge stays valid.

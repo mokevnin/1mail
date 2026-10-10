@@ -9,12 +9,12 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/workspace"
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/secondfactor"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/ent/workspace"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/secondfactor"
 )
 
 // SecondFactorReminderLead is how long before a User's grace ends they are reminded to

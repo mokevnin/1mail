@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/lmittmann/tint"
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 )
 
 // New builds a logger from config: a coloured, human-readable handler for

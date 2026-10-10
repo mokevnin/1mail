@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/recoverycode"
-	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/sphericon/ent/recoverycode"
+	"github.com/mokevnin/sphericon/ent/user"
 )
 
 // RecoveryCode is the model entity for the RecoveryCode schema.

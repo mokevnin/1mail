@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/internal/sendlimit"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/internal/sendlimit"
 )
 
 // reserve takes one token from the default Integration's Send rate limit (ADR 0023).

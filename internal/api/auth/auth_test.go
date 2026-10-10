@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/apitoken"
-	collectapi "github.com/mokevnin/1mail/gen/collect"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/apitoken"
+	collectapi "github.com/mokevnin/sphericon/gen/collect"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // closedClient is an ent client whose database is gone: every query fails.

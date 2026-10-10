@@ -6,13 +6,13 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
 
-const otelScope = "github.com/mokevnin/1mail/internal/db"
+const otelScope = "github.com/mokevnin/sphericon/internal/db"
 
 // Pool label values: the only label on the pool gauges, so cardinality is
 // bounded by the number of pools (two).

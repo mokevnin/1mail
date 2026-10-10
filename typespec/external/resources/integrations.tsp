@@ -2,7 +2,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.OpenAPI;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** A per-second Send rate limit the caller may set */
 @minValue(1)

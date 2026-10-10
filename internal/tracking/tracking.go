@@ -32,7 +32,7 @@ type Tracker struct {
 	baseURL string
 }
 
-// New builds a Tracker. baseURL is the public origin (e.g. https://1mail.localhost);
+// New builds a Tracker. baseURL is the public origin (e.g. https://sphericon.localhost);
 // a trailing slash is trimmed.
 func New(secret, baseURL string) *Tracker {
 	return &Tracker{secret: []byte(secret), baseURL: strings.TrimRight(baseURL, "/")}

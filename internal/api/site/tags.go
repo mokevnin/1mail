@@ -8,11 +8,11 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/tags"
+	"github.com/mokevnin/sphericon/ent"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/convert"
+	"github.com/mokevnin/sphericon/internal/pagination"
+	"github.com/mokevnin/sphericon/internal/tags"
 )
 
 func (h *Handlers) SiteTagsList(ctx context.Context, params siteapi.SiteTagsListParams) (siteapi.SiteTagsListRes, error) {

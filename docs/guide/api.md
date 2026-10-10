@@ -1,6 +1,6 @@
 # API
 
-1mail exposes three HTTP surfaces. All are described by OpenAPI documents generated from
+sphericon exposes three HTTP surfaces. All are described by OpenAPI documents generated from
 TypeSpec, which is the single source of truth; you will find them in the repository under
 `openapi/`. Every operation of the external API is documented in the [API reference](/api/).
 
@@ -8,7 +8,7 @@ TypeSpec, which is the single source of truth; you will find them in the reposit
 | ------------ | ---------- | ----------------------------------- | ------------------------------- |
 | **External** | `/api`     | Your backend and automation         | `Authorization: Bearer <token>` |
 | **Collect**  | `/collect` | The browser tracker and your server | `x-collect-key` header          |
-| **Site**     | `/site`    | The 1mail web app itself            | Session, per workspace          |
+| **Site**     | `/site`    | The sphericon web app itself        | Session, per workspace          |
 
 The site API is the web app's own backend and may change with the UI. Build on the external and
 collect APIs.
@@ -49,8 +49,8 @@ Sending, activating and erasing have their own scopes, so a token that can edit 
 ### Example: upsert contacts
 
 ```sh
-curl https://1mail.example.com/api/contacts/batch \
-  -H "Authorization: Bearer $ONEMAIL_TOKEN" \
+curl https://sphericon.example.com/api/contacts/batch \
+  -H "Authorization: Bearer $SPHERICON_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"contacts":[{"subjectId":"user_42","email":"ada@example.com","firstName":"Ada"}]}'
 ```
@@ -113,7 +113,7 @@ carry no detail; quote the `X-Request-Id` response header when you report one.
 the original result without sending a second email, so it is safe to retry after a timeout. A
 repeat that arrives while the first is still running gets `409`.
 
-## Operating 1mail with an agent
+## Operating sphericon with an agent
 
 The same binary serves an MCP endpoint at `/mcp`. Its tools are projected from the external API
 contract, so token scopes, workspace scoping and errors behave exactly as they do over `/api`.

@@ -1,7 +1,7 @@
 # Tracking visitors and events
 
 Tracking turns anonymous visits into contacts you can segment on. A small script runs in the
-browser, assigns each device a visitor id, and sends events to your 1mail instance.
+browser, assigns each device a visitor id, and sends events to your sphericon instance.
 
 ## Add the tracker
 
@@ -11,9 +11,9 @@ section of the workspace **Settings**.
 ```html
 <script
   async
-  src="https://1mail.example.com/t.js"
+  src="https://sphericon.example.com/t.js"
   data-collect-key="YOUR_COLLECT_KEY"
-  data-collect-url="https://1mail.example.com"
+  data-collect-url="https://sphericon.example.com"
 ></script>
 ```
 
@@ -30,7 +30,7 @@ window._omq = window._omq || []
 // Record something a visitor did
 _omq.push(['track', 'viewed_pricing', { plan: 'team' }])
 
-// Tell 1mail who this visitor is
+// Tell sphericon who this visitor is
 _omq.push(['identify', { email: 'ada@example.com', subjectId: 'user_42' }])
 ```
 
@@ -64,8 +64,8 @@ Events you record from your backend use the API with a bearer token and the `eve
 scope:
 
 ```sh
-curl https://1mail.example.com/api/events/batch \
-  -H "Authorization: Bearer $ONEMAIL_TOKEN" \
+curl https://sphericon.example.com/api/events/batch \
+  -H "Authorization: Bearer $SPHERICON_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"events":[{"action":"subscription_started","subjectId":"user_42"}]}'
 ```

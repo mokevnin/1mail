@@ -202,7 +202,7 @@ not the current Paddle Billing product.
   none of those mechanisms, so it is plausible but undocumented; the removed Checkout parameters
   include `subscription_data.invoice_settings`, which is not what the grace period uses. Needs a
   Stripe confirmation (support or sales) before Managed Payments is considered for usage billing.
-- **Inference.** 1mail sells software (SaaS), not a marketing service, so the "marketing"
+- **Inference.** sphericon sells software (SaaS), not a marketing service, so the "marketing"
   exclusion should not apply, but that is for Stripe to confirm. A third-party site quotes
   "5% + 50c" for Managed Payments; Stripe's own pricing page says 3.5% on top of processing.
   Use Stripe's figure.
@@ -287,7 +287,7 @@ not the current Paddle Billing product.
 ### B6. Lago (rating layer; AGPLv3; self-hosted or managed)
 
 - **License (verified).** Platform AGPLv3; agent SDKs, MCP server and CLI MIT
-  ([github.com/getlago/lago](https://github.com/getlago/lago)). Same license family as 1mail.
+  ([github.com/getlago/lago](https://github.com/getlago/lago)). Same license family as sphericon.
 - **Not a PSP or MoR (verified).** "Lago is not a payment service provider"; it integrates
   Stripe Payments, GoCardless and Adyen, or emits webhooks to any PSP (Paddle, Razorpay, ...)
   ([payments overview](https://github.com/getlago/lago-docs/blob/502a9e7/docs/guide/11_payments/overview.md);
@@ -536,7 +536,7 @@ Notes on weak spots:
 3. **Table above.** Verified OSS range for this load is roughly USD 49 to EUR 64, with
    Mautic managed an order of magnitude higher and Sendy cheapest in ongoing cost but self-hosted.
 
-### Implication for 1mail (inference, not a decision)
+### Implication for sphericon (inference, not a decision)
 
 Sends-priced with unlimited contacts is a safe, already-validated metric and matches the
 `emails_sent` snapshot in ADR 0009; it differentiates from incumbent contact tiers rather than

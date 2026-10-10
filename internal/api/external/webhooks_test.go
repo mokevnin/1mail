@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/ent/webhookendpoint"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent/webhookendpoint"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func TestExternalWebhooksCRUD(t *testing.T) {
 	require.NoError(t, err)
 	hook, ok := got.(*externalapi.WebhookResource)
 	require.Truef(t, ok, "got %T", got)
-	assert.Equal(t, "https://codebasics.dev/webhooks/1mail", hook.URL)
+	assert.Equal(t, "https://codebasics.dev/webhooks/sphericon", hook.URL)
 	assert.Equal(t, []string{"contact.created", "email.opened", "email.clicked"}, hook.EventTypes)
 
 	bad, err := c.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "not-a-url"})

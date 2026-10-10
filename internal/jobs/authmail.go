@@ -8,8 +8,8 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/messaging"
 )
 
 // Auth-mail flows: the self-service account emails sent through the system
@@ -47,7 +47,7 @@ func (w *SendAuthMailWorker) Work(ctx context.Context, job *river.Job[SendAuthMa
 }
 
 // SendAuthMail renders and sends a self-service account email through the system
-// sender (1mail's own provider — NOT a workspace integration, so it bypasses the
+// sender (sphericon's own provider — NOT a workspace integration, so it bypasses the
 // workspace suppression/eligibility machinery). Pure (no queue) so it runs
 // identically under the river worker and the inline adapter.
 func SendAuthMail(ctx context.Context, sender messaging.EmailSender, appURL string, args SendAuthMailArgs) error {

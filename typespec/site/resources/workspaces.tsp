@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Workspace the current user belongs to */
 @resource("workspaces")

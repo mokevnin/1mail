@@ -1,4 +1,4 @@
-# Example Prometheus alerting rules for 1mail. This file is the single source: the Helm chart
+# Example Prometheus alerting rules for sphericon. This file is the single source: the Helm chart
 # renders it into a PrometheusRule, and docs/operations/monitoring.md includes it verbatim.
 # Every alert has a section with the same name in docs/operations/runbook.md (mise run
 # check:helm enforces it). Thresholds are starting points; tune them to your traffic.
@@ -6,19 +6,19 @@
 # The three API surfaces share one set of HTTP metrics and are told apart by operation_id:
 # Collect* is /collect, Site* is /site, everything else is the external /api.
 groups:
-  - name: 1mail.availability
+  - name: sphericon.availability
     rules:
-      - alert: OneMailDown
-        expr: up{job=~".*1mail.*"} == 0
+      - alert: SphericonDown
+        expr: up{job=~".*sphericon.*"} == 0
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: 1mail metrics target {{ $labels.instance }} is down
+          summary: sphericon metrics target {{ $labels.instance }} is down
           description: Prometheus has not been able to scrape {{ $labels.instance }} for 5 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemaildown
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericondown
 
-      - alert: OneMailCollectErrorRatioHigh
+      - alert: SphericonCollectErrorRatioHigh
         expr: |
           sum(rate(ogen_server_request_count_total{operation_id=~"Collect.*", http_response_status_code=~"5.."}[5m]))
             / sum(rate(ogen_server_request_count_total{operation_id=~"Collect.*"}[5m])) > 0.01
@@ -28,9 +28,9 @@ groups:
         annotations:
           summary: /collect is failing {{ $value | humanizePercentage }} of requests
           description: More than 1% of tracking requests answered 5xx for 10 minutes; events are being lost.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailcollecterrorratiohigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericoncollecterrorratiohigh
 
-      - alert: OneMailSiteErrorRatioHigh
+      - alert: SphericonSiteErrorRatioHigh
         expr: |
           sum(rate(ogen_server_request_count_total{operation_id=~"Site.*", http_response_status_code=~"5.."}[5m]))
             / sum(rate(ogen_server_request_count_total{operation_id=~"Site.*"}[5m])) > 0.05
@@ -40,9 +40,9 @@ groups:
         annotations:
           summary: /site is failing {{ $value | humanizePercentage }} of requests
           description: More than 5% of dashboard API requests answered 5xx for 10 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailsiteerrorratiohigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonsiteerrorratiohigh
 
-      - alert: OneMailApiErrorRatioHigh
+      - alert: SphericonApiErrorRatioHigh
         expr: |
           sum(rate(ogen_server_request_count_total{operation_id!~"Site.*|Collect.*", http_response_status_code=~"5.."}[5m]))
             / sum(rate(ogen_server_request_count_total{operation_id!~"Site.*|Collect.*"}[5m])) > 0.05
@@ -52,9 +52,9 @@ groups:
         annotations:
           summary: /api is failing {{ $value | humanizePercentage }} of requests
           description: More than 5% of external API requests answered 5xx for 10 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailapierrorratiohigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonapierrorratiohigh
 
-      - alert: OneMailRequestLatencyHigh
+      - alert: SphericonRequestLatencyHigh
         expr: |
           histogram_quantile(0.95,
             sum by (le) (rate(ogen_server_duration_milliseconds_bucket{operation_id!~"Collect.*"}[5m]))) > 2000
@@ -64,11 +64,11 @@ groups:
         annotations:
           summary: p95 /site and /api latency is {{ $value | humanize }} ms
           description: The 95th percentile of request duration has been above 2 seconds for 15 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailrequestlatencyhigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonrequestlatencyhigh
 
-  - name: 1mail.events
+  - name: sphericon.events
     rules:
-      - alert: OneMailOutboxLagHigh
+      - alert: SphericonOutboxLagHigh
         expr: max by (consumer_group) (outbox_lag_seconds) > 300
         for: 10m
         labels:
@@ -76,9 +76,9 @@ groups:
         annotations:
           summary: Event consumer {{ $labels.consumer_group }} is {{ $value | humanizeDuration }} behind
           description: The oldest unprocessed domain event for {{ $labels.consumer_group }} is older than 5 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailoutboxlaghigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonoutboxlaghigh
 
-      - alert: OneMailEventHandlerErrors
+      - alert: SphericonEventHandlerErrors
         expr: |
           sum by (handler) (rate(watermill_messages_processed_total{error="true"}[10m]))
             / sum by (handler) (rate(watermill_messages_processed_total[10m])) > 0.05
@@ -88,11 +88,11 @@ groups:
         annotations:
           summary: Event handler {{ $labels.handler }} fails {{ $value | humanizePercentage }} of messages
           description: More than 5% of messages handled by {{ $labels.handler }} returned an error for 15 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemaileventhandlererrors
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericoneventhandlererrors
 
-  - name: 1mail.jobs
+  - name: sphericon.jobs
     rules:
-      - alert: OneMailJobQueueBacklog
+      - alert: SphericonJobQueueBacklog
         expr: max by (queue) (river_queue_oldest_available_age_seconds) > 900
         for: 15m
         labels:
@@ -100,9 +100,9 @@ groups:
         annotations:
           summary: Job queue {{ $labels.queue }} has had a ready job waiting {{ $value | humanizeDuration }}
           description: The oldest job ready to run in queue {{ $labels.queue }} has waited more than 15 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailjobqueuebacklog
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonjobqueuebacklog
 
-      - alert: OneMailJobFailureRatioHigh
+      - alert: SphericonJobFailureRatioHigh
         expr: |
           sum by (queue) (rate(river_work_count_total{status!="ok"}[15m]))
             / sum by (queue) (rate(river_work_count_total[15m])) > 0.2
@@ -112,11 +112,11 @@ groups:
         annotations:
           summary: Jobs in queue {{ $labels.queue }} fail {{ $value | humanizePercentage }} of attempts
           description: More than 20% of job attempts in queue {{ $labels.queue }} errored or panicked for 30 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailjobfailureratiohigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonjobfailureratiohigh
 
-  - name: 1mail.database
+  - name: sphericon.database
     rules:
-      - alert: OneMailDBPoolSaturated
+      - alert: SphericonDBPoolSaturated
         expr: max by (pool) (db_pool_in_use / db_pool_max) >= 0.9
         for: 10m
         labels:
@@ -124,9 +124,9 @@ groups:
         annotations:
           summary: Database pool {{ $labels.pool }} is {{ $value | humanizePercentage }} in use
           description: Connections in pool {{ $labels.pool }} have been at 90% of the configured maximum for 10 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemaildbpoolsaturated
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericondbpoolsaturated
 
-      - alert: OneMailDBPoolWaits
+      - alert: SphericonDBPoolWaits
         expr: sum by (pool) (increase(db_pool_wait_count[15m]) or increase(db_pool_empty_acquire_count[15m])) > 100
         for: 15m
         labels:
@@ -134,11 +134,11 @@ groups:
         annotations:
           summary: Requests are waiting for a connection from pool {{ $labels.pool }}
           description: More than 100 connection waits in 15 minutes on pool {{ $labels.pool }} (database/sql waits for pool sql, pgx empty-pool acquires for pool pgx).
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemaildbpoolwaits
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericondbpoolwaits
 
-  - name: 1mail.deliverability
+  - name: sphericon.deliverability
     rules:
-      - alert: OneMailEmailSendErrorsHigh
+      - alert: SphericonEmailSendErrorsHigh
         expr: |
           sum by (provider) (rate(email_send_outcomes_total{status="error"}[15m]))
             / sum by (provider) (rate(email_send_outcomes_total{status=~"accepted|error"}[15m])) > 0.1
@@ -148,9 +148,9 @@ groups:
         annotations:
           summary: Provider {{ $labels.provider }} rejects {{ $value | humanizePercentage }} of sends
           description: More than 10% of send attempts through {{ $labels.provider }} failed for 15 minutes.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailemailsenderrorshigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonemailsenderrorshigh
 
-      - alert: OneMailEmailBounceRateHigh
+      - alert: SphericonEmailBounceRateHigh
         expr: |
           sum by (provider) (increase(email_send_outcomes_total{status="bounce"}[1h]))
             / sum by (provider) (increase(email_send_outcomes_total{status="accepted"}[1h])) > 0.05
@@ -161,9 +161,9 @@ groups:
         annotations:
           summary: Bounce rate through {{ $labels.provider }} is {{ $value | humanizePercentage }}
           description: More than 5% of messages accepted by {{ $labels.provider }} bounced in the last hour.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailemailbounceratehigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonemailbounceratehigh
 
-      - alert: OneMailEmailComplaintRateHigh
+      - alert: SphericonEmailComplaintRateHigh
         expr: |
           sum by (provider) (increase(email_send_outcomes_total{status="complaint"}[1h]))
             / sum by (provider) (increase(email_send_outcomes_total{status="accepted"}[1h])) > 0.001
@@ -174,4 +174,4 @@ groups:
         annotations:
           summary: Complaint rate through {{ $labels.provider }} is {{ $value | humanizePercentage }}
           description: More than 0.1% of messages accepted by {{ $labels.provider }} drew a spam complaint in the last hour.
-          runbook_url: https://mokevnin.github.io/1mail/operations/runbook#onemailemailcomplaintratehigh
+          runbook_url: https://mokevnin.github.io/sphericon/operations/runbook#sphericonemailcomplaintratehigh

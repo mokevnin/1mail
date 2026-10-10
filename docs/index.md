@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: 1mail
+  name: sphericon
   text: Marketing automation you can run yourself
   tagline: Know your audience, talk to it at the right moment, and keep the data on your own infrastructure.
   actions:
@@ -16,7 +16,7 @@ hero:
       link: /api/
     - theme: alt
       text: GitHub
-      link: https://github.com/mokevnin/1mail
+      link: https://github.com/mokevnin/sphericon
 features:
   - title: Know your contacts
     details: One contact per person, identified by subject id, email or phone. Anonymous visitors are stitched to the contact once they identify themselves, with their earlier events.

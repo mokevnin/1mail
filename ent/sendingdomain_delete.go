@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
 )
 
 // SendingDomainDelete is the builder for deleting a SendingDomain entity.

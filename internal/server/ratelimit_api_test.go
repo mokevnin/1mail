@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/mokevnin/1mail/config"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -14,11 +14,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 // Module is the Events ingest and read module.

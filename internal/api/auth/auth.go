@@ -7,15 +7,15 @@ import (
 	"time"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/apitoken"
-	"github.com/mokevnin/1mail/ent/workspace"
-	collectapi "github.com/mokevnin/1mail/gen/collect"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/ratelimit"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/apitoken"
+	"github.com/mokevnin/sphericon/ent/workspace"
+	collectapi "github.com/mokevnin/sphericon/gen/collect"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/ratelimit"
 	"github.com/samber/lo"
 )
 
@@ -264,7 +264,7 @@ type SiteSecurityHandler struct {
 func NewSiteSecurityHandler(jwtSecret string, client *ent.Client, now func() time.Time) *SiteSecurityHandler {
 	svc := gptoken.NewService(gptoken.Opts{
 		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
-		Issuer:       "1mail",
+		Issuer:       "sphericon",
 		DisableXSRF:  true,
 	})
 	if now == nil {

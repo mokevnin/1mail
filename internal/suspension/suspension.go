@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/workspace"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/workspace"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // SuspendWorkspace freezes all outbound sending for a Workspace (ADR 0007): it sets
@@ -74,7 +74,7 @@ func UnsuspendWorkspace(ctx context.Context, bus *events.Bus, workspaceID int64,
 
 // recordWorkspaceAudit publishes the Audit entry of a suspension change. "system" (the
 // automated abuse detector) is the system actor; anything else is a platform Operator,
-// which the customer sees only as "1mail staff" (ADR 0022).
+// which the customer sees only as "sphericon staff" (ADR 0022).
 func recordWorkspaceAudit(ctx context.Context, tx *ent.Client, pub events.Publisher, workspaceID int64, by, action string, diff map[string]any) error {
 	ws, err := tx.Workspace.Get(ctx, workspaceID)
 	if err != nil {

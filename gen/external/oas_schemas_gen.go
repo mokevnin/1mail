@@ -358,7 +358,7 @@ func (s *ApplyTagInput) SetName(val string) {
 // The actor of an Audit entry.
 // Ref: #/components/schemas/AuditActor
 type AuditActor struct {
-	// The kind of actor; an operator is shown as "1mail staff".
+	// The kind of actor; an operator is shown as "sphericon staff".
 	Kind AuditActorKind `json:"kind"`
 	// The actor's id (a User id or an API token id); absent for the system.
 	ID OptNilString `json:"id"`
@@ -3584,7 +3584,7 @@ func (s *CreateSegmentInput) SetDefinition(val string) {
 type CreateSendingDomainInput struct {
 	// The domain to authenticate, e.g. "mail.acme.com" (normalized to lowercase ASCII).
 	Domain string `json:"domain"`
-	// DKIM selector; defaults to "1mail" when omitted.
+	// DKIM selector; defaults to "sphericon" when omitted.
 	DkimSelector OptString `json:"dkimSelector"`
 }
 
@@ -7732,7 +7732,7 @@ func (s *SendingDomainRatesResource) SetBounceRate(val RateTriple) {
 	s.BounceRate = val
 }
 
-// Sending domain (ADR 0010). 1mail generates the DKIM keypair; the caller publishes the DKIM TXT
+// Sending domain (ADR 0010). sphericon generates the DKIM keypair; the caller publishes the DKIM TXT
 // record. The private key is never returned. `verified` is a live property re-checked in the
 // background: it can flip back if the DNS record disappears.
 // Ref: #/components/schemas/SendingDomainResource

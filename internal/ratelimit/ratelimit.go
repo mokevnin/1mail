@@ -24,9 +24,9 @@ import (
 	"time"
 
 	"github.com/go-chi/httprate"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/clientip"
-	"github.com/mokevnin/1mail/internal/logging"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/clientip"
+	"github.com/mokevnin/sphericon/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -147,7 +147,7 @@ func (discardWriter) WriteHeader(int)             {}
 // a warn log. It carries the policy and the client address only, never an email or
 // a path (paths hold tokens).
 func Rejected(ctx context.Context, policy string) {
-	counter, err := otel.Meter("1mail/ratelimit").Int64Counter("ratelimit_rejected",
+	counter, err := otel.Meter("sphericon/ratelimit").Int64Counter("ratelimit_rejected",
 		metric.WithDescription("Requests refused by a rate limit, by policy."))
 	if err == nil {
 		counter.Add(ctx, 1, metric.WithAttributes(attribute.String("policy", policy)))

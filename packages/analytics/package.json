@@ -1,7 +1,7 @@
 {
-  "name": "@1mail/analytics",
+  "name": "@sphericon/analytics",
   "version": "0.0.0",
-  "description": "1mail tracking SDK — module + browser snippet",
+  "description": "sphericon tracking SDK — module + browser snippet",
   "files": [
     "dist",
     "src"

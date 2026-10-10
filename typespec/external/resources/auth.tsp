@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 enum ApiTokenScope {
   contactsRead: "contacts:read",

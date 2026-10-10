@@ -2,7 +2,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** A DNS record the user publishes to authenticate a sending domain */
 model SiteDnsRecord {
@@ -17,7 +17,7 @@ model SiteDnsRecord {
 }
 
 /**
- * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
+ * Sending domain resource used by the site UI (ADR 0010). sphericon generates the
  * DKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The
  * private key is never exposed. `verified` is a live property re-checked in the
  * background — it can flip back if the DNS record disappears.
@@ -66,7 +66,7 @@ model SiteCreateSendingDomainInput {
   /** The domain to authenticate, e.g. "mail.acme.com" */
   domain: string;
 
-  /** DKIM selector; defaults to "1mail" when omitted */
+  /** DKIM selector; defaults to "sphericon" when omitted */
   dkimSelector?: string;
 }
 

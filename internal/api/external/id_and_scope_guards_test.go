@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/auditentry"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/auditentry"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func TestRoleDecisionsAreNamedAndSeparate(t *testing.T) {

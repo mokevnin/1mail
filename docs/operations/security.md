@@ -1,6 +1,6 @@
 # Security hardening
 
-A checklist for running 1mail in production. These are the settings that are yours to get
+A checklist for running sphericon in production. These are the settings that are yours to get
 right; the application enforces the rest.
 
 ## Keep metrics on the internal listener
@@ -60,14 +60,14 @@ After any rotation, record the new value in your secret store before you discard
 Production database connections should be encrypted. Use `sslmode=require` at a minimum:
 
 ```
-postgres://user:pass@db.example.com:5432/1mail?sslmode=require
+postgres://user:pass@db.example.com:5432/sphericon?sslmode=require
 ```
 
 `require` encrypts the connection but does not check who answered. To also verify the server
 certificate and host name, use `verify-full` with the CA that signed it:
 
 ```
-postgres://user:pass@db.example.com:5432/1mail?sslmode=verify-full&sslrootcert=/etc/ssl/db-ca.pem
+postgres://user:pass@db.example.com:5432/sphericon?sslmode=verify-full&sslrootcert=/etc/ssl/db-ca.pem
 ```
 
 Use `verify-full` whenever the database is reachable over a network you do not fully control.

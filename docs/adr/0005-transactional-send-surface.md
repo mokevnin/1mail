@@ -4,7 +4,7 @@ status: accepted
 
 # Transactional is a first-class send surface, binding templates by reference
 
-1mail supports **transactional email** as a third send surface alongside Broadcast and
+sphericon supports **transactional email** as a third send surface alongside Broadcast and
 Automation, so a customer can run marketing _and_ transactional sends through one service
 rather than bolting on a SendGrid/Postmark. A **Transactional send** is a single-recipient
 email triggered by the customer's own application through the `/api` surface (password reset,

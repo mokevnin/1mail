@@ -10,7 +10,7 @@ must be DKIM-authenticated, come from a domain with a published DMARC record, an
 
 > ~5k/day) carry a **one-click unsubscribe** (RFC 8058), with the spam-complaint rate held
 > < 0.3%. Non-compliant mail is spam-foldered or rejected. The transport does not do this for us:
-> SES ships whatever MIME we hand it and adds no `List-Unsubscribe` headers. So 1mail must build
+> SES ships whatever MIME we hand it and adds no `List-Unsubscribe` headers. So sphericon must build
 > the headers itself, in the message, before handing it to any provider.
 
 This ADR covers the two forks still open after ADR 0011 settled the complaint-rate metric:
@@ -80,7 +80,7 @@ actually use — skips it via POST.
 `List-Unsubscribe` carries only the HTTPS URI plus `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
 That combination **is** RFC 8058-compliant and satisfies the Gmail/Yahoo one-click mandate; the
 `mailto:` variant is not required for it. Acting on a `mailto:` unsubscribe needs an inbound-mail
-parsing pipeline 1mail does not have (the only inbound path is the SNS bounce/complaint webhook).
+parsing pipeline sphericon does not have (the only inbound path is the SNS bounce/complaint webhook).
 Shipping a `mailto:` we cannot act on is worse than omitting it, so it is deferred until an
 inbound-mail pipeline exists.
 
@@ -92,7 +92,7 @@ Gmail hard-requires a published DMARC record (at least `p=none`) for bulk sender
 with valid aligned DKIM but **no** `_dmarc` record still fails that policy — the mail is
 **rejected (a 5xx → bounce, inflating the ADR 0011 bounce rate) or spam-foldered** (killing
 deliverability and engagement), and a bounce spike can trip auto-suspension. So a missing DMARC
-record raises a **prominent warning before the blast** but does **not** block sending. 1mail
+record raises a **prominent warning before the blast** but does **not** block sending. sphericon
 generates the suggested `_dmarc` TXT (`v=DMARC1; p=none; …`), checks its presence, and guides
 toward `quarantine`/`reject` over time — but never mandates the stricter policies, which live on
 the organizational domain and can break the sender's unrelated mail streams.
@@ -101,7 +101,7 @@ the organizational domain and can break the sender's unrelated mail streams.
 
 - **Rely on SES/provider list-management to add List-Unsubscribe** (rejected): couples the header
   to one provider, breaks for raw SMTP, and fragments the model the moment a second transport
-  lands (same reasoning as ADR 0010's native-signing choice). 1mail owns the MIME.
+  lands (same reasoning as ADR 0010's native-signing choice). sphericon owns the MIME.
 - **A separate POST-only one-click endpoint, leaving the footer GET as-is** (rejected): avoids the
   UX change but leaves the footer's scanner-unsubscribe bug unfixed; once the POST-performs path
   exists for the header, keeping a second scanner-unsafe GET-records path is strictly worse.

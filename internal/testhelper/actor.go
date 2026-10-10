@@ -6,14 +6,14 @@ import (
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/user"
-	collectapi "github.com/mokevnin/1mail/gen/collect"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/user"
+	collectapi "github.com/mokevnin/sphericon/gen/collect"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	apiauth "github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/fixtures"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
@@ -159,13 +159,13 @@ func (env *TestEnv) SiteToken(t *testing.T, email string, edit func(*gptoken.Cla
 func (env *TestEnv) mintSiteToken(ctx context.Context, email string, edit func(*gptoken.Claims)) (string, error) {
 	svc := gptoken.NewService(gptoken.Opts{
 		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return env.jwtSecret, nil }),
-		Issuer:       "1mail",
+		Issuer:       "sphericon",
 		DisableXSRF:  true,
 	})
 	claims := gptoken.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "1mail",
-			Audience:  jwt.ClaimStrings{"1mail"},
+			Issuer:    "sphericon",
+			Audience:  jwt.ClaimStrings{"sphericon"},
 			ExpiresAt: jwt.NewNumericDate(env.now().Add(env.sessionTTL)),
 		},
 		User: &gptoken.User{Name: email, ID: "test"},

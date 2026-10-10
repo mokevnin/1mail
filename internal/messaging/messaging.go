@@ -70,7 +70,7 @@ type DefaultFromer interface {
 }
 
 // Signer resolves the native DKIM signer for an outbound message (ADR 0010).
-// Signing is 1mail-native and transport-independent: the same signer applies
+// Signing is sphericon-native and transport-independent: the same signer applies
 // identically across providers because both serialize the message via go-mail's
 // WriteTo, which signs when a DKIM signer is set.
 type Signer interface {

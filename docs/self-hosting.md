@@ -1,6 +1,6 @@
-# Self-hosting 1mail
+# Self-hosting sphericon
 
-1mail ships as a **single self-contained artifact** — one Go binary (or one Docker image)
+sphericon ships as a **single self-contained artifact** — one Go binary (or one Docker image)
 with the React SPA, the tracker snippet (`/t.js`), and the database migrations all
 embedded. The only external dependency at runtime is **PostgreSQL** (the background queue
 and pub/sub both ride on Postgres — no Redis, no object storage, no separate worker).
@@ -19,7 +19,7 @@ the binary). `APP_ENV` selects the environment (`development` by default; set it
 | `DATABASE_URL`                                                      | **yes**         | —                              | PostgreSQL connection string (`postgres://user:pass@host:5432/db?sslmode=require`). Use `sslmode=verify-full` (with `sslrootcert`) to also verify the server certificate.                                                                                                                                      |
 | `JWT_SECRET`                                                        | **yes in prod** | —                              | Signing secret for auth tokens. Outside `development`/`test` the server refuses to boot if it is empty, shorter than 32 characters, or a known placeholder. Generate one with `openssl rand -hex 32`.                                                                                                          |
 | `SESSION_TTL`                                                       | no              | `24h`                          | Lifetime of a dashboard session (a Go duration, e.g. `12h`): the session token expires and the cookie is dropped after it, with no refresh. Must be positive.                                                                                                                                                  |
-| `ENCRYPTION_KEY`                                                    | **yes**         | —                              | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `1mail`-side tooling). Boot fails if missing.                                                                                                                                                      |
+| `ENCRYPTION_KEY`                                                    | **yes**         | —                              | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `sphericon`-side tooling). Boot fails if missing.                                                                                                                                                  |
 | `APP_URL`                                                           | no              | `http://localhost:3000`        | Public base URL — used when issuing auth tokens and building tracking/unsubscribe links. Set to your real origin.                                                                                                                                                                                              |
 | `PORT`                                                              | no              | `3000`                         | HTTP listen port.                                                                                                                                                                                                                                                                                              |
 | `METRICS_ADDR`                                                      | no              | — (off)                        | `host:port` for the opt-in Prometheus listener. Must differ from `PORT`; see [Prometheus metrics](#prometheus-metrics).                                                                                                                                                                                        |
@@ -49,10 +49,10 @@ the binary). `APP_ENV` selects the environment (`development` by default; set it
 | `LICENSE_KEY`                                                       | no              | —                              | Enterprise Edition license key; without it the single binary runs the open-source core only.                                                                                                                                                                                                                   |
 | `LOG_LEVEL`                                                         | no              | `info`                         | Log level.                                                                                                                                                                                                                                                                                                     |
 | `LOG_FORMAT`                                                        | no              | `json` (`text` in development) | Log format: `json` or `text`.                                                                                                                                                                                                                                                                                  |
-| `OTEL_SERVICE_NAME`                                                 | no              | `1mail`                        | Service name reported to OpenTelemetry.                                                                                                                                                                                                                                                                        |
+| `OTEL_SERVICE_NAME`                                                 | no              | `sphericon`                    | Service name reported to OpenTelemetry.                                                                                                                                                                                                                                                                        |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no              | `SMTP_PORT=1025`               | Outbound email over SMTP.                                                                                                                                                                                                                                                                                      |
 | `SYSTEM_EMAIL_PROVIDER`                                             | no              | `smtp`                         | Platform (system) email provider: `smtp` or `ses`.                                                                                                                                                                                                                                                             |
-| `SYSTEM_EMAIL_FROM`                                                 | no              | `noreply@1mail.localhost`      | From address for platform mail (e.g. welcome emails).                                                                                                                                                                                                                                                          |
+| `SYSTEM_EMAIL_FROM`                                                 | no              | `noreply@sphericon.localhost`  | From address for platform mail (e.g. welcome emails).                                                                                                                                                                                                                                                          |
 | `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY`        | no              | —                              | Credentials of an SES-compatible service when using the `ses` provider.                                                                                                                                                                                                                                        |
 | `COLLECT_SITE_KEY`                                                  | no              | —                              | Tracker ingestion key.                                                                                                                                                                                                                                                                                         |
 | `BOOTSTRAP_TOKEN`                                                   | no              | —                              | External-API bootstrap token.                                                                                                                                                                                                                                                                                  |
@@ -63,7 +63,7 @@ Both secrets are random values you create once and keep:
 
 ```sh
 openssl rand -hex 32          # JWT_SECRET
-docker run --rm ghcr.io/mokevnin/1mail:latest genkey   # ENCRYPTION_KEY (or: ./1mail genkey)
+docker run --rm ghcr.io/mokevnin/sphericon:latest genkey   # ENCRYPTION_KEY (or: ./sphericon genkey)
 ```
 
 Back up `ENCRYPTION_KEY` with your database. It encrypts the stored SMTP and SES-compatible credentials, and
@@ -78,7 +78,7 @@ Migrations are embedded in the binary. You apply them one of two ways:
   migration step once before rolling out the new version:
 
   ```sh
-  ./1mail migrate      # applies pending migrations and exits
+  ./sphericon migrate      # applies pending migrations and exits
   ```
 
   Use it as a pre-deploy job or a Kubernetes init container, then start the servers
@@ -98,12 +98,12 @@ full procedure and [Backup and restore](./operations/backup) for what to protect
 ```sh
 docker run -p 3000:3000 \
   -e APP_ENV=production \
-  -e DATABASE_URL="postgres://user:pass@db:5432/1mail?sslmode=require" \
+  -e DATABASE_URL="postgres://user:pass@db:5432/sphericon?sslmode=require" \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e ENCRYPTION_KEY="<base64 tink keyset>" \
   -e APP_URL="https://mail.example.com" \
   -e AUTO_MIGRATE=true \
-  ghcr.io/mokevnin/1mail:latest
+  ghcr.io/mokevnin/sphericon:latest
 ```
 
 The image declares a `HEALTHCHECK` against `/healthz`, so `docker ps` reports `healthy`
@@ -113,13 +113,13 @@ once the process is serving.
 
 ```sh
 export APP_ENV=production
-export DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require"
+export DATABASE_URL="postgres://user:pass@host:5432/sphericon?sslmode=require"
 export JWT_SECRET="$(openssl rand -hex 32)"
 export ENCRYPTION_KEY="<base64 tink keyset>"
 export APP_URL="https://mail.example.com"
 
-./1mail migrate   # apply migrations (or set AUTO_MIGRATE=true)
-./1mail           # start the server
+./sphericon migrate   # apply migrations (or set AUTO_MIGRATE=true)
+./sphericon           # start the server
 ```
 
 ### systemd
@@ -128,17 +128,17 @@ For the bare binary, a unit keeps it running and restarts it on failure. Put the
 file only root can read:
 
 ```ini
-# /etc/systemd/system/1mail.service
+# /etc/systemd/system/sphericon.service
 [Unit]
-Description=1mail
+Description=sphericon
 After=network-online.target postgresql.service
 Wants=network-online.target
 
 [Service]
-User=onemail
-EnvironmentFile=/etc/1mail/env
-ExecStartPre=/usr/local/bin/1mail migrate
-ExecStart=/usr/local/bin/1mail
+User=sphericon
+EnvironmentFile=/etc/sphericon/env
+ExecStartPre=/usr/local/bin/sphericon migrate
+ExecStart=/usr/local/bin/sphericon
 Restart=on-failure
 NoNewPrivileges=true
 
@@ -147,15 +147,15 @@ WantedBy=multi-user.target
 ```
 
 ```sh
-sudo install -m 600 -o root /dev/null /etc/1mail/env   # then add KEY=value lines
-sudo systemctl enable --now 1mail
+sudo install -m 600 -o root /dev/null /etc/sphericon/env   # then add KEY=value lines
+sudo systemctl enable --now sphericon
 ```
 
 `ExecStartPre` runs the migrations before every start, so leave `AUTO_MIGRATE` unset.
 
 ## HTTPS and reverse proxy
 
-1mail speaks plain HTTP on `PORT`. Put a reverse proxy in front for TLS, and set `APP_URL` to the
+sphericon speaks plain HTTP on `PORT`. Put a reverse proxy in front for TLS, and set `APP_URL` to the
 public `https://` origin: tracking pixels, click links, unsubscribe links and OAuth metadata are
 built from it, so a wrong value breaks mail already sent.
 
@@ -197,7 +197,7 @@ binary itself stays path-based.
 All state is in PostgreSQL, so a backup is a database backup plus your `ENCRYPTION_KEY`:
 
 ```sh
-pg_dump --format=custom --file=1mail-$(date +%F).dump "$DATABASE_URL"
+pg_dump --format=custom --file=sphericon-$(date +%F).dump "$DATABASE_URL"
 ```
 
 To upgrade, back up, then pull the new image (or replace the binary) and restart. Migrations are
@@ -209,7 +209,7 @@ to roll back restore the backup taken before the upgrade.
 
 There is no Helm chart yet. The image is a plain stateless container, so a Deployment needs only
 the environment above, `/healthz` as the liveness probe and `/readyz` as the readiness probe.
-Run `1mail migrate` as a pre-deploy Job or init container and keep `AUTO_MIGRATE` unset when you
+Run `sphericon migrate` as a pre-deploy Job or init container and keep `AUTO_MIGRATE` unset when you
 run more than one replica.
 
 ## Health checks
@@ -239,9 +239,9 @@ the `HEALTHCHECK` stay). Scrape example:
 
 ```yaml
 scrape_configs:
-  - job_name: 1mail
+  - job_name: sphericon
     static_configs:
-      - targets: ['1mail:9090']
+      - targets: ['sphericon:9090']
 ```
 
 OTLP push (`OTEL_EXPORTER_OTLP_*`) is independent of this and unchanged.

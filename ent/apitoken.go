@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/apitoken"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/apitoken"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // ApiToken is the model entity for the ApiToken schema.

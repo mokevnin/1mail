@@ -20,17 +20,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/telemetry"
-	"github.com/mokevnin/1mail/internal/testhelper"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/telemetry"
+	"github.com/mokevnin/sphericon/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/tracking"
 )
 
 // forbiddenLabel matches label names that identify a tenant or a person (ADR 0018):
@@ -48,7 +48,7 @@ func TestMetricsExpositionCarriesNoTenantLabels(t *testing.T) {
 
 	// Global providers must be installed before the instrumented components are built.
 	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
-		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
+		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "sphericon-test"}, "test", telemetry.BuildInfo{})
 	})
 
 	srv := telemetry.NewMetricsServer("127.0.0.1:0")

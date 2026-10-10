@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/segment"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/segment"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // Segment is the model entity for the Segment schema.

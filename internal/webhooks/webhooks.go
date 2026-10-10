@@ -16,11 +16,11 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/webhookendpoint"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/webhookendpoint"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/pagination"
+	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
 // Domain errors. Callers match with errors.Is.

@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "OneMail Collect API",
+    "title": "Sphericon Collect API",
     "version": "1.0.0"
   },
   "tags": [

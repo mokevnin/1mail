@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/wneessen/go-mail"
 
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func TestFirstNonEmpty(t *testing.T) {
@@ -140,7 +140,7 @@ func TestDKIMSignerBrokenKeyMaterial(t *testing.T) {
 
 	// Ciphertext that does not decrypt under the workspace cipher.
 	_, err := env.DB.SendingDomain.Create().
-		SetWorkspaceID(1).SetDomain("garbled.acme.com").SetDkimSelector("1mail").
+		SetWorkspaceID(1).SetDomain("garbled.acme.com").SetDkimSelector("sphericon").
 		SetDkimPrivateKeyEncrypted("not-a-ciphertext").SetDkimPublicKey("v=DKIM1").SetVerified(true).
 		Save(ctx)
 	require.NoError(t, err)
@@ -151,7 +151,7 @@ func TestDKIMSignerBrokenKeyMaterial(t *testing.T) {
 	sealed, err := cipher.Encrypt([]byte("definitely not PEM"))
 	require.NoError(t, err)
 	_, err = env.DB.SendingDomain.Create().
-		SetWorkspaceID(1).SetDomain("nopem.acme.com").SetDkimSelector("1mail").
+		SetWorkspaceID(1).SetDomain("nopem.acme.com").SetDkimSelector("sphericon").
 		SetDkimPrivateKeyEncrypted(sealed).SetDkimPublicKey("v=DKIM1").SetVerified(true).
 		Save(ctx)
 	require.NoError(t, err)

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

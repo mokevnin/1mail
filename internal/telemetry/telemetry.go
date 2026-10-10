@@ -26,7 +26,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"

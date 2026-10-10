@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** The authenticated dashboard user */
 model SiteUserResource {

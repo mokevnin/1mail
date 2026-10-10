@@ -10,13 +10,13 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/templates"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/eligibility"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/templates"
 )
 
 // EmailsSend is the transactional send surface (ADR 0005): a single-recipient

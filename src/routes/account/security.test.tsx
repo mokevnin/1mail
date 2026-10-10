@@ -25,7 +25,8 @@ type Handler = (req: Request) => Response | Promise<Response>
 
 const enrollment: SiteSecondFactorEnrollment = {
   secret: 'JBSWY3DPEHPK3PXP',
-  otpauthUri: 'otpauth://totp/1mail:info@1mail.com?secret=JBSWY3DPEHPK3PXP&issuer=1mail',
+  otpauthUri:
+    'otpauth://totp/sphericon:info@getsphericon.com?secret=JBSWY3DPEHPK3PXP&issuer=sphericon',
   qrCode:
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
 }

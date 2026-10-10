@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/customfield"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/customfield"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // CustomField is the model entity for the CustomField schema.

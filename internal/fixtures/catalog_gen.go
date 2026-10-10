@@ -478,7 +478,7 @@ const (
 	// OwnerJanePassword is from fixtures/users.
 	OwnerJanePassword = "jane-test-password"
 	// OwnerJohnEmail is from fixtures/users.
-	OwnerJohnEmail = "info@1mail.com"
+	OwnerJohnEmail = "info@getsphericon.com"
 	// OwnerJohnID is from fixtures/users.
 	OwnerJohnID = 1
 	// OwnerJohnName is from fixtures/users.
@@ -634,7 +634,7 @@ const (
 	// WebhookCodebasicsID is from fixtures/webhook_endpoints.
 	WebhookCodebasicsID = 100
 	// WebhookCodebasicsURL is from fixtures/webhook_endpoints.
-	WebhookCodebasicsURL = "https://codebasics.dev/webhooks/1mail"
+	WebhookCodebasicsURL = "https://codebasics.dev/webhooks/sphericon"
 	// WebhookGlobexID is from fixtures/webhook_endpoints.
 	WebhookGlobexID = 900
 	// WebhookGlobexURL is from fixtures/webhook_endpoints.

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/sphericon/internal/emailrender"
 )
 
 func TestRenderEmailNamesTheFailingPart(t *testing.T) {

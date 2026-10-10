@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 func auditMessage(t *testing.T) *message.Message {
@@ -44,7 +44,7 @@ func TestWebhooksConsumerForwardsAuditEntriesAsAuditEntry(t *testing.T) {
 	assert.JSONEq(t, `{"workspaceId":1,"actor":{"kind":"user"},"action":"membership.update","targetType":"membership"}`, string(payload.Data))
 }
 
-// A forwarded entry shows an Operator only as "1mail staff", like every read surface:
+// A forwarded entry shows an Operator only as "sphericon staff", like every read surface:
 // the staff id never reaches a customer's SIEM (ADR 0022).
 func TestWebhooksConsumerMasksTheOperatorIdentity(t *testing.T) {
 	data, err := json.Marshal(&AuditEntry{

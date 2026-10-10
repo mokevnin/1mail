@@ -11,10 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/tag"
-	"github.com/mokevnin/1mail/ent/visitor"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/tag"
+	"github.com/mokevnin/sphericon/ent/visitor"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // ContactCreate is the builder for creating a Contact entity.

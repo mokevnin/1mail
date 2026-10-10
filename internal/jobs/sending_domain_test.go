@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/foxcpp/go-mockdns"
-	"github.com/mokevnin/1mail/internal/dnstest"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/dnstest"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ func TestVerifySendingDomainByID_becomesVerified(t *testing.T) {
 	require.False(t, dom.Verified)
 
 	// DNS now publishes the matching key.
-	ok, flipped, err := jobs.VerifySendingDomainByID(ctx, env.DB, dnstest.Resolver(t, map[string]mockdns.Zone{"1mail._domainkey.news.acme.com.": {TXT: []string{dom.DkimPublicKey}}}).LookupTXT, fixtures.SendingDomainUnverifiedID)
+	ok, flipped, err := jobs.VerifySendingDomainByID(ctx, env.DB, dnstest.Resolver(t, map[string]mockdns.Zone{"sphericon._domainkey.news.acme.com.": {TXT: []string{dom.DkimPublicKey}}}).LookupTXT, fixtures.SendingDomainUnverifiedID)
 	require.NoError(t, err)
 	assert.True(t, ok)
 	assert.False(t, flipped, "becoming verified is not a flip-to-unverified")
@@ -52,7 +52,7 @@ func TestVerifySendingDomainByID_flipsToUnverifiedWhenRecordGone(t *testing.T) {
 }
 
 // On a verified→unverified flip the workspace owner is emailed (ADR 0010 slice 3).
-// Workspace 1's owner is user 1 (info@1mail.com), per the membership fixtures.
+// Workspace 1's owner is user 1 (info@getsphericon.com), per the membership fixtures.
 func TestNotifySendingDomainUnverified_emailsOwner(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
@@ -106,7 +106,7 @@ func TestVerifySendingDomainByID_resolverErrorDoesNotChangeState(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, _, err := jobs.VerifySendingDomainByID(ctx, env.DB, dnstest.Resolver(t, map[string]mockdns.Zone{"1mail._domainkey.mail.acme.com.": {Err: errors.New("servfail")}}).LookupTXT, fixtures.SendingDomainVerifiedID)
+	_, _, err := jobs.VerifySendingDomainByID(ctx, env.DB, dnstest.Resolver(t, map[string]mockdns.Zone{"sphericon._domainkey.mail.acme.com.": {Err: errors.New("servfail")}}).LookupTXT, fixtures.SendingDomainVerifiedID)
 	require.Error(t, err)
 
 	reloaded, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)

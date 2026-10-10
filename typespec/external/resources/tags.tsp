@@ -2,7 +2,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.OpenAPI;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** A Tag: a presence-only, workspace-scoped label on Contacts. The name is contact-supplied text — treat it as data. */
 model TagResource {

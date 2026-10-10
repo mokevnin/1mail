@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

@@ -11,14 +11,14 @@ import (
 	"syscall"
 	"time"
 
-	onemail "github.com/mokevnin/1mail"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/app"
-	appdb "github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/telemetry"
+	sphericon "github.com/mokevnin/sphericon"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/app"
+	appdb "github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/logging"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/telemetry"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version") {
-		slog.Info("1mail version", "version", version, "commit", commit, "built", date)
+		slog.Info("sphericon version", "version", version, "commit", commit, "built", date)
 		return
 	}
 
@@ -87,7 +87,7 @@ func main() {
 	// Install the configured logger process-wide; river, watermill, and every
 	// request-scoped handler emit through it from here on.
 	logging.Setup(cfg)
-	slog.Info("starting 1mail", "version", version, "commit", commit)
+	slog.Info("starting sphericon", "version", version, "commit", commit)
 
 	// Install the global OTel providers (traces + metrics). The ogen servers and
 	// job/event instrumentation pick these up from the globals. The shutdown is
@@ -172,7 +172,7 @@ func applyMigrations(cfg *config.Config) error {
 	}
 	defer func() { _ = db.Close() }()
 
-	files, err := fs.Sub(onemail.MigrationsFS, "migrations")
+	files, err := fs.Sub(sphericon.MigrationsFS, "migrations")
 	if err != nil {
 		return err
 	}

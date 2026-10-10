@@ -4,8 +4,8 @@
 package resources
 
 import (
-	ent "github.com/mokevnin/1mail/ent"
-	external "github.com/mokevnin/1mail/gen/external"
+	ent "github.com/mokevnin/sphericon/ent"
+	external "github.com/mokevnin/sphericon/gen/external"
 )
 
 type ConverterImpl struct{}

@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Reusable email template used by the site UI */
 @resource("templates")

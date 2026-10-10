@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** The authenticated User's Second factor (ADR 0020). Recovery codes are never
  * readable here: only how many are left. */

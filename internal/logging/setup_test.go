@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 )
 
 func TestSetupInstallsDefaultLogger(t *testing.T) {

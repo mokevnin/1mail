@@ -24,15 +24,15 @@ ARG VERSION=docker
 ARG COMMIT=none
 RUN go build -tags embed_spa \
     -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" \
-    -o /1mail ./cmd/server
+    -o /sphericon ./cmd/server
 
 # --- Stage 3: runtime ---
 FROM alpine:3.24
 RUN apk add --no-cache ca-certificates tzdata
-COPY --from=gobuild /1mail /usr/local/bin/1mail
+COPY --from=gobuild /sphericon /usr/local/bin/sphericon
 # Containers are production deployments: enforce the strict secret checks by default.
 ENV APP_ENV=production
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD wget -qO- "http://localhost:${PORT:-3000}/healthz" || exit 1
-ENTRYPOINT ["1mail"]
+ENTRYPOINT ["sphericon"]

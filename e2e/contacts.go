@@ -5,7 +5,7 @@ package e2e
 import (
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
 )
 
 // ImportContacts upserts a Contact per email through the batch endpoint.

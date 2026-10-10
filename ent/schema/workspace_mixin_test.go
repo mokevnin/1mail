@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent/schema"
+	"github.com/mokevnin/sphericon/ent/schema"
 )
 
 // A workspace-scoped entity gets workspace_id and a required, unique

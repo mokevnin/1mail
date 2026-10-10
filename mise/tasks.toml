@@ -16,7 +16,7 @@ depends = ["install", "db:seed"]
 run = [{ task = "worktrees:gc --apply" }]
 
 [dev]
-description = "Start the whole dev stack (https://1mail.localhost in the primary checkout, `mise env | grep APP_URL` elsewhere)"
+description = "Start the whole dev stack (https://sphericon.localhost in the primary checkout, `mise env | grep APP_URL` elsewhere)"
 depends = ["db:up"]
 run = "mise daemons start caddy"
 
@@ -33,7 +33,7 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 # A server answering at PGHOST:PGPORT is used as is: that is the no-op case, an external
-# Postgres (ONEMAIL_PG_*), and what makes concurrent callers safe. Otherwise the primary
+# Postgres (SPHERICON_PG_*), and what makes concurrent callers safe. Otherwise the primary
 # checkout's daemon is started (pitchfork treats a start of a running or starting daemon as
 # done), and we wait for the port.
 if ! nc -z "$PGHOST" "$PGPORT" 2>/dev/null; then
@@ -136,7 +136,7 @@ run = '''
 set -euo pipefail
 apply=${usage_apply:-}
 
-# 1. Databases. The shared server only holds 1mail databases, each checkout's DB_NAMES (see
+# 1. Databases. The shared server only holds sphericon databases, each checkout's DB_NAMES (see
 #    .mise.toml). A live worktree is a `git worktree list` entry whose directory exists; its
 #    names are read from its own mise environment. Whatever cannot be read leaves the keep
 #    list incomplete (a worktree on a commit before DB_NAMES, an untrusted config), so then
@@ -383,15 +383,15 @@ run = ["pnpm build:tracker", "pnpm exec size-limit"]
 description = "Helm chart: lint, schema-validated render (default and all-features), and refusal without existingSecret, runbook coverage of every alert"
 run = '''
 set -eu
-chart=charts/1mail
-helm lint "$chart" --set existingSecret=1mail-secrets
+chart=charts/sphericon
+helm lint "$chart" --set existingSecret=sphericon-secrets
 if helm template r "$chart" >/dev/null 2>&1; then
   echo 'error: chart rendered without existingSecret'; exit 1
 fi
 # ServiceMonitor is a CRD kind: kubeconform has no built-in schema for it.
 kc='kubeconform -strict -summary -ignore-missing-schemas'
-helm template r "$chart" --set existingSecret=1mail-secrets | $kc
-helm template r "$chart" --set existingSecret=1mail-secrets \
+helm template r "$chart" --set existingSecret=sphericon-secrets | $kc
+helm template r "$chart" --set existingSecret=sphericon-secrets \
   --set ingress.enabled=true --set ingress.tls.enabled=true --set ingress.tls.secretName=tls \
   --set metrics.enabled=true --set metrics.serviceMonitor.enabled=true \
   --set metrics.prometheusRule.enabled=true | $kc
@@ -442,7 +442,7 @@ depends = ["build:tracker", "build:spa"]
 run = '''
 commit=$(git rev-parse --short HEAD 2>/dev/null || echo none)
 date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-go build -tags embed_spa -ldflags "-s -w -X main.version=${VERSION:-dev} -X main.commit=$commit -X main.date=$date" -o bin/1mail ./cmd/server
+go build -tags embed_spa -ldflags "-s -w -X main.version=${VERSION:-dev} -X main.commit=$commit -X main.date=$date" -o bin/sphericon ./cmd/server
 '''
 
 [loc]

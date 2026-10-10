@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@1mail/analytics':
+      '@sphericon/analytics':
         specifier: workspace:*
         version: link:packages/analytics
       '@jsonforms/core':

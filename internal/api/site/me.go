@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/authtoken"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/i18n"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/authtoken"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/i18n"
 )
 
 // SiteUserGetMe returns the authenticated user's profile. Auth is enforced by

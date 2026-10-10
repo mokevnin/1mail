@@ -1,6 +1,6 @@
-# 1mail Enterprise Edition (`ee/`)
+# sphericon Enterprise Edition (`ee/`)
 
-This directory holds **1mail Enterprise** features. Everything under `ee/` is
+This directory holds **sphericon Enterprise** features. Everything under `ee/` is
 **source-available but not open source** — it is governed by [`ee/LICENSE`](./LICENSE),
 _not_ the AGPL-3.0 that covers the rest of the repository. See
 [`../LICENSING.md`](../LICENSING.md) for the boundary.

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/internal/tracking"
 	"github.com/stretchr/testify/require"
 )
 

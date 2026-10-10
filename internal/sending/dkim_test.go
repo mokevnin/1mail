@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/foxcpp/go-mockdns"
-	"github.com/mokevnin/1mail/internal/dnstest"
+	"github.com/mokevnin/sphericon/internal/dnstest"
 )
 
 func TestGenerateKeypairRoundTrip(t *testing.T) {
@@ -34,8 +34,8 @@ func TestGenerateKeypairRoundTrip(t *testing.T) {
 }
 
 func TestDKIMRecordHost(t *testing.T) {
-	host, value := DKIMRecord("1mail", "mail.acme.com", "v=DKIM1; k=rsa; p=abc")
-	if host != "1mail._domainkey.mail.acme.com" {
+	host, value := DKIMRecord("sphericon", "mail.acme.com", "v=DKIM1; k=rsa; p=abc")
+	if host != "sphericon._domainkey.mail.acme.com" {
 		t.Fatalf("host = %q", host)
 	}
 	if value != "v=DKIM1; k=rsa; p=abc" {
@@ -43,7 +43,7 @@ func TestDKIMRecordHost(t *testing.T) {
 	}
 }
 
-const dkimZone = "1mail._domainkey.mail.acme.com."
+const dkimZone = "sphericon._domainkey.mail.acme.com."
 
 func TestVerifyDKIM(t *testing.T) {
 	const pub = "v=DKIM1; k=rsa; p=MIIBIjANBgkqABC"
@@ -105,7 +105,7 @@ func TestVerifyDKIM(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lookup := dnstest.Resolver(t, tt.zones).LookupTXT
-			got, err := VerifyDKIM(context.Background(), lookup, "1mail", "mail.acme.com", tt.expect)
+			got, err := VerifyDKIM(context.Background(), lookup, "sphericon", "mail.acme.com", tt.expect)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

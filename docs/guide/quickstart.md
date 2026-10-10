@@ -2,24 +2,24 @@
 
 This walks you from a running instance to your first broadcast.
 
-## 1. Run 1mail
+## 1. Run sphericon
 
 The quickest way is the published image. PostgreSQL is the only dependency.
 
 ```sh
 docker run -p 3000:3000 \
   -e APP_ENV=production \
-  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require" \
+  -e DATABASE_URL="postgres://user:pass@host:5432/sphericon?sslmode=require" \
   -e APP_URL="https://example.com" \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e ENCRYPTION_KEY="<base64 keyset>" \
   -e AUTO_MIGRATE=true \
-  ghcr.io/mokevnin/1mail:latest
+  ghcr.io/mokevnin/sphericon:latest
 ```
 
 Every variable, and the alternative of running the single binary, is covered in
 [Self-hosting](/self-hosting). To explore with sample data instead, follow the development
-setup in the [README](https://github.com/mokevnin/1mail#development).
+setup in the [README](https://github.com/mokevnin/sphericon#development).
 
 ## 2. Create an account and a workspace
 
@@ -31,7 +31,7 @@ You can invite teammates later from **Settings**.
 In **Settings → Integrations** add an SMTP server or an SES-compatible service. Credentials are stored
 encrypted with your `ENCRYPTION_KEY`.
 
-Then add a **sending domain** and publish the DKIM record 1mail shows you. Mail can only be sent
+Then add a **sending domain** and publish the DKIM record sphericon shows you. Mail can only be sent
 from a verified domain; see [Deliverability and consent](/guide/deliverability).
 
 ## 4. Bring in contacts

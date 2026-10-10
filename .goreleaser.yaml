@@ -4,7 +4,7 @@
 # and leaves the changelog to release-please.
 version: 2
 
-project_name: 1mail
+project_name: sphericon
 
 # Vite already owns ./dist, so keep GoReleaser's output elsewhere.
 dist: dist-release
@@ -16,9 +16,9 @@ before:
     - mise run build:spa
 
 builds:
-  - id: onemail
+  - id: sphericon
     main: ./cmd/server
-    binary: 1mail
+    binary: sphericon
     flags:
       - -tags=embed_spa
     env:
@@ -44,7 +44,7 @@ checksum:
 # reusing the prebuilt binaries (Dockerfile.release just copies them in).
 dockers_v2:
   - images:
-      - ghcr.io/mokevnin/1mail
+      - ghcr.io/mokevnin/sphericon
     tags:
       - '{{ .Version }}'
       - latest
@@ -53,7 +53,7 @@ dockers_v2:
       - linux/amd64
       - linux/arm64
     ids:
-      - onemail
+      - sphericon
 
 # release-please owns the GitHub Release + changelog; just attach artifacts.
 release:

@@ -17,8 +17,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/app"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/app"
 )
 
 // Env is the running application under test plus its Mailpit. One Env serves every

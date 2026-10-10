@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Selectable window for the analytics overview */
 enum SiteAnalyticsRange {

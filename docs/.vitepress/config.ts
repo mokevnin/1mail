@@ -7,9 +7,9 @@ import spec from '../../openapi/external.openapi.json'
 const apiItems = useSidebar({ spec, linkPrefix: '/api/' }).generateSidebarGroups()
 
 export default defineConfig({
-  title: '1mail',
+  title: 'sphericon',
   description: 'Open-core marketing automation you can run yourself',
-  base: '/1mail/',
+  base: '/sphericon/',
   cleanUrls: true,
   lastUpdated: true,
   // Internal working notes (agent setup, backlog, ADRs, research) are not part of the public site.
@@ -63,9 +63,9 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [{ icon: 'github', link: 'https://github.com/mokevnin/1mail' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/mokevnin/sphericon' }],
     editLink: {
-      pattern: 'https://github.com/mokevnin/1mail/edit/main/docs/:path',
+      pattern: 'https://github.com/mokevnin/sphericon/edit/main/docs/:path',
     },
     search: { provider: 'local' },
   },

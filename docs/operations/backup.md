@@ -1,6 +1,6 @@
 # Backup and restore
 
-Everything 1mail knows lives in PostgreSQL, so backing up the database backs up the instance.
+Everything sphericon knows lives in PostgreSQL, so backing up the database backs up the instance.
 Two secrets live **outside** the database and need their own backup. This page covers what to
 back up, how, how to rehearse a restore, and what the instance does once it is restored.
 
@@ -28,8 +28,8 @@ A logical dump is the simplest backup and is enough for a small instance that ca
 losing the time since the last dump.
 
 ```sh
-pg_dump --format=custom --file="1mail-$(date -u +%Y%m%dT%H%M%SZ).dump" \
-  "postgres://backup_user@db.example.com:5432/1mail?sslmode=require"
+pg_dump --format=custom --file="sphericon-$(date -u +%Y%m%dT%H%M%SZ).dump" \
+  "postgres://backup_user@db.example.com:5432/sphericon?sslmode=require"
 ```
 
 Supply the password through `PGPASSWORD` or a `~/.pgpass` file, not on the command line.
@@ -60,13 +60,13 @@ a schedule (for example monthly) and after any change to the backup setup.
    or newer) and restore the dump:
 
    ```sh
-   createdb --host=scratch.example.com 1mail_restore
+   createdb --host=scratch.example.com sphericon_restore
    pg_restore --no-owner \
-     --dbname="postgres://admin@scratch.example.com:5432/1mail_restore?sslmode=require" \
-     1mail-20260101T000000Z.dump
+     --dbname="postgres://admin@scratch.example.com:5432/sphericon_restore?sslmode=require" \
+     sphericon-20260101T000000Z.dump
    ```
 
-2. Start the **same version** of 1mail that wrote the dump against the scratch database, with
+2. Start the **same version** of sphericon that wrote the dump against the scratch database, with
    the backed-up `ENCRYPTION_KEY` and `JWT_SECRET`. Point it at a throwaway SMTP sink (for
    example Mailpit), not at your real provider, so a drill cannot send real mail. Leave
    `AUTO_MIGRATE` off.
@@ -74,12 +74,12 @@ a schedule (for example monthly) and after any change to the backup setup.
    ```sh
    docker run --rm -p 3000:3000 \
      -e APP_ENV=production \
-     -e DATABASE_URL="postgres://app@scratch.example.com:5432/1mail_restore?sslmode=require" \
+     -e DATABASE_URL="postgres://app@scratch.example.com:5432/sphericon_restore?sslmode=require" \
      -e JWT_SECRET="$JWT_SECRET" \
      -e ENCRYPTION_KEY="$ENCRYPTION_KEY" \
      -e APP_URL="https://restore-drill.example.com" \
      -e SMTP_HOST=mailpit.internal -e SMTP_PORT=1025 \
-     ghcr.io/mokevnin/1mail:<version>
+     ghcr.io/mokevnin/sphericon:<version>
    ```
 
 3. Check that `GET /readyz` returns `200`, sign in, and open a workspace. Confirm the contact
@@ -103,10 +103,10 @@ three behaviours follow from the architecture:
   Consumers resume from their stored position, so anything published after that position is
   delivered again. An Event is stored once per `source_id`, so redelivery does not duplicate
   it.
-- **Mail sent after the backup point can be sent again.** Each email 1mail sends is recorded
+- **Mail sent after the backup point can be sent again.** Each email sphericon sends is recorded
   as an Outbound message before the provider is called, and the idempotency key that prevents
   duplicate sends lives in that same database row
-  ([ADR 0015](https://github.com/mokevnin/1mail/blob/main/docs/adr/0015-outbound-send-single-chokepoint.md)). A message sent after the backup
+  ([ADR 0015](https://github.com/mokevnin/sphericon/blob/main/docs/adr/0015-outbound-send-single-chokepoint.md)). A message sent after the backup
   point has no row in the restored database, so its send is not recognized as already done
   and a still-pending job or automation step can send it again. Delivery to the provider is
   at-least-once by design.

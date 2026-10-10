@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/sphericon/ent/user"
 )
 
 // User is the model entity for the User schema.

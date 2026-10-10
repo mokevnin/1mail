@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/oauthclient"
-	"github.com/mokevnin/1mail/ent/oauthcode"
+	"github.com/mokevnin/sphericon/ent/oauthclient"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
 )
 
 // OAuthCode is the model entity for the OAuthCode schema.

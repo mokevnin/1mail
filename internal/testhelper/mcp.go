@@ -29,7 +29,7 @@ func (env *TestEnv) MCPClient(t *testing.T, token string) *mcp.ClientSession {
 		DisableStandaloneSSE: true,
 		MaxRetries:           -1,
 	}
-	client := mcp.NewClient(&mcp.Implementation{Name: "1mail-test", Version: "0"}, nil)
+	client := mcp.NewClient(&mcp.Implementation{Name: "sphericon-test", Version: "0"}, nil)
 	session, err := client.Connect(context.Background(), transport, nil)
 	require.NoError(t, err, "connect MCP client")
 	t.Cleanup(func() { _ = session.Close() })

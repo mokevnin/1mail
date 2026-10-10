@@ -16,18 +16,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/recoverycode"
-	"github.com/mokevnin/1mail/ent/workspace"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/testhelper"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/ent/recoverycode"
+	"github.com/mokevnin/sphericon/ent/workspace"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/tracking"
 )
 
 // smtpSink is a minimal SMTP server that records the RCPT of every accepted message,
@@ -445,7 +445,7 @@ func TestBuildSystemSender(t *testing.T) {
 		require.NoError(t, err)
 		addr, name := sender.(messaging.DefaultFromer).DefaultFrom()
 		assert.Equal(t, "noreply@example.test", addr)
-		assert.Equal(t, "1mail", name)
+		assert.Equal(t, "sphericon", name)
 	})
 
 	t.Run("ses provider", func(t *testing.T) {

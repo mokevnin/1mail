@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/sendlimit"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/broadcast"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/sendlimit"
 )
 
 // Progress is how far a sending Broadcast has got (ADR 0023). A Broadcast stays

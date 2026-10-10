@@ -1,12 +1,12 @@
-The 1mail Enterprise Edition (EE) License
+The sphericon Enterprise Edition (EE) License
 
-Copyright (c) 2026 1mail
+Copyright (c) 2026 sphericon
 
 ----------------------------------------------------------------------
 
 This license governs everything in this directory (the `ee/` tree, and any
-file that carries an explicit "1mail Enterprise Edition License" header).
-The rest of the 1mail repository is licensed separately under the GNU AGPL-3.0
+file that carries an explicit "sphericon Enterprise Edition License" header).
+The rest of the sphericon repository is licensed separately under the GNU AGPL-3.0
 (see the LICENSE file at the repository root and LICENSING.md). Where this
 license applies, it supersedes the AGPL-3.0 for the covered files.
 
@@ -22,7 +22,7 @@ license applies, it supersedes the AGPL-3.0 for the covered files.
 
    You may use, copy, modify, and run the covered software ONLY:
    (a) for development, testing, and evaluation purposes; or
-   (b) in production, if and for as long as you hold a valid 1mail Enterprise
+   (b) in production, if and for as long as you hold a valid sphericon Enterprise
        subscription (a "License Key") that covers such use, and only within
        the scope of that subscription.
 
@@ -50,4 +50,4 @@ license applies, it supersedes the AGPL-3.0 for the covered files.
    IMPLIED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
    ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
 
-For commercial licensing and Enterprise subscriptions, contact the 1mail team.
+For commercial licensing and Enterprise subscriptions, contact the sphericon team.

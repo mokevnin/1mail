@@ -4,7 +4,7 @@
     "acceptExistingButton": "Unirse al espacio de trabajo",
     "errorMessage": "No pudimos aceptar esta invitación. Es posible que el enlace haya caducado.",
     "errorTitle": "No se pudo aceptar la invitación",
-    "intro": "Te han invitado a unirte a {{workspace}} en 1mail.",
+    "intro": "Te han invitado a unirte a {{workspace}} en sphericon.",
     "invalid": "Esta invitación no es válida o ha caducado.",
     "loading": "Cargando invitación…",
     "nameLabel": "Tu nombre",
@@ -108,7 +108,7 @@
     }
   },
   "app": {
-    "name": "1mail"
+    "name": "sphericon"
   },
   "automations": {
     "activate": "Activar",
@@ -166,7 +166,7 @@
       "reasons": {
         "no_integration": "No hay un proveedor de correo configurado para este espacio de trabajo. Añada una integración predeterminada para reanudar.",
         "unverified_domain": "El dominio del remitente no está verificado. Publique su registro DKIM y verifique el dominio para reanudar.",
-        "workspace_suspended": "El envío está suspendido para este espacio de trabajo. Póngase en contacto con su administrador de 1mail."
+        "workspace_suspended": "El envío está suspendido para este espacio de trabajo. Póngase en contacto con su administrador de sphericon."
       },
       "title": "El envío está en pausa"
     },
@@ -348,13 +348,13 @@
     "errorMessage": "No pudimos completar la autorización. Inténtalo de nuevo.",
     "errorTitle": "Error de autorización",
     "forbidden": "Solo los propietarios y administradores del espacio de trabajo pueden conectar una aplicación. Pide a un propietario o administrador que la apruebe, o elige otro espacio de trabajo.",
-    "intro": "{{client}} solicita actuar en un espacio de trabajo tuyo a través de la API de 1mail. Recibirá un token de API limitado a los permisos de abajo, que puedes revocar en cualquier momento en las claves de API del espacio de trabajo.",
+    "intro": "{{client}} solicita actuar en un espacio de trabajo tuyo a través de la API de sphericon. Recibirá un token de API limitado a los permisos de abajo, que puedes revocar en cualquier momento en las claves de API del espacio de trabajo.",
     "invalid": "Esta solicitud de autorización no es válida. Vuelve a la aplicación que te trajo aquí y empieza de nuevo.",
     "scopesTitle": "Permisos concedidos",
     "sendCheckbox": "Permitir también el envío ({{scopes}})",
     "sendDescription": "Esta aplicación también pidió enviar correos. Está desactivado salvo que lo permitas aquí.",
     "sendTitle": "El envío es opcional",
-    "title": "Conectar {{client}} con 1mail",
+    "title": "Conectar {{client}} con sphericon",
     "workspaceLabel": "Espacio de trabajo"
   },
   "overview": {
@@ -506,7 +506,7 @@
       "from": "Desde",
       "ip": "Dirección IP",
       "kindApiToken": "Token de API",
-      "kindOperator": "Personal de 1mail",
+      "kindOperator": "Personal de sphericon",
       "kindSystem": "Sistema",
       "kindUser": "Usuario",
       "loadError": "No se pudo cargar el registro de auditoría",
@@ -634,7 +634,7 @@
       "deleteConfirmDescription": "El correo de este dominio dejará de autenticarse. Esta acción no se puede deshacer.",
       "deleteConfirmTitle": "¿Eliminar este dominio de envío?",
       "deleteError": "No se pudo eliminar el dominio",
-      "description": "Autentica los dominios desde los que envías. 1mail firma tu correo con DKIM; publica los registros de abajo en tu proveedor de DNS y verifica.",
+      "description": "Autentica los dominios desde los que envías. sphericon firma tu correo con DKIM; publica los registros de abajo en tu proveedor de DNS y verifica.",
       "dkim": "DKIM (obligatorio)",
       "dkimHint": "Autentica tu correo — obligatorio para enviar cuando se aplique.",
       "dmarc": "DMARC (recomendado)",
@@ -805,7 +805,7 @@
     "verifying": "Verificando tu correo…"
   },
   "workspaceSuspension": {
-    "description": "El envío de correos salientes está suspendido para este espacio de trabajo. Los envíos programados y las automatizaciones están en pausa y se reanudarán cuando se levante la suspensión. Aún puede iniciar sesión y consultar sus datos. Para apelar, póngase en contacto con su administrador de 1mail.",
+    "description": "El envío de correos salientes está suspendido para este espacio de trabajo. Los envíos programados y las automatizaciones están en pausa y se reanudarán cuando se levante la suspensión. Aún puede iniciar sesión y consultar sus datos. Para apelar, póngase en contacto con su administrador de sphericon.",
     "reason": "Motivo: {{reason}}",
     "title": "El envío está suspendido"
   }

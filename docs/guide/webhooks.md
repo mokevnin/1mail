@@ -8,10 +8,10 @@ without polling.
 Create one with `POST /api/webhooks` (token scope `webhooks:write`) or in the app:
 
 ```sh
-curl https://1mail.example.com/api/webhooks \
-  -H "Authorization: Bearer $ONEMAIL_TOKEN" \
+curl https://sphericon.example.com/api/webhooks \
+  -H "Authorization: Bearer $SPHERICON_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://app.example.com/hooks/1mail","eventTypes":["email.bounced","email.complained"]}'
+  -d '{"url":"https://app.example.com/hooks/sphericon","eventTypes":["email.bounced","email.complained"]}'
 ```
 
 `eventTypes` filters by event name; leave it empty to receive everything. `enabled: false` pauses
@@ -63,7 +63,7 @@ Headers:
 | `webhook-id`        | Unique delivery id. Use it to deduplicate.    |
 | `webhook-timestamp` | Unix seconds when the delivery was signed.    |
 | `webhook-signature` | HMAC signature of the body.                   |
-| `X-1mail-Event`     | The event name, for routing before you parse. |
+| `X-sphericon-Event` | The event name, for routing before you parse. |
 
 ## Verify the signature
 

@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/automations"
 )
 
 // Converter maps ent entities to site API resources. goverter generates the

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/i18n"
 	"github.com/spf13/viper"
 )
 
@@ -126,7 +126,7 @@ type Config struct {
 	// (ADR 0025).
 	MetricsAddr string
 
-	// System (platform) transactional email — 1mail's OWN sender, distinct from a
+	// System (platform) transactional email — sphericon's OWN sender, distinct from a
 	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
 	// values); prod uses ses (the SES_* values). Sent via the same messaging
 	// Catalog, not a separate sender.
@@ -147,9 +147,9 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("SESSION_TTL", 24*time.Hour)
 	v.SetDefault("SMTP_PORT", 1025)
 	v.SetDefault("SYSTEM_EMAIL_PROVIDER", "smtp")
-	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
+	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@sphericon.localhost")
 	v.SetDefault("LOG_LEVEL", "info")
-	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
+	v.SetDefault("OTEL_SERVICE_NAME", "sphericon")
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 500<<10)

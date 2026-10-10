@@ -13,11 +13,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/sendingdomain"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/sending"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/sending"
 )
 
 // recheckBatchSize bounds how many domains one periodic tick re-checks, so a
@@ -187,7 +187,7 @@ func NotifySendingDomainUnverified(ctx context.Context, client *ent.Client, send
 		"The sending domain %q in your workspace is no longer verified: its DKIM DNS "+
 			"record (%s._domainkey.%s) could not be found.\n\nEmail sent from this domain "+
 			"is now blocked until you re-publish the record and re-verify the domain in "+
-			"your 1mail settings.\n",
+			"your sphericon settings.\n",
 		dom.Domain, dom.DkimSelector, dom.Domain,
 	)
 	var errs []error

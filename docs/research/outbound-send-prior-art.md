@@ -15,11 +15,11 @@ Base URLs: `https://github.com/knadh/listmonk/blob/82db22c/<path>#L<n>`, and lik
 
 ## Question
 
-1mail has three send surfaces (Broadcast, Automation, Transactional) that each re-implement
+sphericon has three send surfaces (Broadcast, Automation, Transactional) that each re-implement
 Send-eligibility, unsubscribe footer / `List-Unsubscribe` headers, the sending-domain gate and
 `email.sent` outbox publication, with no single chokepoint. What do mature open-source senders do
 for the same concerns, and what does ent officially support for enforcing a workspace predicate
-on every query and mutation? This note reports facts only; it proposes no 1mail interface.
+on every query and mutation? This note reports facts only; it proposes no sphericon interface.
 
 ## Summary of findings
 
@@ -178,7 +178,7 @@ Where checks run: **campaign-build / batch-fetch time, in SQL**, not per message
 1. Model: unsubscribe/bounce/complaint are **statuses on the contact-list membership**: `unsubscribed`, `bounced`, `complained` ([internal/domain/contact_list.go#L23-L26](https://github.com/Notifuse/notifuse/blob/7516397/internal/domain/contact_list.go#L23-L26)).
    Broadcast audience queries exclude those statuses in SQL ([internal/repository/contact_postgres.go#L1459-L1461](https://github.com/Notifuse/notifuse/blob/7516397/internal/repository/contact_postgres.go#L1459-L1461)).
    Automation email nodes **re-check** the list status at execute time and exit the contact with the status as reason (skipped for non-marketing template categories), see
-   [internal/service/automation_node_executor.go#L250-L275](https://github.com/Notifuse/notifuse/blob/7516397/internal/service/automation_node_executor.go#L250-L275). So the same rule exists in at least two producers (duplication similar to 1mail's).
+   [internal/service/automation_node_executor.go#L250-L275](https://github.com/Notifuse/notifuse/blob/7516397/internal/service/automation_node_executor.go#L250-L275). So the same rule exists in at least two producers (duplication similar to sphericon's).
 2. Pipeline: broadcast and automation emails are enqueued as `EmailQueueEntry` with `SourceType` of only `broadcast` or `automation`
    ([internal/domain/email_queue.go#L23-L29](https://github.com/Notifuse/notifuse/blob/7516397/internal/domain/email_queue.go#L23-L29)) and drained by one `EmailQueueWorker` (per-workspace, poll 1s, batch 50, 3 attempts, circuit breaker, per-integration rate limiter;
    [internal/service/queue/worker.go#L16-L60](https://github.com/Notifuse/notifuse/blob/7516397/internal/service/queue/worker.go#L16-L60)). `processEntry` checks the circuit breaker, marks processing, sends, then upserts message history and fires sent/failed callbacks.

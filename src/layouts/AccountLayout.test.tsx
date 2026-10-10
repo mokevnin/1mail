@@ -8,7 +8,7 @@ import { AccountLayout } from './AccountLayout.tsx'
 test('renders the brand, the account sidebar and the user menu', async () => {
   const { screen, navigate } = await renderWithRouter(<AccountLayout />, routeMount(accountRoute))
 
-  await expect.element(screen.getByText('1mail')).toBeInTheDocument()
+  await expect.element(screen.getByText('sphericon')).toBeInTheDocument()
   await expect.element(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeVisible()
 
   await expect.element(screen.getByText('Dashboard')).toBeInTheDocument()

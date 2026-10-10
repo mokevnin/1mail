@@ -1,6 +1,6 @@
 # Sending email
 
-1mail has three send surfaces. They differ in who triggers them, and they share templates,
+sphericon has three send surfaces. They differ in who triggers them, and they share templates,
 sending domains and consent rules.
 
 ## Templates
@@ -51,8 +51,8 @@ Your application sends a single email to one address with `POST /api/emails`, na
 and the variables to fill it with:
 
 ```sh
-curl https://1mail.example.com/api/emails \
-  -H "Authorization: Bearer $ONEMAIL_TOKEN" \
+curl https://sphericon.example.com/api/emails \
+  -H "Authorization: Bearer $SPHERICON_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "templateId": 12,
@@ -76,5 +76,5 @@ Add one or more integrations in **Settings → Integrations**:
   Amazon SES itself. Bounce and complaint notifications delivered over SNS are ingested and turned
   into suppressions.
 
-Credentials are encrypted at rest. Because DKIM signing happens in 1mail itself, switching
+Credentials are encrypted at rest. Because DKIM signing happens in sphericon itself, switching
 transport does not mean re-verifying your domain.

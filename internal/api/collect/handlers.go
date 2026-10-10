@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	collectapi "github.com/mokevnin/1mail/gen/collect"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/visitors"
+	collectapi "github.com/mokevnin/sphericon/gen/collect"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/visitors"
 	"github.com/samber/lo"
 )
 

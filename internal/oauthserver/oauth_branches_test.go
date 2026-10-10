@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/oauthclient"
-	"github.com/mokevnin/1mail/ent/oauthcode"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/oauthserver"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/oauthclient"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
+	"github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/oauthserver"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // audit:read is never grantable to a connector (ADR 0016, ADR 0022).

@@ -8,14 +8,14 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/erasure"
-	"github.com/mokevnin/1mail/internal/eventlog"
-	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/sphericon/ent"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/convert"
+	"github.com/mokevnin/sphericon/internal/erasure"
+	"github.com/mokevnin/sphericon/internal/eventlog"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 func (h *Handlers) ContactsList(ctx context.Context, params externalapi.ContactsListParams) (externalapi.ContactsListRes, error) {

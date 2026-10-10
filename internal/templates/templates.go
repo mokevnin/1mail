@@ -8,9 +8,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
-	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/emailtemplate"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 // Domain errors. Callers match with errors.Is.

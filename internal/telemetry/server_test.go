@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func TestMetricsServerServesExpositionOnItsOwnListener(t *testing.T) {
 	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
-		return Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", BuildInfo{})
+		return Setup(ctx, &config.Config{OtelServiceName: "sphericon-test"}, "test", BuildInfo{})
 	})
 
 	srv := NewMetricsServer("127.0.0.1:0")

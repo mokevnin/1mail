@@ -19,16 +19,16 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/confirmation"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/event"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/tag"
-	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/visitor"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/ent/confirmation"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/event"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/ent/suppression"
+	"github.com/mokevnin/sphericon/ent/tag"
+	"github.com/mokevnin/sphericon/ent/unsubscribe"
+	"github.com/mokevnin/sphericon/ent/visitor"
 )
 
 // pageSize bounds how many rows of a large collection are held at once.

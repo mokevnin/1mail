@@ -7,7 +7,7 @@ import (
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 // The session token's claims beyond go-pkgz's own (ADR 0020). Both ride the token's
@@ -23,7 +23,7 @@ const (
 const SessionCookie = "JWT"
 
 // sessionIssuer is the token issuer and audience of every session.
-const sessionIssuer = "1mail"
+const sessionIssuer = "sphericon"
 
 // Sessions issues and clears the site session (ADR 0020): a JWT signed with the
 // instance secret, carried in an HttpOnly, SameSite=Lax cookie that lives as long as

@@ -8,7 +8,7 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 // eventsRetentionBatch bounds the rows one DELETE removes so a large backlog

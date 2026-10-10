@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/clientip"
-	"github.com/mokevnin/1mail/internal/logging"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/clientip"
+	"github.com/mokevnin/sphericon/internal/logging"
 )
 
 // NameAuditEntry is the bus type of an Audit entry (ADR 0022). Core only carries the
@@ -28,7 +28,7 @@ const (
 
 // OperatorLabel is how a platform Operator appears to the customer on every read
 // surface (ADR 0022): the staff identity is never exposed.
-const OperatorLabel = "1mail staff"
+const OperatorLabel = "sphericon staff"
 
 // Actor is who performed a change. Name is a display snapshot (a User's name) so the
 // entry stays readable after the actor is gone.

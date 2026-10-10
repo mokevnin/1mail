@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/sphericon/internal/emailrender"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

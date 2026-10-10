@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 // The ApiTokenFunc type is an adapter to allow the use of ordinary

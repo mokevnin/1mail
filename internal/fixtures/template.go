@@ -10,9 +10,9 @@ import (
 	"github.com/go-crypt/crypt/algorithm/argon2"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
 // timeLayout is the Postgres-friendly timestamp layout the template date helpers

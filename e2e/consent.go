@@ -11,8 +11,8 @@ import (
 	"github.com/go-faster/jx"
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/eligibility"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/eligibility"
 )
 
 // OneClickUnsubscribe performs the RFC 8058 one-click request exactly as a mailbox

@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Why a destination is on the suppression (do-not-send) list */
 enum SuppressionReason {

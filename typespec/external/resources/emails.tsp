@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Outcome of a transactional send */
 enum TransactionalSendStatus {

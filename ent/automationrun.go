@@ -9,9 +9,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/automation"
-	"github.com/mokevnin/1mail/ent/automationrun"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/automation"
+	"github.com/mokevnin/sphericon/ent/automationrun"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // AutomationRun is the model entity for the AutomationRun schema.

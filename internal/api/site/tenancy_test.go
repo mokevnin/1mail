@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Fixture user info@1mail.com owns workspace fixtures.AcmeSlug (id 1), which owns the three
+// Fixture user info@getsphericon.com owns workspace fixtures.AcmeSlug (id 1), which owns the three
 // seeded contacts. The dashboard addresses contacts via /w/{slug}/contacts.
 func TestSiteContactsScopedToWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)

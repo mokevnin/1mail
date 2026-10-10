@@ -51,7 +51,7 @@ func TestTemplateData(t *testing.T) {
 	t.Cleanup(func() { Configure("en") })
 	Configure("en")
 	got := T("email.welcome.body", map[string]any{"Greeting": "Ada"})
-	want := "Hi Ada,\n\nWelcome to 1mail! Your account is ready.\n"
+	want := "Hi Ada,\n\nWelcome to sphericon! Your account is ready.\n"
 	if got != want {
 		t.Errorf("welcome body = %q, want %q", got, want)
 	}

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/auditapi"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/auditapi"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 const (

@@ -2,7 +2,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Why a destination is on the suppression (do-not-send) list. Unsubscribe is
  * not a suppression — it is a separate, per-source opt-out. */

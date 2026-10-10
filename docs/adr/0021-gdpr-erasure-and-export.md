@@ -43,7 +43,7 @@ adds the per-person path that ADR 0019's "evidentiary Events are never deleted" 
 - **Proof without PII:** an immutable system Event `contact.erased` (Workspace, time, operator,
   identifier kind; stored with no email and no contact id) is the accountability record. Its
   webhook delivery additionally carries the Contact's `subject_id` (the customer's own id), or the
-  1mail contact id when there was none, so the customer can erase downstream copies; the
+  sphericon contact id when there was none, so the customer can erase downstream copies; the
   identifier lives only in the delivered payload, never on the stored Event. No direct downstream
   integrations. In EE the Audit log additionally records the operator's delete.
 - **Not blocked on re-creation.** A returning person (Identify, import) becomes a new Contact;

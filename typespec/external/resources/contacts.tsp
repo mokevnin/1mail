@@ -3,7 +3,7 @@ using TypeSpec.Rest;
 using TypeSpec.Rest.Resource;
 using TypeSpec.OpenAPI;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Contact resource */
 @resource("contacts")

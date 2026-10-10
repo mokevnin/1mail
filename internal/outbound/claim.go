@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/internal/logging"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/internal/logging"
 )
 
 // find loads the Outbound message recorded under (workspace, key), or nil.

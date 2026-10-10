@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 func newEnroller() *EnrollerMock {

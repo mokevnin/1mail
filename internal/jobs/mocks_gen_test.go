@@ -5,9 +5,9 @@ package jobs_test
 
 import (
 	"context"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/outbound"
 	"sync"
 )
 

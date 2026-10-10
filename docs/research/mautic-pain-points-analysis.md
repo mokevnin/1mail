@@ -3,15 +3,15 @@
 Researched July 2026 via web search across the Mautic community forums, GitHub issues,
 and third-party review/hosting write-ups (G2, TrustRadius, Research.com, Autoize). Mautic
 is the incumbent open-source marketing automation platform; this doc catalogues its
-**most-repeated user complaints** and maps each to 1mail's current position, so the roadmap
+**most-repeated user complaints** and maps each to sphericon's current position, so the roadmap
 can target the pains that are genuinely _ours to win_.
 
-Mautic-side claims are cited to forum threads / issues. 1mail-side claims are grounded in
+Mautic-side claims are cited to forum threads / issues. sphericon-side claims are grounded in
 `GLOSSARY.md` and `docs/adr/*` (the authoritative model) — where the two disagree, CONTEXT/ADRs win.
 
 **Bottom line:** Mautic's deepest pains are _systemic_ (cron architecture, upgrade friction,
-heavyweight deployment, dated UI) and 1mail neutralises them **by design** — that is the core
-positioning advantage. The two areas where 1mail is _not yet proven_ against Mautic are
+heavyweight deployment, dated UI) and sphericon neutralises them **by design** — that is the core
+positioning advantage. The two areas where sphericon is _not yet proven_ against Mautic are
 **scale** (unvalidated) and **send-rate control** (absent). On raw feature breadth Mautic is
 still ahead, and that is fine at this stage.
 
@@ -30,7 +30,7 @@ staggered cron jobs. Consequences reported repeatedly:
 - Cron/queue documentation is unclear, leaving operators guessing at configuration
   ([netcore](https://netcorecloud.com/tutorials/slow-email-sending-speed-in-mautic/)).
 
-**1mail position — solved by design. ✅**
+**sphericon position — solved by design. ✅**
 There is no cron layer. Async work runs on **river** (Postgres-backed job queue, retries +
 concurrency) and a **watermill** domain-event bus over a transactional outbox; both run
 in-process (`docs/design/domain-events.md`; `internal/jobs`). Automation enrollment fires off
@@ -51,7 +51,7 @@ partial-campaign failure mode from a missed tick.
 - Campaign conditions that check segment membership re-run the segment query, making them
   unusable on large/slow segments ([forum](https://forum.mautic.org/t/segment-campaign-condition-slow/25268)).
 
-**1mail position — better architecture, but UNPROVEN. ⚠️**
+**sphericon position — better architecture, but UNPROVEN. ⚠️**
 Segments are **live rules compiled to SQL predicates** and membership is _never materialized_
 (`GLOSSARY.md` — "membership is never materialized and shifts as data changes"; `internal/segments`),
 which structurally avoids Mautic's rebuild-the-segment-table pain. Backing store is Postgres,
@@ -67,7 +67,7 @@ capacity, and generally slow sending ([forum](https://forum.mautic.org/t/mautic-
 much of this is downstream of the cron architecture (§1) but also of missing rate control
 ([Mautic 5 throttling thread](https://forum.mautic.org/t/how-to-slow-down-email-sending-mautic-5/34302)).
 
-**1mail position — cron cause removed, but no send-rate feature yet. ⚠️**
+**sphericon position — cron cause removed, but no send-rate feature yet. ⚠️**
 The cron bottleneck is gone (§1), and river gives fixed per-queue concurrency
 (`internal/jobs/worker.go` — `QueueBroadcasts: {MaxWorkers: 10}`). But there is **no
 configurable send-rate limit (emails/sec), no per-provider throttle, and no IP warmup ramp.**
@@ -86,10 +86,10 @@ roadmap item.
   plugins ([forum](https://forum.mautic.org/t/mautic-release-upgrade-strategy-is-misguided/35981)).
 - The composer-based update path is "very badly documented."
 
-**1mail position — solved by design. ✅**
+**sphericon position — solved by design. ✅**
 Ships as a **single Go binary with the SPA and migrations embedded**; the only runtime
 dependency is Postgres (`docs/self-hosting.md`). Migrations are managed by **Atlas**,
-forward-only, applied via `./1mail migrate` (or `AUTO_MIGRATE` on a single replica). No
+forward-only, applied via `./sphericon migrate` (or `AUTO_MIGRATE` on a single replica). No
 composer, no Symfony version hops, no plugin re-purchase — EE code lives in the same binary,
 gated by a license key ([[project_open_core_ee]]). A versioned upgrade runbook + an in-app
 "new release available" banner are already planned (ROADMAP → Self-hosting lifecycle); the
@@ -101,7 +101,7 @@ Mautic evidence raises their priority.
 containers, **Redis** for session storage, and **multi-master MySQL**
 ([Autoize horizontal scaling](https://autoize.com/hosting-large-instances-of-mautic-with-horizontal-scaling/)).
 
-**1mail position — solved by design. ✅**
+**sphericon position — solved by design. ✅**
 Self-contained binary + Postgres only. Queue (river) and pub/sub (watermill) both live _in
 Postgres_ — **no Redis, no S3, no separate worker process** (`docs/design/domain-events.md`,
 `README.md`). Runs single-replica, or multi-replica by running the migrate step once as init.
@@ -113,7 +113,7 @@ the Carbon Design System from 2024 ([year-in-review](https://mautic.org/blog/mau
 and there is **no way to archive old/unused resources**, so busy instances become cluttered
 and hard to navigate ([roadmap](https://mautic.org/roadmap/)).
 
-**1mail position — modern UI ✅, but archiving is also missing ⚠️.**
+**sphericon position — modern UI ✅, but archiving is also missing ⚠️.**
 Frontend is React 19 + Mantine with responsive layout and light/dark themes from day one
 (`CLAUDE.md` frontend conventions) — modern out of the gate, no legacy redesign debt. But
 Mautic's _clutter_ complaint applies to us too: **there is no archive / soft-delete on
@@ -130,7 +130,7 @@ an org/governance issue, not a product capability. Noted for completeness only.
 
 ## Where Mautic is still ahead (honest gaps)
 
-1mail is an earlier-stage product; on feature _breadth_ Mautic leads, echoing the review
+sphericon is an earlier-stage product; on feature _breadth_ Mautic leads, echoing the review
 critique that Mautic "lacks features for precise/quantitative requirements or larger
 companies" ([Research.com](https://research.com/software/reviews/mautic)). Specifically:
 
@@ -155,7 +155,7 @@ Three items are **not** already on the roadmap and are added by this analysis (s
 
 1. **Scale validation (highest value).** Load-test the segment engine (rule → SQL compilation
    - live preview count) _and_ the broadcast send-loop audience resolution at ~1M contacts.
-     This directly targets Mautic's #1 abandonment cause and is the one place 1mail's core
+     This directly targets Mautic's #1 abandonment cause and is the one place sphericon's core
      architectural bet is currently unproven. Deliverable is a benchmark + any indexes/query
      fixes it exposes — not a vague "prove scale."
 2. **Send-rate control & IP warmup.** Configurable per-provider send rate (emails/sec) and a

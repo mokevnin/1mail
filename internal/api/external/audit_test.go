@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/suspension"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/suspension"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func TestExternalAuditListNeedsTheAuditReadScope(t *testing.T) {

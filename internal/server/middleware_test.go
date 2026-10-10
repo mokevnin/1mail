@@ -11,7 +11,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,7 +142,7 @@ func TestCrossOriginGuardProtectsCookiePathsOnly(t *testing.T) {
 		reached = true
 		w.WriteHeader(http.StatusNoContent)
 	})
-	guard, err := crossOriginGuard("https://1mail.example", nil)
+	guard, err := crossOriginGuard("https://sphericon.example", nil)
 	require.NoError(t, err)
 	h := guard(ok)
 
@@ -216,14 +216,14 @@ func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
 func TestCrossOriginGuardTrustsAppAndAllowlistedOrigins(t *testing.T) {
 	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	// APP_URL may carry a trailing slash or path; only its origin counts.
-	guard, err := crossOriginGuard("https://1mail.example/", []string{"https://app.example"})
+	guard, err := crossOriginGuard("https://sphericon.example/", []string{"https://app.example"})
 	require.NoError(t, err)
 	h := guard(ok)
 
 	for origin, want := range map[string]int{
-		"https://1mail.example": http.StatusNoContent,
-		"https://app.example":   http.StatusNoContent,
-		"https://evil.example":  http.StatusForbidden,
+		"https://sphericon.example": http.StatusNoContent,
+		"https://app.example":       http.StatusNoContent,
+		"https://evil.example":      http.StatusForbidden,
 	} {
 		rec := do(t, h, http.MethodPost, "/site/workspaces", map[string]string{
 			"Sec-Fetch-Site": "cross-site", "Origin": origin,

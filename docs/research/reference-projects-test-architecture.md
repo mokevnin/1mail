@@ -27,7 +27,7 @@ Base URLs: `https://github.com/<org>/<repo>/blob/<sha>/<path>#L<n>`; Forgejo is 
 
 ## Question
 
-1mail's test stack: committed YAML fixtures with generated named constants (`fixtures/*.yml` to
+sphericon's test stack: committed YAML fixtures with generated named constants (`fixtures/*.yml` to
 `internal/fixtures/catalog_gen.go`), a baseline applied once per process then one go-txdb transaction per
 test (`internal/testhelper/testhelper.go`), no direct SQL in tests, a scratch database for fresh-instance
 migration tests (`internal/testhelper/scratchdb.go`), and an in-process e2e suite with domain steps on
@@ -37,30 +37,30 @@ per-project verdicts. It does not change any ADR.
 
 ## Summary of findings
 
-- **Most relevant by number of 1mail mechanisms touched:** Forgejo, Mattermost, Plausible, Hatchet, mox.
+- **Most relevant by number of sphericon mechanisms touched:** Forgejo, Mattermost, Plausible, Hatchet, mox.
   Ranking is at the end.
-- **Grafana deprecated the exact pattern 1mail does not use and moved to the one it nearly has:** a shared
+- **Grafana deprecated the exact pattern sphericon does not use and moved to the one it nearly has:** a shared
   database truncated between tests is now `Deprecated` and lint-banned (staticcheck SA1019); new tests call
   `NewTestStore`, which gives each test its own temporary database, optionally cloned from a pre-migrated
-  template. 1mail's txdb rollback is a stronger and cheaper isolation than either, so this is confirmation,
+  template. sphericon's txdb rollback is a stronger and cheaper isolation than either, so this is confirmation,
   not a change request.
 - **Gitea reloads fixtures without transactions** and avoids the cost by tracking which tables a test
   dirtied (a SQL-text hook marks them) and reloading only those. txdb makes that unnecessary for Go tests.
   It would matter only for the e2e suite, where the app really commits.
 - **Forgejo runs Playwright from a Go test** that boots the app in-process and exposes
   `PATCH /_e2e/fixtures/reload`. It also has a `forgery` package of per-test entity factories, which
-  conflicts with 1mail's fixtures-only policy (see verdict).
+  conflicts with sphericon's fixtures-only policy (see verdict).
 - **Mattermost writes store contract tests once** (`storetest`) and runs them against each store
-  implementation. That maps onto 1mail's smtp and ses providers behind `messaging`.
+  implementation. That maps onto sphericon's smtp and ses providers behind `messaging`.
 - **Plausible and Hatchet both run the suite in more than one product mode in CI** (CE vs EE, optimistic
-  scheduling on/off, race on/off). That is the direct analogue of 1mail's `ee/` with `WithoutLicense()`.
+  scheduling on/off, race on/off). That is the direct analogue of sphericon's `ee/` with `WithoutLicense()`.
 - **Hatchet's `TestMain` runs `goleak.Find`.** Relevant because river and watermill start goroutines.
 - **mox and maddy test mail servers with an in-process or subprocess SMTP client and a mocked DNS**
   (`dns.MockResolver`, `go-mockdns`), no real network. Relevant to sending-domain verification and DKIM.
 - **Three projects exercise schema migrations in tests** (Gitea `test-migration`, Plausible `--include
-  migrations`, Hatchet `TESTING_MATRIX_MIGRATE=penultimate`). 1mail already runs its real migration path on
+  migrations`, Hatchet `TESTING_MATRIX_MIGRATE=penultimate`). sphericon already runs its real migration path on
   an empty database (`cmd/server/migrate_test.go` calls `applyMigrations`, which runs goose over the embedded
-  `migrations` FS, then river's migrator, twice for idempotence). What no project-style test does in 1mail is
+  `migrations` FS, then river's migrator, twice for idempotence). What no project-style test does in sphericon is
   run migrations **against a database that already has rows** (the Hatchet `penultimate` idea). This is an
   observation from reading that one test; other CI jobs were not checked.
 - **listmonk: nothing worth taking** (already reviewed, re-confirmed below).
@@ -78,7 +78,7 @@ corpus, a DB matrix, an in-process integration suite and Playwright e2e. Fork pa
   (`*.test.ts`), `models/fixtures/` (78 YAML files, one per table, e.g. `models/fixtures/access_token.yml`).
 - Fixtures: hand-written YAML, rows keyed by numeric ids, tests reference ids as literals
   (`unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})`,
-  `tests/integration/incoming_email_test.go:31`). No generated named constants. 1mail's catalog_gen is
+  `tests/integration/incoming_email_test.go:31`). No generated named constants. sphericon's catalog_gen is
   stricter.
 - DB handling: `unittest.PrepareTestDatabase()` or `tests.PrepareTestEnv` (`tests/test_utils.go:118`) calls
   `LoadFixtures`. The loader does `DELETE FROM <table>` then re-inserts, and only for tables flagged dirty
@@ -104,15 +104,15 @@ corpus, a DB matrix, an in-process integration suite and Playwright e2e. Fork pa
 
 **Verdict.**
 
-- Borrow, e2e only: dirty-table tracking is worth knowing about if 1mail's e2e ever needs to reset a shared
-  database between scenarios. 1mail's e2e uses fresh Workspaces instead (`env.NewWorkspace(t).Ready()`), which
+- Borrow, e2e only: dirty-table tracking is worth knowing about if sphericon's e2e ever needs to reset a shared
+  database between scenarios. sphericon's e2e uses fresh Workspaces instead (`env.NewWorkspace(t).Ready()`), which
   avoids the reset entirely. **Inference:** keep the fresh-Workspace approach.
-- Borrow: `CheckConsistencyFor`-style invariant checks, if 1mail has denormalised counters (not verified
+- Borrow: `CheckConsistencyFor`-style invariant checks, if sphericon has denormalised counters (not verified
   whether it does).
 - Borrow: running the integration suite from a compiled test binary to keep passing-test log noise out of
-  output, if 1mail's ent/river logging becomes noisy.
-- Skip: hook-parses-SQL-text dirty tracking (fragile), numeric literal ids in tests (1mail's generated named
-  constants are better), per-engine DB matrix (1mail is Postgres only).
+  output, if sphericon's ent/river logging becomes noisy.
+- Skip: hook-parses-SQL-text dirty tracking (fragile), numeric literal ids in tests (sphericon's generated named
+  constants are better), per-engine DB matrix (sphericon is Postgres only).
 
 ### A2. Forgejo (GPL-3.0-or-later, Go; hosted on Codeberg)
 
@@ -138,24 +138,24 @@ corpus, a DB matrix, an in-process integration suite and Playwright e2e. Fork pa
 
 **Verdict.**
 
-- Borrow: one Go entry point for e2e that boots the in-process app then runs the browser suite. 1mail's
+- Borrow: one Go entry point for e2e that boots the in-process app then runs the browser suite. sphericon's
   `e2e/` is Go-only today (Mailpit Inbox, no browser); if a Playwright layer is ever added, this wiring is
   the template. **Inference:** only relevant if browser e2e is planned.
 - Borrow: a fixture-reload endpoint registered only in the test router, to reset between Playwright specs.
 - Borrow, with a conflict: `forgery`'s `t.Name()`-derived unique names solve a real parallelism problem.
-  **It conflicts with 1mail's rule that tests build on committed fixtures and do not fabricate entities
+  **It conflicts with sphericon's rule that tests build on committed fixtures and do not fabricate entities
   inline** (memory: tests use fixtures; add a fixture row if uncovered). Do not adopt `forgery`-style
   factories unqualified. A defensible subset: factories only for entities whose uniqueness is the point
   (api tokens, sending-domain names), living in `testhelper` and generated or documented as the exception.
   That is a policy decision for the user, not taken here.
-- Skip: GPL-licensed code cannot be copied into 1mail's AGPL core without a licence review (not checked);
+- Skip: GPL-licensed code cannot be copied into sphericon's AGPL core without a licence review (not checked);
   read for ideas only.
 
 ### A3. rudder-server (Elastic License 2.0 for the core, per repo LICENSE; Go)
 
 **What it solves.** Customer-data-platform ingestion: gateway accepts events, a Postgres-backed jobs queue
 (`jobsdb`) moves them through processor and router to destinations. **Overlap:** event ingestion from
-customer sites (1mail `/collect`), Postgres as a queue, workspace-scoped config.
+customer sites (sphericon `/collect`), Postgres as a queue, workspace-scoped config.
 
 **Test architecture.**
 
@@ -181,12 +181,12 @@ customer sites (1mail `/collect`), Postgres as a queue, workspace-scoped config.
 **Verdict.**
 
 - Borrow: the `require.Eventually`-not-sleep rule, as a lint or review rule for river/watermill assertions
-  (1mail already has `Outbox*` helpers; whether any test sleeps was not checked).
+  (sphericon already has `Outbox*` helpers; whether any test sleeps was not checked).
 - Borrow: fluent builders for configuration that has no fixture row (for example provider settings), only if
-  YAML fixtures prove awkward. 1mail's catalog is the stated policy, so this is optional.
+  YAML fixtures prove awkward. sphericon's catalog is the stated policy, so this is optional.
 - Borrow: a CI check that every new package of a class is registered in the matrix (matrixchecker idea).
-- Skip: per-test Docker Postgres (1mail's shared baseline + txdb is far faster; **inference**), ginkgo/gomock
-  (1mail uses testify and a real app), direct SQL assertions (forbidden in 1mail).
+- Skip: per-test Docker Postgres (sphericon's shared baseline + txdb is far faster; **inference**), ginkgo/gomock
+  (sphericon uses testify and a real app), direct SQL assertions (forbidden in sphericon).
 
 ### A4. mox (MIT / MPL-2.0, Go)
 
@@ -216,14 +216,14 @@ and verification, suppression list (`queue/suppression.go`).
 
 **Verdict.**
 
-- Borrow: native Go fuzz targets for any 1mail parser of untrusted input that is also security-relevant
+- Borrow: native Go fuzz targets for any sphericon parser of untrusted input that is also security-relevant
   (signed unsubscribe/confirm token parsing in `internal/consent`, SES/SNS hook payloads, the `/collect`
-  body). Cheap to add. Whether 1mail already has any fuzz target was **not verified**.
+  body). Cheap to add. Whether sphericon already has any fuzz target was **not verified**.
 - Borrow: table-driven DKIM tests with a mock DNS map, relevant to the known go-mail `h=` folding gotcha
   (memory: DKIM h= folding). A regression table of header lists and expected canonicalisation fits the same
   style.
 - Borrow: asserting enhanced status codes (not just 2xx/5xx) when testing bounce handling.
-- Skip: `net.Pipe` SMTP server harness (1mail is an SMTP client; Mailpit already covers the server side).
+- Skip: `net.Pipe` SMTP server harness (sphericon is an SMTP client; Mailpit already covers the server side).
 
 ### A5. maddy (GPL-3.0, Go)
 
@@ -247,10 +247,10 @@ and verification, suppression list (`queue/suppression.go`).
 
 **Verdict.**
 
-- Borrow: `go-mockdns` for sending-domain verification tests (SPF/DKIM/DMARC TXT lookups) if 1mail's
+- Borrow: `go-mockdns` for sending-domain verification tests (SPF/DKIM/DMARC TXT lookups) if sphericon's
   resolver (`internal/messaging/resolver_test.go` exists) is not already injectable; whether it is was not
   checked.
-- Skip: subprocess-binary harness (1mail's in-process app is simpler and faster), GPL code.
+- Skip: subprocess-binary harness (sphericon's in-process app is simpler and faster), GPL code.
 
 ### A6. Hatchet (MIT, Go; Postgres-backed task queue, multi-tenant)
 
@@ -280,16 +280,16 @@ Postgres as the queue, multi-tenant (tenant = workspace), a scheduler with concu
 
 **Verdict.**
 
-- Borrow: `goleak.Find` in `TestMain` with a curated ignore list. 1mail runs river and watermill workers;
+- Borrow: `goleak.Find` in `TestMain` with a curated ignore list. sphericon runs river and watermill workers;
   leaked goroutines after the in-process app stops are a real class of bug. **Inference:** worth a trial in
   `e2e/main_test.go` first.
 - Borrow, optional: a "migrate to N-1, load fixtures, migrate to N" test, to check the newest migration
-  against pre-existing rows. 1mail's `migrate_test.go` covers only the empty-database path. Hatchet gets the
-  N-1 state by running the whole suite after `WithUpToPenultimate()`; 1mail could do the narrower version
+  against pre-existing rows. sphericon's `migrate_test.go` covers only the empty-database path. Hatchet gets the
+  N-1 state by running the whole suite after `WithUpToPenultimate()`; sphericon could do the narrower version
   with `ScratchDatabaseURL` and goose's provider.
-- Borrow: build tags as tiers is already effectively 1mail's `e2e` tag.
+- Borrow: build tags as tiers is already effectively sphericon's `e2e` tag.
 - Skip: the shared dev DB with a hard-coded tenant id (the opposite of txdb isolation), per-suite container
-  start (1mail uses a shared Postgres daemon).
+  start (sphericon uses a shared Postgres daemon).
 
 ### A7. Grafana (AGPL-3.0, Go)
 
@@ -316,14 +316,14 @@ mature test-DB story, multi-org tenancy, an enterprise split.
 
 **Verdict.**
 
-- Borrow: the `TestIntegration` prefix guard with a `-short` skip, if 1mail wants a fast `-short` lane
-  alongside txdb tests. 1mail has no such split today (**not verified** beyond AGENTS.md).
-- Borrow: the lint-enforced deprecation of the old test-setup path, as a pattern: when 1mail changes a
+- Borrow: the `TestIntegration` prefix guard with a `-short` skip, if sphericon wants a fast `-short` lane
+  alongside txdb tests. sphericon has no such split today (**not verified** beyond AGENTS.md).
+- Borrow: the lint-enforced deprecation of the old test-setup path, as a pattern: when sphericon changes a
   testhelper, deprecate the old one so staticcheck blocks new uses. Fits "never disable lint rules".
 - Confirmed, not borrowed: per-test temporary DB from a migrated template is the heavier version of what
-  txdb gives 1mail for free. Template-cloning is the only relevant idea, and only for tests that must commit
+  txdb gives sphericon for free. Template-cloning is the only relevant idea, and only for tests that must commit
   (e2e, tests with `WithinScopedTx` and concurrent connections).
-- Skip: sharding scripts (1mail's suite is small enough to run `go test -p 1`), the DB matrix.
+- Skip: sharding scripts (sphericon's suite is small enough to run `go test -p 1`), the DB matrix.
 
 ### A8. Mattermost (mixed licensing, Go)
 
@@ -354,15 +354,15 @@ features, a single binary, an API test helper, Inbucket-style mail capture.
 **Verdict.**
 
 - Borrow (strongest idea in this note): contract tests written once against an interface and bound to each
-  implementation. 1mail has smtp and ses providers behind `messaging` and shares `messaging.BuildMIME`;
+  implementation. sphericon has smtp and ses providers behind `messaging` and shares `messaging.BuildMIME`;
   a shared `providertest.Run(t, provider)` suite would assert identical behaviour (headers, errors, retry
-  classification) on both. Whether 1mail already does this was not checked (`internal/messaging` has
+  classification) on both. Whether sphericon already does this was not checked (`internal/messaging` has
   `signer_test.go`, `mime_test.go`, `resolver_test.go`, `coverage_test.go`).
-- Borrow: `SetupEnterprise` vs `Setup`, which mirrors 1mail's `testhelper.Setup` and `WithoutLicense()`.
+- Borrow: `SetupEnterprise` vs `Setup`, which mirrors sphericon's `testhelper.Setup` and `WithoutLicense()`.
   Already equivalent.
-- Borrow: the Inbucket-client-in-non-test-code shape with a `RetryInbucket` helper, which is what 1mail's
+- Borrow: the Inbucket-client-in-non-test-code shape with a `RetryInbucket` helper, which is what sphericon's
   `e2e/inbox.go` and `mailpit.go` already are.
-- Skip: `DropAllTables` per test plus warmup SQL (txdb rollback is better and 1mail builds schema with ent),
+- Skip: `DropAllTables` per test plus warmup SQL (txdb rollback is better and sphericon builds schema with ent),
   the fully parallel store pool.
 
 ## B. Non-Go product references (lighter touch)
@@ -370,7 +370,7 @@ features, a single binary, an API test helper, Inbucket-style mail capture.
 ### B1. Dittofeed (MIT `LICENSE` at repo root, TypeScript; `docker-compose.ee.yaml` suggests an EE tier, not examined)
 
 **Solves.** Open-source customer-engagement / marketing automation (journeys, broadcasts, segments,
-messaging) on Postgres, ClickHouse and Temporal. **Overlap:** the closest product match to 1mail.
+messaging) on Postgres, ClickHouse and Temporal. **Overlap:** the closest product match to sphericon.
 
 **Tests.** Jest with ts-jest, projects per package (`jest.config.js`); backend-lib has 63 `*.test.ts` files
 beside the source. Integration-style: `globalSetup` migrates Postgres via Drizzle and bootstraps ClickHouse
@@ -380,8 +380,8 @@ workspace with a random name (`createWorkspace({ id: randomUUID(), name: \`test-
 built-in `Test` email provider type. CI shards the suite and gives each shard its own DB names to avoid
 races (`.github/workflows/shared-workflow.yaml`, `test_shards`). Factories live in `test/factories/`.
 
-**Verdict.** Borrow: a first-class test provider type is the same idea as 1mail's `fakeses.go` and Mailpit;
-nothing new. The "fresh workspace per test, no teardown" isolation is exactly what 1mail's e2e does with
+**Verdict.** Borrow: a first-class test provider type is the same idea as sphericon's `fakeses.go` and Mailpit;
+nothing new. The "fresh workspace per test, no teardown" isolation is exactly what sphericon's e2e does with
 `env.NewWorkspace(t)`, which confirms the approach for tests that commit. Skip: random-name inline
 construction for Go unit tests (conflicts with fixtures policy), Temporal-specific harness.
 
@@ -399,7 +399,7 @@ inside docker compose (`.github/workflows/ci.yml:55-58`).
 
 **Verdict.** Borrow: a "lint the fixtures" test, i.e. one test that loads or touches every generated catalog
 constant and validates each row against the ent schema and API validators, so a stale fixture row fails
-fast instead of failing a distant test. 1mail's generator already checks naming; row validity beyond DB
+fast instead of failing a distant test. sphericon's generator already checks naming; row validity beyond DB
 constraints was not checked. Skip: everything else.
 
 ### B3. Mautic (GPL, "either version 3" per `LICENSE.txt:7`; PHP/Symfony)
@@ -416,7 +416,7 @@ messenger transport `in-memory://default` in tests (`AbstractMauticTestCase.php:
 version by MySQL/MariaDB version with the DB on tmpfs (`.github/workflows/tests.yml:23-57`).
 
 **Verdict.** Skip mostly. Borrow only the documented rule "rollback by default, explicit opt-out with a
-reason when the test needs DDL or commits", which is how 1mail's txdb vs scratch-DB split already works.
+reason when the test needs DDL or commits", which is how sphericon's txdb vs scratch-DB split already works.
 
 ### B4. Plausible Analytics (AGPL-3.0, Elixir)
 
@@ -437,12 +437,12 @@ envs with Postgres 18 and ClickHouse, `--include slow --include migrations`, 6 p
 **Verdict.**
 
 - Borrow: running the full suite in both core-only and licensed modes in CI, with tag-based excludes for
-  edition-only tests. 1mail has `WithoutLicense()`; whether CI runs both modes for the whole suite was not
+  edition-only tests. sphericon has `WithoutLicense()`; whether CI runs both modes for the whole suite was not
   checked.
 - Borrow: a guard test that fails if tests exist in an unexpected directory (cheap structural check).
-- Borrow: the explicit "allow this background process into the test's transaction" step maps to 1mail's
+- Borrow: the explicit "allow this background process into the test's transaction" step maps to sphericon's
   documented `env.DeliverToEE(t)` step (the router does not run under txdb); same idea, already done.
-- Borrow: tracker tests in a real browser (Playwright) for `/t.js`; 1mail's `@1mail/analytics` package has
+- Borrow: tracker tests in a real browser (Playwright) for `/t.js`; sphericon's `@sphericon/analytics` package has
   its own tests (not inspected here).
 - Skip: Elixir-specific machinery.
 
@@ -455,14 +455,14 @@ Go `_test.go` files anywhere in the repo (count 0). `tests/helpers.js:62` shells
 changes (`UPDATE settings SET value = ...`, `:74`, `:85`); mail is read from MailHog at `localhost:8025`
 (`helpers.js:6`, `playwright.config.js:5`); teardown is `pkill -9 listmonk` (`global-teardown.js:4`,
 `helpers.js:94`); `resetDB` runs between specs (`helpers.js:93`) and `workers: 1`
-(`playwright.config.js:9`). Everything 1mail's stack already does better (in-process app, ent-only state,
+(`playwright.config.js:9`). Everything sphericon's stack already does better (in-process app, ent-only state,
 fixtures, parallel-safe Workspaces).
 
-## What 1mail already does that these projects confirm
+## What sphericon already does that these projects confirm
 
 - One baseline plus per-test rollback (txdb) is stronger than every DB strategy found except Grafana's
   template-cloned temp DBs, and cheaper than all of them. Gitea reloads tables, Mattermost drops all tables,
-  Hatchet and Dittofeed rely on random ids in a shared DB, Mautic rolls back like 1mail.
+  Hatchet and Dittofeed rely on random ids in a shared DB, Mautic rolls back like sphericon.
 - Fresh tenant per scenario for tests that commit (Dittofeed, Hatchet) equals `env.NewWorkspace(t)`.
 - Capturing mail in a real local SMTP sink with an HTTP read API (Mattermost Inbucket, Gitea smtpimap,
   listmonk MailHog) equals the Mailpit `Inbox`.
@@ -474,13 +474,13 @@ fixtures, parallel-safe Workspaces).
 - Licences of copied-from code were not reviewed beyond the headers named above; Forgejo and maddy are GPL
   and rudder-server is not OSI open source, so read for ideas only. The rudder-server licence name is from
   the repo `LICENSE` header and was not re-read in full.
-- Whether 1mail already has a shared provider contract suite, fuzz targets, an `-short` lane, a sleep ban,
+- Whether sphericon already has a shared provider contract suite, fuzz targets, an `-short` lane, a sleep ban,
   or CI jobs that run Atlas migrations was not checked beyond the greps stated above.
 - The Mattermost "uses Inbucket in CI" statement rests on `server/docker-compose.yaml` and the Go client, not on a CI workflow. Gitea's and Mattermost's CI job layouts beyond the lines cited were not read; Mattermost's Cypress and
   Playwright suites were not opened.
 - Dittofeed, Postal, Mautic and Plausible were read at lighter depth (layout, base classes, CI matrix).
 
-## Peek at first (ranked by how many 1mail mechanisms each touches)
+## Peek at first (ranked by how many sphericon mechanisms each touches)
 
 1. **Forgejo**: Go-driven e2e with fixture-reload endpoint, `forgery` (and why it conflicts with the
    fixtures policy), per-test unique naming, in-process boot.

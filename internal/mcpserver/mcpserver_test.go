@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent/broadcast"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +56,7 @@ func TestMCPRequiresBearerToken(t *testing.T) {
 	}
 }
 
-// Independent literal: the /api operations that are not x-mcp hidden, by 1mail name.
+// Independent literal: the /api operations that are not x-mcp hidden, by sphericon name.
 // Token management is hidden. The send-class tools (ADR 0016, "Send is a second
 // lock") are listed only for a token that also carries mcp:send.
 var (

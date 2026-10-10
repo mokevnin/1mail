@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,9 +67,9 @@ func TestBuildMIMEInvalidFrom(t *testing.T) {
 func TestBuildMIMEListUnsubscribe(t *testing.T) {
 	raw := render(t, messaging.EmailMessage{
 		From: "sender@example.com", To: "rcpt@example.com", Subject: "s", HTML: "<p>hi</p>",
-		ListUnsubscribeURL: "https://1mail.test/e/u/tok",
+		ListUnsubscribeURL: "https://sphericon.test/e/u/tok",
 	})
-	require.Contains(t, raw, "List-Unsubscribe: <https://1mail.test/e/u/tok>")
+	require.Contains(t, raw, "List-Unsubscribe: <https://sphericon.test/e/u/tok>")
 	require.Contains(t, raw, "List-Unsubscribe-Post: List-Unsubscribe=One-Click")
 }
 

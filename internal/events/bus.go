@@ -13,7 +13,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 	"github.com/oklog/ulid/v2"
 )
 

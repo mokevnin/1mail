@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/outbound"
 )
 
 func snoozeOf(t *testing.T, err error) *rivertype.JobSnoozeError {

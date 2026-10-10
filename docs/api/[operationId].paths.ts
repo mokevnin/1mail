@@ -7,7 +7,7 @@ export default {
     return usePaths({ spec })
       .getPathsByVerbs()
       .map(({ operationId, summary }: { operationId: string; summary: string }) => ({
-        params: { operationId, pageTitle: `${summary} - 1mail API` },
+        params: { operationId, pageTitle: `${summary} - sphericon API` },
       }))
   },
 }

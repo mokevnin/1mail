@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 alias ValidationErrors = Record<string[]>;
 alias FormValidationFields = Record<string>;

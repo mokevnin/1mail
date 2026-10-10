@@ -10,7 +10,7 @@ The **enforcement** lives in the **AGPL core** because the send path (in the bin
 only reliable choke point — a SaaS-layer gate in front of core would be bypassed by anything
 calling the send path directly. So the core ships the mechanism: the `suspended` state with
 its attribution fields (actor + reason), the send-path refusal, an owner-facing notice on
-`/site`, and a bare `1mail workspace suspend/unsuspend` CLI. Everything above the mechanism —
+`/site`, and a bare `sphericon workspace suspend/unsuspend` CLI. Everything above the mechanism —
 the automated abuse detector, the Operator console, impersonation — is closed **EE/SaaS**.
 
 ## Considered options

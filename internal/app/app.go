@@ -14,46 +14,46 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jackc/pgx/v5/pgxpool"
-	onemail "github.com/mokevnin/1mail"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ee"
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/user"
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/analytics"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	apiexternal "github.com/mokevnin/1mail/internal/api/external"
-	apisite "github.com/mokevnin/1mail/internal/api/site"
-	"github.com/mokevnin/1mail/internal/authtoken"
-	"github.com/mokevnin/1mail/internal/automations"
-	"github.com/mokevnin/1mail/internal/broadcasts"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/erasure"
-	"github.com/mokevnin/1mail/internal/eventlog"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/integrations"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/mcpserver"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/oauthserver"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/reputation"
-	"github.com/mokevnin/1mail/internal/secondfactor"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/segments"
-	"github.com/mokevnin/1mail/internal/sending"
-	"github.com/mokevnin/1mail/internal/sendingdomains"
-	"github.com/mokevnin/1mail/internal/server"
-	"github.com/mokevnin/1mail/internal/suspension"
-	"github.com/mokevnin/1mail/internal/tags"
-	"github.com/mokevnin/1mail/internal/telemetry"
-	"github.com/mokevnin/1mail/internal/templates"
-	"github.com/mokevnin/1mail/internal/tracking"
-	"github.com/mokevnin/1mail/internal/webhooks"
+	sphericon "github.com/mokevnin/sphericon"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ee"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/user"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/analytics"
+	apiauth "github.com/mokevnin/sphericon/internal/api/auth"
+	apiexternal "github.com/mokevnin/sphericon/internal/api/external"
+	apisite "github.com/mokevnin/sphericon/internal/api/site"
+	"github.com/mokevnin/sphericon/internal/authtoken"
+	"github.com/mokevnin/sphericon/internal/automations"
+	"github.com/mokevnin/sphericon/internal/broadcasts"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/erasure"
+	"github.com/mokevnin/sphericon/internal/eventlog"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/integrations"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/mcpserver"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/messaging/registry"
+	"github.com/mokevnin/sphericon/internal/oauthserver"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/reputation"
+	"github.com/mokevnin/sphericon/internal/secondfactor"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/segments"
+	"github.com/mokevnin/sphericon/internal/sending"
+	"github.com/mokevnin/sphericon/internal/sendingdomains"
+	"github.com/mokevnin/sphericon/internal/server"
+	"github.com/mokevnin/sphericon/internal/suspension"
+	"github.com/mokevnin/sphericon/internal/tags"
+	"github.com/mokevnin/sphericon/internal/telemetry"
+	"github.com/mokevnin/sphericon/internal/templates"
+	"github.com/mokevnin/sphericon/internal/tracking"
+	"github.com/mokevnin/sphericon/internal/webhooks"
 	"github.com/samber/do/v2"
 	"go.opentelemetry.io/otel/metric"
 
@@ -119,7 +119,7 @@ type eventsBus struct {
 	*events.Bus
 }
 
-// systemSender is 1mail's own (platform) transactional email sender, built from
+// systemSender is sphericon's own (platform) transactional email sender, built from
 // config via the messaging catalog. Distinct from a workspace's customer sender.
 type systemSender struct {
 	messaging.EmailSender
@@ -147,7 +147,7 @@ func (p *pgxPool) Shutdown() {
 
 // jobsClient is the river-backed async job queue (workers + enqueue API).
 // outboundModule is the Outbound send module singleton (ADR 0015): the one place an
-// email leaves 1mail on a Workspace's behalf, for every send surface.
+// email leaves sphericon on a Workspace's behalf, for every send surface.
 type outboundModule struct{ *outbound.Module }
 
 // externalAPI is the external (/api) ogen server; the MCP surface dispatches through it.
@@ -427,7 +427,7 @@ func (a *App) stop(ctx context.Context) error {
 // NewOperator builds the minimal app the operator commands need (config, database,
 // ent client, system sender) without the HTTP server, the event router or the job
 // workers. Providers are lazy, so only what a command invokes is ever constructed;
-// that keeps `1mail workspace …` quick to start and to shut down.
+// that keeps `sphericon workspace …` quick to start and to shut down.
 func NewOperator(env string) (*App, error) {
 	injector := do.New()
 	register(injector, env, options{})
@@ -985,7 +985,7 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client, bus.Bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
+		h, err := mcpserver.New(sphericon.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client, bus.Bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 		if err != nil {
 			return nil, err
 		}
@@ -1204,9 +1204,9 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	}, nil
 }
 
-// buildSystemSender constructs 1mail's platform email sender from config via the
+// buildSystemSender constructs sphericon's platform email sender from config via the
 // messaging catalog: smtp (dev → mailpit) or ses (prod). Same abstraction as
-// customer sends, just 1mail's own provider.
+// customer sends, just sphericon's own provider.
 func buildSystemSender(cfg *config.Config, catalog *messaging.Catalog) (messaging.EmailSender, error) {
 	from := messaging.FirstNonEmpty(cfg.SystemEmailFrom, cfg.SMTPFrom)
 	switch cfg.SystemEmailProvider {
@@ -1216,7 +1216,7 @@ func buildSystemSender(cfg *config.Config, catalog *messaging.Catalog) (messagin
 			"accessKeyId":     cfg.SESAccessKeyID,
 			"secretAccessKey": cfg.SESSecretAccessKey,
 			"from":            from,
-			"fromName":        "1mail",
+			"fromName":        "sphericon",
 		})
 		if err != nil {
 			return nil, err
@@ -1230,7 +1230,7 @@ func buildSystemSender(cfg *config.Config, catalog *messaging.Catalog) (messagin
 			"username": cfg.SMTPUser,
 			"password": cfg.SMTPPass,
 			"from":     from,
-			"fromName": "1mail",
+			"fromName": "sphericon",
 		})
 		if err != nil {
 			return nil, err

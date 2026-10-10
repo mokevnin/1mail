@@ -622,7 +622,7 @@ export type SiteApplyTagInput = {
  */
 export type SiteAuditActor = {
   /**
-   * The kind of actor; an operator is shown to the customer as "1mail staff"
+   * The kind of actor; an operator is shown to the customer as "sphericon staff"
    */
   kind: SiteAuditActorKind;
   /**
@@ -1187,7 +1187,7 @@ export type SiteCreateSendingDomainInput = {
    */
   domain: string;
   /**
-   * DKIM selector; defaults to "1mail" when omitted
+   * DKIM selector; defaults to "sphericon" when omitted
    */
   dkimSelector?: string;
 };
@@ -1506,7 +1506,7 @@ export type SiteInvitationLookupResult = {
    */
   email: EmailAddress;
   /**
-   * True when that email already has a 1mail account (accept needs no signup)
+   * True when that email already has a sphericon account (accept needs no signup)
    */
   hasAccount: boolean;
 };
@@ -1652,7 +1652,7 @@ export type SiteOAuthAuthorizationRequest = {
    */
   redirectUri: string;
   /**
-   * Scopes the client asked for that 1mail will grant by default
+   * Scopes the client asked for that sphericon will grant by default
    */
   scopes: Array<string>;
   /**
@@ -1939,7 +1939,7 @@ export const SiteSendLimitWarning = { UNLIMITED: 'unlimited', PROVIDER_QUOTA_UNA
 export type SiteSendLimitWarning = typeof SiteSendLimitWarning[keyof typeof SiteSendLimitWarning];
 
 /**
- * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
+ * Sending domain resource used by the site UI (ADR 0010). sphericon generates the
  * DKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The
  * private key is never exposed. `verified` is a live property re-checked in the
  * background — it can flip back if the DNS record disappears.
@@ -2414,7 +2414,7 @@ export type SiteWebhookEndpointResource = {
    */
   url: string;
   /**
-   * HMAC signing secret (used to verify the X-1mail-Signature header)
+   * HMAC signing secret (used to verify the X-sphericon-Signature header)
    */
   secret: string;
   /**

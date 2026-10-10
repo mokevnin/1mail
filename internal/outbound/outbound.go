@@ -1,4 +1,4 @@
-// Package outbound is the one place an email leaves 1mail on a Workspace's behalf
+// Package outbound is the one place an email leaves sphericon on a Workspace's behalf
 // (ADR 0015). Every surface — Broadcast, Automation step, Transactional — hands it
 // a Request and gets back a typed Outcome; none re-implements any part of what lies
 // between "this message is wanted" and "the provider accepted it":
@@ -26,14 +26,14 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/emailrender"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/outboundmessage"
+	"github.com/mokevnin/sphericon/internal/eligibility"
+	"github.com/mokevnin/sphericon/internal/emailrender"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/tracking"
 )
 
 // Outcome is what an Outbound send did. Sent, Skipped and Failed are final for the

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/customfield"
-	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/customfield"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
 )
 
 // SiteCustomFieldsList returns the workspace's Custom field definitions — the typed,

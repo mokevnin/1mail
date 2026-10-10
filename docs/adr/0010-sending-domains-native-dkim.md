@@ -1,12 +1,12 @@
-# Sending domains: 1mail-native DKIM, verified-domain required to send
+# Sending domains: sphericon-native DKIM, verified-domain required to send
 
 To reach deliverability parity, mail must be authenticated (DKIM/SPF/DMARC) and sent from a
 domain the workspace controls — today `from_email` is a free string, nothing is signed, and
 nothing verifies the From domain. We add a first-class, workspace-scoped **Sending domain**
 entity and gate sending on it.
 
-**1mail signs outbound mail itself (native DKIM)** rather than delegating to the provider:
-1mail generates a per-domain keypair, signs every message in the send path, and the user
+**sphericon signs outbound mail itself (native DKIM)** rather than delegating to the provider:
+sphericon generates a per-domain keypair, signs every message in the send path, and the user
 publishes one `selector._domainkey` TXT. This makes the sending identity **independent of the
 Integration** — the same verified domain works identically across SMTP, SES, and any future
 provider, with no re-verification when transport changes. Keys are stored encrypted (reuse the

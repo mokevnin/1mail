@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ee/audit"
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ee/audit"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 type recorder struct{ names []string }

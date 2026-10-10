@@ -9,7 +9,7 @@ import { ProfilePage } from './profile.tsx'
 const user = {
   id: '1',
   name: 'John',
-  email: 'info@1mail.com',
+  email: 'info@getsphericon.com',
   emailVerified: true,
   createdAt: '2026-01-01T00:00:00Z',
 }

@@ -6,8 +6,8 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/messaging"
 )
 
 // SendWelcomeArgs is the river job payload for the platform welcome email.
@@ -28,7 +28,7 @@ func (w *SendWelcomeWorker) Work(ctx context.Context, job *river.Job[SendWelcome
 	return SendWelcome(ctx, w.sender, job.Args.Email, job.Args.Name)
 }
 
-// SendWelcome sends the platform welcome email through the system sender (1mail's
+// SendWelcome sends the platform welcome email through the system sender (sphericon's
 // own provider — NOT a workspace integration). Pure (no queue) so it runs
 // identically under the river worker and the inline adapter.
 func SendWelcome(ctx context.Context, sender messaging.EmailSender, email, name string) error {

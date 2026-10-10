@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/mokevnin/1mail/ent/sendingdomain"
-	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ent/sendingdomain"
+	siteapi "github.com/mokevnin/sphericon/gen/site"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,9 +33,9 @@ func TestSiteSendingDomainsCRUD(t *testing.T) {
 	res, ok := created.(*siteapi.SiteSendingDomainResource)
 	require.Truef(t, ok, "got %T", created)
 	assert.Equal(t, "marketing.example.com", res.Domain, "domain is normalized")
-	assert.Equal(t, "1mail", res.DkimSelector, "selector defaults to 1mail")
+	assert.Equal(t, "sphericon", res.DkimSelector, "selector defaults to sphericon")
 	assert.False(t, res.Verified, "a new domain starts unverified")
-	assert.Equal(t, "1mail._domainkey.marketing.example.com", res.DkimRecord.Host)
+	assert.Equal(t, "sphericon._domainkey.marketing.example.com", res.DkimRecord.Host)
 	assert.Contains(t, res.DkimRecord.Value, "v=DKIM1; k=rsa; p=")
 	assert.Equal(t, siteapi.SiteDnsRecordTypeTXT, res.DkimRecord.Type)
 	assert.NotEmpty(t, res.SpfRecord.Value)
@@ -98,7 +98,7 @@ func TestSiteSendingDomainsListScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, want, len(page.Items))
 	for _, item := range page.Items {
 		assert.NotEmpty(t, item.Domain)
-		assert.Equal(t, "1mail._domainkey."+item.Domain, item.DkimRecord.Host)
+		assert.Equal(t, "sphericon._domainkey."+item.Domain, item.DkimRecord.Host)
 	}
 }
 

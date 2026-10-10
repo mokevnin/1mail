@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// SendingDomain is a workspace-scoped, 1mail-authenticated sending identity
-// (ADR 0010). 1mail signs outbound mail itself: it generates a per-domain DKIM
+// SendingDomain is a workspace-scoped, sphericon-authenticated sending identity
+// (ADR 0010). sphericon signs outbound mail itself: it generates a per-domain DKIM
 // keypair, the user publishes one <selector>._domainkey TXT, and the same
 // verified domain works across every transport (smtp/ses/…) with no
 // re-verification when the Integration changes. Distinct from a Sending source

@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 // WithinScopedTx is WithinTx for a caller that holds a Workspace-scoped client: fn

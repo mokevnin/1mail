@@ -1,8 +1,8 @@
-# 1mail Roadmap — toward drip.com-level marketing automation
+# sphericon Roadmap — toward drip.com-level marketing automation
 
 ## Context
 
-1mail is an open-core marketing automation platform (Go backend + React/Vite frontend,
+sphericon is an open-core marketing automation platform (Go backend + React/Vite frontend,
 workspace-scoped multi-tenant). The goal is to incrementally bring the product to the level of
 **drip.com**, but as a **general-purpose marketing automation platform** (not the e-commerce-specific
 ECRM that drip is — e-commerce is designed-for architecturally and built later).
@@ -36,7 +36,7 @@ SES-compatible send API, more provider adapters (Yandex/SendGrid/…), SMS chann
 
 For a detailed competitive feature breakdown of drip.com, see
 `research/drip-com-feature-analysis.md`. For an
-analysis of the incumbent open-source competitor's pain points (Mautic) mapped to 1mail's
+analysis of the incumbent open-source competitor's pain points (Mautic) mapped to sphericon's
 position — and the net-new items it surfaced — see
 `research/mautic-pain-points-analysis.md`.
 
@@ -136,11 +136,11 @@ The core model is in place; the open work is feature breadth on top of it:
 
 Three items below are **not** feature-breadth parity — they come from the incumbent
 competitor analysis (`research/mautic-pain-points-analysis.md`),
-which maps Mautic's most-repeated complaints to 1mail's position. Most of Mautic's systemic
-pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated UI) 1mail
+which maps Mautic's most-repeated complaints to sphericon's position. Most of Mautic's systemic
+pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated UI) sphericon
 already neutralises by design; these three are the ones still open for us:
 
-- **Scale validation — highest value.** 1mail's core bet (live rule segments, membership
+- **Scale validation — highest value.** sphericon's core bet (live rule segments, membership
   _never materialized_ — `GLOSSARY.md`) structurally avoids Mautic's #1 abandonment cause
   (~1M contacts → 5-minute segment editor, hanging pages, ~4 contacts/sec import), **but it is
   unproven at that scale.** Load-test the segment engine (rule → SQL compile + live preview
@@ -218,7 +218,7 @@ usage signal; plan and document them together, not as two disconnected features.
 - **Update / migration / Postgres runbook** — a documented, versioned upgrade path (doc home:
   [Operations: Upgrading](./operations/upgrading), linked from the migrations section of
   `docs/self-hosting.md`). Keep two runbooks distinct — the user lumps them, the plan must not:
-  - _App upgrade_ — pull the new image/binary, run `./1mail migrate` (or `AUTO_MIGRATE` on a
+  - _App upgrade_ — pull the new image/binary, run `./sphericon migrate` (or `AUTO_MIGRATE` on a
     single replica), roll servers. Migrations are embedded and forward-only.
   - _Postgres major upgrade_ — a DBA operation (`pg_upgrade` or dump/restore across majors),
     independent of the app release. The doc says "14+"; compose ships `postgres:16`.
@@ -365,7 +365,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 
 ### End-to-end verification (Phase 1)
 
-1. `mise run setup` / `mise run dev` — bring up the stack (https://1mail.localhost), mailpit on :8025.
+1. `mise run setup` / `mise run dev` — bring up the stack (https://sphericon.localhost), mailpit on :8025.
 2. Create an SMTP integration (point it at mailpit) in Settings.
 3. Add a few active contacts.
 4. Create a broadcast → audience "all active" → write an email with <code v-pre>{{ first_name }}</code> → **Send**.

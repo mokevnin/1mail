@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025) */
 @error

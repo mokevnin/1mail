@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/unsubscribe"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // UnsubscribeCreate is the builder for creating a Unsubscribe entity.

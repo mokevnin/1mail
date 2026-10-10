@@ -12,9 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/oauthclient"
-	"github.com/mokevnin/1mail/ent/oauthcode"
-	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/oauthclient"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
+	"github.com/mokevnin/sphericon/ent/predicate"
 )
 
 // OAuthClientUpdate is the builder for updating OAuthClient entities.

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	"github.com/mokevnin/1mail/ent"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/sphericon/ent"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/automations"
 )
 
 // automationSteps decodes the stored definition into the typed steps DTO. A

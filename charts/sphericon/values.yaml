@@ -1,6 +1,6 @@
 # Image. The tag defaults to the chart appVersion; pin an explicit version in production.
 image:
-  repository: ghcr.io/mokevnin/1mail
+  repository: ghcr.io/mokevnin/sphericon
   tag: ''
   pullPolicy: IfNotPresent
 
@@ -44,7 +44,7 @@ metrics:
     # Extra labels, e.g. the release label your Prometheus ruleSelector matches.
     labels: {}
     # Base URL of the runbook; each alert links to <runbookUrl>#<alertname>.
-    runbookUrl: https://mokevnin.github.io/1mail/operations/runbook
+    runbookUrl: https://mokevnin.github.io/sphericon/operations/runbook
 
 migrate:
   backoffLimit: 1
@@ -54,7 +54,7 @@ ingress:
   enabled: false
   className: ''
   annotations: {}
-  host: 1mail.example.com
+  host: sphericon.example.com
   tls:
     enabled: false
     secretName: ''

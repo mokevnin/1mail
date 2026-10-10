@@ -15,9 +15,9 @@ type workspaceOps interface {
 	UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 }
 
-const workspaceUsage = "usage: 1mail workspace suspend <slug> <reason...> | unsuspend <slug>"
+const workspaceUsage = "usage: sphericon workspace suspend <slug> <reason...> | unsuspend <slug>"
 
-// runWorkspace executes `1mail workspace <suspend|unsuspend> …` (ADR 0007): the bare
+// runWorkspace executes `sphericon workspace <suspend|unsuspend> …` (ADR 0007): the bare
 // operator toggle for a Workspace's outbound-sending freeze. Everything above this
 // mechanism (the automated detector, an Operator console) is EE.
 func runWorkspace(ctx context.Context, ops workspaceOps, args []string, out io.Writer) error {

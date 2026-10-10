@@ -11,11 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/invitation"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/recoverycode"
-	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/sphericon/ent/invitation"
+	"github.com/mokevnin/sphericon/ent/membership"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/recoverycode"
+	"github.com/mokevnin/sphericon/ent/user"
 )
 
 // UserUpdate is the builder for updating User entities.

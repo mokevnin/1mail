@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "1mail.fullname" . }}
+  name: {{ include "sphericon.fullname" . }}
   labels:
-    {{- include "1mail.labels" . | nindent 4 }}
+    {{- include "sphericon.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -27,7 +27,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "1mail.fullname" . }}
+                name: {{ include "sphericon.fullname" . }}
                 port:
                   name: http
 {{- end }}

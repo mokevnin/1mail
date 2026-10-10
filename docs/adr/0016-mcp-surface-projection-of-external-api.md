@@ -4,7 +4,7 @@ status: accepted
 
 # MCP surface: a projection of the external `/api`, not a second implementation
 
-1mail is operated by agents through an MCP server mounted at `/mcp` in the same binary
+sphericon is operated by agents through an MCP server mounted at `/mcp` in the same binary
 (Streamable HTTP, official `modelcontextprotocol/go-sdk`). Its tools are **projected from the
 external OpenAPI contract** at startup and dispatch in-process through the same ogen server, so
 workspace scoping, token scopes, validation and RFC 7807 errors are the `/api` ones by
@@ -12,7 +12,7 @@ construction. A hand-maintained parallel tool list, or a fourth TypeSpec spec, w
 drifts from the contract (codegen ethos, "generated over hand-rolled"). The only per-operation
 override is a TypeSpec `x-mcp` extension (name, hidden, send), so even that lives in the contract.
 
-The target is **capability parity with Drip's MCP**, expressed in 1mail's vocabulary
+The target is **capability parity with Drip's MCP**, expressed in sphericon's vocabulary
 (`contacts_upsert`, never `subscriber`) and adapted to the model rather than copied: **Tag**
 (glossary) is adopted because segments are built on it; forms, goals, orders and refunds are not
 modelled and stay out.

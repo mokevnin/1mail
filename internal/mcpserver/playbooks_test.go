@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Independent literal: the playbooks 1mail ships.
+// Independent literal: the playbooks sphericon ships.
 var shippedPlaybooks = []string{"welcome", "win-back", "list-hygiene"}
 
 func listedPrompts(t *testing.T, s *mcp.ClientSession) map[string]*mcp.Prompt {

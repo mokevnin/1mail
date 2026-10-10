@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Webhook endpoint resource used by the site UI */
 @resource("webhooks")
@@ -15,7 +15,7 @@ model SiteWebhookEndpointResource {
   /** Destination URL events are POSTed to */
   url: string;
 
-  /** HMAC signing secret (used to verify the X-1mail-Signature header) */
+  /** HMAC signing secret (used to verify the X-sphericon-Signature header) */
   secret: string;
 
   /** Event names this endpoint receives; empty means all events */

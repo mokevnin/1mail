@@ -1,4 +1,4 @@
-module github.com/mokevnin/1mail
+module github.com/mokevnin/sphericon
 
 go 1.27.2
 

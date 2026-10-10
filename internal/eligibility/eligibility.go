@@ -30,13 +30,13 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/confirmation"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/confirmation"
+	"github.com/mokevnin/sphericon/ent/contact"
+	"github.com/mokevnin/sphericon/ent/predicate"
+	"github.com/mokevnin/sphericon/ent/suppression"
+	"github.com/mokevnin/sphericon/ent/unsubscribe"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // Reasons a destination is ineligible.

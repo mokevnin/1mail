@@ -8,8 +8,8 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/outbound"
 )
 
 // holdRetryDelay is how long a held send waits before asking Outbound send again.

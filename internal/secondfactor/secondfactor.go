@@ -26,17 +26,17 @@ import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/recoverycode"
-	"github.com/mokevnin/1mail/ent/user"
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/credentials"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/recoverycode"
+	"github.com/mokevnin/sphericon/ent/user"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/credentials"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/secrets"
 )
 
 // Issuer names the instance in the authenticator app.
-const Issuer = "1mail"
+const Issuer = "sphericon"
 
 // RecoveryCodeCount is the size of a Recovery code set.
 const RecoveryCodeCount = 10
@@ -344,7 +344,7 @@ func (m *Module) Reset(ctx context.Context, userID int64, actor events.Actor, wo
 }
 
 // ResetByOperator is Reset from the operator command: the platform Operator `by`
-// (shown to customers as "1mail staff") is recorded in every Workspace the User
+// (shown to customers as "sphericon staff") is recorded in every Workspace the User
 // holds a Membership in.
 func (m *Module) ResetByOperator(ctx context.Context, userID int64, by string) error {
 	actor := events.Actor{Kind: events.ActorOperator, ID: by}

@@ -1,6 +1,6 @@
 using TypeSpec.Http;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** Who performed an audited change */
 enum SiteAuditActorKind {
@@ -12,7 +12,7 @@ enum SiteAuditActorKind {
 
 /** The actor of an Audit entry */
 model SiteAuditActor {
-  /** The kind of actor; an operator is shown to the customer as "1mail staff" */
+  /** The kind of actor; an operator is shown to the customer as "sphericon staff" */
   kind: SiteAuditActorKind;
 
   /** The actor's id (a User id or an API token id); absent for the system */

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

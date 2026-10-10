@@ -1,6 +1,6 @@
 # Monitoring
 
-1mail is one process on one PostgreSQL database, so monitoring comes down to four questions:
+sphericon is one process on one PostgreSQL database, so monitoring comes down to four questions:
 is the process up and reachable, are requests succeeding, is background work keeping up, and is
 the database and the email provider healthy. This page lists the probes and metrics that answer
 them, proposes service level objectives, and ships example alerting rules. Each alert links to a
@@ -23,8 +23,8 @@ With the Prometheus Operator, the chart can also create the scrape configuration
 below:
 
 ```sh
-helm upgrade --install 1mail charts/1mail \
-  --set existingSecret=1mail-secrets \
+helm upgrade --install sphericon charts/sphericon \
+  --set existingSecret=sphericon-secrets \
   --set metrics.enabled=true \
   --set metrics.serviceMonitor.enabled=true \
   --set metrics.prometheusRule.enabled=true
@@ -36,7 +36,7 @@ Names below are the ones Prometheus sees on `/metrics`. They come from OpenTelem
 counters end in `_total` and the unit becomes a suffix (`_seconds`, `_milliseconds`). Every
 series also carries `otel_scope_*` labels, which this page leaves out. Labels are bounded
 technical dimensions (handler, route template, queue, status class); tenant or recipient
-identifiers are never used as labels ([ADR 0018](https://github.com/mokevnin/1mail/blob/main/docs/adr/0018-metrics-opt-in-internal-listener.md)).
+identifiers are never used as labels ([ADR 0018](https://github.com/mokevnin/sphericon/blob/main/docs/adr/0018-metrics-opt-in-internal-listener.md)).
 
 ### HTTP
 
@@ -101,7 +101,7 @@ opened, so it can rise while the pool is below its maximum.
 
 `bounce` and `complaint` count provider reports about messages the provider had accepted, so
 they arrive later than the send. Per-workspace complaint and bounce rates are on the workspace
-dashboard ([ADR 0011](https://github.com/mokevnin/1mail/blob/main/docs/adr/0011-deliverability-rate-metrics.md));
+dashboard ([ADR 0011](https://github.com/mokevnin/sphericon/blob/main/docs/adr/0011-deliverability-rate-metrics.md));
 the metric above is the instance-wide view.
 
 ### Runtime
@@ -157,29 +157,29 @@ once you have run the objectives for a while.
 ## Example Prometheus rules
 
 The rules below are the same file the Helm chart renders into a `PrometheusRule`
-(`charts/1mail/files/alerts.yaml`). Load them with `rule_files:` in a plain Prometheus, or let
+(`charts/sphericon/files/alerts.yaml`). Load them with `rule_files:` in a plain Prometheus, or let
 the chart manage them (`metrics.prometheusRule.enabled=true`; set
 `metrics.prometheusRule.labels` to match your Prometheus `ruleSelector`).
-`OneMailDown` matches `job=~".*1mail.*"`: adjust it to your scrape job name.
+`SphericonDown` matches `job=~".*sphericon.*"`: adjust it to your scrape job name.
 
-<<< ../../charts/1mail/files/alerts.yaml{yaml}
+<<< ../../charts/sphericon/files/alerts.yaml{yaml}
 
-| Alert                           | Severity | Fires when                                                |
-| ------------------------------- | -------- | --------------------------------------------------------- |
-| `OneMailDown`                   | critical | A scrape target has been down for 5 minutes.              |
-| `OneMailCollectErrorRatioHigh`  | critical | `/collect` 5xx ratio above 1% for 10 minutes.             |
-| `OneMailSiteErrorRatioHigh`     | warning  | `/site` 5xx ratio above 5% for 10 minutes.                |
-| `OneMailApiErrorRatioHigh`      | warning  | `/api` 5xx ratio above 5% for 10 minutes.                 |
-| `OneMailRequestLatencyHigh`     | warning  | `/site` and `/api` p95 above 2 seconds for 15 minutes.    |
-| `OneMailOutboxLagHigh`          | warning  | A consumer group is over 5 minutes behind for 10 minutes. |
-| `OneMailEventHandlerErrors`     | warning  | A handler fails over 5% of messages for 15 minutes.       |
-| `OneMailJobQueueBacklog`        | warning  | A ready job has waited over 15 minutes.                   |
-| `OneMailJobFailureRatioHigh`    | warning  | Over 20% of job attempts fail for 30 minutes.             |
-| `OneMailDBPoolSaturated`        | warning  | A pool is at 90% of its maximum for 10 minutes.           |
-| `OneMailDBPoolWaits`            | warning  | Over 100 connection waits in 15 minutes.                  |
-| `OneMailEmailSendErrorsHigh`    | warning  | Over 10% of send attempts fail for 15 minutes.            |
-| `OneMailEmailBounceRateHigh`    | warning  | Over 5% of accepted messages bounce in an hour.           |
-| `OneMailEmailComplaintRateHigh` | critical | Over 0.1% of accepted messages draw a complaint.          |
+| Alert                             | Severity | Fires when                                                |
+| --------------------------------- | -------- | --------------------------------------------------------- |
+| `SphericonDown`                   | critical | A scrape target has been down for 5 minutes.              |
+| `SphericonCollectErrorRatioHigh`  | critical | `/collect` 5xx ratio above 1% for 10 minutes.             |
+| `SphericonSiteErrorRatioHigh`     | warning  | `/site` 5xx ratio above 5% for 10 minutes.                |
+| `SphericonApiErrorRatioHigh`      | warning  | `/api` 5xx ratio above 5% for 10 minutes.                 |
+| `SphericonRequestLatencyHigh`     | warning  | `/site` and `/api` p95 above 2 seconds for 15 minutes.    |
+| `SphericonOutboxLagHigh`          | warning  | A consumer group is over 5 minutes behind for 10 minutes. |
+| `SphericonEventHandlerErrors`     | warning  | A handler fails over 5% of messages for 15 minutes.       |
+| `SphericonJobQueueBacklog`        | warning  | A ready job has waited over 15 minutes.                   |
+| `SphericonJobFailureRatioHigh`    | warning  | Over 20% of job attempts fail for 30 minutes.             |
+| `SphericonDBPoolSaturated`        | warning  | A pool is at 90% of its maximum for 10 minutes.           |
+| `SphericonDBPoolWaits`            | warning  | Over 100 connection waits in 15 minutes.                  |
+| `SphericonEmailSendErrorsHigh`    | warning  | Over 10% of send attempts fail for 15 minutes.            |
+| `SphericonEmailBounceRateHigh`    | warning  | Over 5% of accepted messages bounce in an hour.           |
+| `SphericonEmailComplaintRateHigh` | critical | Over 0.1% of accepted messages draw a complaint.          |
 
 The bounce and complaint alerts only evaluate once the provider has accepted at least 100 and
 1,000 messages in the hour, so a quiet instance does not page on one bad address.

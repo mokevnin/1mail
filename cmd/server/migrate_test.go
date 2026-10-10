@@ -8,9 +8,9 @@ import (
 	"github.com/riverqueue/river/rivermigrate"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	appdb "github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	appdb "github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // On an empty database applyMigrations creates the app schema and river's own

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/sphericon/config"
 )
 
 func TestFromContextTagsRequestID(t *testing.T) {

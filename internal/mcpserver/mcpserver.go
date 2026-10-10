@@ -20,15 +20,15 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/ratelimit"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	apiauth "github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/ratelimit"
 )
 
 // apiPrefix is where the external ogen server is mounted.
 const apiPrefix = "/api"
 
-const instructions = "1mail marketing automation. Tools mirror the 1mail external API and act on " +
+const instructions = "sphericon marketing automation. Tools mirror the sphericon external API and act on " +
 	"the workspace of the Bearer API token used to connect; results and errors are the API's." + untrustedInstructions
 
 // Authenticator validates a Bearer API token (the external API's security handler).
@@ -53,7 +53,7 @@ func New(spec []byte, api http.Handler, auth Authenticator, opts ...Option) (htt
 	if err != nil {
 		return nil, fmt.Errorf("project MCP tools: %w", err)
 	}
-	srv := mcp.NewServer(&mcp.Implementation{Name: "1mail", Version: "1"}, &mcp.ServerOptions{Instructions: instructions})
+	srv := mcp.NewServer(&mcp.Implementation{Name: "sphericon", Version: "1"}, &mcp.ServerOptions{Instructions: instructions})
 	sendTools := map[string]bool{}
 	for _, op := range ops {
 		srv.AddTool(op.tool, op.handler(api))

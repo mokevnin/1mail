@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 	// required by schema hooks.
-	_ "github.com/mokevnin/1mail/ent/runtime"
+	_ "github.com/mokevnin/sphericon/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/mokevnin/1mail/ent/migrate"
+	"github.com/mokevnin/sphericon/ent/migrate"
 )
 
 type (

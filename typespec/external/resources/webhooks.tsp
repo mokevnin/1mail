@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /**
  * Outbound webhook endpoint. The HMAC signing secret is deliberately absent:

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sphericon
+description: sphericon marketing automation platform (API, workers and event router in one process). External Postgres only.
+type: application
+version: 0.1.0
+appVersion: latest

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mokevnin/1mail/ent/schema"
+	"github.com/mokevnin/sphericon/ent/schema"
 )
 
 // PruneEvents deletes analytical Events created more than retention ago, in

@@ -32,7 +32,7 @@ the SHA matters.
 
 ## Question
 
-ADR 0009 fixes the boundary for 1mail's SaaS: the core meters (a finalized **Usage snapshot**: `emails_sent`
+ADR 0009 fixes the boundary for sphericon's SaaS: the core meters (a finalized **Usage snapshot**: `emails_sent`
 sum, `contacts` high-water-mark, per Workspace and period) and accepts a **Billing hold** (a reversible
 freeze for non-payment or plan-limit breach, engaged only after a dunning grace period, same chokepoint
 as suspension in ADR 0007 but an independent cause). Plans, prices, invoices and dunning live in an external
@@ -280,7 +280,7 @@ abuse/payment conflation.
 - **What a disabled project can still do.** API-key middleware rejects only write methods with 403, reads still work
   ([middleware/auth.ts#L131-L141](https://github.com/useplunk/plunk/blob/12f9f20/apps/api/src/middleware/auth.ts#L131-L141)).
   Queued emails are **cancelled as `FAILED`** and campaigns are finalized with a partial `sentCount`, not paused
-  ([jobs/email-processor.ts#L149-L156](https://github.com/useplunk/plunk/blob/12f9f20/apps/api/src/jobs/email-processor.ts#L149-L156)). Contrast with 1mail's
+  ([jobs/email-processor.ts#L149-L156](https://github.com/useplunk/plunk/blob/12f9f20/apps/api/src/jobs/email-processor.ts#L149-L156)). Contrast with sphericon's
   resumable `Held` outcome (ADR 0007 amendment).
 - **(e) Hidden from self-hosters.** `STRIPE_ENABLED = STRIPE_SK !== '' && STRIPE_WEBHOOK_SECRET !== ''`: runtime
   keys, no build split; the billing code ships in the AGPL image
@@ -325,7 +325,7 @@ abuse/payment conflation.
   ([usage-limit/services/no-usage-limit-entitlement-provider.service.ts#L3](https://github.com/twentyhq/twenty/blob/2e8b29b/packages/twenty-server/src/engine/core-modules/usage-limit/services/no-usage-limit-entitlement-provider.service.ts#L3)),
   and the billing implementation carries a `/* @license Enterprise */` header
   ([billing/services/billing-usage-limit-entitlement-provider.service.ts#L1](https://github.com/twentyhq/twenty/blob/2e8b29b/packages/twenty-server/src/engine/core-modules/billing/services/billing-usage-limit-entitlement-provider.service.ts#L1)).
-  This is the same interface-in-core, implementation-in-`ee/` shape 1mail already uses (`site.AuditLog`, `events.Consumer`).
+  This is the same interface-in-core, implementation-in-`ee/` shape sphericon already uses (`site.AuditLog`, `events.Consumer`).
 
 ## F. Formbricks (AGPL + `ee/` license, TypeScript)
 
@@ -543,7 +543,7 @@ plus a send-path hold.
    15-minute job, read by the capture edge) and Plausible (a `locked` boolean set by daily jobs, read at the
    dashboard/API) both keep limit arithmetic off the request path. Plunk and Keila do the arithmetic **in** the
    send path (live count + threshold in `BillingLimitService`, ledger debit in the delivery transaction). That works,
-   but it puts plan numbers into the open binary, which ADR 0009 rules out for 1mail. The ADR's Billing hold matches the
+   but it puts plan numbers into the open binary, which ADR 0009 rules out for sphericon. The ADR's Billing hold matches the
    first group.
 2. **Usage snapshot read = pull, signed, with a staleness field.** Notifuse is the only open example of the read side,
    and it matches ADR 0009's shape: aggregate where the data lives, expose to the plane by pull, never push, never
@@ -563,10 +563,10 @@ plus a send-path hold.
    "two causes on one chokepoint" is the right shape; the prior art suggests storing **one row or flag per cause**, so
    that lifting one cannot lift another.
 6. **Self-host hiding is mostly "absent config = no limits".** Notifuse `0 = unlimited`, Documenso
-   `SELFHOSTED_PLAN_LIMITS`, Twenty's null provider, Keila's ledger functions returning `:ok` when off. In 1mail, "no
+   `SELFHOSTED_PLAN_LIMITS`, Twenty's null provider, Keila's ledger functions returning `:ok` when off. In sphericon, "no
    Billing hold ever set" is already that default: there is nothing in core to hide except the (EE) snapshot.
 
-### Recommendations for 1mail
+### Recommendations for sphericon
 
 **Live-usage read (recommend).**
 
@@ -622,7 +622,7 @@ plus a send-path hold.
   documents) and treats trial expiry as a **downgrade, not a lock** (Formbricks overrides to a $0 Hobby with
   `create_invoice`; Chatwoot recreates the default plan on `subscription.deleted`). Plausible is the exception: no
   subscription after trial locks the dashboard and later stops ingestion (trial + 14 days).
-- For 1mail: plan, trial and free tier all live in the plane. A free tier is a plan whose cap the plane enforces by setting
+- For sphericon: plan, trial and free tier all live in the plane. A free tier is a plan whose cap the plane enforces by setting
   a plan-limit hold at 100% and lifting it at period roll. Trial end should change the plane's plan to free, not set a hold.
   Warn before the trial ends (Twenty: 7 days before with card, 1 day without; Plausible: 7, 1 and 0 days).
 - Self-hosters are unaffected by construction: no plane, no hold, no snapshot.

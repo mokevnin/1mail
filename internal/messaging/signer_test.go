@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/internal/dnstest"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/internal/dnstest"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 // Fixture sending domains for workspace 1 (fixtures/sending_domains.yml):
-//   id 1  mail.acme.com  verified,   selector "1mail"
-//   id 2  news.acme.com  unverified, selector "1mail"
+//   id 1  mail.acme.com  verified,   selector "sphericon"
+//   id 2  news.acme.com  unverified, selector "sphericon"
 
 // dkimLookup serves pubTXT at mail.acme.com's DKIM name through a real resolver.
 // Any other name answers NXDOMAIN, so a signature over the wrong domain or
@@ -27,7 +27,7 @@ import (
 func dkimLookup(t *testing.T, pubTXT string) func(string) ([]string, error) {
 	t.Helper()
 	r := dnstest.Resolver(t, map[string]mockdns.Zone{
-		"1mail._domainkey.mail.acme.com.": {TXT: []string{pubTXT}},
+		"sphericon._domainkey.mail.acme.com.": {TXT: []string{pubTXT}},
 	})
 	return func(name string) ([]string, error) {
 		return r.LookupTXT(context.Background(), name+".")
@@ -96,7 +96,7 @@ func TestBuildSignedMIMESignsVerified(t *testing.T) {
 	raw := buf.String()
 	assert.Contains(t, raw, "DKIM-Signature:")
 	assert.Contains(t, raw, "d=mail.acme.com")
-	assert.Contains(t, raw, "s=1mail")
+	assert.Contains(t, raw, "s=sphericon")
 }
 
 // The gate (slice 3): a workspace send from an unverified domain is rejected,

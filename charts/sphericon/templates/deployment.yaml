@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "1mail.fullname" . }}
+  name: {{ include "sphericon.fullname" . }}
   labels:
-    {{- include "1mail.labels" . | nindent 4 }}
+    {{- include "sphericon.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "1mail.selectorLabels" . | nindent 6 }}
+      {{- include "sphericon.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "1mail.selectorLabels" . | nindent 8 }}
+        {{- include "sphericon.selectorLabels" . | nindent 8 }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
@@ -23,13 +23,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: 1mail
-          image: {{ include "1mail.image" . | quote }}
+        - name: sphericon
+          image: {{ include "sphericon.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
-            {{- include "1mail.envFrom" . | nindent 12 }}
+            {{- include "sphericon.envFrom" . | nindent 12 }}
           env:
-            {{- include "1mail.env" . | nindent 12 }}
+            {{- include "sphericon.env" . | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}

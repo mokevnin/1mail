@@ -226,7 +226,7 @@ Verdict key: **adopt** / **maybe** / **skip**.
   errors, and the docs list no `--ci` flag for it. `status --unused` reports unused keys.
   Source: https://github.com/i18next/i18next-cli
   This directly protects the instance-locale (ru/en/es) feature, which no current check does.
-- **size-limit: adopt, but only for the tracker.** `@1mail/analytics` builds `t.js`, an IIFE
+- **size-limit: adopt, but only for the tracker.** `@sphericon/analytics` builds `t.js`, an IIFE
   embedded into the binary and loaded on customer sites. A byte budget on
   `packages/analytics/dist/t.js` via its `file` plugin (Brotli default) is exactly what the
   tool is for. It also ships a PR-comment action (`andresz1/size-limit-action`); Vite is not

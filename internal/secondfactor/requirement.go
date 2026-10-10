@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 // GracePeriod is how long a User without a Second factor keeps access to a Workspace

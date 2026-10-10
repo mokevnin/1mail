@@ -1,6 +1,6 @@
 # Licensing
 
-1mail is **open-core**: the core is free and open source, and a small set of
+sphericon is **open-core**: the core is free and open source, and a small set of
 enterprise features is commercial.
 
 ## The split
@@ -11,9 +11,9 @@ enterprise features is commercial.
   it as a network service, the AGPL requires you to publish your source.
 
 - **Enterprise Edition — commercial.** Everything under [`ee/`](./ee/) (and any file
-  carrying an explicit "1mail Enterprise Edition License" header) is **source-available
+  carrying an explicit "sphericon Enterprise Edition License" header) is **source-available
   but not open source**, governed by [`ee/LICENSE`](./ee/LICENSE). It may be used in
-  production only with a valid 1mail Enterprise subscription (license key).
+  production only with a valid sphericon Enterprise subscription (license key).
 
 ## How Enterprise ships
 
@@ -23,4 +23,4 @@ artifact for everyone — there is no separate enterprise build.
 
 ## Questions
 
-For commercial licensing or an Enterprise subscription, contact the 1mail team.
+For commercial licensing or an Enterprise subscription, contact the sphericon team.

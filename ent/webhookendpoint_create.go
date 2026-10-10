@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/webhookendpoint"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/webhookendpoint"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // WebhookEndpointCreate is the builder for creating a WebhookEndpoint entity.

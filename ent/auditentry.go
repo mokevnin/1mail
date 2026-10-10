@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/auditentry"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/auditentry"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // AuditEntry is the model entity for the AuditEntry schema.

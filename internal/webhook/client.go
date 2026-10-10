@@ -23,7 +23,7 @@ const maxResponseBytes = 64 << 10
 // EventHeader carries the event name for receiver-side routing; the signed
 // payload also carries "type". Identity/timestamp/signature use the Standard
 // Webhooks headers (webhook-id, webhook-timestamp, webhook-signature).
-const EventHeader = "X-1mail-Event"
+const EventHeader = "X-sphericon-Event"
 
 // Doer is the subset of *http.Client used for delivery; both *http.Client and
 // safeurl's wrapped client satisfy it (the latter is not an *http.Client).

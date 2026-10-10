@@ -9,12 +9,12 @@ package ee
 import (
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/ee/audit"
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ee/retention"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/sphericon/ee/audit"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ee/retention"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/jobs"
 )
 
 // Edition is the Enterprise surface of one running instance.

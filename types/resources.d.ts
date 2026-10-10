@@ -6,7 +6,7 @@ export default interface Resources {
       "acceptExistingButton": "Join workspace",
       "errorMessage": "We couldn't accept this invitation. The link may have expired.",
       "errorTitle": "Could not accept invitation",
-      "intro": "You've been invited to join {{workspace}} on 1mail.",
+      "intro": "You've been invited to join {{workspace}} on sphericon.",
       "invalid": "This invitation is invalid or has expired.",
       "loading": "Loading invitation…",
       "nameLabel": "Your name",
@@ -110,7 +110,7 @@ export default interface Resources {
       }
     },
     "app": {
-      "name": "1mail"
+      "name": "sphericon"
     },
     "automations": {
       "activate": "Activate",
@@ -168,7 +168,7 @@ export default interface Resources {
         "reasons": {
           "no_integration": "No email provider is configured for this workspace. Add a default integration to resume.",
           "unverified_domain": "The sender domain is not verified. Publish its DKIM record and verify the domain to resume.",
-          "workspace_suspended": "Sending is suspended for this workspace. Contact your 1mail administrator."
+          "workspace_suspended": "Sending is suspended for this workspace. Contact your sphericon administrator."
         },
         "title": "Sending is on hold"
       },
@@ -332,13 +332,13 @@ export default interface Resources {
       "errorMessage": "We couldn't complete the authorization. Please try again.",
       "errorTitle": "Authorization failed",
       "forbidden": "Only workspace owners and admins can connect an application. Ask an owner or admin to approve it, or choose another workspace.",
-      "intro": "{{client}} is asking to act on a workspace of yours through the 1mail API. It gets an API token limited to the permissions below, which you can revoke at any time in the workspace API keys.",
+      "intro": "{{client}} is asking to act on a workspace of yours through the sphericon API. It gets an API token limited to the permissions below, which you can revoke at any time in the workspace API keys.",
       "invalid": "This authorization request is invalid. Return to the app that sent you here and start again.",
       "scopesTitle": "Permissions granted",
       "sendCheckbox": "Also allow sending ({{scopes}})",
       "sendDescription": "This app also asked to send email. That is off unless you allow it here.",
       "sendTitle": "Sending is opt-in",
-      "title": "Connect {{client}} to 1mail",
+      "title": "Connect {{client}} to sphericon",
       "workspaceLabel": "Workspace"
     },
     "overview": {
@@ -484,7 +484,7 @@ export default interface Resources {
         "from": "From",
         "ip": "IP address",
         "kindApiToken": "API token",
-        "kindOperator": "1mail staff",
+        "kindOperator": "sphericon staff",
         "kindSystem": "System",
         "kindUser": "User",
         "loadError": "Failed to load the audit log",
@@ -612,7 +612,7 @@ export default interface Resources {
         "deleteConfirmDescription": "Mail from this domain will stop being authenticated. This cannot be undone.",
         "deleteConfirmTitle": "Delete this sending domain?",
         "deleteError": "Failed to delete domain",
-        "description": "Authenticate the domains you send from. 1mail signs your mail with DKIM; publish the records below at your DNS provider, then verify.",
+        "description": "Authenticate the domains you send from. sphericon signs your mail with DKIM; publish the records below at your DNS provider, then verify.",
         "dkim": "DKIM (required)",
         "dkimHint": "Authenticates your mail — required to send once enforced.",
         "dmarc": "DMARC (recommended)",
@@ -783,7 +783,7 @@ export default interface Resources {
       "verifying": "Verifying your email…"
     },
     "workspaceSuspension": {
-      "description": "Outbound email sending is suspended for this workspace. Scheduled broadcasts and automations are paused and resume when the suspension is lifted. You can still sign in and view your data. To appeal, contact your 1mail administrator.",
+      "description": "Outbound email sending is suspended for this workspace. Scheduled broadcasts and automations are paused and resume when the suspension is lifted. You can still sign in and view your data. To appeal, contact your sphericon administrator.",
       "reason": "Reason: {{reason}}",
       "title": "Sending is suspended"
     }

@@ -18,8 +18,8 @@ import (
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/db"
 )
 
 func testConfig(t *testing.T) *config.Config {

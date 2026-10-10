@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/broadcast"
+	"github.com/mokevnin/sphericon/ent/broadcastrecipient"
 )
 
 // Finalize flips a Broadcast to "sent" once none of its recipients are still

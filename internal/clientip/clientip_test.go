@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mokevnin/1mail/internal/clientip"
+	"github.com/mokevnin/sphericon/internal/clientip"
 	"github.com/stretchr/testify/assert"
 )
 

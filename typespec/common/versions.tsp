@@ -1,4 +1,4 @@
-namespace OneMail;
+namespace Sphericon;
 
 enum Versions {
   v1: "1.0.0",

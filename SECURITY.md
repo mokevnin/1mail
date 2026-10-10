@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report vulnerabilities privately through GitHub private vulnerability reporting:
-open the [Security tab](https://github.com/mokevnin/1mail/security) of this repository and
+open the [Security tab](https://github.com/mokevnin/sphericon/security) of this repository and
 choose **Report a vulnerability**. This is the only supported channel; there is no security
 mailbox.
 
@@ -11,7 +11,7 @@ Do not open a public issue, pull request or discussion for a suspected vulnerabi
 
 Please include:
 
-- the affected version or commit and how you run 1mail (self-hosted, Helm, source);
+- the affected version or commit and how you run sphericon (self-hosted, Helm, source);
 - a description of the impact and the steps to reproduce it;
 - a proof of concept, if you have one.
 
@@ -25,15 +25,15 @@ Security fixes are released for the latest minor release of the current major ve
 
 In scope:
 
-- the 1mail server and its three API surfaces (`/site`, `/api`, `/collect`);
-- the web application and the tracker snippet (`/t.js`, `@1mail/analytics`);
+- the sphericon server and its three API surfaces (`/site`, `/api`, `/collect`);
+- the web application and the tracker snippet (`/t.js`, `@sphericon/analytics`);
 - authentication, authorization and workspace isolation (cross-tenant access);
 - the Enterprise code under `ee/`;
 - the Helm chart and the deployment examples in this repository.
 
 Out of scope:
 
-- vulnerabilities in third-party dependencies with no demonstrable impact on 1mail
+- vulnerabilities in third-party dependencies with no demonstrable impact on sphericon
   (report those upstream);
 - findings that need a compromised operator, database or host, or physical access;
 - denial of service through volumetric traffic, and missing rate limits on their own;

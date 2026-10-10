@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-faster/jx"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/events"
 )
 
 const (

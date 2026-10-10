@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
-	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/consent"
-	"github.com/mokevnin/1mail/internal/eligibility"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
+	"github.com/mokevnin/sphericon/internal/api/auth"
+	"github.com/mokevnin/sphericon/internal/consent"
+	"github.com/mokevnin/sphericon/internal/eligibility"
 )
 
 // Consent only narrows through /api (ADR 0016): these two operations add a

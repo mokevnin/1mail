@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/oauthclient"
-	"github.com/mokevnin/1mail/ent/oauthcode"
+	"github.com/mokevnin/sphericon/ent/oauthclient"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
 )
 
 // OAuthCodeCreate is the builder for creating a OAuthCode entity.

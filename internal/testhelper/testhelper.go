@@ -19,41 +19,41 @@ import (
 	"github.com/go-testfixtures/testfixtures/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	onemail "github.com/mokevnin/1mail"
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ee"
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/accounts"
-	"github.com/mokevnin/1mail/internal/analytics"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	apiexternal "github.com/mokevnin/1mail/internal/api/external"
-	apisite "github.com/mokevnin/1mail/internal/api/site"
-	"github.com/mokevnin/1mail/internal/authtoken"
-	"github.com/mokevnin/1mail/internal/automations"
-	"github.com/mokevnin/1mail/internal/broadcasts"
-	"github.com/mokevnin/1mail/internal/contacts"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/erasure"
-	"github.com/mokevnin/1mail/internal/eventlog"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/integrations"
-	"github.com/mokevnin/1mail/internal/jobs"
-	"github.com/mokevnin/1mail/internal/mcpserver"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/oauthserver"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/reputation"
-	"github.com/mokevnin/1mail/internal/secondfactor"
-	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/segments"
-	"github.com/mokevnin/1mail/internal/sendingdomains"
-	"github.com/mokevnin/1mail/internal/server"
-	"github.com/mokevnin/1mail/internal/tags"
-	"github.com/mokevnin/1mail/internal/templates"
-	"github.com/mokevnin/1mail/internal/tracking"
-	"github.com/mokevnin/1mail/internal/webhooks"
+	sphericon "github.com/mokevnin/sphericon"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/ee"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/accounts"
+	"github.com/mokevnin/sphericon/internal/analytics"
+	apiauth "github.com/mokevnin/sphericon/internal/api/auth"
+	apiexternal "github.com/mokevnin/sphericon/internal/api/external"
+	apisite "github.com/mokevnin/sphericon/internal/api/site"
+	"github.com/mokevnin/sphericon/internal/authtoken"
+	"github.com/mokevnin/sphericon/internal/automations"
+	"github.com/mokevnin/sphericon/internal/broadcasts"
+	"github.com/mokevnin/sphericon/internal/contacts"
+	"github.com/mokevnin/sphericon/internal/db"
+	"github.com/mokevnin/sphericon/internal/erasure"
+	"github.com/mokevnin/sphericon/internal/eventlog"
+	"github.com/mokevnin/sphericon/internal/events"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/integrations"
+	"github.com/mokevnin/sphericon/internal/jobs"
+	"github.com/mokevnin/sphericon/internal/mcpserver"
+	"github.com/mokevnin/sphericon/internal/messaging"
+	"github.com/mokevnin/sphericon/internal/oauthserver"
+	"github.com/mokevnin/sphericon/internal/outbound"
+	"github.com/mokevnin/sphericon/internal/reputation"
+	"github.com/mokevnin/sphericon/internal/secondfactor"
+	"github.com/mokevnin/sphericon/internal/secrets"
+	"github.com/mokevnin/sphericon/internal/segments"
+	"github.com/mokevnin/sphericon/internal/sendingdomains"
+	"github.com/mokevnin/sphericon/internal/server"
+	"github.com/mokevnin/sphericon/internal/tags"
+	"github.com/mokevnin/sphericon/internal/templates"
+	"github.com/mokevnin/sphericon/internal/tracking"
+	"github.com/mokevnin/sphericon/internal/webhooks"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
@@ -298,7 +298,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
 	require.NoError(t, err, "build external API")
-	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
+	mcpHandler, err := mcpserver.New(sphericon.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	secondFactor := secondfactor.New(client, bus, cipher, st.now)
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
@@ -346,7 +346,7 @@ func (s *CapturingSender) Send(_ context.Context, msg messaging.EmailMessage) (m
 		return messaging.Receipt{}, s.Err
 	}
 	s.sent = append(s.sent, msg)
-	return messaging.Receipt{MessageID: fmt.Sprintf("<test-%d@1mail.test>", len(s.sent))}, nil
+	return messaging.Receipt{MessageID: fmt.Sprintf("<test-%d@sphericon.test>", len(s.sent))}, nil
 }
 
 // Messages returns a copy of the captured sends.

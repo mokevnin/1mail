@@ -1,6 +1,6 @@
-# 1mail
+# sphericon
 
-Open-core marketing automation you can run yourself. 1mail helps a business know its
+Open-core marketing automation you can run yourself. sphericon helps a business know its
 audience and talk to it at the right moment: it collects who your contacts are and what
 they do on your site or in your product, groups them into segments, and sends them email —
 one-off broadcasts, automated sequences triggered by their behavior, and transactional
@@ -12,9 +12,9 @@ reputation stays intact. Everything lives in your own workspace on your own infr
 so the customer data stays yours. The goal is a self-hostable alternative to tools like
 Drip, without the lock-in.
 
-![The 1mail workspace overview: email engagement, contacts and automations](docs/public/screenshot.png)
+![The sphericon workspace overview: email engagement, contacts and automations](docs/public/screenshot.png)
 
-**Documentation:** https://mokevnin.github.io/1mail/
+**Documentation:** https://mokevnin.github.io/sphericon/
 
 ## Stack
 
@@ -88,7 +88,7 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
    over it). Personal overrides go in the gitignored `.env` (read by the app) or
    `.mise.local.toml` (read by mise).
 
-2. Trust Caddy's local CA once, so the browser accepts `https://1mail.localhost`:
+2. Trust Caddy's local CA once, so the browser accepts `https://sphericon.localhost`:
 
    ```sh
    caddy trust
@@ -102,7 +102,7 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
    mise daemons logs backend   # follow a daemon's output; `mise daemons ls` shows status
    ```
 
-The entry point is **https://1mail.localhost** (Caddy terminates TLS with its internal CA).
+The entry point is **https://sphericon.localhost** (Caddy terminates TLS with its internal CA).
 Daemons:
 
 | Daemon   | URL / port            | Notes                                                                  |
@@ -114,10 +114,10 @@ Daemons:
 | mailpit  | http://localhost:8025 | captured outbound email (SMTP UI on `:1025`)                           |
 
 > These are the primary checkout's ports. A linked git worktree gets offset ports and its own origin
-> (`https://<dir>.1mail.localhost:<port>`, printed by `mise env`), so stacks never collide; there
+> (`https://<dir>.sphericon.localhost:<port>`, printed by `mise env`), so stacks never collide; there
 > `caddy trust --address "$CADDY_ADMIN"` trusts Caddy's CA. Postgres is one server for every
 > checkout (the primary's `db` daemon, started by `mise run db:up`); each checkout gets its own
-> databases on it, named `1mail_<dir>`. See AGENTS.md, "Common commands" and "Dev environment".
+> databases on it, named `sphericon_<dir>`. See AGENTS.md, "Common commands" and "Dev environment".
 >
 > The backend runs the real Go server under [air](https://github.com/air-verse/air) for
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
@@ -135,45 +135,45 @@ No Node.js, no Atlas CLI, and no extra runtime dependencies are needed.
 
 ### Docker image
 
-Published to **`ghcr.io/mokevnin/1mail`** (multi-arch, linux amd64/arm64) on every release,
+Published to **`ghcr.io/mokevnin/sphericon`** (multi-arch, linux amd64/arm64) on every release,
 tagged with the version and `latest`.
 
 ```sh
 docker run -p 3000:3000 \
   -e APP_ENV=production \
-  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require" \
+  -e DATABASE_URL="postgres://user:pass@host:5432/sphericon?sslmode=require" \
   -e APP_URL="https://example.com" \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e AUTO_MIGRATE=true \
-  ghcr.io/mokevnin/1mail:latest
+  ghcr.io/mokevnin/sphericon:latest
 ```
 
 To build from source instead, use the multi-stage `Dockerfile` (node build → Go build →
-Alpine runtime): `docker build -t 1mail .`.
+Alpine runtime): `docker build -t sphericon .`.
 
 ### Binary
 
-Release archives (`1mail_<version>_<os>_<arch>.tar.gz`) are attached to each
-[GitHub Release](https://github.com/mokevnin/1mail/releases) for linux and darwin
+Release archives (`sphericon_<version>_<os>_<arch>.tar.gz`) are attached to each
+[GitHub Release](https://github.com/mokevnin/sphericon/releases) for linux and darwin
 (amd64/arm64). To build locally:
 
 ```sh
-mise run build    # → bin/1mail (build:tracker + build:spa + go build -tags embed_spa)
+mise run build    # → bin/sphericon (build:tracker + build:spa + go build -tags embed_spa)
 ```
 
 Run it:
 
 ```sh
-./bin/1mail migrate   # apply pending migrations and exit
-./bin/1mail           # start the server (listens on $PORT, default 3000)
-./bin/1mail version   # print build metadata
+./bin/sphericon migrate   # apply pending migrations and exit
+./bin/sphericon           # start the server (listens on $PORT, default 3000)
+./bin/sphericon version   # print build metadata
 ```
 
 ### Migrations
 
 Two options:
 
-- **Separate step (recommended)** — run `1mail migrate` before starting the server (an init
+- **Separate step (recommended)** — run `sphericon migrate` before starting the server (an init
   container, release job, or manual step). Safe for multi-replica deploys.
 - **On startup** — set `AUTO_MIGRATE=true` and the binary applies pending migrations
   in-process before serving. Use only for single-replica deploys against a fresh database.
@@ -191,7 +191,7 @@ and health checks.
 
 ## License
 
-1mail is **open-core**. The core is licensed under the GNU AGPL-3.0
+sphericon is **open-core**. The core is licensed under the GNU AGPL-3.0
 ([`LICENSE`](LICENSE)); the Enterprise features under [`ee/`](ee/) are commercial and
 source-available ([`ee/LICENSE`](ee/LICENSE)). See [`LICENSING.md`](LICENSING.md) for the
 boundary.

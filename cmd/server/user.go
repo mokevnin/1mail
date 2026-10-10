@@ -13,9 +13,9 @@ type userOps interface {
 	ResetSecondFactor(ctx context.Context, email string) (bool, error)
 }
 
-const userUsage = "usage: 1mail user reset-second-factor <email>"
+const userUsage = "usage: sphericon user reset-second-factor <email>"
 
-// runUser executes `1mail user reset-second-factor <email>` (ADR 0020): the way
+// runUser executes `sphericon user reset-second-factor <email>` (ADR 0020): the way
 // back in for a User locked out of their Second factor with nobody to reset it in
 // the product (the sole Owner of a self-hosted instance).
 func runUser(ctx context.Context, ops userOps, args []string, out io.Writer) error {

@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/telemetry"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/telemetry"
 )
 
 // Scrape is one Prometheus exposition body taken from the real /metrics handler.
@@ -25,7 +25,7 @@ type Scrape string
 // show up in Scrape. Shutdown is registered as cleanup.
 func StartMetrics(t *testing.T) {
 	t.Helper()
-	stop, err := telemetry.Setup(context.Background(), &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
+	stop, err := telemetry.Setup(context.Background(), &config.Config{OtelServiceName: "sphericon-test"}, "test", telemetry.BuildInfo{})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = stop(context.Background()) })
 }

@@ -1,5 +1,5 @@
-// Package onemail holds repository-root assets that Go code embeds.
-package onemail
+// Package sphericon holds repository-root assets that Go code embeds.
+package sphericon
 
 import _ "embed"
 

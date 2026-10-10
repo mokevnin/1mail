@@ -55,7 +55,7 @@ func TestPublicKeyFromPrivatePEMRejectsBadKeys(t *testing.T) {
 
 func TestVerifyDKIMRejectsEmptyExpectedKey(t *testing.T) {
 	lookup := func(context.Context, string) ([]string, error) { return []string{"v=DKIM1; k=rsa; p=abc"}, nil }
-	ok, err := VerifyDKIM(context.Background(), lookup, "1mail", "acme.com", "v=DKIM1; k=rsa; p=")
+	ok, err := VerifyDKIM(context.Background(), lookup, "sphericon", "acme.com", "v=DKIM1; k=rsa; p=")
 	if ok || err == nil {
 		t.Fatalf("VerifyDKIM = %v, %v; want false and an error for an empty expected key", ok, err)
 	}

@@ -1,4 +1,4 @@
-namespace OneMail;
+namespace Sphericon;
 
 @format("email")
 scalar EmailAddress extends string;

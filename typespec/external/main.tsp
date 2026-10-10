@@ -30,10 +30,10 @@ using TypeSpec.Http;
 using TypeSpec.OpenAPI;
 using TypeSpec.Versioning;
 
-@service(#{ title: "OneMail External API" })
+@service(#{ title: "Sphericon External API" })
 @info(#{ version: "1.0.0" })
-@server("https://api.onemail.dev", "Production API")
+@server("https://api.getsphericon.com", "Production API")
 @server("http://localhost:3000/api", "Local development API")
 @useAuth(BearerAuth)
 @versioned(Versions)
-namespace OneMail;
+namespace Sphericon;

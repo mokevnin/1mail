@@ -5,8 +5,8 @@ package events_test
 
 import (
 	"context"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/internal/events"
 	"sync"
 )
 

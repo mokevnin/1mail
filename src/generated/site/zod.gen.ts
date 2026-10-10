@@ -1154,7 +1154,7 @@ export const zSiteSegmentResource = z.object({
 });
 
 /**
- * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
+ * Sending domain resource used by the site UI (ADR 0010). sphericon generates the
  * DKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The
  * private key is never exposed. `verified` is a live property re-checked in the
  * background — it can flip back if the DNS record disappears.

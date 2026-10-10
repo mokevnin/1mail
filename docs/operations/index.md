@@ -1,6 +1,6 @@
 # Operations
 
-This section is for the person who keeps a self-hosted 1mail instance running. Start with
+This section is for the person who keeps a self-hosted sphericon instance running. Start with
 [Self-hosting](../self-hosting) to install and configure it; the pages here cover what comes
 after: sizing, backups, upgrades and monitoring.
 
@@ -16,7 +16,7 @@ after: sizing, backups, upgrades and monitoring.
 
 ## What you operate
 
-1mail is one process (the Go binary or Docker image) plus **one PostgreSQL database**. There is
+sphericon is one process (the Go binary or Docker image) plus **one PostgreSQL database**. There is
 no Redis, no object storage and no separate worker. That shapes everything below:
 
 - **PostgreSQL holds all state.** Contacts, events, Outbound messages, provider credentials

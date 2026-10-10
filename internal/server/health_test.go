@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/internal/telemetry"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/config"
+	"github.com/mokevnin/sphericon/internal/telemetry"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +41,7 @@ func TestReadyz(t *testing.T) {
 // so /metrics must answer exactly like any other unknown path.
 func TestPublicHandlerDoesNotServeMetrics(t *testing.T) {
 	testhelper.InstallOtel(t, func(ctx context.Context) (func(context.Context) error, error) {
-		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "1mail-test"}, "test", telemetry.BuildInfo{})
+		return telemetry.Setup(ctx, &config.Config{OtelServiceName: "sphericon-test"}, "test", telemetry.BuildInfo{})
 	})
 	env := testhelper.Setup(t)
 

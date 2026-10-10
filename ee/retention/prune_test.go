@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ee/retention"
-	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ee/retention"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
 )
 
 func licenseFor(t *testing.T, features ...licensekey.Feature) *licensekey.License {

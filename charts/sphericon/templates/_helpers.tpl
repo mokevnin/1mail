@@ -1,4 +1,4 @@
-{{- define "1mail.fullname" -}}
+{{- define "sphericon.fullname" -}}
 {{- if contains .Chart.Name .Release.Name -}}
 {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -6,7 +6,7 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "1mail.labels" -}}
+{{- define "sphericon.labels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -14,17 +14,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version }}
 {{- end -}}
 
-{{- define "1mail.selectorLabels" -}}
+{{- define "sphericon.selectorLabels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{- define "1mail.image" -}}
+{{- define "sphericon.image" -}}
 {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
 {{- end -}}
 
 {{/* Shared container environment: plain settings (secrets come from envFrom). */}}
-{{- define "1mail.env" -}}
+{{- define "sphericon.env" -}}
 - name: APP_ENV
   value: production
 - name: PORT
@@ -44,7 +44,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end -}}
 
-{{- define "1mail.envFrom" -}}
+{{- define "sphericon.envFrom" -}}
 - secretRef:
     name: {{ required "existingSecret is required" .Values.existingSecret }}
 {{- end -}}

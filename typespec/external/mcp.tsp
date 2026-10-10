@@ -2,7 +2,7 @@ import "@typespec/openapi";
 
 using TypeSpec.OpenAPI;
 
-namespace OneMail;
+namespace Sphericon;
 
 // MCP projection overrides (ADR 0016). Every /api operation becomes an MCP tool
 // at /mcp unless it carries `x-mcp: { hidden: true }`; `x-mcp: { name }` overrides
@@ -17,7 +17,7 @@ namespace OneMail;
 // The Audit log is never an agent capability (ADR 0016, ADR 0022).
 @@extension(AuditEntries.list, "x-mcp", #{ hidden: true });
 
-// Names in 1mail vocabulary where the default would read poorly.
+// Names in sphericon vocabulary where the default would read poorly.
 @@extension(Auth.meGet, "x-mcp", #{ name: "whoami" });
 @@extension(Events.create, "x-mcp", #{ name: "events_record" });
 @@extension(EventActions.list, "x-mcp", #{ name: "events_actions_list" });

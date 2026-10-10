@@ -34,7 +34,7 @@ func forbidigoUpdatePattern(t *testing.T) *regexp.Regexp {
 	}
 	require.NoError(t, yaml.Unmarshal(raw, &cfg))
 	for _, f := range cfg.Linters.Settings.Forbidigo.Forbid {
-		if strings.Contains(f.Pkg, "1mail/ent") {
+		if strings.Contains(f.Pkg, "sphericon/ent") {
 			return regexp.MustCompile(f.Pattern)
 		}
 	}

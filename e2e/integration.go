@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	externalapi "github.com/mokevnin/1mail/gen/external"
+	externalapi "github.com/mokevnin/sphericon/gen/external"
 )
 
 // CreateMailpitIntegration creates the default SMTP Integration pointing at the

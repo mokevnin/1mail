@@ -3,7 +3,7 @@ import type { KnipConfig } from 'knip'
 const config: KnipConfig = {
   ignore: ['src/generated/**', 'packages/analytics/src/generated/**', 'internal/server/assets/**'],
   ignoreDependencies: [
-    '@1mail/analytics',
+    '@sphericon/analytics',
     '@jsonforms/core',
     '@jsonforms/react',
     '@typespec/.*',

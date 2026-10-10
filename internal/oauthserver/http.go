@@ -14,9 +14,9 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/auth"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/oauthcode"
-	"github.com/mokevnin/1mail/internal/credentials"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/oauthcode"
+	"github.com/mokevnin/sphericon/internal/credentials"
 	"golang.org/x/oauth2"
 )
 
@@ -64,7 +64,7 @@ func (s *Server) Mount(mux *http.ServeMux) {
 		AuthorizationServers:   []string{s.issuer},
 		ScopesSupported:        SupportedScopes(),
 		BearerMethodsSupported: []string{"header"},
-		ResourceName:           "1mail",
+		ResourceName:           "sphericon",
 	})
 	// RFC 9728 inserts the resource path after the well-known prefix; the bare
 	// path is served too for clients that probe the origin.

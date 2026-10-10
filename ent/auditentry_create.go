@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/mokevnin/1mail/ent/auditentry"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ent/auditentry"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // AuditEntryCreate is the builder for creating a AuditEntry entity.

@@ -33,8 +33,8 @@ The definition is the rule query as JSON (the format used by react-querybuilder)
 group matches every contact.
 
 ```sh
-curl https://1mail.example.com/api/segments/preview \
-  -H "Authorization: Bearer $ONEMAIL_TOKEN" \
+curl https://sphericon.example.com/api/segments/preview \
+  -H "Authorization: Bearer $SPHERICON_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"definition":"{\"combinator\":\"and\",\"rules\":[]}"}'
 ```

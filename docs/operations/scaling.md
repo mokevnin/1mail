@@ -1,6 +1,6 @@
 # Scaling and tuning
 
-This page covers the connection budget, why a connection pooler in front of 1mail is not
+This page covers the connection budget, why a connection pooler in front of sphericon is not
 recommended, and the retention settings that keep the database bounded. All defaults below are
 the shipped ones.
 
@@ -32,7 +32,7 @@ lower `PGX_MAX_CONNS` below the worker total.
 
 ## PgBouncer and other poolers
 
-Do not put PgBouncer (or another transaction-pooling proxy) between 1mail and PostgreSQL:
+Do not put PgBouncer (or another transaction-pooling proxy) between sphericon and PostgreSQL:
 
 - The job queue (river) relies on `LISTEN`/`NOTIFY` to wake workers. Notifications are tied to a
   session, which a transaction-mode pooler does not preserve.
@@ -45,7 +45,7 @@ per client connection. There is no PgBouncer-compatible mode.
 ## Retention
 
 Two pieces of data grow with traffic: the **Event** table and the domain-event **outbox**. Both
-are pruned in core by background jobs. The policy is [ADR 0019](https://github.com/mokevnin/1mail/blob/main/docs/adr/0019-event-retention.md).
+are pruned in core by background jobs. The policy is [ADR 0019](https://github.com/mokevnin/sphericon/blob/main/docs/adr/0019-event-retention.md).
 
 | Variable                      | Default | `0` means | What it controls                                                                                                                                                                               |
 | ----------------------------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-1mail is an **open-core marketing automation platform** (with a planned SaaS offering).
+sphericon is an **open-core marketing automation platform** (with a planned SaaS offering).
 Go backend + React/Vite frontend in a single repo. The data model is workspace-scoped
 (multi-tenant): contacts, events, api tokens, and tracking entities all belong to a
 `workspace`.
@@ -62,7 +62,7 @@ Postgres depend on `db:up` (below) instead of a `db` daemon of their own.
 ```sh
 mise run setup          # deps, db:up, migrate, seed, worktrees:gc
 mise run db:up          # ensure the one shared Postgres runs and this checkout's databases exist
-mise run dev            # db:up, then mise daemons start caddy — full dev stack (https://1mail.localhost; a linked worktree has its own URL, see "Dev environment")
+mise run dev            # db:up, then mise daemons start caddy — full dev stack (https://sphericon.localhost; a linked worktree has its own URL, see "Dev environment")
 mise run dev:down       # stop this checkout's dev stack (never the shared Postgres)
 mise run test           # creates the test DB, then `go test -p 1 ./...`
 mise run check          # tsc + oxlint + oxfmt --check + knip + golangci-lint + govulncheck + gitleaks + jactionlint + zizmor
@@ -86,12 +86,12 @@ commit that has this setup.
 
 `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` and `DATABASE_URL` are set in `[env]`, so they are
 identical in every checkout without a daemon (a `db` daemon exports its own offset port and
-database for a linked worktree, which `[env]` overrides). The database is `1mail_<dir>`: the
+database for a linked worktree, which `[env]` overrides). The database is `sphericon_<dir>`: the
 checkout's directory name lowercased to `[a-z0-9_]`, cut to 31 characters plus a hash of the path
 when it exceeds 40, so with the `_test`, `_e2e` and `_atlas` twins (`TEST_DB_URL`, `E2E_DB_URL`,
 `ATLAS_DEV_URL`; `DB_NAMES` lists all four) every name stays under Postgres's 63-byte identifier
 limit and nothing is truncated or collides. Never set `DATABASE_URL` in `.env`: explicit values
-override it. `ONEMAIL_PG_HOST` / `ONEMAIL_PG_PORT` point every checkout at another server (an
+override it. `SPHERICON_PG_HOST` / `SPHERICON_PG_PORT` point every checkout at another server (an
 external Postgres): one that answers is used as is and never started. CI runs the same path: its
 single checkout is its own primary.
 
@@ -234,7 +234,7 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   (per-workspace providers: smtp/ses). Both providers share `messaging.BuildMIME`
   (wneessen/go-mail) — smtp sends the `*mail.Msg` directly, ses serializes it to raw
   bytes for SES `SendRawEmail`.
-- The tracker snippet (`/t.js`) is the `@1mail/analytics` IIFE bundle, built and embedded:
+- The tracker snippet (`/t.js`) is the `@sphericon/analytics` IIFE bundle, built and embedded:
   `mise run build:tracker` copies `packages/analytics/dist/t.js` into `internal/server/assets/`.
 
 ## Frontend architecture
@@ -251,11 +251,11 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
 ## Dev environment
 
 `mise run dev` starts the mise daemons (`.mise.toml`) behind Caddy with HTTPS at
-**https://1mail.localhost** (run `caddy trust` once). The external API is also exposed at
-**https://api.1mail.localhost** — Caddy rewrites `/*` → `/api/*` to the same backend, so
+**https://sphericon.localhost** (run `caddy trust` once). The external API is also exposed at
+**https://api.sphericon.localhost** — Caddy rewrites `/*` → `/api/*` to the same backend, so
 the subdomain root mirrors the binary's `/api` path (RudderStack-style edge; the binary
 stays path-based). In prod the ingress in front of the binary does the same rewrite for
-`api.onemail.dev`. Daemons: `db`, `mailpit` (SMTP UI at :8025, SMTP :1025),
+`api.getsphericon.com`. Daemons: `db`, `mailpit` (SMTP UI at :8025, SMTP :1025),
 `backend` (real Go server under air on `:3300`, hot reload), `frontend` (Vite on `:5173`),
 `caddy` (:443). Inspect with `mise daemons ls|logs|status`. Migrations run via atlas
 (`mise run db:migrate`); the backend does not self-migrate. Dev defaults (JWT secret, dev
@@ -277,7 +277,7 @@ exported `<NAME>_PORT` (`ready_port` cannot be templated). Ports with no daemon 
 metrics) are the base plus that same offset; Caddy's admin API (`CADDY_ADMIN`, 2019 + offset, what
 `caddy trust --address "$CADDY_ADMIN"` reads) and HTTP redirect listener (`CADDY_HTTP_PORT`: 80 in
 the primary checkout, 4000 + offset elsewhere) are per instance too. A linked worktree's origin is
-`https://<dir-name>.1mail.localhost:<caddy port>` (API: `https://api.<dir-name>.1mail.localhost:<caddy port>`):
+`https://<dir-name>.sphericon.localhost:<caddy port>` (API: `https://api.<dir-name>.sphericon.localhost:<caddy port>`):
 browser cookies are shared across the ports of one host, so a per-worktree host keeps the session
 cookies apart; `*.localhost` resolves to loopback and Caddy's internal CA signs each name.
 `mise env | grep APP_URL` prints it. Caddy stays the edge instead of pitchfork's own proxy
@@ -300,7 +300,7 @@ and Caddy already does the `/api` rewrite and the path routing in one file.
   `testhelper` abstraction for tables ent doesn't model (the domain-event outbox: `env.Outbox*`,
   `env.OutboxCount`). `forbidigo` in `.golangci.yml` rejects `*sql.DB` `Exec`/`Query`/`QueryRow` in
   `_test.go` files. Inject faults with ent hooks/interceptors, never DDL or triggers.
-- **No tests of built-in behaviour.** A test exercises 1mail's own code. One whose only subject is a
+- **No tests of built-in behaviour.** A test exercises sphericon's own code. One whose only subject is a
   Mantine component, the standard library or another dependency (a copy button showing "Copied", a
   library's defaults or retries) is deleted, and none is added.
 - **No custom CSS anywhere in the repo.** Style the frontend exclusively through Mantine — components, style
@@ -317,7 +317,7 @@ and Caddy already does the `/api` rewrite and the path routing in one file.
 
 ### Issue tracker
 
-Issues live in GitHub Issues (`mokevnin/1mail`), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues (`mokevnin/sphericon`), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

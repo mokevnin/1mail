@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "1mail.fullname" . }}
+  name: {{ include "sphericon.fullname" . }}
   labels:
-    {{- include "1mail.labels" . | nindent 4 }}
+    {{- include "sphericon.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    {{- include "1mail.selectorLabels" . | nindent 4 }}
+    {{- include "sphericon.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}
@@ -18,14 +18,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "1mail.fullname" . }}-metrics
+  name: {{ include "sphericon.fullname" . }}-metrics
   labels:
-    {{- include "1mail.labels" . | nindent 4 }}
+    {{- include "sphericon.labels" . | nindent 4 }}
     app.kubernetes.io/component: metrics
 spec:
   type: ClusterIP
   selector:
-    {{- include "1mail.selectorLabels" . | nindent 4 }}
+    {{- include "sphericon.selectorLabels" . | nindent 4 }}
   ports:
     - name: metrics
       port: {{ .Values.metrics.port }}

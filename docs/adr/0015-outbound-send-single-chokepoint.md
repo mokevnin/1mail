@@ -4,7 +4,7 @@ status: accepted
 
 # Outbound send: one module, one message record, two outcome scopes
 
-Every email 1mail sends **on a Workspace's behalf** — Broadcast, Automation step, Transactional,
+Every email sphericon sends **on a Workspace's behalf** — Broadcast, Automation step, Transactional,
 and the operator's test send of a Broadcast — passes through **one module, Outbound send**, which
 owns everything between "this message is wanted" and "the
 provider accepted it": Send-eligibility, the Workspace freeze check, the Sending-domain gate,
@@ -27,8 +27,8 @@ ways. Workspace suspension (ADR 0007) had no single place to be enforced at all.
 - **In, when it exists:** the double-opt-in Confirmation mail (ADR 0013). It goes to a Destination
   on the Workspace's behalf, so it needs Suppression, the freeze check, the domain gate and
   signing; it has no Sending source and no unsubscribe, like Transactional. Today the confirmation
-  link and endpoint exist but nothing in 1mail sends the mail, so there is nothing to migrate.
-- **Out:** platform mail to 1mail's own Users — welcome, email verification, password reset, member
+  link and endpoint exist but nothing in sphericon sends the mail, so there is nothing to migrate.
+- **Out:** platform mail to sphericon's own Users — welcome, email verification, password reset, member
   invitations, and the "sending domain no longer verified" owner notice. It is sent by the
   instance's system sender, is not scoped to a Workspace's Sending domain, and must keep working
   while a Workspace is suspended or unverified (the owner has to be able to read the notice).

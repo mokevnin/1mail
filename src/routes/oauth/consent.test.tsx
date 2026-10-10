@@ -56,7 +56,9 @@ test('shows the client and its permissions, with sending off by default', async 
   mockConsentApi(() => {})
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
-  await expect.element(screen.getByText('Connect Fixture Connector to 1mail')).toBeInTheDocument()
+  await expect
+    .element(screen.getByText('Connect Fixture Connector to sphericon'))
+    .toBeInTheDocument()
   await expect.element(screen.getByText('contacts:read', { exact: true })).toBeInTheDocument()
   await expect.element(screen.getByLabelText(/Also allow sending/)).not.toBeChecked()
 })

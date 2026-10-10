@@ -1,4 +1,4 @@
-# 1mail
+# sphericon
 
 Marketing automation platform. The domain is workspace-scoped (multi-tenant): every
 contact, event, segment, and tracking entity belongs to exactly one Workspace.
@@ -59,7 +59,7 @@ _Avoid_: Alias, merge, reconcile
 An immutable, append-only record that something happened (an `action`, optional properties,
 at a time). Attached to a Contact by **stable identity resolved at ingest** — not by email —
 and carries denormalized identity snapshot fields for debugging. Never FK-constrained to the
-mutable Contact. The raw material behind behavioral segmentation. 1mail's own delivery and
+mutable Contact. The raw material behind behavioral segmentation. sphericon's own delivery and
 engagement facts (`email.sent`, `email.opened`, `email.clicked`) are Events too — reserved,
 system-generated actions — so engagement is segmentable through the very same machinery as
 customer-tracked actions, with no parallel event stream.
@@ -74,7 +74,7 @@ metering counts do not change. What survives is the minimum that keeps the refus
 Unsubscribe and Suppression rows for its Destinations. It leaves a PII-free `contact.erased`
 Event, stored without any Contact reference (its webhook delivery carries the customer's own
 subject_id so downstream copies can be erased). A person who later reappears (Identify, import) is a new Contact and
-is not blocked; surviving opt-outs still apply to them. The Workspace is the controller and 1mail
+is not blocked; surviving opt-outs still apply to them. The Workspace is the controller and sphericon
 the processor, so Erasure is an operator action, never a data-subject self-service form.
 _Avoid_: Anonymization (that is only what happens to the delivery rows), forget, purge (purge is
 bulk retention policy, a separate concern)
@@ -246,7 +246,7 @@ _Avoid_: Delivered (for the accepted-by-provider sense)
 **Transactional send**:
 A single-recipient email triggered by the customer's own application through the `/api`
 surface (e.g. password reset, receipt, OTP) — the third send surface alongside Broadcast and
-Automation, and what makes 1mail one service for marketing _and_ transactional. It carries no
+Automation, and what makes sphericon one service for marketing _and_ transactional. It carries no
 Sending source and is **never** authored as a campaign: the app supplies a Destination, a
 referenced Template id, and per-call variables, and the content is rendered at send time. It
 skips Unsubscribe (Send-eligibility layers 2–3 — you cannot opt out of your own password
@@ -322,7 +322,7 @@ _Avoid_: Provider (alone), ESP, sender, connector
 **Sending domain**:
 A workspace-scoped, DNS-verified domain that a Contact's mail may be sent _from_ — the
 authenticated **sending identity**, deliberately **independent of the Integration** (the
-transport). 1mail owns a per-domain DKIM keypair and **signs every outbound message itself**
+transport). sphericon owns a per-domain DKIM keypair and **signs every outbound message itself**
 (native signing), so the same identity holds across SMTP, SES, and any future provider with no
 re-verification. A `from_email` is a verified Sending domain plus a local part — never a free
 string; the send path **hard-requires** the From domain to match a verified Sending domain on
@@ -341,7 +341,7 @@ _Avoid_: From domain, verified domain, sender identity, SPF domain
 **Complaint rate**:
 The reputation-monitoring ratio `complaints / (sent − hard bounces)`, per (Workspace, **Sending
 domain**), over a trailing time window. The denominator subtracts hard bounces as a cheap proxy
-for _delivered_ (mailbox providers judge complaint rate over delivered mail, but 1mail only
+for _delivered_ (mailbox providers judge complaint rate over delivered mail, but sphericon only
 records `email.sent` = accepted-by-provider — see **Sent**; a plain `/sent` denominator
 understates, worst for the abusive senders that matter most). A **flow rate**: each event counts
 by its own `occurred_at`, never linked back to the originating send, so it is always current and
@@ -424,7 +424,7 @@ Operator does), and skips a Workspace an Operator has exempted. A SaaS/platform 
 _Avoid_: Spam filter, auto-ban
 
 **Webhook endpoint** (outbound):
-A workspace-scoped HTTP destination that **1mail calls** when domain events occur — subscribes
+A workspace-scoped HTTP destination that **sphericon calls** when domain events occur — subscribes
 to event types (empty = all) and signs each delivery (HMAC). Outbound only; the opposite of an
 Ingest hook.
 _Avoid_: Webhook (unqualified), callback
@@ -481,7 +481,7 @@ _Avoid_: Permission, scope (scope is the API-token term)
 
 **Audit entry** (the Audit log is the Workspace's append-only sequence of them):
 An immutable record that an **actor** changed a Workspace's configuration or access — who
-(a User, an API token, a platform Operator shown to the customer only as "1mail staff", or
+(a User, an API token, a platform Operator shown to the customer only as "sphericon staff", or
 `system`), what (an action on a target), and when. It keeps a snapshot of the target's name (a Contact by id only), so
 it stays readable after the target is deleted; secrets are never recorded as values, and
 Contact changes name the fields changed, never their personal data. It covers the
@@ -493,7 +493,7 @@ _Avoid_: Event (that is a Contact/data-plane fact), activity, history, changelog
 
 ### Metering & billing
 
-1mail's core _measures_ billable activity; it does not _price_ it. Metering (what happened,
+sphericon's core _measures_ billable activity; it does not _price_ it. Metering (what happened,
 how much) is a domain concern; rating, plans, invoices, payment, and dunning are **not** — they
 live in an external billing plane and never enter the core glossary.
 

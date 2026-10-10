@@ -1,7 +1,7 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace OneMail;
+namespace Sphericon;
 
 /** A Tag: a presence-only, workspace-scoped label on Contacts (auto-created on first use). */
 model SiteTagResource {

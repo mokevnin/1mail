@@ -1,14 +1,14 @@
 # Deliverability and consent
 
-1mail treats staying out of the spam folder, and out of trouble, as part of the product rather
+sphericon treats staying out of the spam folder, and out of trouble, as part of the product rather
 than an add-on. This page describes what happens for you and what you set up once.
 
 ## Sending domains
 
 You can only send from a domain you control and have verified. Add the domain in **Settings →
-Sending domains**; 1mail generates a DKIM keypair, you publish one TXT record at
+Sending domains**; sphericon generates a DKIM keypair, you publish one TXT record at
 `selector._domainkey`, and verification flips the domain on. From then on every message is
-signed by 1mail itself, whichever transport carries it. Sending from an unverified domain is
+signed by sphericon itself, whichever transport carries it. Sending from an unverified domain is
 rejected on all three surfaces: broadcasts, automations and transactional mail.
 
 ## Who may be mailed

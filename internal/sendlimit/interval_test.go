@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mokevnin/1mail/internal/sendlimit"
+	"github.com/mokevnin/sphericon/internal/sendlimit"
 )
 
 func ptr(n int) *int { return &n }

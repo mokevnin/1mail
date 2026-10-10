@@ -15,10 +15,10 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/mokevnin/1mail/ee/licensekey"
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/auditentry"
-	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/auditentry"
+	"github.com/mokevnin/sphericon/ent/workspace"
 )
 
 // Interval is how often the prune job runs; the window is in days, so hourly is ample.

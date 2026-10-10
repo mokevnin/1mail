@@ -3,7 +3,7 @@ package resources
 import (
 	"testing"
 
-	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/sphericon/ent"
 )
 
 func TestBroadcastStatsRates(t *testing.T) {

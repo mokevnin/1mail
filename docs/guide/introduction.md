@@ -1,10 +1,10 @@
 # Introduction
 
-1mail helps you know the people you talk to and reach them with the right email at the right
+sphericon helps you know the people you talk to and reach them with the right email at the right
 moment. It collects who your contacts are and what they do, lets you describe groups of them,
 and sends to those groups: one-off broadcasts, automated sequences, and transactional mail.
 
-![The 1mail workspace overview](/screenshot.png)
+![The sphericon workspace overview](/screenshot.png)
 
 ## The model in five ideas
 
@@ -17,7 +17,7 @@ those it has typed [custom fields](/guide/tracking#custom-fields) and tags.
 
 **Event.** An immutable record that something happened: `signed_up`, `viewed_pricing`,
 `email.opened`. Events attach to the contact, so behavior is something you can segment on.
-1mail's own delivery facts (`email.sent`, `email.opened`, `email.clicked`) are events too, so
+sphericon's own delivery facts (`email.sent`, `email.opened`, `email.clicked`) are events too, so
 engagement is segmentable the same way as anything you track yourself.
 
 **Segment.** A saved rule that says which contacts match: attributes, custom fields, tags, and
