@@ -15,6 +15,7 @@ export default defineConfig({
     'packages/*/src/generated',
     'packages/*/dist',
     'internal/server/assets',
+    'charts/*/templates',
     'gen',
     'ent',
     'pnpm-lock.yaml',

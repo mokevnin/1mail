@@ -9,6 +9,9 @@ hero:
       text: Self-host it
       link: /self-hosting
     - theme: alt
+      text: Operate it
+      link: /operations/
+    - theme: alt
       text: API reference
       link: /api/
     - theme: alt

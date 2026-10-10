@@ -216,8 +216,8 @@ usage signal; plan and document them together, not as two disconnected features.
   that's watchtower/the orchestrator's job, not ours), and risky when a release carries
   migrations. Scope the banner as the feature; treat auto-apply as binary-only, maybe.
 - **Update / migration / Postgres runbook** — a documented, versioned upgrade path (doc home:
-  a new **"Upgrading"** section in `docs/self-hosting.md`, extending the existing migrations
-  section). Keep two runbooks distinct — the user lumps them, the plan must not:
+  [Operations: Upgrading](./operations/upgrading), linked from the migrations section of
+  `docs/self-hosting.md`). Keep two runbooks distinct — the user lumps them, the plan must not:
   - _App upgrade_ — pull the new image/binary, run `./1mail migrate` (or `AUTO_MIGRATE` on a
     single replica), roll servers. Migrations are embedded and forward-only.
   - _Postgres major upgrade_ — a DBA operation (`pg_upgrade` or dump/restore across majors),

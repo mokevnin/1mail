@@ -45,6 +45,7 @@ import (
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
+	"go.opentelemetry.io/otel/metric"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -114,9 +115,11 @@ type dkimLookup struct {
 // database/sql pool the ent client and pubsub use).
 type pgxPool struct {
 	*pgxpool.Pool
+	metrics metric.Registration
 }
 
 func (p *pgxPool) Shutdown() {
+	_ = p.metrics.Unregister()
 	p.Close()
 }
 
@@ -169,6 +172,27 @@ func New(env string) (*App, error) {
 
 	jobsCli, err := do.Invoke[*jobsClient](injector)
 	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+
+	// Operational gauges (outbox lag, queue depth). They read on scrape through the
+	// shared pools and live for the process, so they are never unregistered.
+	database, err := do.Invoke[*sqlDB](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	pool, err := do.Invoke[*pgxPool](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := events.RegisterLagGauge(database.DB); err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := jobs.RegisterQueueMetrics(pool.Pool); err != nil {
 		_ = injector.Shutdown()
 		return nil, err
 	}
@@ -310,6 +334,8 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
+		db.ConfigurePool(database, cfg.DBPool)
+
 		return &sqlDB{DB: database}, nil
 	})
 
@@ -427,11 +453,20 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		return &pgxPool{Pool: pool}, nil
+		pool, err := db.NewPGXPool(context.Background(), cfg.DatabaseURL, cfg.DBPool)
+		if err != nil {
+			return nil, err
+		}
+		reg, err := db.RegisterPoolMetrics(database.DB, pool)
+		if err != nil {
+			pool.Close()
+			return nil, err
+		}
+		return &pgxPool{Pool: pool, metrics: reg}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*jobsClient, error) {
@@ -464,7 +499,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
+		database, err := do.Invoke[*sqlDB](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL, jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention})
 		if err != nil {
 			return nil, err
 		}
