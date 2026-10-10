@@ -111,6 +111,11 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) (messagin
 		RawMessage:   &types.RawMessage{Data: raw.Bytes()},
 	})
 	if err != nil {
+		if busy := messaging.ClassifyReply(err.Error()); busy != nil {
+			// SES Throttling (rate or daily quota): the provider is busy, not the
+			// message bad (ADR 0023).
+			return messaging.Receipt{}, fmt.Errorf("ses: send: %w: %w", busy, err)
+		}
 		return messaging.Receipt{}, fmt.Errorf("ses: send: %w", err)
 	}
 	return messaging.Receipt{MessageID: aws.ToString(out.MessageId)}, nil

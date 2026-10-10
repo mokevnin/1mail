@@ -56,6 +56,27 @@ const (
 	Deferral Outcome = "deferral"
 )
 
+// Backoffs for a provider reply that says it is busy (ADR 0023). The core does not
+// auto-tune the Send rate limit; it only waits. A daily quota refills gradually, so
+// its wait is long.
+const (
+	ThrottleBackoff = 30 * time.Second
+	QuotaBackoff    = time.Hour
+)
+
+// throttleBackoff is the wait a provider "too fast" or "quota exceeded" error asks
+// for, zero when err is neither.
+func throttleBackoff(err error) time.Duration {
+	switch {
+	case errors.Is(err, messaging.ErrQuotaExceeded):
+		return QuotaBackoff
+	case errors.Is(err, messaging.ErrThrottled):
+		return ThrottleBackoff
+	default:
+		return 0
+	}
+}
+
 // Reasons an Outbound send is Held.
 const (
 	HoldSuspended        = "workspace_suspended"
@@ -286,6 +307,13 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 			// not a failure. The claim is dropped so the same Request can run again.
 			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Held, Reason: HoldUnverifiedDomain}, nil
+		}
+		if wait := throttleBackoff(err); wait > 0 {
+			// The provider answered "too fast" or "quota exceeded": it refused the
+			// message, so nothing left. A Deferral, like our own spent limit: the claim
+			// is dropped, no attempt is consumed and the same Request runs again later.
+			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
+			return Result{Outcome: Deferral, Wait: wait}, nil
 		}
 		m.release(ctx, s, msg)
 		return Result{}, fmt.Errorf("outbound: send to %s: %w", dest, err)
