@@ -108,18 +108,69 @@ func TestCORSPoliciesByPath(t *testing.T) {
 		assert.Empty(t, got.Get("Access-Control-Allow-Credentials"))
 	}
 
-	// The app reflects any origin when no allowlist is set, with credentials...
-	open := preflight(corsMiddleware(nil)(ok), "/site/workspaces")
-	assert.Equal(t, "https://customer.example", open.Get("Access-Control-Allow-Origin"))
-	assert.Equal(t, "true", open.Get("Access-Control-Allow-Credentials"))
+	// Cookie-authenticated paths allow cross-origin credentials only for an explicit
+	// allowlist: with none configured there are no CORS headers at all.
+	for _, path := range []string{"/site/workspaces", "/auth/direct/login"} {
+		none := preflight(corsMiddleware(nil)(ok), path)
+		assert.Empty(t, none.Get("Access-Control-Allow-Origin"), path)
+		assert.Empty(t, none.Get("Access-Control-Allow-Credentials"), path)
 
-	// ...and enforces the allowlist when one is configured.
-	listed := corsMiddleware([]string{"https://app.example"})(ok)
-	assert.Empty(t, preflight(listed, "/site/workspaces").Get("Access-Control-Allow-Origin"))
-	allowed := do(t, listed, http.MethodOptions, "/site/workspaces", map[string]string{
-		"Origin": "https://app.example", "Access-Control-Request-Method": "POST",
-	}).Header()
-	assert.Equal(t, "https://app.example", allowed.Get("Access-Control-Allow-Origin"))
+		listed := corsMiddleware([]string{"https://app.example"})(ok)
+		assert.Empty(t, preflight(listed, path).Get("Access-Control-Allow-Origin"), path)
+		allowed := do(t, listed, http.MethodOptions, path, map[string]string{
+			"Origin": "https://app.example", "Access-Control-Request-Method": "POST",
+		}).Header()
+		assert.Equal(t, "https://app.example", allowed.Get("Access-Control-Allow-Origin"), path)
+		assert.Equal(t, "true", allowed.Get("Access-Control-Allow-Credentials"), path)
+	}
+
+	// Bearer-token surfaces (external API, MCP, OAuth) reflect any origin but never
+	// allow credentials, whatever the allowlist.
+	for _, origins := range [][]string{nil, {"https://app.example"}} {
+		for _, path := range []string{"/api/v1/contacts", "/mcp", "/oauth/token"} {
+			got := preflight(corsMiddleware(origins)(ok), path)
+			assert.Equal(t, "https://customer.example", got.Get("Access-Control-Allow-Origin"), path)
+			assert.Empty(t, got.Get("Access-Control-Allow-Credentials"), path)
+		}
+	}
+}
+
+func TestCrossOriginGuardProtectsCookiePathsOnly(t *testing.T) {
+	var reached bool
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		reached = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	guard, err := crossOriginGuard("https://1mail.example", nil)
+	require.NoError(t, err)
+	h := guard(ok)
+
+	cases := []struct {
+		name, method, path, site string
+		want                     int
+	}{
+		{"cross-site site write", http.MethodPost, "/site/workspaces", "cross-site", http.StatusForbidden},
+		{"cross-site login", http.MethodPost, "/site/auth/direct/login", "cross-site", http.StatusForbidden},
+		{"cross-site auth write", http.MethodPost, "/auth/direct/login", "cross-site", http.StatusForbidden},
+		{"same-site subdomain write", http.MethodDelete, "/site/workspaces/acme", "same-site", http.StatusForbidden},
+		{"same-origin site write", http.MethodPost, "/site/workspaces", "same-origin", http.StatusNoContent},
+		{"cross-site read", http.MethodGet, "/site/workspaces", "cross-site", http.StatusNoContent},
+		{"non-browser write", http.MethodPost, "/site/workspaces", "", http.StatusNoContent},
+		{"collect is cross-origin by design", http.MethodPost, "/collect/v1/track", "cross-site", http.StatusNoContent},
+		{"one-click unsubscribe", http.MethodPost, "/e/u/token", "cross-site", http.StatusNoContent},
+		{"external API", http.MethodPost, "/api/v1/contacts", "cross-site", http.StatusNoContent},
+		{"OAuth token", http.MethodPost, "/oauth/token", "cross-site", http.StatusNoContent},
+	}
+	for _, c := range cases {
+		reached = false
+		headers := map[string]string{}
+		if c.site != "" {
+			headers["Sec-Fetch-Site"] = c.site
+		}
+		rec := do(t, h, c.method, c.path, headers)
+		assert.Equal(t, c.want, rec.Code, c.name)
+		assert.Equal(t, c.want == http.StatusNoContent, reached, c.name)
+	}
 }
 
 func TestChainRunsMiddlewareOutermostFirst(t *testing.T) {
@@ -157,4 +208,26 @@ func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, post("/collect/x", "1234").Code)
 	assert.Equal(t, http.StatusRequestEntityTooLarge, post("/collect/x", "12345").Code)
+}
+
+func TestCrossOriginGuardTrustsAppAndAllowlistedOrigins(t *testing.T) {
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	// APP_URL may carry a trailing slash or path; only its origin counts.
+	guard, err := crossOriginGuard("https://1mail.example/", []string{"https://app.example"})
+	require.NoError(t, err)
+	h := guard(ok)
+
+	for origin, want := range map[string]int{
+		"https://1mail.example": http.StatusNoContent,
+		"https://app.example":   http.StatusNoContent,
+		"https://evil.example":  http.StatusForbidden,
+	} {
+		rec := do(t, h, http.MethodPost, "/site/workspaces", map[string]string{
+			"Sec-Fetch-Site": "cross-site", "Origin": origin,
+		})
+		assert.Equal(t, want, rec.Code, origin)
+	}
+
+	_, err = crossOriginGuard("not a url", nil)
+	assert.Error(t, err)
 }

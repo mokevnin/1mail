@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -51,7 +53,9 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		SecretReader:   token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
 		TokenDuration:  time.Hour,
 		CookieDuration: 24 * time.Hour,
+		// Cross-site writes are rejected by crossOriginGuard instead (see there).
 		DisableXSRF:    true,
+		SameSiteCookie: http.SameSiteLaxMode,
 		SecureCookies:  secureCookies,
 		Issuer:         "1mail",
 		URL:            cfg.AppURL,
@@ -127,10 +131,16 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// specific pattern wins, so this never shadows the API prefixes above.
 	mux.Handle("/", spaHandler(cfg.Locale))
 
+	guard, err := crossOriginGuard(cfg.AppURL, cfg.CORSOrigins)
+	if err != nil {
+		return nil, err
+	}
+
 	// requestID is outermost so the correlation id is in context before recoverer
 	// runs — the panic log then carries request_id. (requestID is trivial and
 	// cannot itself panic, so nothing downstream of recovery is lost.)
-	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes), corsMiddleware(cfg.CORSOrigins)), nil
+	// guard sits inside corsMiddleware so preflights are answered before the check.
+	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes), corsMiddleware(cfg.CORSOrigins), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
@@ -248,49 +258,94 @@ func requestID(next http.Handler) http.Handler {
 	})
 }
 
-// corsMiddleware applies two rs/cors policies by path: the public collect API
-// echoes any origin without credentials (the collect key is public, cookies are
-// first-party on the customer's own domain), while the rest of the app uses the
-// configured allowlist with credentials (an empty list reflects any origin).
+// cookiePath reports whether a path is authenticated by the JWT cookie (the SPA
+// API and go-pkgz/auth), the only surface exposed to CSRF.
+func cookiePath(path string) bool {
+	return strings.HasPrefix(path, "/site/") || strings.HasPrefix(path, "/auth/")
+}
+
+// corsMiddleware applies three rs/cors policies by path:
+//   - /collect/: echoes any origin without credentials (the collect key is
+//     public, cookies are first-party on the customer's own domain);
+//   - /site/ and /auth/ (cookie auth): credentials only for the configured
+//     allowlist. The SPA is served same-origin, so with no allowlist there are no
+//     CORS headers at all;
+//   - everything else (external API, MCP, OAuth: bearer tokens): echoes any origin
+//     without credentials.
 func corsMiddleware(origins []string) func(http.Handler) http.Handler {
-	app := cors.New(cors.Options{
-		AllowedMethods: []string{
-			http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions,
-		},
-		// "*" reflects whatever request headers the client asks for (works with
-		// credentials, and avoids brittle exact-match of comma-joined header lists).
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-		AllowedOrigins:   origins,
-		// Empty allowlist ⇒ reflect any origin (dev convenience); AllowedOrigins
-		// is ignored when AllowOriginFunc is set, so only install it when empty.
-		AllowOriginFunc: reflectAllWhenEmpty(origins),
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions}
+	// "*" reflects whatever request headers the client asks for (works with
+	// credentials, and avoids brittle exact-match of comma-joined header lists).
+	anyHeaders := []string{"*"}
+	open := cors.New(cors.Options{
+		AllowedMethods:  methods,
+		AllowedHeaders:  anyHeaders,
+		AllowOriginFunc: func(string) bool { return true },
 	})
 	collect := cors.New(cors.Options{
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: false,
-		AllowOriginFunc:  func(string) bool { return true },
+		AllowedMethods:  []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowedHeaders:  anyHeaders,
+		AllowOriginFunc: func(string) bool { return true },
 	})
+	var cookie *cors.Cors
+	if len(origins) > 0 {
+		cookie = cors.New(cors.Options{
+			AllowedMethods:   methods,
+			AllowedHeaders:   anyHeaders,
+			AllowCredentials: true,
+			AllowedOrigins:   origins,
+		})
+	}
 
 	return func(next http.Handler) http.Handler {
-		appH := app.Handler(next)
+		openH := open.Handler(next)
 		collectH := collect.Handler(next)
+		cookieH := next
+		if cookie != nil {
+			cookieH = cookie.Handler(next)
+		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasPrefix(r.URL.Path, "/collect/") {
+			switch {
+			case strings.HasPrefix(r.URL.Path, "/collect/"):
 				collectH.ServeHTTP(w, r)
-				return
+			case cookiePath(r.URL.Path):
+				cookieH.ServeHTTP(w, r)
+			default:
+				openH.ServeHTTP(w, r)
 			}
-			appH.ServeHTTP(w, r)
 		})
 	}
 }
 
-// reflectAllWhenEmpty returns an AllowOriginFunc that reflects any origin when no
-// allowlist is configured, or nil so rs/cors uses AllowedOrigins otherwise.
-func reflectAllWhenEmpty(origins []string) func(string) bool {
-	if len(origins) > 0 {
-		return nil
+// crossOriginGuard rejects cross-site unsafe requests (Sec-Fetch-Site, falling back
+// to Origin vs Host) on the cookie-authenticated paths with the stdlib's
+// http.CrossOriginProtection. This is why go-pkgz's own XSRF double-submit stays
+// disabled: it would need a token round-trip in the generated client for the same
+// protection. Bearer and secret-key surfaces (collect, API, MCP, OAuth, hooks,
+// tracking) are cross-origin by design and pass through untouched.
+//
+// The app origin (APP_URL, which may carry a path or trailing slash) and the
+// credentialed-CORS allowlist are trusted: an origin allowed to send cookies
+// cross-origin must also be allowed to write.
+func crossOriginGuard(appURL string, allowed []string) (func(http.Handler) http.Handler, error) {
+	cop := http.NewCrossOriginProtection()
+	for _, raw := range append([]string{appURL}, allowed...) {
+		u, err := url.Parse(raw)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return nil, fmt.Errorf("trusted origin %q: want scheme://host", raw)
+		}
+		if err := cop.AddTrustedOrigin(u.Scheme + "://" + u.Host); err != nil {
+			return nil, fmt.Errorf("trusted origin %q: %w", raw, err)
+		}
 	}
-	return func(string) bool { return true }
+	return func(next http.Handler) http.Handler {
+		guarded := cop.Handler(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if cookiePath(r.URL.Path) {
+				guarded.ServeHTTP(w, r)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}, nil
 }
