@@ -46,13 +46,20 @@ type Client struct {
 	ent   *ent.Client
 }
 
+// Retention groups the data-retention settings of the prune jobs.
+type Retention struct {
+	// OutboxFloor is the minimum age of a pruned outbox row.
+	OutboxFloor time.Duration
+	// Events is the age past which analytical Events are deleted (0 disables).
+	Events time.Duration
+}
+
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change). db is the raw handle the instance-wide
-// outbox prune runs on; outboxFloor is the minimum age of a pruned outbox row;
-// eventsRetention is the age past which analytical Events are deleted (0 disables).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, outboxFloor, eventsRetention time.Duration) (*Client, error) {
+// outbox prune runs on; retention carries the prune settings.
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, retention Retention) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -70,8 +77,8 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
-	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: outboxFloor})
-	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: eventsRetention})
+	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
+	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))

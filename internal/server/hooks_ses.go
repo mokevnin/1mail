@@ -16,7 +16,6 @@ import (
 	"github.com/mokevnin/1mail/ent/workspace"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/webhook"
 	sns "github.com/robbiet480/go.sns"
 )
@@ -219,7 +218,7 @@ func (h *sesHook) publishFailure(ctx context.Context, s *ent.Scoped, messageID s
 	default:
 		return fmt.Errorf("lookup contact %q: %w", email, err)
 	}
-	err = h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
+	return h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
 		return pub.Publish(ctx, &events.EmailDeliveryFailure{
 			Action:        action,
 			WorkspaceID:   s.WorkspaceID(),
@@ -231,15 +230,6 @@ func (h *sesHook) publishFailure(ctx context.Context, s *ent.Scoped, messageID s
 			DedupID:       messageID + "/" + email,
 		})
 	})
-	if err != nil {
-		return err
-	}
-	status := messaging.SendBounce
-	if action == events.NameEmailComplained {
-		status = messaging.SendComplaint
-	}
-	messaging.RecordSendOutcome(ctx, messaging.ProviderSES, status)
-	return nil
 }
 
 // confirmSNSSubscription confirms an SNS subscription by GETting the SubscribeURL.

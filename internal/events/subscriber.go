@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/messaging"
 )
 
 // Enroller enrolls a contact into automations matching an event action. The
@@ -285,11 +287,34 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 	if p.Phone != "" {
 		create.SetPhone(p.Phone)
 	}
-	// Idempotent: at-least-once delivery can redeliver an envelope after a crash;
-	// dedupe on the source_id (the envelope ULID) so the projection row is written
-	// at most once.
-	if err := create.OnConflictColumns(event.FieldSourceID).Ignore().Exec(ctx); err != nil {
+	// Idempotent: at-least-once delivery can redeliver an envelope after a crash,
+	// and SNS redelivers notifications with the same DedupKey; dedupe on the
+	// source_id so the projection row is written at most once. ent reports a
+	// conflict skipped by DoNothing as sql.ErrNoRows, which is how a first write
+	// is told from a duplicate: the bounce/complaint outcome counter ticks only on
+	// the first.
+	err = create.OnConflictColumns(event.FieldSourceID).DoNothing().Exec(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
 		return fmt.Errorf("persist event %q: %w", env.Name, err)
 	}
+	recordProviderOutcome(ctx, ev)
 	return nil
+}
+
+// recordProviderOutcome counts a newly persisted provider bounce or complaint on
+// the send-outcome counter. Counting here, at the one place a duplicate is
+// detected, keeps SNS redeliveries from counting twice.
+func recordProviderOutcome(ctx context.Context, ev DomainEvent) {
+	f, ok := ev.(*EmailDeliveryFailure)
+	if !ok || f.Provider != string(messaging.ProviderSES) {
+		return
+	}
+	status := messaging.SendBounce
+	if f.Action == NameEmailComplained {
+		status = messaging.SendComplaint
+	}
+	messaging.RecordSendOutcome(ctx, messaging.ProviderSES, status)
 }

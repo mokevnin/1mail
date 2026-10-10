@@ -54,7 +54,11 @@ func RegisterPoolMetrics(sqlDB *sql.DB, pgxPool *pgxpool.Pool) (metric.Registrat
 	inUse := mk("in_use", "Connections currently in use.")
 	idle := mk("idle", "Idle connections.")
 	maxOpen := mk("max", "Configured maximum number of connections.")
-	waitCount := mk("wait_count", "Total number of connections waited for.")
+	// Two pools, two driver-native counters: they are not the same quantity, so
+	// each has its own instrument and is observed for its own pool only.
+	// database/sql counts requests that blocked for a connection (WaitCount).
+	waitCount := mk("wait_count", "database/sql pool only: cumulative number of connection requests that had to wait (sql.DBStats.WaitCount).")
+	emptyAcquire := mk("empty_acquire_count", "pgx pool only: cumulative number of successful acquires that found the pool empty and waited for a connection to be released or opened (pgxpool.Stat.EmptyAcquireCount).")
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
 	}
@@ -76,8 +80,8 @@ func RegisterPoolMetrics(sqlDB *sql.DB, pgxPool *pgxpool.Pool) (metric.Registrat
 			o.ObserveInt64(inUse, int64(s.AcquiredConns()), a)
 			o.ObserveInt64(idle, int64(s.IdleConns()), a)
 			o.ObserveInt64(maxOpen, int64(s.MaxConns()), a)
-			o.ObserveInt64(waitCount, s.EmptyAcquireCount(), a)
+			o.ObserveInt64(emptyAcquire, s.EmptyAcquireCount(), a)
 		}
 		return nil
-	}, open, inUse, idle, maxOpen, waitCount)
+	}, open, inUse, idle, maxOpen, waitCount, emptyAcquire)
 }

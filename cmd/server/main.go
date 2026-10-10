@@ -13,11 +13,11 @@ import (
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/internal/app"
+	appdb "github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/telemetry"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -183,7 +183,7 @@ func applyMigrations(cfg *config.Config) error {
 	}
 
 	// river owns its own schema (river_job, ...), which goose does not carry.
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := appdb.NewPGXPool(ctx, cfg.DatabaseURL, cfg.DBPool)
 	if err != nil {
 		return err
 	}

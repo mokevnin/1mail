@@ -85,4 +85,9 @@ func TestPoolMetricsAppearInScrape(t *testing.T) {
 	assert.Regexp(t, `db_pool_max\{[^}]*pool="pgx"\} 11`, string(body))
 	assert.Contains(t, string(body), "db_pool_in_use")
 	assert.Contains(t, string(body), "db_pool_idle")
+	// Each wait counter is reported for its own pool only.
+	assert.Regexp(t, `db_pool_wait_count\{[^}]*pool="sql"\}`, string(body))
+	assert.NotRegexp(t, `db_pool_wait_count\{[^}]*pool="pgx"\}`, string(body))
+	assert.Regexp(t, `db_pool_empty_acquire_count\{[^}]*pool="pgx"\}`, string(body))
+	assert.NotRegexp(t, `db_pool_empty_acquire_count\{[^}]*pool="sql"\}`, string(body))
 }
