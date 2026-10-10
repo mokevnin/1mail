@@ -190,6 +190,9 @@ Configuration is read from the environment (and, if present, `.env` files).
 | `CORS_ORIGINS`                                                      | —                        | Origins allowed credentialed CORS on the cookie API (`/site`, `/auth`); empty = same-origin only                                         |
 | `MAX_BODY_BYTES` / `COLLECT_MAX_BODY_BYTES`                         | `1048576` / `65536`      | Largest accepted request body in bytes (`/collect` has its own cap); larger bodies get `413`                                             |
 | `RATE_LIMIT_HUMAN_PER_MINUTE`                                       | `60`                     | Requests per minute per IP and endpoint on signup, invitation accept and consent confirm; over it `429` with `Retry-After`; `0` disables |
+| `RATE_LIMIT_API_BURST_PER_SECOND`                                   | `20`                     | Requests per second per Workspace on `/api` and `/mcp` (one shared budget); over it `429` with `Retry-After`; `0` disables               |
+| `RATE_LIMIT_API_PER_MINUTE`                                         | `600`                    | Requests per minute per Workspace on `/api` and `/mcp`, stacked on the burst limit; `0` disables                                         |
+| `RATE_LIMIT_FAILED_AUTH_PER_MINUTE`                                 | `30`                     | Failed bearer-token authentications per minute per IP; over it `429`; successful ones are not counted; `0` disables                      |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).

@@ -94,7 +94,10 @@ model SendingDomainRatesResource {
 namespace CustomFields {
   /** List the workspace's custom field definitions */
   @get
-  op list(): Page<CustomFieldResource> | UnauthorizedProblem;
+  op list():
+    | Page<CustomFieldResource>
+    | UnauthorizedProblem
+    | TooManyRequestsProblem;
 }
 
 @route("/sending-domains")
@@ -105,7 +108,8 @@ namespace SendingDomains {
   op list(...PageQuery):
     | Page<SendingDomainResource>
     | BadRequestProblem
-    | UnauthorizedProblem;
+    | UnauthorizedProblem
+    | TooManyRequestsProblem;
 }
 
 @route("/sending-domains/rates")
@@ -116,5 +120,9 @@ namespace SendingDomainRates {
   op list(
     /** Trailing window in days (1 to 90) */
     @query windowDays?: int32 = 7,
-  ): Page<SendingDomainRatesResource> | BadRequestProblem | UnauthorizedProblem;
+  ):
+    | Page<SendingDomainRatesResource>
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | TooManyRequestsProblem;
 }

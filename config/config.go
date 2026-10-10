@@ -25,10 +25,17 @@ type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
 	// consent confirm) per client IP and endpoint.
 	Human int
+	// APIBurst caps /api and /mcp per Workspace per second (one shared budget).
+	APIBurst int
+	// APIPerMinute caps /api and /mcp per Workspace per minute, stacked on APIBurst.
+	APIPerMinute int
+	// FailedAuth caps failed credential checks (bearer token, collect key) per
+	// client IP per minute; successful ones are not counted.
+	FailedAuth int
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60}
+var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30}
 
 type Config struct {
 	DatabaseURL    string
@@ -100,6 +107,9 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
+	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
+	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
+	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", DefaultRateLimits.FailedAuth)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -145,7 +155,10 @@ func Load(envName string) (*Config, error) {
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
 		},
 		RateLimits: RateLimits{
-			Human: v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			Human:        v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			APIBurst:     v.GetInt("RATE_LIMIT_API_BURST_PER_SECOND"),
+			APIPerMinute: v.GetInt("RATE_LIMIT_API_PER_MINUTE"),
+			FailedAuth:   v.GetInt("RATE_LIMIT_FAILED_AUTH_PER_MINUTE"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
@@ -181,8 +194,15 @@ func (c *Config) validate(envName string) error {
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
 	}
-	if c.RateLimits.Human < 0 {
-		return fmt.Errorf("RATE_LIMIT_HUMAN_PER_MINUTE must not be negative (0 disables)")
+	for name, limit := range map[string]int{
+		"RATE_LIMIT_HUMAN_PER_MINUTE":       c.RateLimits.Human,
+		"RATE_LIMIT_API_BURST_PER_SECOND":   c.RateLimits.APIBurst,
+		"RATE_LIMIT_API_PER_MINUTE":         c.RateLimits.APIPerMinute,
+		"RATE_LIMIT_FAILED_AUTH_PER_MINUTE": c.RateLimits.FailedAuth,
+	} {
+		if limit < 0 {
+			return fmt.Errorf("%s must not be negative (0 disables)", name)
+		}
 	}
 	return c.validateMetricsAddr()
 }

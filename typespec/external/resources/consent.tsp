@@ -72,6 +72,7 @@ namespace Suppressions {
         @body body: SuppressionResource;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
 
@@ -89,5 +90,6 @@ namespace Unsubscribes {
         @body body: UnsubscribeResource;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
