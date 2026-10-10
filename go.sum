@@ -116,12 +116,12 @@ github.com/go-oauth2/oauth2/v4 v4.5.4 h1:YjI0tmGW8oxVhn9QSBIxlr641QugWrJY5UWa6Xm
 github.com/go-oauth2/oauth2/v4 v4.5.4/go.mod h1:BXiOY+QZtZy2ewbsGk2B5P8TWmtz/Rf7ES5ZttQFxfQ=
 github.com/go-openapi/inflect v0.21.6 h1:0Se5BlyDT4hnV9JQQKA63W9TIUU6SC4hPJiY3qJOEzQ=
 github.com/go-openapi/inflect v0.21.6/go.mod h1:ksYcnLD7j24H79hdqOMmWaLXjFXd0LTkRoBA0UazLW8=
-github.com/go-pkgz/auth/v2 v2.1.5 h1:CFL7XxRMNPga0S0YCnAnlvO61OHHEYvVEGrIZXuA98Y=
-github.com/go-pkgz/auth/v2 v2.1.5/go.mod h1:IvxxhJIrwd1hKqFwQgBF9i+sMTmGfzAw66wmhw1zfJc=
+github.com/go-pkgz/auth/v2 v2.3.0 h1:Y/ZZaMfn0YrxNC+3wh+U/n0fH+Jwanfjur+nZ/9XO3Y=
+github.com/go-pkgz/auth/v2 v2.3.0/go.mod h1:iZx2JiGZ8Aef+wM0BPLMQY8aur4fLE0uyPhFRO9dYQ4=
 github.com/go-pkgz/repeater/v2 v2.2.0 h1:8nZR/NaknmLfx2YMHbr78u9OL4Xj+8+romm9dz4FpMg=
 github.com/go-pkgz/repeater/v2 v2.2.0/go.mod h1:RgX5vUbLKq7PV82QUDP5pFbQS1os4Z+U9XzKymK23A8=
-github.com/go-pkgz/rest v1.23.1 h1:Vp+znk3wC7NcISKdlcMiBSnDb1R0akx3V7sztBzvAeQ=
-github.com/go-pkgz/rest v1.23.1/go.mod h1:+AHzjHazq7Z3Tk/kRWOhbbAz/YZlUV40feC1Hf4NtbE=
+github.com/go-pkgz/rest v1.24.0 h1:GAUCgx7U8xCOC2OynLjhCRMhtnMQH4d1mTdKpQyX2yI=
+github.com/go-pkgz/rest v1.24.0/go.mod h1:dl3EWiuFB4hRTo2Sknj6UrQGFRAYvANK6/NyW8qQPxc=
 github.com/go-sql-driver/mysql v1.10.0 h1:Q+1LV8DkHJvSYAdR83XzuhDaTykuDx0l6fkXxoWCWfw=
 github.com/go-sql-driver/mysql v1.10.0/go.mod h1:M+cqaI7+xxXGG9swrdeUIoPG3Y3KCkF0pZej+SK+nWk=
 github.com/go-test/deep v1.0.8 h1:TDsG77qcSprGbC6vTN8OuXp5g+J+b5Pcguhf7Zt61VM=
@@ -221,8 +221,8 @@ github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQ
 github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=
 github.com/modelcontextprotocol/go-sdk v1.8.0 h1:KIvahhYqwtbeniWVPs3TcXEA7b8jEtwfBpOTAI+Urx4=
 github.com/modelcontextprotocol/go-sdk v1.8.0/go.mod h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=
-github.com/montanaflynn/stats v0.12.2 h1:qHR+IveGjTbO+lnrz1nKR+xpIcOtovJ5Xu0cst99h80=
-github.com/montanaflynn/stats v0.12.2/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
+github.com/montanaflynn/stats v0.12.4 h1:amtNRsti20yIhcrkfUJGwoYqBR82jKQFE8SNNYVgGn0=
+github.com/montanaflynn/stats v0.12.4/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/moul/http2curl v1.0.0 h1:dRMWoAtb+ePxMlLkrCbAqh4TlPHXvoGUSQ323/9Zahs=
 github.com/moul/http2curl v1.0.0/go.mod h1:8UbvGypXm98wA/IqH45anm5Y2Z6ep6O31QGOAZ3H0fQ=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=

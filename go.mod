@@ -17,7 +17,7 @@ require (
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0
-	github.com/go-pkgz/auth/v2 v2.1.5
+	github.com/go-pkgz/auth/v2 v2.3.0
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gosimple/slug v1.15.0
@@ -99,7 +99,7 @@ require (
 	github.com/go-oauth2/oauth2/v4 v4.5.4 // indirect
 	github.com/go-openapi/inflect v0.21.6 // indirect
 	github.com/go-pkgz/repeater/v2 v2.2.0 // indirect
-	github.com/go-pkgz/rest v1.23.1 // indirect
+	github.com/go-pkgz/rest v1.24.0 // indirect
 	github.com/go-test/deep v1.0.8 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/montanaflynn/stats v0.12.2 // indirect
+	github.com/montanaflynn/stats v0.12.4 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/osteele/tuesday v1.0.4 // indirect
