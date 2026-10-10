@@ -68,6 +68,24 @@ func TestExternalBroadcastsAreCreatedAsDraftsAndEditedWhileDraft(t *testing.T) {
 	assert.NotEmpty(t, listed.Items)
 }
 
+// The one pagination smoke of the external surface: the envelope is copied from the module's page.
+func TestExternalBroadcastsListPaginates(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.ExternalScoped(t, authorScopes...)
+
+	res, err := c.BroadcastsList(context.Background(), externalapi.BroadcastsListParams{
+		Page: externalapi.NewOptInt32(2), PageSize: externalapi.NewOptInt32(2),
+	})
+	require.NoError(t, err)
+	page, ok := res.(*externalapi.BroadcastsListOK)
+	require.Truef(t, ok, "got %T", res)
+	assert.Len(t, page.Items, 2)
+	assert.EqualValues(t, 2, page.Page)
+	assert.EqualValues(t, 2, page.PageSize)
+	assert.Greater(t, page.TotalItems, int32(4))
+	assert.Greater(t, page.TotalPages, int32(2))
+}
+
 func TestExternalBroadcastsDeleteOnlyDrafts(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := env.ExternalScoped(t, authorScopes...)

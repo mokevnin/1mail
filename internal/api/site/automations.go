@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) SiteAutomationsList(ctx context.Context, params siteapi.SiteAutomationsListParams) (siteapi.SiteAutomationsListRes, error) {
@@ -24,30 +25,17 @@ func (h *Handlers) SiteAutomationsList(ctx context.Context, params siteapi.SiteA
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	items, total, err := h.automations.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
+	page, err := h.automations.List(ctx, ws, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 
-	resources := make([]siteapi.SiteAutomationResource, len(items))
-	for i, a := range items {
-		resources[i] = mapper.AutomationToResource(a)
-	}
 	return &siteapi.SiteAutomationsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items:      lo.Map(page.Items, func(a *ent.Automation, _ int) siteapi.SiteAutomationResource { return mapper.AutomationToResource(a) }),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 
