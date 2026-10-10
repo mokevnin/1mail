@@ -1,49 +1,38 @@
 variable "region" {
-  description = "DigitalOcean region for the app and the database (they must share it for private networking)."
+  description = "AWS region of everything, SES included (SES_REGION follows it)."
   type        = string
-  default     = "fra1"
+  default     = "us-east-2"
 }
 
 variable "name" {
-  description = "Base name of the app and the database cluster."
+  description = "Base name of the resources."
   type        = string
   default     = "sphericon"
 }
 
-# Image (pulled from GHCR). Repository and tag are variables so infra does not wait on the rename.
-
-variable "image_registry" {
-  description = "GHCR owner (user or organisation) that holds the image, e.g. \"mokevnin\"."
-  type        = string
-}
+# Image (pulled anonymously from GHCR: the package is public).
 
 variable "image_repository" {
-  description = "Image name under the owner, e.g. \"sphericon\"."
+  description = "Image repository on GHCR, as published by the release workflow (.goreleaser.yaml)."
   type        = string
+  default     = "ghcr.io/mokevnin/sphericon"
 }
 
 variable "image_tag" {
-  description = "Image tag to deploy. Pin a release tag; changing it redeploys the app."
+  description = "Image tag to deploy (a release version, without the v). Changing it runs the migration and rolls the service."
   type        = string
-}
-
-variable "registry_credentials" {
-  description = "GHCR pull credentials as \"<username>:<token>\" (a token with read:packages). Leave empty only if the package is public."
-  type        = string
-  default     = ""
-  sensitive   = true
 }
 
 # Application settings.
 
 variable "otel_service_name" {
-  description = "OTEL_SERVICE_NAME reported to OpenTelemetry; follows the product name without an infra change."
+  description = "OTEL_SERVICE_NAME reported to OpenTelemetry."
   type        = string
   default     = "sphericon"
 }
 
 variable "domain" {
-  description = "Apex domain of the deployment. The zone is created in DigitalOcean DNS; point the registrar's nameservers at it once (README.md). The apex itself is reserved for the marketing site and carries mail records only; the app is served from <app_host_label>.<domain>."
+  description = "Apex domain. The Route 53 zone is created for it; point the registrar's nameservers at it once (infra/README.md). The apex is reserved for the marketing site and carries mail records only."
   type        = string
   default     = "getsphericon.com"
 }
@@ -60,66 +49,61 @@ variable "api_host_label" {
   default     = "api"
 }
 
-variable "tracker_host" {
-  description = "Hostname that serves the tracker script (/t.js) and collect (/collect/*). Empty means t.<domain>."
+variable "tracker_host_label" {
+  description = "Label of the tracker host: <label>.<domain> serves /t.js and /collect/* only."
   type        = string
-  default     = ""
+  default     = "t"
 }
 
 variable "app_port" {
-  description = "PORT the server listens on; also the service http_port."
+  description = "PORT the server listens on; also the target group and container port."
   type        = number
   default     = 3000
 }
 
-variable "db_max_open_conns" {
-  description = "DB_MAX_OPEN_CONNS: the database/sql pool of one process. See the connection budget in app.tf."
+variable "task_cpu" {
+  description = "Fargate task CPU units (512 = 0.5 vCPU)."
   type        = number
-  default     = 5
+  default     = 512
+}
+
+variable "task_memory" {
+  description = "Fargate task memory in MiB."
+  type        = number
+  default     = 1024
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class. The connection budget in ecs.tf assumes the 1 GiB db.t4g.micro."
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "RDS storage in GB (gp3, encrypted)."
+  type        = number
+  default     = 20
+}
+
+variable "db_max_open_conns" {
+  description = "DB_MAX_OPEN_CONNS: the database/sql pool of one process. See the connection budget in ecs.tf."
+  type        = number
+  default     = 10
 }
 
 variable "pgx_max_conns" {
-  description = "PGX_MAX_CONNS: the river pool of one process. See the connection budget in app.tf."
+  description = "PGX_MAX_CONNS: the river pool of one process. See the connection budget in ecs.tf."
   type        = number
-  default     = 5
+  default     = 10
 }
 
-# Secrets. All of them come from outside Terraform and end up as SECRET env values (encrypted by
-# the platform). They are in state, which is why the state bucket is private.
-
-variable "jwt_secret" {
-  description = "JWT_SECRET: at least 32 characters (openssl rand -hex 32)."
+variable "app_secret_name" {
+  description = "Name of the Secrets Manager secret that `mise run infra:bootstrap` creates once (JWT_SECRET, ENCRYPTION_KEY, BOOTSTRAP_TOKEN, LICENSE_KEY). Terraform reads only its ARN; the values never pass through Terraform."
   type        = string
-  sensitive   = true
+  default     = "sphericon/app"
 }
 
-variable "encryption_key" {
-  description = "ENCRYPTION_KEY: base64 Tink keyset, generated ONCE outside Terraform (sphericon genkey). Losing or replacing it makes stored provider credentials unreadable."
-  type        = string
-  sensitive   = true
-}
-
-variable "license_key" {
-  description = "LICENSE_KEY: Enterprise Edition license key. Empty runs the open-source core."
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "bootstrap_token" {
-  description = "BOOTSTRAP_TOKEN: external-API bootstrap token."
-  type        = string
-  sensitive   = true
-}
-
-# System email through SES (ADR 0028): DigitalOcean blocks outbound SMTP, so the app sends over
-# the SES HTTPS API.
-
-variable "ses_region" {
-  description = "AWS region of the SES identity and of the app's SES_REGION (e.g. eu-central-1). Terraform's own AWS credentials come from the AWS_* environment variables."
-  type        = string
-  default     = "eu-central-1"
-}
+# System email through SES.
 
 variable "mail_from_label" {
   description = "Label of the SES MAIL FROM subdomain: <label>.<domain>. SPF for SES lives here, never on the apex (the apex SPF belongs to Google Workspace)."
@@ -137,16 +121,4 @@ variable "dmarc_rua" {
   description = "Mailbox that receives DMARC aggregate reports (rua). Empty omits the tag."
   type        = string
   default     = ""
-}
-
-variable "ses_access_key_id" {
-  description = "SES_ACCESS_KEY_ID: access key of an IAM user limited to SES sending. Not the key Terraform itself uses."
-  type        = string
-  sensitive   = true
-}
-
-variable "ses_secret_access_key" {
-  description = "SES_SECRET_ACCESS_KEY: secret of the IAM user above."
-  type        = string
-  sensitive   = true
 }

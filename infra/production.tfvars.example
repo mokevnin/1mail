@@ -1,8 +1,0 @@
-# Copy to production.tfvars (gitignored) and adjust. Secrets are NOT set here: export them as
-# TF_VAR_* environment variables (see README.md).
-image_registry    = "mokevnin"
-image_repository  = "sphericon"
-image_tag         = "v0.1.0"
-otel_service_name = "sphericon"
-domain            = "getsphericon.com"
-app_host_label    = "app"

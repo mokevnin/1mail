@@ -1,8 +1,12 @@
-# The token is read from the DIGITALOCEAN_TOKEN environment variable.
-provider "digitalocean" {}
-
-# SES lives in AWS. Credentials come only from the environment (AWS_ACCESS_KEY_ID,
-# AWS_SECRET_ACCESS_KEY); nothing is committed. Only SES resources use this provider.
+# Credentials: the AWS_* environment variables that `mise run infra` exports from the `aws login`
+# session of the `sphericon` profile. Nothing is committed.
 provider "aws" {
-  region = var.ses_region
+  region = var.region
+
+  default_tags {
+    tags = {
+      Project   = var.name
+      ManagedBy = "terraform"
+    }
+  }
 }

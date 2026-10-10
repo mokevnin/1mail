@@ -1,20 +1,42 @@
-# Managed Postgres: one node, 1 GB, no standby (ADR 0028). Used directly, without a
-# transaction-mode pooler, because river relies on LISTEN/NOTIFY.
-resource "digitalocean_database_cluster" "pg" {
-  name       = "${var.name}-pg"
-  engine     = "pg"
-  version    = "18" # the newest DigitalOcean offers; the repo's tests and dev stack run Postgres 18
-  size       = "db-s-1vcpu-1gb"
-  region     = var.region
-  node_count = 1
+# RDS PostgreSQL: one db.t4g.micro, single AZ, gp3, encrypted, not publicly accessible. Used
+# directly, without a transaction-mode pooler, because river relies on LISTEN/NOTIFY.
+
+resource "aws_db_subnet_group" "this" {
+  name       = var.name
+  subnet_ids = aws_subnet.db[*].id
 }
 
-# Only the app may connect: the single rule is of type "app", so nothing on the internet can.
-resource "digitalocean_database_firewall" "pg" {
-  cluster_id = digitalocean_database_cluster.pg.id
+# The master password is generated here and lives in the state (private, encrypted bucket) and in
+# the runtime secret. It is never typed, never in tfvars and never printed.
+resource "random_password" "db" {
+  length  = 32
+  special = false
+}
 
-  rule {
-    type  = "app"
-    value = digitalocean_app.this.id
-  }
+resource "aws_db_instance" "pg" {
+  identifier     = var.name
+  engine         = "postgres"
+  engine_version = "18" # the repo's tests and dev stack run Postgres 18
+  instance_class = var.db_instance_class
+
+  allocated_storage = var.db_allocated_storage
+  storage_type      = "gp3"
+  storage_encrypted = true
+
+  db_name  = "sphericon"
+  username = "sphericon"
+  password = random_password.db.result
+
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = [aws_security_group.db.id]
+  publicly_accessible    = false
+  multi_az               = false
+
+  backup_retention_period    = 7
+  auto_minor_version_upgrade = true
+  apply_immediately          = true
+
+  # A test deployment destroyed and recreated freely (ADR 0029): no protection, no final snapshot.
+  deletion_protection = false
+  skip_final_snapshot = true
 }
