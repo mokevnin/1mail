@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/cors"
@@ -60,15 +61,22 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		URL:            cfg.AppURL,
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
 	})
-	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client))
+	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client, site.Attempts))
 	authHandler, avatarHandler := authSvc.Handlers()
+	limiter := ratelimit.New(cfg.RateLimits)
+	// Login rides a wrapper (per-IP cap, per-account delay, ADR 0025) on both of its
+	// paths: the provider's own and the SPA's /site alias. The longer pattern
+	// outranks the /auth/ subtree.
+	throttledLogin := loginThrottle(authHandler, site.Attempts, limiter.LoginIP())
+	mux.Handle("/auth/direct/login", throttledLogin)
 	mux.Handle("/auth/", authHandler)
 	mux.Handle("/avatar/", avatarHandler)
 	// The SPA's generated client posts to /site/auth/direct/login (baseUrl "/site");
 	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
 	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	mux.Handle("/site/auth/direct/login", auditLogin(authHandler, site.Accounts))
+	// Audit the login inside the throttle: a throttled attempt never reaches it.
+	mux.Handle("/site/auth/direct/login", loginThrottle(auditLogin(authHandler, site.Accounts), site.Attempts, limiter.LoginIP()))
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
@@ -115,7 +123,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	mux.Handle("/t.js", trackerHandler())
 
 	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
-	mux.Handle("/e/", trackingHandler(client, bus, site.Tracker))
+	mux.Handle("/e/", trackingHandler(client, bus, site.Tracker, limiter))
 
 	// Inbound provider webhooks (SES bounce/complaint via SNS), routed by the
 	// workspace's secret ingest key: POST /hooks/{key}/{provider}.
@@ -130,11 +138,10 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		return nil, err
 	}
 
-	// requestID is outermost so the correlation id is in context before recoverer
-	// runs — the panic log then carries request_id. (requestID is trivial and
-	// cannot itself panic, so nothing downstream of recovery is lost.)
-	// guard sits inside corsMiddleware so preflights are answered before the check.
-	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), corsMiddleware(cfg.CORSOrigins), guard), nil
+	// Order (ADR 0025): recoverer, requestID, CORS, client address, rate limit,
+	// timeout. CORS precedes the limiter so a 429 still reaches the browser; guard
+	// sits inside CORS so preflights are answered before the check.
+	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, limiter.Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), collectEventLimit(cfg.BodyLimits.CollectEvent), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
@@ -152,6 +159,13 @@ func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, er
 // A reference id from another Workspace (the scoped client's ErrNotInWorkspace,
 // ADR 0017) is a client error, so it is a 422 and never a 500.
 func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+	// A rate limit rejection already set its headers on the shared writer and was
+	// counted and logged where it was decided (ratelimit.LimitedError).
+	var limited *ratelimit.LimitedError
+	if errors.As(err, &limited) {
+		ratelimit.WriteProblem(w)
+		return
+	}
 	code := http.StatusInternalServerError
 	var oe ogenerrors.Error
 	var tooBig *http.MaxBytesError
@@ -199,6 +213,11 @@ func recoverer(next http.Handler) http.Handler {
 		logger := logging.FromContext(r.Context())
 		defer func() {
 			if rec := recover(); rec != nil {
+				// recoverer is outermost, so requestID has only put the id on the
+				// shared response headers, not in this request's context.
+				if id := w.Header().Get("X-Request-Id"); id != "" {
+					logger = logger.With("request_id", id)
+				}
 				logger.Error("panic recovered",
 					"err", rec,
 					"method", r.Method,
@@ -230,14 +249,17 @@ const collectPrefix = "/collect"
 func isCollectPath(path string) bool { return strings.HasPrefix(path, collectPrefix+"/") }
 
 // bodyLimit caps every request body before a handler or the ogen decoder reads it:
-// collect gets its own (smaller) cap, everything else the default. An oversized
+// collect gets its own (smaller) caps (a batch of events, or a single event), everything else the default. An oversized
 // body surfaces as *http.MaxBytesError, which problemErrorHandler renders as 413.
 func bodyLimit(limits config.BodyLimits) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			limit := limits.Default
-			if isCollectPath(r.URL.Path) {
-				limit = limits.Collect
+			switch {
+			case r.URL.Path == collectPrefix+"/events":
+				limit = limits.Collect // a batch
+			case isCollectPath(r.URL.Path):
+				limit = limits.CollectEvent // one event
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, limit)
 			next.ServeHTTP(w, r)

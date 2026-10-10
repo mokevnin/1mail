@@ -25,7 +25,12 @@ ingress. The edge may add its own limits on top.
   go-pkgz/auth maps a `CredChecker` error to 500 and a wrong password to a fixed 403, so the
   checker cannot answer 429. An HTTP wrapper around `authHandler` reads the email from the body
   (restoring it), consults `auth_attempt` and answers 429 itself; `CredChecker` only records
-  successes and failures.
+  successes and failures. The check (wrapper) and the count (checker) are two steps, so wrong
+  passwords sent in parallel before the first failure is recorded all pass the delay check. The
+  excess is bounded by the in-flight requests of one client (the per-IP login cap applies in
+  front, and each attempt is a slow password hash), and the delay applies from the next request
+  on. Closing it would mean claiming an attempt before the credential is checked, which the
+  go-pkgz/auth login contract does not allow without a larger redesign; accepted.
 - **Tracking never refuses a recipient.** Opens and clicks come mostly from mailbox-provider
   proxies (Gmail image proxy, Apple MPP), link scanners and RFC 8058 one-click POSTs, which share
   few IPs, so a per-IP 429 would break links and the ADR 0012 unsubscribe guarantee. A click
@@ -35,11 +40,15 @@ ingress. The edge may add its own limits on top.
   answer 429.
 - **`forgot-password` never reveals the account.** Over the per-address limit (3 mails/hour) the
   response is still a silent 202 with no mail sent; only the per-IP limit (10/hour) answers 429.
-  The early return for an unknown email is removed so response time does not leak existence.
+  The early return for an unknown email is removed so response time does not leak existence:
+  every request takes a slot of the address budget in one atomic upsert (`Attempts.Take`, so
+  parallel requests cannot send a further mail) and enqueues a mail job; for an unknown or
+  over-limit address the job is a no-send one that builds the mail and drops it.
 - **`/api` and `/mcp` are limited per Workspace**, not per token (a Workspace has many tokens, and
   the load is the Workspace's), with Klaviyo-style burst (1 s) and steady (1 min) windows and one
   shared budget for `/api` and `/mcp`. `/collect` is limited per Workspace too, plus per IP, plus
-  size caps (32 KB per event, 500 KB per batch, 413). The Workspace is only known inside the
+  size caps (32 KB per event, 500 KB per batch, 413; the per-event cap inside a batch is checked
+  on the exact serialized bytes of each element before the ogen decoder runs). The Workspace is only known inside the
   ogen security handlers, which receive only a `ctx`. An outer middleware therefore puts the
   `ResponseWriter` and `*http.Request` into the context (as `clientip` does), the handler calls
   `httprate`'s `OnLimit` through them, and a typed error is rendered by `problemErrorHandler` as 429. Headers set on the shared writer reach successful responses too. Failed token / collect-key authentications are limited

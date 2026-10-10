@@ -44,6 +44,8 @@ const QueueBroadcasts = "broadcasts"
 type Client struct {
 	river *river.Client[pgx.Tx]
 	ent   *ent.Client
+	// appURL builds the links of account emails (rehearsed resets render one).
+	appURL string
 }
 
 // Extension plugs extra workers and periodic jobs into the client without core
@@ -85,6 +87,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	river.AddWorker(workers, &PurgeAuthAttemptsWorker{ent: entClient})
 	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
 	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
 
@@ -101,7 +104,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	if err != nil {
 		return nil, err
 	}
-	return &Client{river: rc, ent: entClient}, nil
+	return &Client{river: rc, ent: entClient, appURL: appURL}, nil
 }
 
 // River job retention, explicit rather than river's defaults: bounds the
@@ -137,6 +140,14 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river
 				river.PeriodicInterval(15*time.Minute),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Drop failed-attempt rows past their window (ADR 0025).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PurgeAuthAttemptsArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),

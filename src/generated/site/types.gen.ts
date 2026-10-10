@@ -49,6 +49,10 @@ export type ProblemDetails = {
   fields?: {
     [key: string]: string;
   };
+  /**
+   * Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait
+   */
+  retryAfter?: number;
 };
 
 /**
@@ -2144,6 +2148,10 @@ export type SiteAuthDirectLoginErrors = {
    * Access is forbidden.
    */
   403: SiteDirectLoginError;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteAuthDirectLoginError = SiteAuthDirectLoginErrors[keyof SiteAuthDirectLoginErrors];
@@ -2163,6 +2171,15 @@ export type SiteAuthForgotPasswordData = {
   query?: never;
   url: '/auth/forgot-password';
 };
+
+export type SiteAuthForgotPasswordErrors = {
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthForgotPasswordError = SiteAuthForgotPasswordErrors[keyof SiteAuthForgotPasswordErrors];
 
 export type SiteAuthForgotPasswordResponses = {
   /**
@@ -2187,6 +2204,10 @@ export type SiteAuthRegisterErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteAuthRegisterError = SiteAuthRegisterErrors[keyof SiteAuthRegisterErrors];
@@ -2264,6 +2285,10 @@ export type SitePublicConfirmationsPerformErrors = {
    * RFC 7807 gone response: the resource existed but is no longer available (an expired link)
    */
   410: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SitePublicConfirmationsPerformError = SitePublicConfirmationsPerformErrors[keyof SitePublicConfirmationsPerformErrors];
@@ -2322,6 +2347,10 @@ export type SitePublicInvitationsAcceptErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type SitePublicInvitationsAcceptError = SitePublicInvitationsAcceptErrors[keyof SitePublicInvitationsAcceptErrors];

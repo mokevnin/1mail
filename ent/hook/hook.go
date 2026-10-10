@@ -33,6 +33,18 @@ func (f AuditEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuditEntryMutation", m)
 }
 
+// The AuthAttemptFunc type is an adapter to allow the use of ordinary
+// function as AuthAttempt mutator.
+type AuthAttemptFunc func(context.Context, *ent.AuthAttemptMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AuthAttemptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AuthAttemptMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuthAttemptMutation", m)
+}
+
 // The AutomationFunc type is an adapter to allow the use of ordinary
 // function as Automation mutator.
 type AutomationFunc func(context.Context, *ent.AutomationMutation) (ent.Value, error)

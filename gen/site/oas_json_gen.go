@@ -1081,9 +1081,15 @@ func (s *ProblemDetails) encodeFields(e *jx.Encoder) {
 			s.Fields.Encode(e)
 		}
 	}
+	{
+		if s.RetryAfter.Set {
+			e.FieldStart("retryAfter")
+			s.RetryAfter.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfProblemDetails = [8]string{
+var jsonFieldsNameOfProblemDetails = [9]string{
 	0: "type",
 	1: "title",
 	2: "status",
@@ -1092,6 +1098,7 @@ var jsonFieldsNameOfProblemDetails = [8]string{
 	5: "errors",
 	6: "form",
 	7: "fields",
+	8: "retryAfter",
 }
 
 // Decode decodes ProblemDetails from json.
@@ -1181,6 +1188,16 @@ func (s *ProblemDetails) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"fields\"")
+			}
+		case "retryAfter":
+			if err := func() error {
+				s.RetryAfter.Reset()
+				if err := s.RetryAfter.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retryAfter\"")
 			}
 		default:
 			return d.Skip()

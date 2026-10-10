@@ -1403,6 +1403,8 @@ type ProblemDetails struct {
 	Form OptString `json:"form"`
 	// Field validation errors.
 	Fields OptProblemDetailsFields `json:"fields"`
+	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
+	RetryAfter OptInt32 `json:"retryAfter"`
 }
 
 // GetType returns the value of Type.
@@ -1445,6 +1447,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 	return s.Fields
 }
 
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetails) GetRetryAfter() OptInt32 {
+	return s.RetryAfter
+}
+
 // SetType sets the value of Type.
 func (s *ProblemDetails) SetType(val OptString) {
 	s.Type = val
@@ -1485,6 +1492,11 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
+	s.RetryAfter = val
+}
+
 func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
 func (*ProblemDetails) siteAuthDirectLoginRes()           {}
 func (*ProblemDetails) siteAuthResetPasswordRes()         {}
@@ -1521,6 +1533,71 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 	}
 	return m
 }
+
+// ProblemDetailsHeaders wraps ProblemDetails with response headers.
+type ProblemDetailsHeaders struct {
+	RetryAfter          int32
+	XRateLimitLimit     int32
+	XRateLimitRemaining int32
+	XRateLimitReset     int64
+	Response            ProblemDetails
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetailsHeaders) GetRetryAfter() int32 {
+	return s.RetryAfter
+}
+
+// GetXRateLimitLimit returns the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) GetXRateLimitLimit() int32 {
+	return s.XRateLimitLimit
+}
+
+// GetXRateLimitRemaining returns the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) GetXRateLimitRemaining() int32 {
+	return s.XRateLimitRemaining
+}
+
+// GetXRateLimitReset returns the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) GetXRateLimitReset() int64 {
+	return s.XRateLimitReset
+}
+
+// GetResponse returns the value of Response.
+func (s *ProblemDetailsHeaders) GetResponse() ProblemDetails {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetailsHeaders) SetRetryAfter(val int32) {
+	s.RetryAfter = val
+}
+
+// SetXRateLimitLimit sets the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) SetXRateLimitLimit(val int32) {
+	s.XRateLimitLimit = val
+}
+
+// SetXRateLimitRemaining sets the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) SetXRateLimitRemaining(val int32) {
+	s.XRateLimitRemaining = val
+}
+
+// SetXRateLimitReset sets the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) SetXRateLimitReset(val int64) {
+	s.XRateLimitReset = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
+	s.Response = val
+}
+
+func (*ProblemDetailsHeaders) siteAuthDirectLoginRes()            {}
+func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
+func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
+func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
+func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
 
 // Accept an invite. name + password are required only when the invitee has no account yet; ignored
 // otherwise.
@@ -2423,6 +2500,8 @@ func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 
 // SiteAuthForgotPasswordAccepted is response for SiteAuthForgotPassword operation.
 type SiteAuthForgotPasswordAccepted struct{}
+
+func (*SiteAuthForgotPasswordAccepted) siteAuthForgotPasswordRes() {}
 
 type SiteAuthRegisterConflict ProblemDetails
 

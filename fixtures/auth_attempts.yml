@@ -1,0 +1,27 @@
+# Failed-attempt counters (ADR 0025), keyed by normalized email and action kind. No
+# Workspace and no link to users: rows exist for unknown addresses too, so the table
+# cannot enumerate accounts. StaleLoginAttempt is past its window (the purge job
+# removes it); FreshLoginAttempt is current and must survive the purge.
+# GhostLoginAttempt belongs to an address with no account and is deep into its
+# delay (12 failures = 128 s), so a login for it answers 429 like a known account's.
+- id: 100 # fixture: StaleLoginAttempt
+  email: stale@attempts.test
+  kind: login
+  failures: 7
+  last_attempt_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+  updated_at: '{{daysAgo 2}}'
+- id: 101 # fixture: FreshLoginAttempt
+  email: fresh@attempts.test
+  kind: login
+  failures: 2
+  last_attempt_at: '{{now}}'
+  created_at: '{{now}}'
+  updated_at: '{{now}}'
+- id: 102 # fixture: GhostLoginAttempt
+  email: ghost@attempts.test
+  kind: login
+  failures: 12
+  last_attempt_at: '{{now}}'
+  created_at: '{{now}}'
+  updated_at: '{{now}}'

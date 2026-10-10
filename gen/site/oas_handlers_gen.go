@@ -1356,8 +1356,9 @@ func (s *Server) handleSiteAuthDirectLoginRequest(args [0]string, argsEscaped bo
 
 // handleSiteAuthForgotPasswordRequest handles SiteAuth_forgotPassword operation.
 //
-// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-// account, to avoid leaking which addresses exist.
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+// and even when the address has used its hourly mail budget, to avoid leaking which addresses exist.
+// Answers 429 over the per-IP limit.
 //
 // POST /auth/forgot-password
 func (s *Server) handleSiteAuthForgotPasswordRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1449,7 +1450,7 @@ func (s *Server) handleSiteAuthForgotPasswordRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response *SiteAuthForgotPasswordAccepted
+	var response SiteAuthForgotPasswordRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1465,7 +1466,7 @@ func (s *Server) handleSiteAuthForgotPasswordRequest(args [0]string, argsEscaped
 		type (
 			Request  = *SiteForgotPasswordInput
 			Params   = struct{}
-			Response = *SiteAuthForgotPasswordAccepted
+			Response = SiteAuthForgotPasswordRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1476,12 +1477,12 @@ func (s *Server) handleSiteAuthForgotPasswordRequest(args [0]string, argsEscaped
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				err = s.h.SiteAuthForgotPassword(ctx, request)
+				response, err = s.h.SiteAuthForgotPassword(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		err = s.h.SiteAuthForgotPassword(ctx, request)
+		response, err = s.h.SiteAuthForgotPassword(ctx, request)
 	}
 	if err != nil {
 		defer recordError("Internal", err)

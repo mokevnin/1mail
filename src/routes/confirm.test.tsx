@@ -50,6 +50,19 @@ test('a link that expires before the button is pressed offers sign-up-again', as
   await expect.element(screen.getByText('Confirmation failed')).not.toBeInTheDocument()
 })
 
+test('a rate-limited confirmation shows the localized too-many-requests message', async () => {
+  mockClientRoutes([
+    perform(() => jsonResponse({ status: 429, title: 'Too Many Requests' }, { status: 429 })),
+  ])
+  const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
+
+  await screen.getByRole('button', { name: 'Confirm subscription' }).click()
+
+  await expect
+    .element(screen.getByText('Too many requests. Please wait a minute and try again.'))
+    .toBeInTheDocument()
+})
+
 test('an expired link offers sign-up-again instead of a button', async () => {
   const { screen } = await renderWithRouter(<ConfirmSubscription expired />)
 

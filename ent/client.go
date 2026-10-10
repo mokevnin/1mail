@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/auditentry"
+	"github.com/mokevnin/1mail/ent/authattempt"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -52,6 +53,8 @@ type Client struct {
 	ApiToken *ApiTokenClient
 	// AuditEntry is the client for interacting with the AuditEntry builders.
 	AuditEntry *AuditEntryClient
+	// AuthAttempt is the client for interacting with the AuthAttempt builders.
+	AuthAttempt *AuthAttemptClient
 	// Automation is the client for interacting with the Automation builders.
 	Automation *AutomationClient
 	// AutomationRun is the client for interacting with the AutomationRun builders.
@@ -113,6 +116,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.ApiToken = NewApiTokenClient(c.config)
 	c.AuditEntry = NewAuditEntryClient(c.config)
+	c.AuthAttempt = NewAuthAttemptClient(c.config)
 	c.Automation = NewAutomationClient(c.config)
 	c.AutomationRun = NewAutomationRunClient(c.config)
 	c.Broadcast = NewBroadcastClient(c.config)
@@ -231,6 +235,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:             cfg,
 		ApiToken:           NewApiTokenClient(cfg),
 		AuditEntry:         NewAuditEntryClient(cfg),
+		AuthAttempt:        NewAuthAttemptClient(cfg),
 		Automation:         NewAutomationClient(cfg),
 		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
@@ -276,6 +281,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:             cfg,
 		ApiToken:           NewApiTokenClient(cfg),
 		AuditEntry:         NewAuditEntryClient(cfg),
+		AuthAttempt:        NewAuthAttemptClient(cfg),
 		Automation:         NewAutomationClient(cfg),
 		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
@@ -329,8 +335,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.ApiToken, c.AuditEntry, c.Automation, c.AutomationRun, c.Broadcast,
-		c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
+		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
+		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
 		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendingDomain,
 		c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
@@ -344,8 +350,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.ApiToken, c.AuditEntry, c.Automation, c.AutomationRun, c.Broadcast,
-		c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
+		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
+		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
 		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendingDomain,
 		c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
@@ -362,6 +368,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ApiToken.mutate(ctx, m)
 	case *AuditEntryMutation:
 		return c.AuditEntry.mutate(ctx, m)
+	case *AuthAttemptMutation:
+		return c.AuthAttempt.mutate(ctx, m)
 	case *AutomationMutation:
 		return c.Automation.mutate(ctx, m)
 	case *AutomationRunMutation:
@@ -710,6 +718,139 @@ func (c *AuditEntryClient) mutate(ctx context.Context, m *AuditEntryMutation) (V
 		return (&AuditEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AuditEntry mutation op: %q", m.Op())
+	}
+}
+
+// AuthAttemptClient is a client for the AuthAttempt schema.
+type AuthAttemptClient struct {
+	config
+}
+
+// NewAuthAttemptClient returns a client for the AuthAttempt from the given config.
+func NewAuthAttemptClient(c config) *AuthAttemptClient {
+	return &AuthAttemptClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `authattempt.Hooks(f(g(h())))`.
+func (c *AuthAttemptClient) Use(hooks ...Hook) {
+	c.hooks.AuthAttempt = append(c.hooks.AuthAttempt, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `authattempt.Intercept(f(g(h())))`.
+func (c *AuthAttemptClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AuthAttempt = append(c.inters.AuthAttempt, interceptors...)
+}
+
+// Create returns a builder for creating a AuthAttempt entity.
+func (c *AuthAttemptClient) Create() *AuthAttemptCreate {
+	mutation := newAuthAttemptMutation(c.config, OpCreate)
+	return &AuthAttemptCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AuthAttempt entities.
+func (c *AuthAttemptClient) CreateBulk(builders ...*AuthAttemptCreate) *AuthAttemptCreateBulk {
+	return &AuthAttemptCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AuthAttemptClient) MapCreateBulk(slice any, setFunc func(*AuthAttemptCreate, int)) *AuthAttemptCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AuthAttemptCreateBulk{err: fmt.Errorf("calling to AuthAttemptClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AuthAttemptCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AuthAttemptCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AuthAttempt.
+func (c *AuthAttemptClient) Update() *AuthAttemptUpdate {
+	mutation := newAuthAttemptMutation(c.config, OpUpdate)
+	return &AuthAttemptUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AuthAttemptClient) UpdateOne(_m *AuthAttempt) *AuthAttemptUpdateOne {
+	mutation := newAuthAttemptMutation(c.config, OpUpdateOne, withAuthAttempt(_m))
+	return &AuthAttemptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AuthAttemptClient) UpdateOneID(id int64) *AuthAttemptUpdateOne {
+	mutation := newAuthAttemptMutation(c.config, OpUpdateOne, withAuthAttemptID(id))
+	return &AuthAttemptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AuthAttempt.
+func (c *AuthAttemptClient) Delete() *AuthAttemptDelete {
+	mutation := newAuthAttemptMutation(c.config, OpDelete)
+	return &AuthAttemptDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AuthAttemptClient) DeleteOne(_m *AuthAttempt) *AuthAttemptDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AuthAttemptClient) DeleteOneID(id int64) *AuthAttemptDeleteOne {
+	builder := c.Delete().Where(authattempt.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AuthAttemptDeleteOne{builder}
+}
+
+// Query returns a query builder for AuthAttempt.
+func (c *AuthAttemptClient) Query() *AuthAttemptQuery {
+	return &AuthAttemptQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAuthAttempt},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AuthAttempt entity by its id.
+func (c *AuthAttemptClient) Get(ctx context.Context, id int64) (*AuthAttempt, error) {
+	return c.Query().Where(authattempt.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AuthAttemptClient) GetX(ctx context.Context, id int64) *AuthAttempt {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AuthAttemptClient) Hooks() []Hook {
+	return c.hooks.AuthAttempt
+}
+
+// Interceptors returns the client interceptors.
+func (c *AuthAttemptClient) Interceptors() []Interceptor {
+	return c.inters.AuthAttempt
+}
+
+func (c *AuthAttemptClient) mutate(ctx context.Context, m *AuthAttemptMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AuthAttemptCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AuthAttemptUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AuthAttemptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AuthAttemptDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AuthAttempt mutation op: %q", m.Op())
 	}
 }
 
@@ -4804,17 +4945,17 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, AuditEntry, Automation, AutomationRun, Broadcast, BroadcastRecipient,
-		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
-		Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage, Segment,
-		SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor, WebhookEndpoint,
-		Workspace []ent.Hook
+		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
+		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
+		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
+		Segment, SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor,
+		WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, AuditEntry, Automation, AutomationRun, Broadcast, BroadcastRecipient,
-		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
-		Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage, Segment,
-		SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor, WebhookEndpoint,
-		Workspace []ent.Interceptor
+		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
+		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
+		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
+		Segment, SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor,
+		WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

@@ -17,6 +17,7 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/fixtures"
@@ -228,7 +229,7 @@ func TestSiteAuthRejectsEveryUnusableCredential(t *testing.T) {
 
 func TestCredCheckerVerifiesLoginCredentials(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := auth.NewCredChecker(env.DB)
+	c := auth.NewCredChecker(env.DB, accounts.NewAttempts(env.DB))
 
 	ok, err := c.Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
 	require.NoError(t, err)
@@ -250,7 +251,7 @@ func TestCredCheckerVerifiesLoginCredentials(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ok, "a user without a password hash cannot log in, even with an empty password")
 
-	_, err = auth.NewCredChecker(closedClient(t)).Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
+	_, err = auth.NewCredChecker(closedClient(t), accounts.NewAttempts(closedClient(t))).Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
 	require.Error(t, err)
 }
 

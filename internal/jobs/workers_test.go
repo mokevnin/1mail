@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -107,7 +108,7 @@ func TestClientEnqueuesEveryJobKind(t *testing.T) {
 	later := time.Now().Add(time.Hour)
 	require.NoError(t, e.client.EnqueueBroadcast(ctx, fixtures.BroadcastDraftID, &later))
 	require.NoError(t, e.client.EnqueueWelcome(ctx, "new@example.com", "New"))
-	require.NoError(t, e.client.EnqueuePasswordReset(ctx, "a@example.com", "tok"))
+	require.NoError(t, e.client.EnqueuePasswordReset(ctx, "a@example.com", "tok", true))
 	require.NoError(t, e.client.EnqueueEmailVerification(ctx, "a@example.com", "tok"))
 	require.NoError(t, e.client.EnqueueEmailChangeConfirm(ctx, "a@example.com", "tok"))
 	require.NoError(t, e.client.EnqueueMemberInvite(ctx, "a@example.com", "https://x/invite", "Acme", "Jane"))
@@ -192,6 +193,16 @@ func TestAuthMailWorker(t *testing.T) {
 
 	require.Error(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "nope", Email: "a@example.com"})))
 	require.Error(t, jobs.NewAuthMailWorker(nil, "").Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "password_reset"})))
+}
+
+// A Discard job does the whole job (builds the mail) but sends nothing: forgot-password
+// enqueues one for an unknown or over-limit address so every request costs the same.
+func TestAuthMailWorkerDiscardSendsNothing(t *testing.T) {
+	env := testhelper.Setup(t)
+	w := jobs.NewAuthMailWorker(env.SystemMail, "https://app.example/")
+	require.NoError(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "password_reset", Email: "a@example.com", Token: "t", Discard: true})))
+	assert.Empty(t, env.SystemMail.Messages())
+	require.Error(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "nope", Email: "a@example.com", Discard: true})), "a discarded job still validates what it renders")
 }
 
 func TestMemberInviteWorker(t *testing.T) {
@@ -293,6 +304,18 @@ func TestRecheckSendingDomainsWorkerFansOut(t *testing.T) {
 	for _, k := range kinds {
 		assert.Equal(t, "sending_domain_verify", k)
 	}
+}
+
+func TestPurgeAuthAttemptsWorkerRemovesStaleRowsOnly(t *testing.T) {
+	e := newRiverEnv(t)
+	ctx := e.workCtx()
+
+	require.NoError(t, jobs.NewPurgeAuthAttemptsWorker(e.DB).Work(ctx, job(jobs.PurgeAuthAttemptsArgs{})))
+
+	_, err := e.DB.AuthAttempt.Get(ctx, fixtures.StaleLoginAttemptID)
+	assert.True(t, ent.IsNotFound(err), "the stale row is purged")
+	_, err = e.DB.AuthAttempt.Get(ctx, fixtures.FreshLoginAttemptID)
+	assert.NoError(t, err, "the current row stays")
 }
 
 func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {

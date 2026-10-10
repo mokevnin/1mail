@@ -53,11 +53,12 @@ type Handler interface {
 	SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
 	// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 	//
-	// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-	// account, to avoid leaking which addresses exist.
+	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+	// and even when the address has used its hourly mail budget, to avoid leaking which addresses exist.
+	// Answers 429 over the per-IP limit.
 	//
 	// POST /auth/forgot-password
-	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) error
+	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
 	// SiteAuthRegister implements SiteAuth_register operation.
 	//
 	// POST /auth/register

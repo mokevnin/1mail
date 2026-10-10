@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/auditentry"
+	"github.com/mokevnin/1mail/ent/authattempt"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -100,6 +101,29 @@ func init() {
 	auditentryDescTargetType := auditentryFields[7].Descriptor()
 	// auditentry.TargetTypeValidator is a validator for the "target_type" field. It is called by the builders before save.
 	auditentry.TargetTypeValidator = auditentryDescTargetType.Validators[0].(func(string) error)
+	authattemptMixin := schema.AuthAttempt{}.Mixin()
+	authattemptMixinFields0 := authattemptMixin[0].Fields()
+	_ = authattemptMixinFields0
+	authattemptFields := schema.AuthAttempt{}.Fields()
+	_ = authattemptFields
+	// authattemptDescCreatedAt is the schema descriptor for created_at field.
+	authattemptDescCreatedAt := authattemptMixinFields0[0].Descriptor()
+	// authattempt.DefaultCreatedAt holds the default value on creation for the created_at field.
+	authattempt.DefaultCreatedAt = authattemptDescCreatedAt.Default.(func() time.Time)
+	// authattemptDescUpdatedAt is the schema descriptor for updated_at field.
+	authattemptDescUpdatedAt := authattemptMixinFields0[1].Descriptor()
+	// authattempt.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	authattempt.DefaultUpdatedAt = authattemptDescUpdatedAt.Default.(func() time.Time)
+	// authattempt.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	authattempt.UpdateDefaultUpdatedAt = authattemptDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// authattemptDescEmail is the schema descriptor for email field.
+	authattemptDescEmail := authattemptFields[1].Descriptor()
+	// authattempt.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	authattempt.EmailValidator = authattemptDescEmail.Validators[0].(func(string) error)
+	// authattemptDescFailures is the schema descriptor for failures field.
+	authattemptDescFailures := authattemptFields[3].Descriptor()
+	// authattempt.DefaultFailures holds the default value on creation for the failures field.
+	authattempt.DefaultFailures = authattemptDescFailures.Default.(int)
 	automationMixin := schema.Automation{}.Mixin()
 	automationMixinFields0 := automationMixin[0].Fields()
 	_ = automationMixinFields0

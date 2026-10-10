@@ -22,6 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 )
 
 // apiPrefix is where the external ogen server is mounted.
@@ -154,7 +155,12 @@ func requireToken(auth Authenticator, metadataURL string, next http.Handler) htt
 			return
 		}
 		if _, err := auth.HandleBearerAuth(r.Context(), "", externalapi.BearerAuth{Token: token}); err != nil {
-			if errors.Is(err, apiauth.ErrUnauthorized) {
+			var limited *ratelimit.LimitedError
+			switch {
+			case errors.As(err, &limited):
+				ratelimit.WriteProblem(w)
+				return
+			case errors.Is(err, apiauth.ErrUnauthorized):
 				challenge(w, `error="invalid_token"`)
 				writeProblem(w, http.StatusUnauthorized, "invalid bearer token")
 				return

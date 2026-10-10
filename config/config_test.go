@@ -108,7 +108,7 @@ func TestConfigLoadBodyLimitDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.BodyLimits != (BodyLimits{Default: 1 << 20, Collect: 64 << 10}) {
+	if cfg.BodyLimits != (BodyLimits{Default: 1 << 20, Collect: 500 << 10, CollectEvent: 32 << 10}) {
 		t.Fatalf("defaults = %+v", cfg.BodyLimits)
 	}
 }

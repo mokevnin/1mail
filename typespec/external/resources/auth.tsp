@@ -66,6 +66,7 @@ namespace Auth {
         @body body: CreateApiTokenResponse;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | ForbiddenProblem
     | BadRequestProblem;
 
@@ -74,6 +75,7 @@ namespace Auth {
   op tokensList():
     | ApiTokenListResponse
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | ForbiddenProblem;
 
   @delete
@@ -81,13 +83,18 @@ namespace Auth {
   op tokensDelete(@path id: EntityId):
     | NoContentResponse
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | ForbiddenProblem
     | NotFoundProblem
     | BadRequestProblem;
 
   @get
   @route("/me")
-  op meGet(): ApiTokenInfo | UnauthorizedProblem | NotFoundProblem;
+  op meGet():
+    | ApiTokenInfo
+    | UnauthorizedProblem
+    | TooManyRequestsProblem
+    | NotFoundProblem;
 
   @post
   @route("/tokens/bootstrap")
@@ -101,6 +108,7 @@ namespace Auth {
         @body body: CreateApiTokenResponse;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | ForbiddenProblem
     | BadRequestProblem;
 }

@@ -189,7 +189,7 @@ func TestChainRunsMiddlewareOutermostFirst(t *testing.T) {
 }
 
 func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
-	h := bodyLimit(config.BodyLimits{Default: 8, Collect: 4})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := bodyLimit(config.BodyLimits{Default: 8, Collect: 4, CollectEvent: 2})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := io.ReadAll(r.Body); err != nil {
 			problemErrorHandler(r.Context(), w, r, err)
 			return
@@ -207,8 +207,11 @@ func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
 	assert.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
 	assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
 
-	assert.Equal(t, http.StatusNoContent, post("/collect/x", "1234").Code)
-	assert.Equal(t, http.StatusRequestEntityTooLarge, post("/collect/x", "12345").Code)
+	// A collect batch and a single collect event have caps of their own.
+	assert.Equal(t, http.StatusNoContent, post("/collect/events", "1234").Code)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, post("/collect/events", "12345").Code)
+	assert.Equal(t, http.StatusNoContent, post("/collect/identify", "12").Code)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, post("/collect/identify", "123").Code)
 }
 
 func TestCrossOriginGuardTrustsAppAndAllowlistedOrigins(t *testing.T) {
