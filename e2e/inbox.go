@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -66,14 +67,31 @@ func (in *Inbox) RequireNone(m Match, window ...time.Duration) {
 		w = window[0]
 	}
 	// A failing lookup fails the test: an unreachable Mailpit must not read as absence.
-	require.Never(in.t, func() bool {
+	// Never runs the condition on its own goroutine and returns without waiting for one still
+	// in flight, so the condition must not touch in.t: the error is handed back through lookupErr.
+	var (
+		mu        sync.Mutex
+		lookupErr error
+	)
+	ok := assert.Never(in.t, func() bool {
 		found, err := in.seen(m)
 		if err != nil {
-			in.t.Errorf("could not check the inbox for absence of %q for %s: %v", m.Subject, m.To, err)
+			mu.Lock()
+			lookupErr = err
+			mu.Unlock()
 			return true
 		}
 		return found
-	}, w, in.mp.poll, "the inbox must stay free of %q for %s", m.Subject, m.To)
+	}, w, in.mp.poll, "unexpected email %q for %s (or the inbox could not be checked)", m.Subject, m.To)
+	if ok {
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if lookupErr != nil {
+		in.t.Errorf("could not check the inbox for absence of %q for %s: %v", m.Subject, m.To, lookupErr)
+	}
+	in.t.FailNow()
 }
 
 // wait is Wait with an explicit timeout, returning the diagnostic instead of failing.
