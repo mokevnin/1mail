@@ -71,14 +71,28 @@ const (
 	BroadcastInitechID = 300
 	// BroadcastInitechName is from fixtures/broadcasts.
 	BroadcastInitechName = "Initech newsletter"
+	// BroadcastInitechSendingID is from fixtures/broadcasts.
+	BroadcastInitechSendingID = 301
+	// BroadcastInitechSendingName is from fixtures/broadcasts.
+	BroadcastInitechSendingName = "Initech launch"
+	// BroadcastInitechSendingSoloID is from fixtures/broadcasts.
+	BroadcastInitechSendingSoloID = 302
+	// BroadcastInitechSendingSoloName is from fixtures/broadcasts.
+	BroadcastInitechSendingSoloName = "Initech reminder"
 	// BroadcastProSegmentID is from fixtures/broadcasts.
 	BroadcastProSegmentID = 105
 	// BroadcastProSegmentName is from fixtures/broadcasts.
 	BroadcastProSegmentName = "Pro plan perks"
 	// BroadcastRecipientBystanderID is from fixtures/broadcast_recipients.
 	BroadcastRecipientBystanderID = 3001
+	// BroadcastRecipientBystanderPendingID is from fixtures/broadcast_recipients.
+	BroadcastRecipientBystanderPendingID = 3003
 	// BroadcastRecipientErasableID is from fixtures/broadcast_recipients.
 	BroadcastRecipientErasableID = 3000
+	// BroadcastRecipientErasablePendingID is from fixtures/broadcast_recipients.
+	BroadcastRecipientErasablePendingID = 3002
+	// BroadcastRecipientErasableSoloID is from fixtures/broadcast_recipients.
+	BroadcastRecipientErasableSoloID = 3004
 	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
 	BroadcastRecipientSentID = 1000
 	// BroadcastScheduledID is from fixtures/broadcasts.

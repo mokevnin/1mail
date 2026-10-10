@@ -193,3 +193,29 @@
   workspace_id: 3
   created_at: '2026-01-02 00:00:00'
   updated_at: '2026-01-02 00:00:00'
+
+# Initech (workspace 3): two Broadcasts mid-send, for the Erasure of unsent recipients.
+# 301 still has ContactBystander pending after ContactErasable goes; 302 has only
+# ContactErasable pending, so erasing it settles the Broadcast.
+- id: 301 # fixture: BroadcastInitechSending
+  name: Initech launch
+  subject: Initech launch
+  from_name: Initech
+  from_email: hello@mail.initech.test
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text>Launch.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  status: sending
+  recipients_total: 2
+  workspace_id: 3
+  created_at: '2026-01-03 00:00:00'
+  updated_at: '2026-01-03 00:00:00'
+- id: 302 # fixture: BroadcastInitechSendingSolo
+  name: Initech reminder
+  subject: Initech reminder
+  from_name: Initech
+  from_email: hello@mail.initech.test
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text>Reminder.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  status: sending
+  recipients_total: 1
+  workspace_id: 3
+  created_at: '2026-01-03 00:00:00'
+  updated_at: '2026-01-03 00:00:00'

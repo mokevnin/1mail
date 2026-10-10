@@ -327,8 +327,8 @@ func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {
 	assert.Equal(t, automationrun.StatusCompleted, e.DB.AutomationRun.GetX(ctx, run.ID).Status)
 	assert.Len(t, e.queued(t), 4, "a finished run queues nothing")
 
-	// An unknown run is an error.
-	require.Error(t, w.Work(ctx, job(jobs.RunStepArgs{RunID: 424242})))
+	// An unknown run (erased with its Contact) is finished, not retried.
+	require.NoError(t, w.Work(ctx, job(jobs.RunStepArgs{RunID: 424242})))
 }
 
 func TestBroadcastWorkers(t *testing.T) {

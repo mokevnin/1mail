@@ -90,7 +90,7 @@ func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publishe
 		return fmt.Errorf("outbox publisher: %w", err)
 	}
 
-	if err := fn(txClient, &txPublisher{wm: wm}); err != nil {
+	if err := fn(txClient, &txPublisher{wm: wm, tx: sqlTx}); err != nil {
 		_ = sqlTx.Rollback()
 		return err
 	}
@@ -141,6 +141,7 @@ func (nopTx) Rollback() error { return nil }
 // outbox topic via the tx-bound watermill publisher.
 type txPublisher struct {
 	wm *watermillsql.Publisher
+	tx *sql.Tx
 }
 
 func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {

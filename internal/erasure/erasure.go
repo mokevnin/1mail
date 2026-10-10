@@ -78,6 +78,7 @@ func (m *Module) Erase(ctx context.Context, s *ent.Scoped, id Identifier) error 
 // Contact's rows through ids already resolved into the Target.
 func (m *Module) steps() []step {
 	return []step{
+		cancelInFlight,
 		eraseEvents,
 		eraseVisitors,
 		eraseConfirmations,

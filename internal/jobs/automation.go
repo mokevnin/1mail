@@ -145,6 +145,9 @@ type StepResult struct {
 // RunStep only turns its Outcome into the enrollment's next state.
 func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runID int64) (StepResult, error) {
 	run, err := client.AutomationRun.Get(ctx, runID)
+	if ent.IsNotFound(err) {
+		return StepResult{Done: true}, nil // erased with its Contact (ADR 0021) after the job was queued
+	}
 	if err != nil {
 		return StepResult{}, fmt.Errorf("load run %d: %w", runID, err)
 	}

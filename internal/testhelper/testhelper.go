@@ -15,6 +15,7 @@ import (
 
 	"github.com/DATA-DOG/go-txdb"
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
@@ -85,6 +86,19 @@ func initBaseline() {
 		// of the ent schema, so create it here too (once per process, on the real
 		// DB) — otherwise the transactional publisher hits "relation does not exist".
 		if err := events.InitSchema(context.Background(), sqlDB); err != nil {
+			loadErr = err
+			return
+		}
+
+		// river's own tables, so Erasure can clear the jobs that name a Contact (the
+		// queue itself stays inline in tests; see JobsOf and EnqueueJob).
+		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			loadErr = err
+			return
+		}
+		defer pool.Close()
+		if err := jobs.Migrate(context.Background(), pool); err != nil {
 			loadErr = err
 			return
 		}
