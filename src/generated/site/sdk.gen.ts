@@ -56,8 +56,8 @@ export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(option
 
 /**
  * Request a password-reset link. Always returns 202 regardless of whether
- * the email matches an account and even when the address has had its 3 mails
- * this hour, to avoid leaking which addresses exist. Answers 429 over the
+ * the email matches an account and even when the address has used its hourly
+ * mail budget, to avoid leaking which addresses exist. Answers 429 over the
  * per-IP limit.
  */
 export const siteAuthForgotPassword = <ThrowOnError extends boolean = false>(options: Options<SiteAuthForgotPasswordData, ThrowOnError>): RequestResult<SiteAuthForgotPasswordResponses, SiteAuthForgotPasswordErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthForgotPasswordResponses, SiteAuthForgotPasswordErrors, ThrowOnError>({

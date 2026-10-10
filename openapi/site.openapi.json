@@ -214,7 +214,7 @@
     "/auth/forgot-password": {
       "post": {
         "operationId": "SiteAuth_forgotPassword",
-        "description": "Request a password-reset link. Always returns 202 regardless of whether\nthe email matches an account and even when the address has had its 3 mails\nthis hour, to avoid leaking which addresses exist. Answers 429 over the\nper-IP limit.",
+        "description": "Request a password-reset link. Always returns 202 regardless of whether\nthe email matches an account and even when the address has used its hourly\nmail budget, to avoid leaking which addresses exist. Answers 429 over the\nper-IP limit.",
         "parameters": [],
         "responses": {
           "202": {

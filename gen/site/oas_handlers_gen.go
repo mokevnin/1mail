@@ -512,7 +512,7 @@ func (s *Server) handleSiteAuthDirectLoginRequest(args [0]string, argsEscaped bo
 // handleSiteAuthForgotPasswordRequest handles SiteAuth_forgotPassword operation.
 //
 // Request a password-reset link. Always returns 202 regardless of whether the email matches an account
-// and even when the address has had its 3 mails this hour, to avoid leaking which addresses exist.
+// and even when the address has used its hourly mail budget, to avoid leaking which addresses exist.
 // Answers 429 over the per-IP limit.
 //
 // POST /auth/forgot-password
