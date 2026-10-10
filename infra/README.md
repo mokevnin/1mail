@@ -49,35 +49,37 @@ docker run --rm ghcr.io/<owner>/<image>:<tag> genkey   # or: go run ./cmd/server
 State lives in a private Spaces bucket (fra1). `doctl` cannot create buckets, so use the S3 API.
 
 ```sh
-# 1. a full-access key (the secret is shown once); the AWS CLI reads these two variables
+# 1. a full-access key (the secret is shown once), stored in an AWS CLI profile named "spaces"
+#    (prompts for the key and secret; region and format can stay empty). Nothing goes into AWS_*
+#    variables, which the aws provider would read for SES, or into shell history.
 doctl spaces keys create sphericon-bootstrap --grants 'bucket=;permission=fullaccess'
-export AWS_ACCESS_KEY_ID=<Spaces access key> AWS_SECRET_ACCESS_KEY=<Spaces secret key>
+aws configure --profile spaces
 
 # 2. a private bucket (names are global across Spaces: pick a unique one)
-aws s3api create-bucket --bucket sphericon-tfstate --acl private \
+aws --profile spaces s3api create-bucket --bucket sphericon-tfstate --acl private \
   --endpoint-url https://fra1.digitaloceanspaces.com
 
 # 3. verify: the ACL has no AllUsers grant
-aws s3api get-bucket-acl --bucket sphericon-tfstate --endpoint-url https://fra1.digitaloceanspaces.com
+aws --profile spaces s3api get-bucket-acl --bucket sphericon-tfstate --endpoint-url https://fra1.digitaloceanspaces.com
 
 # 4. narrow the access: a key for this bucket only, then drop the bootstrap key
 doctl spaces keys create sphericon-tfstate --grants 'bucket=sphericon-tfstate;permission=readwrite'
 doctl spaces keys delete sphericon-bootstrap
 ```
 
-Keep the bucket key apart from the SES AWS credentials: export it as `SPACES_ACCESS_KEY_ID` /
-`SPACES_SECRET_ACCESS_KEY` and unset the `AWS_*` values used above. Then initialise (or copy
-`backend.hcl.example` to `backend.hcl` and pass `-backend-config=backend.hcl`):
+Put the bucket-only key in `backend.hcl` (copy `backend.hcl.example`; gitignored, `chmod 600`),
+never in `AWS_*` variables (the aws provider reads those for SES) and never in `-backend-config`
+arguments (they land in shell history and process lists). Then initialise:
 
 ```sh
 export DIGITALOCEAN_TOKEN=<API token>
 export AWS_ACCESS_KEY_ID=<AWS key for Terraform's SES resources> AWS_SECRET_ACCESS_KEY=<its secret>
-terraform -chdir=infra init \
-  -backend-config="bucket=sphericon-tfstate" \
-  -backend-config="key=production/terraform.tfstate" \
-  -backend-config="access_key=$SPACES_ACCESS_KEY_ID" \
-  -backend-config="secret_key=$SPACES_SECRET_ACCESS_KEY"
+terraform -chdir=infra init -backend-config=backend.hcl
 ```
+
+(With `-chdir=infra` the path resolves inside `infra/`, where `backend.hcl` lives.) Afterwards
+delete the CLI profile: `aws configure set aws_access_key_id '' --profile spaces`, or edit
+`~/.aws/credentials`.
 
 State holds the sensitive variables, which is why the bucket stays private.
 
@@ -87,7 +89,7 @@ Plain values: copy `production.tfvars.example` to `production.tfvars`. Variables
 `image_repository`, `image_tag`; optional `otel_service_name`, `domain` (`getsphericon.com`),
 `app_host_label` (`app`; `APP_URL` is `https://<app_host_label>.<domain>`), `api_host_label` (`api`),
 `tracker_host` (empty means `t.<domain>`), `region`, `name`, `ses_region`, `mail_from_label`
-(`mail`), `system_email_from` (`noreply@getsphericon.com`) and `dmarc_rua` (empty omits `rua`).
+(`mail`), `system_email_from` (default `noreply@<domain>`) and `dmarc_rua` (empty omits `rua`).
 
 Secrets, through the environment only:
 
@@ -199,13 +201,27 @@ not covered by `mise run check:infra`.
   `dns.tf`. The SES DKIM records are short CNAMEs and unaffected. Keep one apex SPF (Google); SES
   SPF belongs on `mail.<domain>`.
 - **Certificates or hosts stay pending.** The nameservers are not delegated yet (section 6).
-- **Connection budget.** A 1 GB Postgres allows 22 backend connections; each process opens two pools,
-  capped by `DB_MAX_OPEN_CONNS` + `PGX_MAX_CONNS` = 5 + 5 = 10 (the app defaults of 15 + 25 would
-  not fit). The new service starts only after the migrate job exits, so at most two full processes
-  overlap during a deploy: 20 of 22, leaving 2 for administration. Before a second service instance
-  or any extra process, lower both pools (for example 3 + 3). river's workers share a 5-connection
-  pool, so jobs queue instead of running in parallel. No transaction-mode pooler: river needs
-  LISTEN/NOTIFY. Symptom of overrun: `too many connections` in the deployment log.
+- **Connection budget.** A 1 GB Postgres allows 22 backend connections; each process opens two
+  pools, `DB_MAX_OPEN_CONNS` (database/sql: ent, event bus, job workers' queries) + `PGX_MAX_CONNS`
+  (river's own queries: fetch, completion, LISTEN, leader election) = 5 + 5 = 10 (the app defaults
+  of 15 + 25 would not fit). river's 20 workers are fixed in code; they hold no pgx connection, so
+  the pgx pool need not match them (the env table in `docs/self-hosting.md` says so); the cost is
+  queued completions and 20 workers sharing 5 sql connections. The migrate job runs before the new
+  instance and overlaps only the old one: it opens one uncapped `sql.Open` pool (goose, one
+  statement at a time, 1-2 connections) and a river pool for the river migrator (also 1-2). So the
+  worst case is old + new service = 20 of 22, leaving 2 for administration. Before a second
+  service instance or any extra process, lower both pools (for example 3 + 3). No
+  transaction-mode pooler: river needs LISTEN/NOTIFY. Symptom of overrun: `too many connections`
+  in the deployment log.
+- **Migrate job fails with "executable not found" or runs the server.** The job sets
+  `run_command = "sphericon migrate"`. DigitalOcean documents that for Dockerfile builds a run
+  command overrides the Dockerfile's entrypoint
+  ([source](https://docs.digitalocean.com/products/app-platform/how-to/deploy-from-container-images/)),
+  and the image has `ENTRYPOINT ["sphericon"]` with the binary on PATH (`/usr/local/bin`) and no
+  CMD, so the full command is `sphericon migrate`; the service sets no run command and runs
+  `sphericon` (the server). The docs say nothing about CMD, so this is to be confirmed in the first
+  live deploy: the job log must show "migrations applied". If the platform instead appended the
+  command to the entrypoint, use `run_command = "migrate"`.
 - **Email not delivered.** The SES sandbox accepts only verified recipients until production access
   is granted; check identity status first. DigitalOcean blocks outbound SMTP, so the app uses the SES
   API (`SYSTEM_EMAIL_PROVIDER=ses`, see the env table in `docs/self-hosting.md`).

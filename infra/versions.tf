@@ -14,9 +14,9 @@ terraform {
 
   # State lives in a private DigitalOcean Spaces bucket (ADR 0028). Spaces speaks the S3 API, so
   # the s3 backend is used with every AWS-only check skipped. Bucket and key are not committed:
-  # pass them with `-backend-config` (see infra/README.md). The Spaces key is passed with
-  # `-backend-config=access_key=...` / `secret_key=...` from the environment (README.md), because
-  # the aws provider (SES) reads the AWS_* variables. Never from a committed file.
+  # put them, with the Spaces access_key and secret_key, in the gitignored backend.hcl (see
+  # infra/README.md). The Spaces key must not use the AWS_* variables: the aws provider (SES)
+  # reads those. Never a committed file, never command-line arguments.
   backend "s3" {
     endpoints = {
       s3 = "https://fra1.digitaloceanspaces.com"

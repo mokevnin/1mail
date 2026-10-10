@@ -128,9 +128,9 @@ variable "mail_from_label" {
 }
 
 variable "system_email_from" {
-  description = "SYSTEM_EMAIL_FROM: sender address of platform mail (password reset, invitations). Must be on the apex domain, which is the verified SES identity."
+  description = "SYSTEM_EMAIL_FROM: sender address of platform mail (password reset, invitations). Must be on the apex domain, which is the verified SES identity. Null means noreply@<domain>."
   type        = string
-  default     = "noreply@getsphericon.com"
+  default     = null
 }
 
 variable "dmarc_rua" {

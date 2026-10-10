@@ -24,7 +24,7 @@ resource "digitalocean_record" "ses_verification" {
   type   = "TXT"
   name   = "_amazonses"
   value  = aws_ses_domain_identity.this.verification_token
-  ttl    = 3600
+  ttl    = local.dns_ttl
 }
 
 # Easy DKIM: three CNAMEs to <token>.dkim.amazonses.com.
@@ -35,7 +35,7 @@ resource "digitalocean_record" "ses_dkim" {
   type   = "CNAME"
   name   = "${aws_ses_domain_dkim.this.dkim_tokens[count.index]}._domainkey"
   value  = "${aws_ses_domain_dkim.this.dkim_tokens[count.index]}.dkim.amazonses.com."
-  ttl    = 3600
+  ttl    = local.dns_ttl
 }
 
 resource "digitalocean_record" "ses_mail_from_mx" {
@@ -44,7 +44,7 @@ resource "digitalocean_record" "ses_mail_from_mx" {
   name     = var.mail_from_label
   value    = "feedback-smtp.${var.ses_region}.amazonses.com."
   priority = 10
-  ttl      = 3600
+  ttl      = local.dns_ttl
 }
 
 # SPF of the MAIL FROM subdomain only. The apex keeps the single Google Workspace SPF (dns.tf).
@@ -53,7 +53,7 @@ resource "digitalocean_record" "ses_mail_from_spf" {
   type   = "TXT"
   name   = var.mail_from_label
   value  = "v=spf1 include:amazonses.com ~all"
-  ttl    = 3600
+  ttl    = local.dns_ttl
 }
 
 # DMARC passes through aligned DKIM (the apex identity signs the From domain) or aligned SPF
@@ -63,5 +63,5 @@ resource "digitalocean_record" "dmarc" {
   type   = "TXT"
   name   = "_dmarc"
   value  = var.dmarc_rua != "" ? "v=DMARC1; p=none; rua=mailto:${var.dmarc_rua}" : "v=DMARC1; p=none"
-  ttl    = 3600
+  ttl    = local.dns_ttl
 }

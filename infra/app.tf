@@ -1,19 +1,4 @@
 locals {
-  # Connection budget. A 1 GB Postgres plan allows 22 backend connections, and every process opens
-  # two pools: database/sql (DB_MAX_OPEN_CONNS) and river's pgx pool (PGX_MAX_CONNS), so one
-  # process peaks at db_max_open_conns + pgx_max_conns (5 + 5 = 10).
-  #
-  #   steady state       service                          10
-  #   pre-deploy job     service (old) + migrate job      10 + 10 at the pool caps
-  #                      (really 1-2 each: goose and river's migrator run one statement at a time)
-  #   rolling deploy     old + new service                10 + 10
-  #   worst case         two processes                    20 of 22, leaving 2 for admin/monitoring
-  #
-  # The new service starts only after the PRE_DEPLOY job has exited, so the job never overlaps the
-  # new instance: at most two full processes exist at once. Three (3 x 10 = 30) would NOT fit, so
-  # a second service instance requires smaller pools first. river runs 20 workers (5 + 10 + 5) on
-  # a 5-connection pool: workers wait for a connection instead of running in parallel, which is
-  # acceptable for a test production.
   secret_env = {
     JWT_SECRET      = var.jwt_secret
     ENCRYPTION_KEY  = var.encryption_key
@@ -24,6 +9,24 @@ locals {
     SES_SECRET_ACCESS_KEY = var.ses_secret_access_key
   }
 
+  # Connection budget. A 1 GB Postgres plan allows 22 backend connections, and every process opens
+  # two pools: database/sql (DB_MAX_OPEN_CONNS: ent, the event bus and the job workers' own
+  # queries) and river's pgx pool (PGX_MAX_CONNS: river's fetch, completion, LISTEN and leader
+  # election queries). One process peaks at db_max_open_conns + pgx_max_conns = 5 + 5 = 10.
+  #
+  # river runs 20 workers (default 5, broadcasts 10, webhooks 5; fixed in code, not configurable),
+  # but a worker does its database work through the database/sql pool and holds no pgx connection
+  # (no river transactions), so the pgx pool does NOT need one connection per worker. The price of
+  # 5: job completions queue briefly under load, and 20 workers share the 5 sql connections.
+  #
+  #   steady state    1 service                              10
+  #   deploy          old service + migrate job              10 + ~4 (goose: sql.Open, uncapped but
+  #                   (the job runs before the new instance;  one statement at a time = 1-2; river's
+  #                    it overlaps only the OLD one)          migrator pool, same: 1-2)
+  #   then            old + new service                      10 + 10 = 20 of 22 (2 for admin)
+  #
+  # The new instance starts only after the PRE_DEPLOY job exits, so the job never overlaps both.
+  # A third process (3 x 10 = 30) would NOT fit: a second service instance needs smaller pools.
   plain_env = {
     APP_URL           = "https://${local.app_host}"
     PORT              = tostring(var.app_port)
@@ -32,11 +35,21 @@ locals {
     PGX_MAX_CONNS     = tostring(var.pgx_max_conns)
 
     SYSTEM_EMAIL_PROVIDER = "ses"
-    SYSTEM_EMAIL_FROM     = var.system_email_from
+    SYSTEM_EMAIL_FROM     = local.system_email_from
     SES_REGION            = var.ses_region
   }
 
   registry_credentials = var.registry_credentials != "" ? var.registry_credentials : null
+
+  system_email_from = coalesce(var.system_email_from, "noreply@${var.domain}")
+
+  image = {
+    registry_type        = "GHCR"
+    registry             = var.image_registry
+    repository           = var.image_repository
+    tag                  = var.image_tag
+    registry_credentials = local.registry_credentials
+  }
 
   app_host     = "${var.app_host_label}.${var.domain}"
   api_host     = "${var.api_host_label}.${var.domain}"
@@ -174,6 +187,8 @@ resource "digitalocean_app" "this" {
       }
     }
 
+    # Neither component sets an entrypoint: the image has ENTRYPOINT ["sphericon"] (binary at
+    # /usr/local/bin/sphericon, on PATH) and no CMD, so the service runs `sphericon` = the server.
     # One service: HTTP, river and watermill all run in this process, so there is no worker.
     service {
       name               = "web"
@@ -181,12 +196,15 @@ resource "digitalocean_app" "this" {
       instance_count     = 1
       http_port          = var.app_port
 
-      image {
-        registry_type        = "GHCR"
-        registry             = var.image_registry
-        repository           = var.image_repository
-        tag                  = var.image_tag
-        registry_credentials = local.registry_credentials
+      dynamic "image" {
+        for_each = [local.image]
+        content {
+          registry_type        = image.value.registry_type
+          registry             = image.value.registry
+          repository           = image.value.repository
+          tag                  = image.value.tag
+          registry_credentials = image.value.registry_credentials
+        }
       }
 
       # /readyz pings the database, so a deploy that cannot reach Postgres is not routed to.
@@ -200,6 +218,11 @@ resource "digitalocean_app" "this" {
     }
 
     # Applies the goose and river migrations once, before the new service instance starts.
+    # run_command replaces the image ENTRYPOINT (DigitalOcean: "For Dockerfile-based builds,
+    # entering a run command overrides the Dockerfile's entrypoint",
+    # https://docs.digitalocean.com/products/app-platform/how-to/deploy-from-container-images/),
+    # so the full command is `sphericon migrate`. The docs do not say what happens to CMD (there is
+    # none here). Confirm in the first live deploy (README troubleshooting).
     job {
       name               = "migrate"
       kind               = "PRE_DEPLOY"
@@ -207,12 +230,15 @@ resource "digitalocean_app" "this" {
       instance_count     = 1
       run_command        = "sphericon migrate"
 
-      image {
-        registry_type        = "GHCR"
-        registry             = var.image_registry
-        repository           = var.image_repository
-        tag                  = var.image_tag
-        registry_credentials = local.registry_credentials
+      dynamic "image" {
+        for_each = [local.image]
+        content {
+          registry_type        = image.value.registry_type
+          registry             = image.value.registry
+          repository           = image.value.repository
+          tag                  = image.value.tag
+          registry_credentials = image.value.registry_credentials
+        }
       }
     }
   }

@@ -12,7 +12,9 @@ The runtime is one App Platform **service** plus one `PRE_DEPLOY` **job** runnin
 separate worker component. The database is a DO Managed Postgres cluster (fra1, 1 GB, single
 node) attached to the app and firewalled to it. DNS for `getsphericon.com` lives in DO DNS and is
 managed by the same module, including the SES DKIM/SPF/DMARC records, because DO has no email
-service and outbound SMTP is blocked: system mail goes through SES over HTTPS. The image is pulled
+service and outbound SMTP is blocked: system mail goes through SES over HTTPS. Terraform also
+manages the SES domain identity through the AWS provider (credentials from the environment),
+because the DKIM tokens that DNS needs are only known after it is created. The image is pulled
 from GHCR; the image repository and tag and `OTEL_SERVICE_NAME` are Terraform variables, so the
 infra does not depend on the rename of the product.
 
