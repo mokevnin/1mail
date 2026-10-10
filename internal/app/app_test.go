@@ -119,7 +119,7 @@ func newApp(t *testing.T) *App {
 	// under test runs it for its lifetime.
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- a.RunEvents(ctx) }()
+	go func() { done <- a.runEvents(ctx) }()
 	select {
 	case <-a.events.router.Running():
 	case err := <-done:
@@ -173,7 +173,7 @@ func TestRunEventsStopsWhenTheContextIsCancelled(t *testing.T) {
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- a.RunEvents(ctx) }()
+	go func() { done <- a.runEvents(ctx) }()
 
 	select {
 	case <-a.events.router.Running():
@@ -199,7 +199,7 @@ func TestRunJobsStartsTheWorkerPool(t *testing.T) {
 	require.NoError(t, jobs.Migrate(context.Background(), pool.Pool), "river's own schema")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	require.NoError(t, a.RunJobs(ctx))
+	require.NoError(t, a.runJobs(ctx))
 	cancel()
 	assert.Empty(t, a.Shutdown(context.Background()).Errors, "workers stop cleanly")
 }
@@ -237,7 +237,7 @@ func TestStopShutsDownTheMetricsServer(t *testing.T) {
 	t.Cleanup(func() { _ = a.Shutdown(context.Background()) })
 	require.NotNil(t, a.Metrics)
 
-	require.NoError(t, a.BindMetrics())
+	require.NoError(t, a.bindMetrics(t.Context()))
 	go func() { _ = a.Metrics.Serve() }()
 	url := "http://" + a.Metrics.Addr() + "/metrics"
 	require.Eventually(t, func() bool {
@@ -247,7 +247,7 @@ func TestStopShutsDownTheMetricsServer(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	require.NoError(t, a.Stop(ctx))
+	require.NoError(t, a.stop(ctx))
 
 	_, _, err = testhelper.TryHTTPGet(t.Context(), url)
 	assert.Error(t, err, "metrics listener stopped accepting after Stop")
@@ -435,7 +435,7 @@ func TestAppServesOnACallerProvidedListener(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	served := make(chan error, 1)
-	go func() { served <- a.RunEvents(ctx) }()
+	go func() { served <- a.runEvents(ctx) }()
 	select {
 	case <-a.events.router.Running():
 	case err := <-served:
@@ -443,13 +443,13 @@ func TestAppServesOnACallerProvidedListener(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("router never started")
 	}
-	require.NoError(t, a.BindMetrics())
-	go func() { served <- a.Serve() }()
+	require.NoError(t, a.bindMetrics(t.Context()))
+	go func() { served <- a.serve() }()
 	t.Cleanup(func() {
 		cancel()
 		sctx, scancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer scancel()
-		_ = a.Stop(sctx)
+		_ = a.stop(sctx)
 		_ = a.Shutdown(sctx)
 	})
 
