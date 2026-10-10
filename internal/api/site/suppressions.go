@@ -2,13 +2,14 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/consent"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -68,29 +69,13 @@ func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	dest := eligibility.NormalizeDestination(req.Destination)
-	if dest == "" {
+	created, err := consent.Suppress(ctx, s, req.Destination)
+	if errors.Is(err, consent.ErrDestinationEmpty) {
 		v := siteapi.SiteSuppressionsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.destination_invalid", nil), map[string][]string{
 			"destination": {i18n.T("errors.must_not_be_empty", nil)},
 		}))
 		return &v, nil
 	}
-
-	// Manual suppression is idempotent per (channel, destination): keep the
-	// existing entry (and its reason) if the destination is already suppressed.
-	if err := s.Suppression().Create().
-		SetChannel(suppression.ChannelEmail).
-		SetDestination(dest).
-		SetReason(suppression.ReasonManual).
-		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldChannel, suppression.FieldDestination).
-		Ignore().
-		Exec(ctx); err != nil {
-		return nil, err
-	}
-
-	created, err := s.Suppression().Query().
-		Where(suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
-		Only(ctx)
 	if err != nil {
 		return nil, err
 	}

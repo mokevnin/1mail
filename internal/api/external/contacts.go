@@ -237,6 +237,16 @@ func updateContactAttributes(req *externalapi.UpdateContactInput) contacts.Attri
 		FirstName: convert.StringPtr(req.FirstName),
 		LastName:  convert.StringPtr(req.LastName),
 		TimeZone:  convert.StringPtr(req.TimeZone),
+		// JSON Merge Patch: an explicit null clears the field, an absent key keeps it.
+		Cleared: contacts.Cleared{
+			SubjectID:    req.SubjectId.IsNull(),
+			Email:        req.Email.IsNull(),
+			Phone:        req.Phone.IsNull(),
+			FirstName:    req.FirstName.IsNull(),
+			LastName:     req.LastName.IsNull(),
+			TimeZone:     req.TimeZone.IsNull(),
+			CustomFields: req.CustomFields.IsNull(),
+		},
 	}
 	if v, ok := req.CustomFields.Get(); ok {
 		attrs.CustomFields = convert.RawMap(v)

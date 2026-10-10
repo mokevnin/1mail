@@ -15,6 +15,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 )
@@ -141,19 +142,31 @@ var (
 
 // Fields are the author-editable content of a Broadcast. A nil field is "not
 // provided": Create falls back to the schema default, Update keeps the stored value.
+// The Clear flags are JSON Merge Patch nulls for Update: they drop the stored value.
+// SegmentID and IntegrationID reference rows of the same Workspace; the scoped
+// client refuses a foreign one with ent.ErrNotInWorkspace.
 type Fields struct {
-	Name      *string
-	Subject   *string
-	FromName  *string
-	FromEmail *string
-	Body      *string
+	Name          *string
+	Subject       *string
+	FromName      *string
+	FromEmail     *string
+	Body          *string
+	SegmentID     *int64
+	IntegrationID *int64
+
+	ClearFromName    bool
+	ClearFromEmail   bool
+	ClearSegment     bool
+	ClearIntegration bool
 }
 
 // Create makes a draft Broadcast. Nothing here schedules or sends.
 func (m *Module) Create(ctx context.Context, s *ent.Scoped, f Fields) (*ent.Broadcast, error) {
 	q := s.Broadcast().Create().
 		SetNillableFromName(f.FromName).
-		SetNillableFromEmail(f.FromEmail)
+		SetNillableFromEmail(f.FromEmail).
+		SetNillableSegmentID(f.SegmentID).
+		SetNillableIntegrationID(f.IntegrationID)
 	if f.Name != nil {
 		q.SetName(*f.Name)
 	}
@@ -194,7 +207,21 @@ func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, f Fields) 
 		SetNillableSubject(f.Subject).
 		SetNillableFromName(f.FromName).
 		SetNillableFromEmail(f.FromEmail).
-		SetNillableBody(f.Body)
+		SetNillableBody(f.Body).
+		SetNillableSegmentID(f.SegmentID).
+		SetNillableIntegrationID(f.IntegrationID)
+	if f.ClearFromName {
+		u.ClearFromName()
+	}
+	if f.ClearFromEmail {
+		u.ClearFromEmail()
+	}
+	if f.ClearSegment {
+		u.ClearSegmentID()
+	}
+	if f.ClearIntegration {
+		u.ClearIntegrationID()
+	}
 	return m.editDraft(ctx, s, id, u)
 }
 
@@ -232,6 +259,21 @@ func (m *Module) DeleteDraft(ctx context.Context, s *ent.Scoped, id int64) error
 		return m.notDraftOrNotFound(ctx, s, id)
 	}
 	return nil
+}
+
+// Delete removes a Broadcast of any status together with its recipient rows, which
+// FK the Broadcast (the engagement Event log keys on subject_id and is untouched).
+// It is the human's history cleanup in the SPA; the authoring surface (/api, MCP)
+// uses DeleteDraft and cannot reach a sent Broadcast.
+func (m *Module) Delete(ctx context.Context, s *ent.Scoped, id int64) error {
+	if _, err := s.BroadcastRecipient().Delete().Where(broadcastrecipient.BroadcastID(id)).Exec(ctx); err != nil {
+		return err
+	}
+	err := s.Broadcast().DeleteOneID(id).Exec(ctx)
+	if ent.IsNotFound(err) {
+		return ErrNotFound
+	}
+	return err
 }
 
 // Report is a Broadcast's delivery report. Rates are ratios in [0,1]; a zero

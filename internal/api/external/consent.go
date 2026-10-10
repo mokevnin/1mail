@@ -2,18 +2,13 @@ package external
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
-	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automation"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/unsubscribe"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/consent"
 	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // Consent only narrows through /api (ADR 0016): these two operations add a
@@ -28,25 +23,11 @@ func (h *Handlers) SuppressionsCreate(ctx context.Context, req *externalapi.Crea
 	}
 	s := auth.TokenScoped(ctx)
 
-	dest := eligibility.NormalizeDestination(string(req.Destination))
-	if dest == "" {
+	created, err := consent.Suppress(ctx, s, string(req.Destination))
+	if errors.Is(err, consent.ErrDestinationEmpty) {
 		res := externalapi.SuppressionsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "destination must not be empty"))
 		return &res, nil
 	}
-
-	// Idempotent per (channel, destination): an existing entry keeps its reason.
-	if err := s.Suppression().Create().
-		SetChannel(suppression.ChannelEmail).
-		SetDestination(dest).
-		SetReason(suppression.ReasonManual).
-		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldChannel, suppression.FieldDestination).
-		Ignore().
-		Exec(ctx); err != nil {
-		return nil, err
-	}
-	created, err := s.Suppression().Query().
-		Where(suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
-		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,48 +45,14 @@ func (h *Handlers) UnsubscribesCreate(ctx context.Context, req *externalapi.Crea
 		return &res, nil
 	}
 	s := auth.TokenScoped(ctx)
-	unprocessable := func(detail string) (externalapi.UnsubscribesCreateRes, error) {
-		res := externalapi.UnsubscribesCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
-		return &res, nil
-	}
 
-	dest := eligibility.NormalizeDestination(string(req.Destination))
-	if dest == "" {
-		return unprocessable("destination must not be empty")
-	}
 	source := req.SendingSource.Or(eligibility.SourceBroadcasts)
-	switch automationID, isAutomation := eligibility.ParseAutomationSource(source); {
-	case source == eligibility.SourceBroadcasts || source == eligibility.SourceEverything:
-	case isAutomation:
-		exists, err := s.Automation().Query().Where(automation.ID(automationID)).Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if !exists {
-			return unprocessable("unknown automation in sendingSource")
-		}
-	default:
-		return unprocessable("sendingSource must be broadcasts, everything or automation:<id>")
-	}
-
-	target := tracking.UnsubTarget{Source: source, Destination: dest, WorkspaceID: s.WorkspaceID()}
-	if c, err := s.Contact().Query().Where(contact.EmailEqualFold(dest)).First(ctx); err == nil {
-		target.ContactID = c.ID
-	} else if !ent.IsNotFound(err) {
-		return nil, err
-	}
-	// Same effects as the unsubscribe link: row, confirmation reset on "everything",
-	// automation exit and the engagement event, atomically and idempotently.
-	if err := consent.RecordUnsubscribe(ctx, h.bus, target); err != nil {
-		return nil, err
-	}
-
-	u, err := s.Unsubscribe().Query().Where(
-		unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
-		unsubscribe.DestinationEQ(dest),
-		unsubscribe.SendingSourceEQ(source),
-	).Only(ctx)
-	if err != nil {
+	u, err := consent.Unsubscribe(ctx, h.bus, s, string(req.Destination), source)
+	switch {
+	case errors.Is(err, consent.ErrDestinationEmpty), errors.Is(err, consent.ErrInvalidSource), errors.Is(err, consent.ErrUnknownAutomation):
+		res := externalapi.UnsubscribesCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+		return &res, nil
+	case err != nil:
 		return nil, err
 	}
 	return &externalapi.UnsubscribeResource{

@@ -93,3 +93,13 @@ func TestSiteTokensNeedAnOwnerOrAdmin(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteCreateTokenResponse{}, ok)
 }
+
+func TestSiteTokensCreateRefusesAnUnknownScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	res, err := c.SiteTokensCreate(context.Background(),
+		&siteapi.SiteCreateTokenInput{Name: "x", Scopes: []string{"contacts:read", "root:all"}},
+		siteapi.SiteTokensCreateParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTokensCreateUnprocessableEntity{}, res)
+}

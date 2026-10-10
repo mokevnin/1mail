@@ -7,9 +7,9 @@ import (
 	"context"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -76,15 +76,7 @@ func RecordUnsubscribe(ctx context.Context, bus *events.Bus, target tracking.Uns
 		// Automation: unsubscribing from an automation also exits its active
 		// enrollment (ADR: two effects from one action).
 		if isAutomation && target.ContactID != 0 {
-			if _, err := sc.AutomationRun().Update().
-				Where(
-					automationrun.AutomationID(automationID),
-					automationrun.ContactID(target.ContactID),
-					automationrun.StatusEQ(automationrun.StatusActive),
-				).
-				SetStatus(automationrun.StatusExited).
-				ClearResumeAt().
-				Save(ctx); err != nil {
+			if _, err := automations.Exit(ctx, sc, automationID, target.ContactID); err != nil {
 				return err
 			}
 		}

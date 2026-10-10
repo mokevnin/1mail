@@ -1,0 +1,125 @@
+// Package apitokens owns minting and revoking workspace API tokens. Every entry
+// point that creates one (the /api token endpoints, bootstrap, the /site settings
+// screen) calls it, so the rules are written once: a name is required, scopes come
+// from the contract's vocabulary, and a token minted by another token can never
+// carry a scope its minter lacks. Handlers stay thin adapters: authorization of
+// the caller (scope, role), call, map errors.
+//
+// OAuth issuing (internal/oauthserver) keeps its own flow: its scopes are fixed by
+// the consent screen, and it only shares the credential generators in
+// internal/service.
+package apitokens
+
+import (
+	"context"
+	"errors"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/apitoken"
+	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/service"
+)
+
+var (
+	// ErrNameEmpty: the token name is blank after trimming.
+	ErrNameEmpty = errors.New("apitokens: name must not be empty")
+	// ErrUnknownScope: a requested scope is not in the ApiTokenScope vocabulary.
+	ErrUnknownScope = errors.New("apitokens: unknown scope")
+	// ErrScopeEscalation: a token asked to mint a scope it does not hold itself.
+	ErrScopeEscalation = errors.New("apitokens: cannot grant a scope the minting token lacks")
+	// ErrNotFound: no such active token in this Workspace (unknown, foreign or
+	// already revoked).
+	ErrNotFound = errors.New("apitokens: token not found")
+)
+
+// Input is what a caller chooses when minting.
+type Input struct {
+	Name      string
+	Scopes    []string
+	ExpiresAt *time.Time
+}
+
+// Minted is a created token and its full secret value, shown to the caller once;
+// only a bcrypt hash and the public prefix are stored.
+type Minted struct {
+	Token *ent.ApiToken
+	Value string
+}
+
+// Mint creates a token with any scope of the vocabulary. The caller has already
+// been authorized to hold that power: an owner/admin on /site, or the bootstrap
+// secret. A token minting another token goes through MintWithin.
+func Mint(ctx context.Context, s *ent.Scoped, in Input) (Minted, error) {
+	name := strings.TrimSpace(in.Name)
+	if name == "" {
+		return Minted{}, ErrNameEmpty
+	}
+	scopes := slices.Compact(slices.Sorted(slices.Values(in.Scopes)))
+	for _, sc := range scopes {
+		if !validScope(sc) {
+			return Minted{}, ErrUnknownScope
+		}
+	}
+
+	prefix, err := service.GenerateTokenPrefix()
+	if err != nil {
+		return Minted{}, err
+	}
+	secret, err := service.GenerateTokenSecret()
+	if err != nil {
+		return Minted{}, err
+	}
+	hash, err := service.HashTokenSecret(secret)
+	if err != nil {
+		return Minted{}, err
+	}
+
+	create := s.ApiToken().Create().
+		SetName(name).
+		SetPrefix(prefix).
+		SetSecretHash(hash).
+		SetScopes(scopes)
+	if in.ExpiresAt != nil {
+		create = create.SetExpiresAt(*in.ExpiresAt)
+	}
+	token, err := create.Save(ctx)
+	if err != nil {
+		return Minted{}, err
+	}
+	return Minted{Token: token, Value: service.TokenValue(prefix, secret)}, nil
+}
+
+// MintWithin is Mint for a token acting as minter: every requested scope must be
+// among the minter's own, so tokens:write cannot be turned into send or any other
+// power the minter does not already have.
+func MintWithin(ctx context.Context, s *ent.Scoped, minter []string, in Input) (Minted, error) {
+	for _, sc := range in.Scopes {
+		if !slices.Contains(minter, sc) {
+			return Minted{}, ErrScopeEscalation
+		}
+	}
+	return Mint(ctx, s, in)
+}
+
+// Revoke retires an active token (it stays listed with revoked_at). A token that
+// is unknown, belongs to another Workspace or is already revoked is ErrNotFound.
+func Revoke(ctx context.Context, s *ent.Scoped, id int64) error {
+	n, err := s.ApiToken().Update().
+		Where(apitoken.ID(id), apitoken.RevokedAtIsNil()).
+		SetRevokedAt(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func validScope(scope string) bool {
+	return slices.Contains(externalapi.ApiTokenScope("").AllValues(), externalapi.ApiTokenScope(scope))
+}

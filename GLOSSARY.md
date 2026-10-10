@@ -191,7 +191,8 @@ _Avoid_: Send log, delivery row, email record
 Either **per-recipient** and final for that destination — _Sent_, _Skipped_ (Suppression,
 Unsubscribe, or missing Confirmation), or a permanent failure of that one message — or
 **per-source** and reversible: a **Hold** (Workspace suspension, Billing hold, an unverified
-Sending domain, or no Integration), after which the same messages may still be sent.
+Sending domain, or no Integration) or a **Deferral** (the Integration's Send rate limit is spent),
+after which the same messages may still be sent.
 _Avoid_: Status, result (unqualified)
 
 **Send rate limit**:
