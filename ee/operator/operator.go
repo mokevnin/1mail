@@ -22,6 +22,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 
+	"github.com/mokevnin/sphericon/ee/audit"
 	"github.com/mokevnin/sphericon/ee/licensekey"
 	"github.com/mokevnin/sphericon/ent"
 	entoperator "github.com/mokevnin/sphericon/ent/operator"
@@ -109,6 +110,7 @@ func (c Config) Validate(siteSecret string) error {
 type Module struct {
 	ent        *ent.Client
 	lic        *licensekey.License
+	audit      *audit.Log
 	cipher     *secrets.Cipher
 	challenges *authtoken.Signer
 	attempts   *accounts.Attempts
@@ -116,13 +118,13 @@ type Module struct {
 }
 
 // NewModule builds the module over the raw client.
-func NewModule(client *ent.Client, lic *licensekey.License, cipher *secrets.Cipher, cfg Config) *Module {
+func NewModule(client *ent.Client, lic *licensekey.License, auditLog *audit.Log, cipher *secrets.Cipher, cfg Config) *Module {
 	now := cfg.Clock
 	if now == nil {
 		now = time.Now
 	}
 	return &Module{
-		ent: client, lic: lic, cipher: cipher, attempts: cfg.Attempts, now: now,
+		ent: client, lic: lic, audit: auditLog, cipher: cipher, attempts: cfg.Attempts, now: now,
 		challenges: authtoken.New(cfg.Secret).WithClock(now),
 	}
 }

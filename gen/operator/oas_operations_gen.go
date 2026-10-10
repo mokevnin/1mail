@@ -6,10 +6,11 @@ package operatorapi
 type OperationName = string
 
 const (
-	OperatorAuthLoginOperation        OperationName = "OperatorAuthLogin"
-	OperatorAuthLogoutOperation       OperationName = "OperatorAuthLogout"
-	OperatorAuthSecondFactorOperation OperationName = "OperatorAuthSecondFactor"
-	OperatorMeGetOperation            OperationName = "OperatorMeGet"
-	OperatorWorkspacesGetOperation    OperationName = "OperatorWorkspacesGet"
-	OperatorWorkspacesListOperation   OperationName = "OperatorWorkspacesList"
+	OperatorAuthLoginOperation          OperationName = "OperatorAuthLogin"
+	OperatorAuthLogoutOperation         OperationName = "OperatorAuthLogout"
+	OperatorAuthSecondFactorOperation   OperationName = "OperatorAuthSecondFactor"
+	OperatorMeGetOperation              OperationName = "OperatorMeGet"
+	OperatorWorkspaceAuditListOperation OperationName = "OperatorWorkspaceAuditList"
+	OperatorWorkspacesGetOperation      OperationName = "OperatorWorkspacesGet"
+	OperatorWorkspacesListOperation     OperationName = "OperatorWorkspacesList"
 )

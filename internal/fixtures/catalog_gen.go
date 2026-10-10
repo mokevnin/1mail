@@ -385,6 +385,14 @@ const (
 	InitechAdminAdaPassword = "ada-test-password"
 	// InitechAdminMembershipID is from fixtures/memberships.
 	InitechAdminMembershipID = 7
+	// InitechAuditOperatorSuspendAction is from fixtures/audit_entries.
+	InitechAuditOperatorSuspendAction = "workspace.suspend"
+	// InitechAuditOperatorSuspendID is from fixtures/audit_entries.
+	InitechAuditOperatorSuspendID = 7
+	// InitechAuditUserTagAction is from fixtures/audit_entries.
+	InitechAuditUserTagAction = "tag.create"
+	// InitechAuditUserTagID is from fixtures/audit_entries.
+	InitechAuditUserTagID = 8
 	// InitechCoOwnerMembershipID is from fixtures/memberships.
 	InitechCoOwnerMembershipID = 6
 	// InitechCoOwnerOwenEmail is from fixtures/users.

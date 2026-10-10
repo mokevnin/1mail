@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { operatorAuthLogin, operatorAuthLogout, operatorAuthSecondFactor, operatorMeGet, operatorWorkspacesGet, operatorWorkspacesList, type Options } from '../sdk.gen.ts';
-import type { OperatorAuthLoginData, OperatorAuthLoginError, OperatorAuthLoginResponse, OperatorAuthLogoutData, OperatorAuthLogoutResponse, OperatorAuthSecondFactorData, OperatorAuthSecondFactorError, OperatorAuthSecondFactorResponse, OperatorMeGetData, OperatorMeGetError, OperatorMeGetResponse, OperatorWorkspacesGetData, OperatorWorkspacesGetError, OperatorWorkspacesGetResponse, OperatorWorkspacesListData, OperatorWorkspacesListError, OperatorWorkspacesListResponse } from '../types.gen.ts';
+import { operatorAuthLogin, operatorAuthLogout, operatorAuthSecondFactor, operatorMeGet, operatorWorkspaceAuditList, operatorWorkspacesGet, operatorWorkspacesList, type Options } from '../sdk.gen.ts';
+import type { OperatorAuthLoginData, OperatorAuthLoginError, OperatorAuthLoginResponse, OperatorAuthLogoutData, OperatorAuthLogoutResponse, OperatorAuthSecondFactorData, OperatorAuthSecondFactorError, OperatorAuthSecondFactorResponse, OperatorMeGetData, OperatorMeGetError, OperatorMeGetResponse, OperatorWorkspaceAuditListData, OperatorWorkspaceAuditListError, OperatorWorkspaceAuditListResponse, OperatorWorkspacesGetData, OperatorWorkspacesGetError, OperatorWorkspacesGetResponse, OperatorWorkspacesListData, OperatorWorkspacesListError, OperatorWorkspacesListResponse } from '../types.gen.ts';
 
 /**
  * Check the password. Answers a challenge (or, at first login, a TOTP enrolment)
@@ -207,3 +207,51 @@ export const operatorWorkspacesGetOptions = (options: Options<OperatorWorkspaces
   },
   queryKey: operatorWorkspacesGetQueryKey(options)
 });
+
+export const operatorWorkspaceAuditListQueryKey = (options: Options<OperatorWorkspaceAuditListData>) => createQueryKey('operatorWorkspaceAuditList', options);
+
+/**
+ * One Workspace's Audit log, newest first. Empty when the instance has no Audit license, since nothing is then recorded.
+ */
+export const operatorWorkspaceAuditListOptions = (options: Options<OperatorWorkspaceAuditListData>) => queryOptions<OperatorWorkspaceAuditListResponse, OperatorWorkspaceAuditListError, OperatorWorkspaceAuditListResponse, ReturnType<typeof operatorWorkspaceAuditListQueryKey>>({
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await operatorWorkspaceAuditList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: operatorWorkspaceAuditListQueryKey(options)
+});
+
+export const operatorWorkspaceAuditListInfiniteQueryKey = (options: Options<OperatorWorkspaceAuditListData>): QueryKey<Options<OperatorWorkspaceAuditListData>> => createQueryKey('operatorWorkspaceAuditList', options, true);
+
+/**
+ * One Workspace's Audit log, newest first. Empty when the instance has no Audit license, since nothing is then recorded.
+ */
+export const operatorWorkspaceAuditListInfiniteOptions = (options: Options<OperatorWorkspaceAuditListData>) => {
+  const opts = infiniteQueryOptions<OperatorWorkspaceAuditListResponse, OperatorWorkspaceAuditListError, InfiniteData<OperatorWorkspaceAuditListResponse>, QueryKey<Options<OperatorWorkspaceAuditListData>>, string | Pick<QueryKey<Options<OperatorWorkspaceAuditListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<OperatorWorkspaceAuditListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          cursor: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await operatorWorkspaceAuditList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: operatorWorkspaceAuditListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
+};

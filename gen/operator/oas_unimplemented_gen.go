@@ -52,6 +52,16 @@ func (UnimplementedHandler) OperatorMeGet(ctx context.Context) (r OperatorMeGetR
 	return r, ht.ErrNotImplemented
 }
 
+// OperatorWorkspaceAuditList implements OperatorWorkspaceAudit_list operation.
+//
+// One Workspace's Audit log, newest first. Empty when the instance has no Audit license, since nothing
+// is then recorded.
+//
+// GET /workspaces/{workspaceId}/audit-entries
+func (UnimplementedHandler) OperatorWorkspaceAuditList(ctx context.Context, params OperatorWorkspaceAuditListParams) (r OperatorWorkspaceAuditListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
 //
 // One Workspace's metadata and suspension state.

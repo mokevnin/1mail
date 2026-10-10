@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses, OperatorWorkspacesGetData, OperatorWorkspacesGetErrors, OperatorWorkspacesGetResponses, OperatorWorkspacesListData, OperatorWorkspacesListErrors, OperatorWorkspacesListResponses } from './types.gen.ts';
-import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody, zOperatorWorkspacesGetPath, zOperatorWorkspacesListQuery } from './zod.gen.ts';
+import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses, OperatorWorkspaceAuditListData, OperatorWorkspaceAuditListErrors, OperatorWorkspaceAuditListResponses, OperatorWorkspacesGetData, OperatorWorkspacesGetErrors, OperatorWorkspacesGetResponses, OperatorWorkspacesListData, OperatorWorkspacesListErrors, OperatorWorkspacesListResponses } from './types.gen.ts';
+import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody, zOperatorWorkspaceAuditListPath, zOperatorWorkspaceAuditListQuery, zOperatorWorkspacesGetPath, zOperatorWorkspacesListQuery } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
   /**
@@ -124,5 +124,23 @@ export const operatorWorkspacesGet = <ThrowOnError extends boolean = false>(opti
       type: 'apiKey'
     }],
   url: '/workspaces/{workspaceId}',
+  ...options
+});
+
+/**
+ * One Workspace's Audit log, newest first. Empty when the instance has no Audit license, since nothing is then recorded.
+ */
+export const operatorWorkspaceAuditList = <ThrowOnError extends boolean = false>(options: Options<OperatorWorkspaceAuditListData, ThrowOnError>): RequestResult<OperatorWorkspaceAuditListResponses, OperatorWorkspaceAuditListErrors, ThrowOnError> => (options.client ?? client).get<OperatorWorkspaceAuditListResponses, OperatorWorkspaceAuditListErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: zOperatorWorkspaceAuditListPath,
+    query: zOperatorWorkspaceAuditListQuery.optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'OPERATOR_JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{workspaceId}/audit-entries',
   ...options
 });

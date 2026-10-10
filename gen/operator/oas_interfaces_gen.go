@@ -13,6 +13,10 @@ type OperatorMeGetRes interface {
 	operatorMeGetRes()
 }
 
+type OperatorWorkspaceAuditListRes interface {
+	operatorWorkspaceAuditListRes()
+}
+
 type OperatorWorkspacesGetRes interface {
 	operatorWorkspacesGetRes()
 }

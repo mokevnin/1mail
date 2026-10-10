@@ -8,6 +8,34 @@ export const zEmailAddress = z.email();
 export const zEntityId = z.string().regex(/^[0-9]+$/);
 
 /**
+ * Who performed an audited change, as the Workspace's own team sees it
+ */
+export const zOperatorAuditActorKind = z.enum([
+  'user',
+  'api_token',
+  'operator',
+  'system'
+]);
+
+/**
+ * The actor of an Audit entry
+ */
+export const zOperatorAuditActor = z.object({
+  kind: zOperatorAuditActorKind,
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * What an audited change was done to
+ */
+export const zOperatorAuditTarget = z.object({
+  type: z.string(),
+  id: z.exactOptional(z.string().nullable()),
+  name: z.exactOptional(z.string().nullable())
+});
+
+/**
  * A TOTP secret awaiting its first confirming code
  */
 export const zOperatorEnrolment = z.object({
@@ -94,13 +122,6 @@ export const zProblemDetails = z.object({
 });
 
 /**
- * RFC 7807 bad request response
- */
-export const zBadRequestProblem = z.object({
-  body: zProblemDetails
-});
-
-/**
  * RFC 7807 conflict response
  */
 export const zConflictProblem = z.object({
@@ -131,6 +152,29 @@ export const zPaymentRequiredProblem = z.object({
 export const zTimeZoneName = z.string();
 
 export const zTimestamp = z.iso.datetime();
+
+/**
+ * One immutable Audit entry of a Workspace. Secrets are never recorded; they appear as changed only.
+ */
+export const zOperatorAuditEntryResource = z.object({
+  id: zEntityId,
+  occurredAt: zTimestamp,
+  actor: zOperatorAuditActor,
+  action: z.string(),
+  target: zOperatorAuditTarget,
+  diff: z.exactOptional(z.record(z.string(), z.unknown()).nullable()),
+  requestId: z.exactOptional(z.string().nullable()),
+  ip: z.exactOptional(z.string().nullable()),
+  userAgent: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * A page of a Workspace's Audit log, newest first
+ */
+export const zOperatorAuditEntryList = z.object({
+  items: z.array(zOperatorAuditEntryResource),
+  nextCursor: z.exactOptional(z.string().nullable())
+});
 
 /**
  * A Workspace's suspension state (ADR 0007)
@@ -224,3 +268,17 @@ export const zOperatorWorkspacesGetPath = z.object({
  * The request has succeeded.
  */
 export const zOperatorWorkspacesGetResponse = zOperatorWorkspaceResource;
+
+export const zOperatorWorkspaceAuditListPath = z.object({
+  workspaceId: zEntityId
+});
+
+export const zOperatorWorkspaceAuditListQuery = z.object({
+  cursor: z.exactOptional(z.string()),
+  limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zOperatorWorkspaceAuditListResponse = zOperatorAuditEntryList;

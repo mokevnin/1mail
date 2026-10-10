@@ -187,7 +187,10 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
      `accounts.AcceptInvitation`, re-scope a transaction's client to the same Workspace;
   6. the Workspace comes from a secret rather than a login: the SES hook ingest key
      (`internal/server/hooks_ses.go`), signed unsubscribe/confirm tokens
-     (`internal/consent`), and `accounts.BootstrapScope` (the bootstrap token).
+     (`internal/consent`), and `accounts.BootstrapScope` (the bootstrap token);
+  7. the platform Operator (ADR 0026): `ee/operator` scopes over the one Workspace whose
+     Audit log it reads (`Module.AuditEntries`, after loading the Workspace row), through the
+     same `audit.Log.Entries` path as `/site`.
 - **The raw `*ent.Client` is allowed only in:** `internal/accounts` (User, Membership,
   Workspace incl. slug resolution, invitation by token), `internal/api/auth` (credentials, token and key lookup),
   `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,

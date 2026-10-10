@@ -35,6 +35,13 @@ type Handler interface {
 	//
 	// GET /me
 	OperatorMeGet(ctx context.Context) (OperatorMeGetRes, error)
+	// OperatorWorkspaceAuditList implements OperatorWorkspaceAudit_list operation.
+	//
+	// One Workspace's Audit log, newest first. Empty when the instance has no Audit license, since nothing
+	// is then recorded.
+	//
+	// GET /workspaces/{workspaceId}/audit-entries
+	OperatorWorkspaceAuditList(ctx context.Context, params OperatorWorkspaceAuditListParams) (OperatorWorkspaceAuditListRes, error)
 	// OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
 	//
 	// One Workspace's metadata and suspension state.
