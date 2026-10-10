@@ -8,8 +8,8 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // SiteUserGetMe returns the authenticated user's profile. Auth is enforced by
@@ -66,11 +66,11 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 			return &v, nil
 		}
 		// Verify the current password the same way the direct login provider does.
-		if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, currentPassword) {
+		if u.PasswordHash == "" || !credentials.VerifyPassword(u.PasswordHash, currentPassword) {
 			v := siteapi.SiteUserUpdateMeForbidden(problem(http.StatusForbidden, i18n.T("errors.current_password_incorrect", nil)))
 			return &v, nil
 		}
-		hash, err := service.HashPassword(newPassword)
+		hash, err := credentials.HashPassword(newPassword)
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +120,7 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 		return &v, nil
 	}
 
-	if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, req.CurrentPassword) {
+	if u.PasswordHash == "" || !credentials.VerifyPassword(u.PasswordHash, req.CurrentPassword) {
 		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, i18n.T("errors.current_password_incorrect", nil)))
 		return &v, nil
 	}

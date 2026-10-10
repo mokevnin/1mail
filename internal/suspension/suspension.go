@@ -1,4 +1,4 @@
-package service
+package suspension
 
 import (
 	"context"
@@ -93,14 +93,4 @@ func recordWorkspaceAudit(ctx context.Context, tx *ent.Client, pub events.Publis
 		TargetName:  ws.Name,
 		Diff:        diff,
 	})
-}
-
-// WorkspaceIDBySlug resolves a Workspace slug to its id (operator tooling addresses
-// Workspaces by slug).
-func WorkspaceIDBySlug(ctx context.Context, client *ent.Client, slug string) (int64, error) {
-	id, err := client.Workspace.Query().Where(workspace.Slug(slug)).OnlyID(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("workspace %q: %w", slug, err)
-	}
-	return id, nil
 }

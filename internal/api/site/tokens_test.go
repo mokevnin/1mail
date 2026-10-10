@@ -8,8 +8,8 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/credentials"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func TestSiteTokensCreateListRevoke(t *testing.T) {
 	resp, ok := created.(*siteapi.SiteCreateTokenResponse)
 	require.Truef(t, ok, "got %T", created)
 	assert.NotEmpty(t, resp.Token)
-	assert.NotNil(t, service.ParseToken(resp.Token), "returned a well-formed token value")
+	assert.NotNil(t, credentials.ParseToken(resp.Token), "returned a well-formed token value")
 	assert.Equal(t, "CI", resp.Resource.Name)
 
 	// The new token is persisted and live (selected from the DB by its public prefix).

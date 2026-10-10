@@ -12,7 +12,7 @@ import (
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -113,7 +113,7 @@ func TestExternalAuditFiltersNarrowTheRead(t *testing.T) {
 func TestExternalAuditOperatorIdCannotBeProbed(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse")
 	require.NoError(t, err)
 	env.DeliverToEE(t)
 	c := env.ExternalScoped(t, "audit:read")

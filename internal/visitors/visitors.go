@@ -1,4 +1,4 @@
-package service
+package visitors
 
 import (
 	"context"
@@ -160,16 +160,4 @@ func findOrCreateVisitor(ctx context.Context, s *ent.Scoped, visitorID string) (
 		SetVisitorID(visitorID).
 		SetLastSeenAt(time.Now()).
 		Save(ctx)
-}
-
-// ResolveContactID resolves an existing Contact by any present alias key (subject_id
-// → email → phone) and returns its id, or 0 if none matches. It never creates a
-// Contact — used by event ingest to attach an event to a Contact by stable identity
-// when one already exists, leaving it anonymous (0) otherwise.
-func ResolveContactID(ctx context.Context, s *ent.Scoped, subjectID string, email, phone *string) (int64, error) {
-	c, err := contacts.Resolve(ctx, s, &subjectID, email, phone)
-	if err != nil || c == nil {
-		return 0, err
-	}
-	return c.ID, nil
 }

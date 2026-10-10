@@ -157,3 +157,20 @@ func TestUpsertDoesNotResolveAnotherWorkspacesContact(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, found, "an Acme contact is invisible to a Globex-scoped resolve")
 }
+
+func TestResolveIDFindsExistingContactsOnly(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	id, err := contacts.ResolveID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.ContactAliceID, id)
+
+	id, err = contacts.ResolveID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr("nobody@example.com"), nil)
+	require.NoError(t, err)
+	assert.Zero(t, id, "never creates")
+
+	id, err = contacts.ResolveID(ctx, env.DB.Scoped(fixtures.GlobexID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
+	require.NoError(t, err)
+	assert.Zero(t, id, "another workspace's contact is not resolved")
+}

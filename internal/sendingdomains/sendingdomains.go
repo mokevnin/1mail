@@ -21,11 +21,11 @@ import (
 	"golang.org/x/net/idna"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // DefaultSelector is the DKIM selector used when the caller supplies none.
@@ -111,7 +111,7 @@ func (m *Module) Create(ctx context.Context, s *ent.Scoped, in CreateInput) (*en
 			Save(ctx)
 		return cerr
 	})
-	if service.IsUniqueViolation(err) {
+	if db.IsUniqueViolation(err) {
 		return nil, ErrAlreadyExists
 	}
 	if err != nil {

@@ -17,7 +17,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -155,9 +155,9 @@ func TestAuditOperatorSuspensionShowsOnlyOneMailStaff(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
 	require.NoError(t, err)
-	_, err = service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com")
+	_, err = suspension.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com")
 	require.NoError(t, err)
 
 	for _, action := range []string{events.ActionWorkspaceSuspend, events.ActionWorkspaceUnsuspend} {
@@ -177,7 +177,7 @@ func TestAuditOperatorSuspensionShowsOnlyOneMailStaff(t *testing.T) {
 
 func TestAuditAutomaticSuspensionIsAttributedToSystem(t *testing.T) {
 	env := testhelper.Setup(t)
-	_, err := service.SuspendWorkspace(context.Background(), env.Bus, fixtures.AcmeID, "system", "complaint rate")
+	_, err := suspension.SuspendWorkspace(context.Background(), env.Bus, fixtures.AcmeID, "system", "complaint rate")
 	require.NoError(t, err)
 
 	got := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionWorkspaceSuspend)
@@ -188,9 +188,9 @@ func TestAuditAutomaticSuspensionIsAttributedToSystem(t *testing.T) {
 func TestAuditSuspensionNoOpRecordsNothing(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "first")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "first")
 	require.NoError(t, err)
-	changed, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops", "second")
+	changed, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops", "second")
 	require.NoError(t, err)
 	require.False(t, changed)
 
@@ -225,9 +225,9 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = owner.SiteWorkspacesUpdate(ctx, &siteapi.SiteUpdateWorkspaceInput{Name: "Acme Two"}, // workspace.update
 		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
-	_, err = service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops", "abuse") // workspace.suspend
+	_, err = suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops", "abuse") // workspace.suspend
 	require.NoError(t, err)
-	_, err = service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops") // workspace.unsuspend
+	_, err = suspension.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops") // workspace.unsuspend
 	require.NoError(t, err)
 
 	_, err = env.ExternalAnchor(t).ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{ // contact.import
@@ -247,7 +247,7 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	slices.Sort(want)
 	assert.Equal(t, want, seen)
 
-	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/accounts/roles.go", "internal/api/site/audit.go", "internal/contacts/contacts.go", "internal/events/audit.go", "internal/service/suspension.go"},
+	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/accounts/roles.go", "internal/api/site/audit.go", "internal/contacts/contacts.go", "internal/events/audit.go", "internal/suspension/suspension.go"},
 		recordAuditCallSites(t), "a new explicit RecordAudit call site: list its actions and drive them above")
 }
 
@@ -283,7 +283,7 @@ func recordAuditCallSites(t *testing.T) []string {
 func TestAuditOperatorIdCannotBeProbed(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
+	_, err := suspension.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
 	require.NoError(t, err)
 	env.DeliverToEE(t)
 	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)

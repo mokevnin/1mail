@@ -109,9 +109,6 @@ func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
 
 func TestListIsNewestFirstWithinTheWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	_, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(context.Background())
-	require.NoError(t, err)
-
 	page, err := automations.New().List(context.Background(), env.DB.Scoped(fixtures.AcmeID), pagination.Params{Page: 1, PageSize: 100})
 	require.NoError(t, err)
 	require.Greater(t, page.TotalItems, 1)
