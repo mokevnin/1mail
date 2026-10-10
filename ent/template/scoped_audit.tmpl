@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 )
@@ -188,7 +189,11 @@ func auditChange{{ $N }}(verb string, before, after *{{ $N }}) AuditChange {
 		Diff:       AuditDiff(b, a, {{ $N }}AuditSensitive),
 	}
 	{{- if $A.NameField }}
+	{{- if $A.NameIsURL }}
+	change.TargetName = auditURLName(fmt.Sprint(derefAudit(target.{{ $A.NameField.StructField }})))
+	{{- else }}
 	change.TargetName = fmt.Sprint(derefAudit(target.{{ $A.NameField.StructField }}))
+	{{- end }}
 	{{- end }}
 	return change
 }
@@ -207,6 +212,17 @@ func (b *{{ $N }}CreateBulk) auditRebind(c *Client) {
 }
 {{- end }}
 {{ end }}
+
+// auditURLName reduces a URL to scheme, host and path for an entry's name snapshot: a
+// query string, a fragment and userinfo may carry a secret. An unparsable value yields
+// no name at all rather than a raw copy.
+func auditURLName(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return ""
+	}
+	return (&url.URL{Scheme: u.Scheme, Host: u.Host, Path: u.Path}).String()
+}
 
 // derefAudit returns the value a pointer field points at (nil for a nil pointer), so a
 // nillable field diffs like a plain one.

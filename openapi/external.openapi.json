@@ -55,6 +55,33 @@
         "description": "List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope)",
         "parameters": [
           {
+            "$ref": "#/components/parameters/AuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.requestId"
+          },
+          {
             "name": "cursor",
             "in": "query",
             "required": false,
@@ -3844,6 +3871,96 @@
   ],
   "components": {
     "parameters": {
+      "AuditFilter.action": {
+        "name": "action",
+        "in": "query",
+        "required": false,
+        "description": "Only entries with exactly this action, e.g. membership.update",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.actorId": {
+        "name": "actorId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.actorKind": {
+        "name": "actorKind",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by this kind of actor",
+        "schema": {
+          "$ref": "#/components/schemas/AuditActorKind"
+        },
+        "explode": false
+      },
+      "AuditFilter.from": {
+        "name": "from",
+        "in": "query",
+        "required": false,
+        "description": "Only entries at or after this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
+      "AuditFilter.ip": {
+        "name": "ip",
+        "in": "query",
+        "required": false,
+        "description": "Only entries from this client address",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.requestId": {
+        "name": "requestId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries made under this request id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.targetId": {
+        "name": "targetId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about the target with this id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.targetType": {
+        "name": "targetType",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about this target type, e.g. integration",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.to": {
+        "name": "to",
+        "in": "query",
+        "required": false,
+        "description": "Only entries strictly before this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
       "AutomationResourceKey": {
         "name": "id",
         "in": "path",

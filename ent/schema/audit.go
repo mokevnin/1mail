@@ -13,6 +13,9 @@ type Audited struct {
 	// entry stays readable after the target is deleted. Leave empty to snapshot none
 	// (a Contact is identified by id only: an email or name is personal data).
 	NameField string
+	// NameIsURL snapshots NameField as a URL stripped to scheme, host and path: a
+	// query string or userinfo may carry a secret, so it never reaches the log.
+	NameIsURL bool
 	// NamesOnly records the names of changed fields and never a value, on create, update
 	// and delete alike (a Contact: its values are personal data, so an immutable log must
 	// never hold them and erasing a Contact needs no rewrite of the log).

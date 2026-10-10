@@ -115,6 +115,9 @@ func NewLog(lic *licensekey.License) *Log { return &Log{lic: lic} }
 // Licensed reports whether this instance may show an Audit log.
 func (l *Log) Licensed() bool { return l != nil && l.lic.Has(licensekey.FeatureAudit) }
 
+// RetentionLicensed reports whether this instance may set an Audit log retention window.
+func (l *Log) RetentionLicensed() bool { return l != nil && l.lic.Has(licensekey.FeatureRetention) }
+
 // Entries returns up to limit entries of the scoped Workspace matching the filter,
 // newest first, that precede the cursor (an entry id; 0 starts from the newest), and the cursor of the
 // next page (0 on the last page). The caller has already checked Licensed and the
@@ -147,8 +150,11 @@ func predicates(f events.AuditFilter) []predicate.AuditEntry {
 	if f.ActorKind != "" {
 		ps = append(ps, auditentry.ActorKind(f.ActorKind))
 	}
-	if f.ActorID != "" {
-		ps = append(ps, auditentry.ActorID(f.ActorID))
+	// An Operator's id is never exposed, so it must not be probeable either: with the
+	// operator kind the id filter is ignored, and without a kind an id filter never
+	// matches an Operator's entries (ADR 0022).
+	if f.ActorID != "" && f.ActorKind != events.ActorOperator {
+		ps = append(ps, auditentry.ActorID(f.ActorID), auditentry.ActorKindNEQ(events.ActorOperator))
 	}
 	if f.Action != "" {
 		ps = append(ps, auditentry.Action(f.Action))

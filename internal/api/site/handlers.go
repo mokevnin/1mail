@@ -92,6 +92,8 @@ type AuditLog interface {
 	Entries(ctx context.Context, s *ent.Scoped, f events.AuditFilter, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
 	// ExportCSV streams the entries matching the filter, newest first, as CSV.
 	ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter, w io.Writer) error
+	// RetentionLicensed reports whether the retention window may be set (ADR 0014).
+	RetentionLicensed() bool
 }
 
 // Deps is everything the /site handlers are built from. The domain modules are

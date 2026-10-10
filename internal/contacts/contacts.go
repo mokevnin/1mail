@@ -19,6 +19,7 @@ package contacts
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -212,8 +213,11 @@ type BatchOutcome struct {
 //
 // A batch is an import (ADR 0022): its rows are written through an unaudited scope and
 // the whole batch is recorded as ONE contact.import entry (counts only), not one entry
-// per row. The error is that of recording the entry; the rows are already committed.
-func (m *Module) UpsertBatch(ctx context.Context, s *ent.Scoped, items []Attributes) ([]BatchOutcome, error) {
+// per row. The rows commit one by one (a failing row must not poison the others), so
+// the entry cannot share their transaction: if recording it fails the failure is
+// logged and the committed outcomes are still returned, never a 500 for an import
+// that happened.
+func (m *Module) UpsertBatch(ctx context.Context, s *ent.Scoped, items []Attributes) []BatchOutcome {
 	rows := events.Unaudited(s)
 	out := make([]BatchOutcome, len(items))
 	var sum ImportSummary
@@ -228,7 +232,10 @@ func (m *Module) UpsertBatch(ctx context.Context, s *ent.Scoped, items []Attribu
 			sum.Updated++
 		}
 	}
-	return out, m.RecordImport(ctx, s, sum)
+	if err := m.RecordImport(ctx, s, sum); err != nil {
+		slog.ErrorContext(ctx, "record contact.import audit entry", "workspace_id", s.WorkspaceID(), "error", err)
+	}
+	return out
 }
 
 // ImportSummary counts the rows of one import.

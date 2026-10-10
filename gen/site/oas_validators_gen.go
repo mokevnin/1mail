@@ -363,6 +363,30 @@ func (s *SiteAuditExportPaymentRequired) Validate() error {
 	return nil
 }
 
+func (s *SiteAuditGetRetentionForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditGetRetentionNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditGetRetentionPaymentRequired) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SiteAuditListBadRequest) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
@@ -388,6 +412,38 @@ func (s *SiteAuditListNotFound) Validate() error {
 }
 
 func (s *SiteAuditListPaymentRequired) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditSetRetentionForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditSetRetentionNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditSetRetentionPaymentRequired) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteAuditSetRetentionUnprocessableEntity) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err

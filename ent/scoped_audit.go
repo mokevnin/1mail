@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 )
@@ -670,6 +671,7 @@ func (b *TagCreateBulk) auditRebind(c *Client) {
 
 // WebhookEndpointAuditSensitive lists the WebhookEndpoint fields whose values never reach the Audit log.
 var WebhookEndpointAuditSensitive = map[string]bool{
+	"url":              true,
 	"secret_encrypted": true,
 }
 
@@ -701,7 +703,7 @@ func auditChangeWebhookEndpoint(verb string, before, after *WebhookEndpoint) Aud
 		TargetID:   auditID(target.ID),
 		Diff:       AuditDiff(b, a, WebhookEndpointAuditSensitive),
 	}
-	change.TargetName = fmt.Sprint(derefAudit(target.URL))
+	change.TargetName = auditURLName(fmt.Sprint(derefAudit(target.URL)))
 	return change
 }
 
@@ -724,6 +726,17 @@ func (b *WebhookEndpointCreateBulk) auditRebind(c *Client) {
 	for _, x := range b.builders {
 		x.auditRebind(c)
 	}
+}
+
+// auditURLName reduces a URL to scheme, host and path for an entry's name snapshot: a
+// query string, a fragment and userinfo may carry a secret. An unparsable value yields
+// no name at all rather than a raw copy.
+func auditURLName(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return ""
+	}
+	return (&url.URL{Scheme: u.Scheme, Host: u.Host, Path: u.Path}).String()
 }
 
 // derefAudit returns the value a pointer field points at (nil for a nil pointer), so a

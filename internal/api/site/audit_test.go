@@ -99,8 +99,8 @@ func TestAuditIsTenantIsolated(t *testing.T) {
 	require.Len(t, acme.Items, 2)
 
 	globex := auditPage(t, env.SiteActor(t, fixtures.OwnerJaneEmail), fixtures.GlobexSlug)
-	require.Len(t, globex.Items, 1, "Globex sees only its own entry, not Acme's role change")
-	assert.Equal(t, strconv.Itoa(fixtures.GlobexAuditEntryID), string(globex.Items[0].ID))
+	require.Len(t, globex.Items, 5, "Globex sees only its own fixture entries, not Acme's role change")
+	assert.Equal(t, strconv.Itoa(fixtures.GlobexAuditEntryID), string(globex.Items[len(globex.Items)-1].ID), "oldest last")
 
 	cross := auditList(t, env.SiteActor(t, fixtures.OwnerJohnEmail), fixtures.GlobexSlug)
 	assert.IsType(t, &siteapi.SiteAuditListNotFound{}, cross, "John cannot address Globex's log")

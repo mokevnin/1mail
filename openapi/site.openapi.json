@@ -1084,6 +1084,142 @@
         "tags": ["Site Audit"]
       }
     },
+    "/workspaces/{slug}/audit-entries/retention": {
+      "get": {
+        "operationId": "SiteAudit_getRetention",
+        "description": "Read the Audit log retention window (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAuditRetention"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"]
+      },
+      "put": {
+        "operationId": "SiteAudit_setRetention",
+        "description": "Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin only)",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAuditRetention"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Audit"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteAuditRetention"
+              }
+            }
+          }
+        }
+      }
+    },
     "/workspaces/{slug}/automations": {
       "get": {
         "operationId": "SiteAutomations_list",
@@ -5091,7 +5227,7 @@
         "name": "actorId",
         "in": "query",
         "required": false,
-        "description": "Only entries by the actor with this id (a User id or an API token id)",
+        "description": "Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind",
         "schema": {
           "type": "string"
         },
@@ -5893,6 +6029,19 @@
           }
         },
         "description": "One immutable Audit entry (Enterprise)"
+      },
+      "SiteAuditRetention": {
+        "type": "object",
+        "required": ["retentionDays"],
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Entries older than this many days are pruned; null keeps them forever"
+          }
+        },
+        "description": "How long the Audit log is kept; the Enterprise advanced-retention control"
       },
       "SiteAuditTarget": {
         "type": "object",

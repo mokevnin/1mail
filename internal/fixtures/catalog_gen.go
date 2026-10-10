@@ -133,6 +133,22 @@ const (
 	GlobexAuditEntryAction = "membership.update"
 	// GlobexAuditEntryID is from fixtures/audit_entries.
 	GlobexAuditEntryID = 1
+	// GlobexAuditFormulaEntryAction is from fixtures/audit_entries.
+	GlobexAuditFormulaEntryAction = "tag.create"
+	// GlobexAuditFormulaEntryID is from fixtures/audit_entries.
+	GlobexAuditFormulaEntryID = 6
+	// GlobexAuditIntegrationDeleteAction is from fixtures/audit_entries.
+	GlobexAuditIntegrationDeleteAction = "integration.delete"
+	// GlobexAuditIntegrationDeleteID is from fixtures/audit_entries.
+	GlobexAuditIntegrationDeleteID = 5
+	// GlobexAuditIntegrationUpdateAction is from fixtures/audit_entries.
+	GlobexAuditIntegrationUpdateAction = "integration.update"
+	// GlobexAuditIntegrationUpdateID is from fixtures/audit_entries.
+	GlobexAuditIntegrationUpdateID = 3
+	// GlobexAuditWebhookCreateAction is from fixtures/audit_entries.
+	GlobexAuditWebhookCreateAction = "webhook_endpoint.create"
+	// GlobexAuditWebhookCreateID is from fixtures/audit_entries.
+	GlobexAuditWebhookCreateID = 4
 	// GlobexCollectKey is from fixtures/workspaces.
 	GlobexCollectKey = "omck_test_globex_collect_key"
 	// GlobexID is from fixtures/workspaces.

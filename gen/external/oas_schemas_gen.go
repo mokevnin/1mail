@@ -3142,6 +3142,52 @@ func (o NilFloat64) Or(d float64) float64 {
 	return d
 }
 
+// NewOptAuditActorKind returns new OptAuditActorKind with value set to v.
+func NewOptAuditActorKind(v AuditActorKind) OptAuditActorKind {
+	return OptAuditActorKind{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAuditActorKind is optional AuditActorKind.
+type OptAuditActorKind struct {
+	Value AuditActorKind
+	Set   bool
+}
+
+// IsSet returns true if OptAuditActorKind was set.
+func (o OptAuditActorKind) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAuditActorKind) Reset() {
+	var v AuditActorKind
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAuditActorKind) SetTo(v AuditActorKind) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAuditActorKind) Get() (v AuditActorKind, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAuditActorKind) Or(d AuditActorKind) AuditActorKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -4252,6 +4298,52 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTimestamp returns new OptTimestamp with value set to v.
+func NewOptTimestamp(v Timestamp) OptTimestamp {
+	return OptTimestamp{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTimestamp is optional Timestamp.
+type OptTimestamp struct {
+	Value Timestamp
+	Set   bool
+}
+
+// IsSet returns true if OptTimestamp was set.
+func (o OptTimestamp) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTimestamp) Reset() {
+	var v Timestamp
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTimestamp) SetTo(v Timestamp) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTimestamp) Get() (v Timestamp, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTimestamp) Or(d Timestamp) Timestamp {
 	if v, ok := o.Get(); ok {
 		return v
 	}

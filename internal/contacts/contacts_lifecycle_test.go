@@ -81,12 +81,11 @@ func TestUpsertBatchRunsEachItemIndependentlyAndInOrder(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := contacts.New(env.Bus)
 
-	out, err := m.UpsertBatch(context.Background(), env.DB.Scoped(fixtures.AcmeID), []contacts.Attributes{
+	out := m.UpsertBatch(context.Background(), env.DB.Scoped(fixtures.AcmeID), []contacts.Attributes{
 		{Email: lo.ToPtr("batch.new@example.com"), CustomFields: map[string]any{"source": "import"}},
 		{Email: lo.ToPtr(fixtures.ContactAliceEmail), FirstName: lo.ToPtr("Ignored")},
 		{FirstName: lo.ToPtr("No identity")},
 	})
-	require.NoError(t, err)
 	require.Len(t, out, 3)
 
 	require.NoError(t, out[0].Err)

@@ -48,10 +48,10 @@ const (
 	ActionWorkspaceSuspend   = "workspace.suspend"
 	ActionWorkspaceUnsuspend = "workspace.unsuspend"
 	ActionContactImport      = "contact.import"
+	ActionAuditLogExport     = "audit_log.export"
 )
 
 // ExplicitAuditActions lists every action emitted by an explicit RecordAudit call.
-// Data exports are not here yet: no export exists on this branch.
 var ExplicitAuditActions = []string{
 	ActionMembershipUpdate,
 	ActionInvitationCreate,
@@ -63,6 +63,7 @@ var ExplicitAuditActions = []string{
 	ActionWorkspaceSuspend,
 	ActionWorkspaceUnsuspend,
 	ActionContactImport,
+	ActionAuditLogExport,
 }
 
 // Unprojected is an optional DomainEvent capability: an event that is not a

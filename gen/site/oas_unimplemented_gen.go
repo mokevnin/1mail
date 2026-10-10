@@ -32,12 +32,31 @@ func (UnimplementedHandler) SiteAuditExport(ctx context.Context, params SiteAudi
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuditGetRetention implements SiteAudit_getRetention operation.
+//
+// Read the Audit log retention window (Enterprise; owner and admin only).
+//
+// GET /workspaces/{slug}/audit-entries/retention
+func (UnimplementedHandler) SiteAuditGetRetention(ctx context.Context, params SiteAuditGetRetentionParams) (r SiteAuditGetRetentionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuditList implements SiteAudit_list operation.
 //
 // List the workspace's Audit log, newest first (Enterprise; owner and admin only).
 //
 // GET /workspaces/{slug}/audit-entries
 func (UnimplementedHandler) SiteAuditList(ctx context.Context, params SiteAuditListParams) (r SiteAuditListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuditSetRetention implements SiteAudit_setRetention operation.
+//
+// Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin
+// only).
+//
+// PUT /workspaces/{slug}/audit-entries/retention
+func (UnimplementedHandler) SiteAuditSetRetention(ctx context.Context, req *SiteAuditRetention, params SiteAuditSetRetentionParams) (r SiteAuditSetRetentionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

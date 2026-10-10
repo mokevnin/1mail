@@ -121,6 +121,13 @@ export const zSiteAuditActor = z.object({
 });
 
 /**
+ * How long the Audit log is kept; the Enterprise advanced-retention control
+ */
+export const zSiteAuditRetention = z.object({
+  retentionDays: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()
+});
+
+/**
  * What an audited change was done to
  */
 export const zSiteAuditTarget = z.object({
@@ -993,7 +1000,7 @@ export const zSiteApiTokenResourceParentKey = z.string();
 export const zSiteAuditFilterAction = z.string();
 
 /**
- * Only entries by the actor with this id (a User id or an API token id)
+ * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
  */
 export const zSiteAuditFilterActorId = z.string();
 
@@ -1371,6 +1378,26 @@ export const zSiteAuditExportQuery = z.object({
  * The request has succeeded.
  */
 export const zSiteAuditExportResponse = z.string();
+
+export const zSiteAuditGetRetentionPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditGetRetentionResponse = zSiteAuditRetention;
+
+export const zSiteAuditSetRetentionBody = zSiteAuditRetention;
+
+export const zSiteAuditSetRetentionPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditSetRetentionResponse = zSiteAuditRetention;
 
 export const zSiteAutomationsListPath = z.object({
   slug: z.string()

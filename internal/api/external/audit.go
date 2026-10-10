@@ -2,20 +2,17 @@ package external
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"strconv"
+	"time"
 
-	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/auditapi"
 	"github.com/mokevnin/1mail/internal/events"
 )
 
 const (
-	defaultAuditLimit = 25
-	maxAuditLimit     = 100
 	// auditReadScope gates the Audit log read. It is deliberately absent from the
 	// OAuth grantable scopes, and the operation is hidden from MCP (ADR 0016, 0022).
 	auditReadScope = "audit:read"
@@ -34,20 +31,24 @@ func (h *Handlers) AuditEntriesList(ctx context.Context, params externalapi.Audi
 		return &res, nil
 	}
 
-	var cursor int64
-	if c, ok := params.Cursor.Get(); ok && c != "" {
-		var err error
-		if cursor, err = strconv.ParseInt(c, 10, 64); err != nil || cursor < 1 {
-			res := externalapi.AuditEntriesListBadRequest(problem(http.StatusBadRequest, "invalid cursor"))
-			return &res, nil
-		}
+	cursor, limit, err := auditapi.Page(params.Cursor.Or(""), params.Limit.Or(0), params.Limit.IsSet())
+	if err != nil {
+		res := externalapi.AuditEntriesListBadRequest(problem(http.StatusBadRequest, "invalid cursor"))
+		return &res, nil
 	}
-	limit := int(params.Limit.Or(defaultAuditLimit))
-	if limit < 1 || limit > maxAuditLimit {
-		limit = defaultAuditLimit
+	filter := events.AuditFilter{
+		From:       time.Time(params.From.Or(externalapi.Timestamp{})),
+		To:         time.Time(params.To.Or(externalapi.Timestamp{})),
+		ActorKind:  string(params.ActorKind.Or("")),
+		ActorID:    params.ActorId.Or(""),
+		Action:     params.Action.Or(""),
+		TargetType: params.TargetType.Or(""),
+		TargetID:   params.TargetId.Or(""),
+		IP:         params.IP.Or(""),
+		RequestID:  params.RequestId.Or(""),
 	}
 
-	rows, next, err := h.audit.Entries(ctx, auth.TokenScoped(ctx), events.AuditFilter{}, cursor, limit)
+	rows, next, err := h.audit.Entries(ctx, auth.TokenScoped(ctx), filter, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -56,43 +57,25 @@ func (h *Handlers) AuditEntriesList(ctx context.Context, params externalapi.Audi
 		out.Items[i] = auditEntryResource(e)
 	}
 	if next > 0 {
-		out.NextCursor = externalapi.NewOptNilString(strconv.FormatInt(next, 10))
+		out.NextCursor = externalapi.NewOptNilString(auditapi.NextCursor(next))
 	}
 	return out, nil
 }
 
 func auditEntryResource(e *ent.AuditEntry) externalapi.AuditEntryResource {
-	actor := externalapi.AuditActor{
-		Kind: externalapi.AuditActorKind(e.ActorKind),
-		ID:   nilableString(e.ActorID),
-		Name: nilableString(e.ActorName),
-	}
-	if e.ActorKind == events.ActorOperator {
-		actor.ID = externalapi.OptNilString{}
-		actor.Name = externalapi.NewOptNilString(events.OperatorLabel)
-	}
+	v := auditapi.ViewOf(e)
 	res := externalapi.AuditEntryResource{
-		ID:         externalapi.EntityId(strconv.FormatInt(e.ID, 10)),
-		OccurredAt: externalapi.Timestamp(e.OccurredAt),
-		Actor:      actor,
-		Action:     e.Action,
-		Target: externalapi.AuditTarget{
-			Type: e.TargetType,
-			ID:   nilableString(e.TargetID),
-			Name: nilableString(e.TargetName),
-		},
-		RequestId: nilableString(e.RequestID),
-		IP:        nilableString(e.IP),
-		UserAgent: nilableString(e.UserAgent),
+		ID:         externalapi.EntityId(v.ID),
+		OccurredAt: externalapi.Timestamp(v.OccurredAt),
+		Actor:      externalapi.AuditActor{Kind: externalapi.AuditActorKind(v.ActorKind), ID: nilableString(v.ActorID), Name: nilableString(v.ActorName)},
+		Action:     v.Action,
+		Target:     externalapi.AuditTarget{Type: v.TargetType, ID: nilableString(v.TargetID), Name: nilableString(v.TargetName)},
+		RequestId:  nilableString(v.RequestID),
+		IP:         nilableString(v.IP),
+		UserAgent:  nilableString(v.UserAgent),
 	}
-	if len(e.Diff) > 0 {
-		diff := make(externalapi.AuditEntryResourceDiff, len(e.Diff))
-		for k, v := range e.Diff {
-			if raw, err := json.Marshal(v); err == nil {
-				diff[k] = jx.Raw(raw)
-			}
-		}
-		res.Diff = externalapi.NewOptNilAuditEntryResourceDiff(diff)
+	if v.Diff != nil {
+		res.Diff = externalapi.NewOptNilAuditEntryResourceDiff(v.Diff)
 	}
 	return res
 }

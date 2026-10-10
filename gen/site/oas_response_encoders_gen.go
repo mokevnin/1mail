@@ -118,6 +118,61 @@ func encodeSiteAuditExportResponse(response SiteAuditExportRes, w http.ResponseW
 	}
 }
 
+func encodeSiteAuditGetRetentionResponse(response SiteAuditGetRetentionRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteAuditRetention:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(200)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditGetRetentionPaymentRequired:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(402)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditGetRetentionForbidden:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(403)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditGetRetentionNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeSiteAuditListResponse(response SiteAuditListRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SiteAuditEntryList:
@@ -171,6 +226,73 @@ func encodeSiteAuditListResponse(response SiteAuditListRes, w http.ResponseWrite
 	case *SiteAuditListNotFound:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeSiteAuditSetRetentionResponse(response SiteAuditSetRetentionRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteAuditRetention:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(200)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditSetRetentionPaymentRequired:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(402)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditSetRetentionForbidden:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(403)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditSetRetentionNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuditSetRetentionUnprocessableEntity:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(422)
 
 		e := new(jx.Encoder)
 		response.Encode(e)

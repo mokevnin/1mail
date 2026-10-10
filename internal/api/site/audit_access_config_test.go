@@ -36,7 +36,7 @@ func TestAccessAndConfigEntitiesAreAuditedWithoutSecrets(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, &siteapi.SiteIntegrationResource{}, integration)
 
-	hook, err := c.SiteWebhooksCreate(ctx, &siteapi.SiteCreateWebhookEndpointInput{URL: "https://example.com/audited"},
+	hook, err := c.SiteWebhooksCreate(ctx, &siteapi.SiteCreateWebhookEndpointInput{URL: "https://user:pw-9@example.com/audited?token=url-secret-7#frag"},
 		siteapi.SiteWebhooksCreateParams{Slug: slug})
 	require.NoError(t, err)
 	hookResp, ok := hook.(*siteapi.SiteWebhookEndpointResource)
@@ -64,12 +64,16 @@ func TestAccessAndConfigEntitiesAreAuditedWithoutSecrets(t *testing.T) {
 	assert.Equal(t, "changed", actions["integration.create"].Diff["config_encrypted"])
 	assert.Equal(t, "changed", actions["webhook_endpoint.create"].Diff["secret_encrypted"])
 	assert.Equal(t, "changed", actions["api_token.create"].Diff["secret_hash"])
+	assert.Equal(t, "changed", actions["webhook_endpoint.create"].Diff["url"], "the URL may carry a secret")
+	assert.Equal(t, "https://example.com/audited", actions["webhook_endpoint.create"].TargetName, "scheme, host and path only")
 	assert.Equal(t, "audited.example.com", actions["sending_domain.create"].TargetName)
 	assert.Equal(t, "Audited SMTP", actions["integration.create"].TargetName)
 
 	log := all.String()
 	assert.NotContains(t, log, "integration-pass-9")
 	assert.NotContains(t, log, "BEGIN")
+	assert.NotContains(t, log, "url-secret-7")
+	assert.NotContains(t, log, "pw-9")
 	assert.NotContains(t, log, tokenResp.Token)
 	assert.NotContains(t, log, hookResp.Secret)
 }

@@ -152,3 +152,26 @@ func TestExternalWebhooksAreWorkspaceScoped(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksDeleteNotFound{}, d)
 }
+
+// audit.entry is selectable on a Webhook endpoint only with an Enterprise license,
+// through /api as through /site (ADR 0022).
+func TestExternalWebhookSelectsAuditEntryOnlyUnderLicense(t *testing.T) {
+	ctx := context.Background()
+	auditTypes := []string{"audit.entry"}
+
+	licensed := testhelper.Setup(t).ExternalScoped(t, "webhooks:write")
+	res, err := licensed.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "https://x.test/audit", EventTypes: auditTypes})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhookResource{}, res)
+
+	env := testhelper.Setup(t, testhelper.WithoutLicense())
+	c := env.ExternalScoped(t, "webhooks:write")
+	res, err = c.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "https://x.test/audit", EventTypes: auditTypes})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksCreateUnprocessableEntity{}, res)
+
+	upd, err := c.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{EventTypes: auditTypes},
+		externalapi.WebhooksUpdateParams{ID: entityIDString(fixtures.WebhookCodebasicsID)})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksUpdateUnprocessableEntity{}, upd)
+}

@@ -83,7 +83,7 @@ model SiteAuditFilter {
   /** Only entries by this kind of actor */
   @query actorKind?: SiteAuditActorKind;
 
-  /** Only entries by the actor with this id (a User id or an API token id) */
+  /** Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind */
   @query actorId?: string;
 
   /** Only entries with exactly this action, e.g. membership.update */
@@ -100,6 +100,12 @@ model SiteAuditFilter {
 
   /** Only entries made under this request id */
   @query requestId?: string;
+}
+
+/** How long the Audit log is kept; the Enterprise advanced-retention control */
+model SiteAuditRetention {
+  /** Entries older than this many days are pruned; null keeps them forever */
+  retentionDays: int32 | null;
 }
 
 @route("/workspaces/{slug}/audit-entries")
@@ -135,4 +141,23 @@ namespace SiteAudit {
     | PaymentRequiredProblem
     | ForbiddenProblem
     | NotFoundProblem;
+
+  /** Read the Audit log retention window (Enterprise; owner and admin only) */
+  @get
+  @route("/retention")
+  op getRetention(@path slug: string):
+    | SiteAuditRetention
+    | PaymentRequiredProblem
+    | ForbiddenProblem
+    | NotFoundProblem;
+
+  /** Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin only) */
+  @put
+  @route("/retention")
+  op setRetention(@path slug: string, @body body: SiteAuditRetention):
+    | SiteAuditRetention
+    | PaymentRequiredProblem
+    | ForbiddenProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
 }

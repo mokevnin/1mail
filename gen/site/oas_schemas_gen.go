@@ -39,6 +39,51 @@ type EmailAddress string
 
 type EntityId string
 
+// NewNilInt32 returns new NilInt32 with value set to v.
+func NewNilInt32(v int32) NilInt32 {
+	return NilInt32{
+		Value: v,
+	}
+}
+
+// NilInt32 is nullable int32.
+type NilInt32 struct {
+	Value int32
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilInt32) SetTo(v int32) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilInt32) SetToNull() {
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -2212,6 +2257,18 @@ type SiteAuditExportPaymentRequired ProblemDetails
 
 func (*SiteAuditExportPaymentRequired) siteAuditExportRes() {}
 
+type SiteAuditGetRetentionForbidden ProblemDetails
+
+func (*SiteAuditGetRetentionForbidden) siteAuditGetRetentionRes() {}
+
+type SiteAuditGetRetentionNotFound ProblemDetails
+
+func (*SiteAuditGetRetentionNotFound) siteAuditGetRetentionRes() {}
+
+type SiteAuditGetRetentionPaymentRequired ProblemDetails
+
+func (*SiteAuditGetRetentionPaymentRequired) siteAuditGetRetentionRes() {}
+
 type SiteAuditListBadRequest ProblemDetails
 
 func (*SiteAuditListBadRequest) siteAuditListRes() {}
@@ -2227,6 +2284,42 @@ func (*SiteAuditListNotFound) siteAuditListRes() {}
 type SiteAuditListPaymentRequired ProblemDetails
 
 func (*SiteAuditListPaymentRequired) siteAuditListRes() {}
+
+// How long the Audit log is kept; the Enterprise advanced-retention control.
+// Ref: #/components/schemas/SiteAuditRetention
+type SiteAuditRetention struct {
+	// Entries older than this many days are pruned; null keeps them forever.
+	RetentionDays NilInt32 `json:"retentionDays"`
+}
+
+// GetRetentionDays returns the value of RetentionDays.
+func (s *SiteAuditRetention) GetRetentionDays() NilInt32 {
+	return s.RetentionDays
+}
+
+// SetRetentionDays sets the value of RetentionDays.
+func (s *SiteAuditRetention) SetRetentionDays(val NilInt32) {
+	s.RetentionDays = val
+}
+
+func (*SiteAuditRetention) siteAuditGetRetentionRes() {}
+func (*SiteAuditRetention) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionForbidden ProblemDetails
+
+func (*SiteAuditSetRetentionForbidden) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionNotFound ProblemDetails
+
+func (*SiteAuditSetRetentionNotFound) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionPaymentRequired ProblemDetails
+
+func (*SiteAuditSetRetentionPaymentRequired) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionUnprocessableEntity ProblemDetails
+
+func (*SiteAuditSetRetentionUnprocessableEntity) siteAuditSetRetentionRes() {}
 
 // What an audited change was done to.
 // Ref: #/components/schemas/SiteAuditTarget

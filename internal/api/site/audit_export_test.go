@@ -3,6 +3,7 @@ package site_test
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"io"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -83,13 +85,10 @@ func TestAuditExportSpansPagesAndNeverLeaksAnotherTenant(t *testing.T) {
 func TestAuditExportNeutralisesSpreadsheetFormulas(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	require.NoError(t, env.DB.Scoped(fixtures.AcmeID).AuditEntry().Create().
-		SetEntryKey("formula").SetOccurredAt(time.Now()).
-		SetActorKind("user").SetActorName("=HYPERLINK(\"http://evil\")").
-		SetAction("tag.create").SetTargetType("tag").SetTargetName("+cmd").
-		Exec(ctx))
 
-	rows := auditCSV(t, auditExport(t, env.SiteActor(t, fixtures.OwnerJohnEmail), fixtures.AcmeSlug))
+	rows := auditCSV(t, mustExport(ctx, t, env.SiteActor(t, fixtures.OwnerJaneEmail), siteapi.SiteAuditExportParams{
+		Slug: fixtures.GlobexSlug, Action: siteapi.NewOptString(fixtures.GlobexAuditFormulaEntryAction)}))
+	require.Len(t, rows, 2)
 	for _, cell := range rows[1] {
 		assert.False(t, strings.ContainsAny(cell[:min(1, len(cell))], "=+-@\t\r"), "cell %q starts a formula", cell)
 	}
@@ -113,4 +112,23 @@ func TestAuditExportWithoutLicenseIsPaymentRequired(t *testing.T) {
 	env := testhelper.Setup(t, testhelper.WithoutLicense())
 	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	assert.IsType(t, &siteapi.SiteAuditExportPaymentRequired{}, auditExport(t, owner, fixtures.AcmeSlug))
+}
+
+// The export is itself an audit_log.export entry that names the filter it ran with
+// (story 19); the entry is recorded for the caller, in the Workspace's own log.
+func TestAuditExportIsItselfAudited(t *testing.T) {
+	env := testhelper.Setup(t)
+	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+
+	auditCSV(t, mustExport(ctx, t, owner, siteapi.SiteAuditExportParams{Slug: fixtures.AcmeSlug, Action: siteapi.NewOptString("membership.update")}))
+
+	got := entriesNamed(t, env, fixtures.OwnerJohnEmail, fixtures.AcmeSlug, events.ActionAuditLogExport)
+	require.Len(t, got, 1)
+	assert.Equal(t, siteapi.SiteAuditActorKindUser, got[0].Actor.Kind)
+	assert.Equal(t, "John", got[0].Actor.Name.Value)
+	assert.Equal(t, "audit_log", got[0].Target.Type)
+	diff, err := json.Marshal(got[0].Diff.Value)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"filter":{"action":"membership.update"}}`, string(diff))
 }

@@ -21,12 +21,25 @@ type Handler interface {
 	//
 	// GET /workspaces/{slug}/audit-entries/export
 	SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (SiteAuditExportRes, error)
+	// SiteAuditGetRetention implements SiteAudit_getRetention operation.
+	//
+	// Read the Audit log retention window (Enterprise; owner and admin only).
+	//
+	// GET /workspaces/{slug}/audit-entries/retention
+	SiteAuditGetRetention(ctx context.Context, params SiteAuditGetRetentionParams) (SiteAuditGetRetentionRes, error)
 	// SiteAuditList implements SiteAudit_list operation.
 	//
 	// List the workspace's Audit log, newest first (Enterprise; owner and admin only).
 	//
 	// GET /workspaces/{slug}/audit-entries
 	SiteAuditList(ctx context.Context, params SiteAuditListParams) (SiteAuditListRes, error)
+	// SiteAuditSetRetention implements SiteAudit_setRetention operation.
+	//
+	// Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin
+	// only).
+	//
+	// PUT /workspaces/{slug}/audit-entries/retention
+	SiteAuditSetRetention(ctx context.Context, req *SiteAuditRetention, params SiteAuditSetRetentionParams) (SiteAuditSetRetentionRes, error)
 	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 	//
 	// Confirm an email change from the token sent to the new address. Public: the link is opened from the

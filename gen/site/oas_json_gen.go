@@ -93,6 +93,52 @@ func (s *EntityId) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes int32 as json.
+func (o NilInt32) Encode(e *jx.Encoder) {
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Int32(int32(o.Value))
+}
+
+// Decode decodes int32 from json.
+func (o *NilInt32) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode NilInt32 to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v int32
+		o.Value = v
+		o.Null = true
+		return nil
+	}
+	o.Null = false
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	o.Value = int32(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NilInt32) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NilInt32) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes bool as json.
 func (o OptBool) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -3098,6 +3144,120 @@ func (s *SiteAuditExportPaymentRequired) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes SiteAuditGetRetentionForbidden as json.
+func (s *SiteAuditGetRetentionForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditGetRetentionForbidden from json.
+func (s *SiteAuditGetRetentionForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditGetRetentionForbidden to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditGetRetentionForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditGetRetentionForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditGetRetentionForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditGetRetentionNotFound as json.
+func (s *SiteAuditGetRetentionNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditGetRetentionNotFound from json.
+func (s *SiteAuditGetRetentionNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditGetRetentionNotFound to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditGetRetentionNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditGetRetentionNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditGetRetentionNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditGetRetentionPaymentRequired as json.
+func (s *SiteAuditGetRetentionPaymentRequired) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditGetRetentionPaymentRequired from json.
+func (s *SiteAuditGetRetentionPaymentRequired) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditGetRetentionPaymentRequired to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditGetRetentionPaymentRequired(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditGetRetentionPaymentRequired) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditGetRetentionPaymentRequired) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes SiteAuditListBadRequest as json.
 func (s *SiteAuditListBadRequest) Encode(e *jx.Encoder) {
 	unwrapped := (*ProblemDetails)(s)
@@ -3246,6 +3406,252 @@ func (s *SiteAuditListPaymentRequired) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteAuditListPaymentRequired) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SiteAuditRetention) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SiteAuditRetention) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("retentionDays")
+		s.RetentionDays.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfSiteAuditRetention = [1]string{
+	0: "retentionDays",
+}
+
+// Decode decodes SiteAuditRetention from json.
+func (s *SiteAuditRetention) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditRetention to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "retentionDays":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.RetentionDays.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retentionDays\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SiteAuditRetention")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSiteAuditRetention) {
+					name = jsonFieldsNameOfSiteAuditRetention[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditRetention) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditRetention) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditSetRetentionForbidden as json.
+func (s *SiteAuditSetRetentionForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditSetRetentionForbidden from json.
+func (s *SiteAuditSetRetentionForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditSetRetentionForbidden to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditSetRetentionForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditSetRetentionForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditSetRetentionForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditSetRetentionNotFound as json.
+func (s *SiteAuditSetRetentionNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditSetRetentionNotFound from json.
+func (s *SiteAuditSetRetentionNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditSetRetentionNotFound to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditSetRetentionNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditSetRetentionNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditSetRetentionNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditSetRetentionPaymentRequired as json.
+func (s *SiteAuditSetRetentionPaymentRequired) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditSetRetentionPaymentRequired from json.
+func (s *SiteAuditSetRetentionPaymentRequired) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditSetRetentionPaymentRequired to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditSetRetentionPaymentRequired(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditSetRetentionPaymentRequired) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditSetRetentionPaymentRequired) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAuditSetRetentionUnprocessableEntity as json.
+func (s *SiteAuditSetRetentionUnprocessableEntity) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteAuditSetRetentionUnprocessableEntity from json.
+func (s *SiteAuditSetRetentionUnprocessableEntity) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAuditSetRetentionUnprocessableEntity to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteAuditSetRetentionUnprocessableEntity(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAuditSetRetentionUnprocessableEntity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAuditSetRetentionUnprocessableEntity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

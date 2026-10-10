@@ -233,6 +233,9 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 		Contacts: []externalapi.UpsertContactInput{{Email: externalapi.NewOptNilEmailAddress("explicit.import@example.org")}}})
 	require.NoError(t, err)
 
+	_, err = owner.SiteAuditExport(ctx, siteapi.SiteAuditExportParams{Slug: fixtures.AcmeSlug}) // audit_log.export
+	require.NoError(t, err)
+
 	var seen []string
 	for _, ev := range env.OutboxEvents(t, events.NameAuditEntry) {
 		seen = append(seen, ev.(*events.AuditEntry).Action)
@@ -243,7 +246,7 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	slices.Sort(want)
 	assert.Equal(t, want, seen)
 
-	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/contacts/contacts.go", "internal/events/audit.go", "internal/service/suspension.go"},
+	assert.Equal(t, []string{"internal/accounts/accounts.go", "internal/api/site/audit.go", "internal/contacts/contacts.go", "internal/events/audit.go", "internal/service/suspension.go"},
 		recordAuditCallSites(t), "a new explicit RecordAudit call site: list its actions and drive them above")
 }
 
@@ -272,4 +275,34 @@ func recordAuditCallSites(t *testing.T) []string {
 	}
 	slices.Sort(sites)
 	return sites
+}
+
+// An Operator's id cannot be probed: filtering by it matches nothing, and with the
+// operator kind the id filter is ignored, on the list and on the export alike.
+func TestAuditOperatorIdCannotBeProbed(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops@example.com", "abuse report")
+	require.NoError(t, err)
+	env.DeliverToEE(t)
+	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)
+
+	list := func(p siteapi.SiteAuditListParams) int {
+		p.Slug = fixtures.AcmeSlug
+		res, err := owner.SiteAuditList(ctx, p)
+		require.NoError(t, err)
+		return len(res.(*siteapi.SiteAuditEntryList).Items)
+	}
+	export := func(p siteapi.SiteAuditExportParams) int {
+		p.Slug = fixtures.AcmeSlug
+		return len(auditCSV(t, mustExport(ctx, t, owner, p))) - 1
+	}
+	operator := siteapi.NewOptSiteAuditActorKind(siteapi.SiteAuditActorKindOperator)
+	probe, other := siteapi.NewOptString("ops@example.com"), siteapi.NewOptString("someone-else")
+
+	assert.Zero(t, list(siteapi.SiteAuditListParams{ActorId: probe}), "the real id matches nothing without a kind")
+	assert.Zero(t, export(siteapi.SiteAuditExportParams{ActorId: probe}))
+	assert.Equal(t, 1, list(siteapi.SiteAuditListParams{ActorKind: operator, ActorId: probe}))
+	assert.Equal(t, 1, list(siteapi.SiteAuditListParams{ActorKind: operator, ActorId: other}), "a wrong id changes nothing: the id is ignored")
+	assert.Equal(t, 1, export(siteapi.SiteAuditExportParams{ActorKind: operator, ActorId: other}))
 }

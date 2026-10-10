@@ -114,6 +114,47 @@ func (a *Accounts) UpdateWorkspace(ctx context.Context, s *ent.Scoped, actor eve
 	return updated, err
 }
 
+// SetAuditRetention sets (or, with nil, clears) the number of days the Audit log is
+// kept (the EE advanced-retention window, ADR 0014) and records the change as a
+// `workspace.update` Audit entry in the same transaction. The caller has checked the
+// license and the role.
+func (a *Accounts) SetAuditRetention(ctx context.Context, s *ent.Scoped, actor events.Actor, days *int) error {
+	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		before, err := tx.Workspace.Get(ctx, s.WorkspaceID())
+		if err != nil {
+			return err
+		}
+		upd := tx.Workspace.UpdateOneID(s.WorkspaceID())
+		if days == nil {
+			upd = upd.ClearRetentionDays()
+		} else {
+			upd = upd.SetRetentionDays(*days)
+		}
+		if _, err := upd.Save(ctx); err != nil {
+			return err
+		}
+		if ptrEqual(before.RetentionDays, days) {
+			return nil
+		}
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: s.WorkspaceID(),
+			Actor:       actor,
+			Action:      events.ActionWorkspaceUpdate,
+			TargetType:  "workspace",
+			TargetID:    strconv.FormatInt(before.ID, 10),
+			TargetName:  before.Name,
+			Diff:        map[string]any{"retention_days": map[string]any{"from": before.RetentionDays, "to": days}},
+		})
+	})
+}
+
+func ptrEqual(a, b *int) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
+}
+
 // ChangeMembershipRole sets a Membership's Role and records `membership.update` with
 // the role change as an Audit entry in the same transaction (ADR 0022): a rolled-back
 // change leaves no entry, a committed one cannot lose it. name is the member's display

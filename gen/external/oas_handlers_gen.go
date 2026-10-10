@@ -177,6 +177,42 @@ func (s *Server) handleAuditEntriesListRequest(args [0]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "from",
+					In:   "query",
+				}: params.From,
+				{
+					Name: "to",
+					In:   "query",
+				}: params.To,
+				{
+					Name: "actorKind",
+					In:   "query",
+				}: params.ActorKind,
+				{
+					Name: "actorId",
+					In:   "query",
+				}: params.ActorId,
+				{
+					Name: "action",
+					In:   "query",
+				}: params.Action,
+				{
+					Name: "targetType",
+					In:   "query",
+				}: params.TargetType,
+				{
+					Name: "targetId",
+					In:   "query",
+				}: params.TargetId,
+				{
+					Name: "ip",
+					In:   "query",
+				}: params.IP,
+				{
+					Name: "requestId",
+					In:   "query",
+				}: params.RequestId,
+				{
 					Name: "cursor",
 					In:   "query",
 				}: params.Cursor,

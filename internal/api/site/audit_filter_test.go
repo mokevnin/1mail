@@ -13,26 +13,6 @@ import (
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-// seedFilterLog adds three Acme entries that differ in every filterable column, on
-// top of the fixture entry (user John, membership.update, 2026-01-01).
-func seedFilterLog(t *testing.T, env *testhelper.TestEnv) {
-	t.Helper()
-	ctx := context.Background()
-	s := env.DB.Scoped(fixtures.AcmeID)
-	require.NoError(t, s.AuditEntry().Create().
-		SetEntryKey("f-1").SetOccurredAt(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)).
-		SetActorKind("api_token").SetActorID("77").SetAction("integration.update").
-		SetTargetType("integration").SetTargetID("5").SetIP("10.0.0.1").SetRequestID("req-a").Exec(ctx))
-	require.NoError(t, s.AuditEntry().Create().
-		SetEntryKey("f-2").SetOccurredAt(time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)).
-		SetActorKind("system").SetAction("webhook_endpoint.create").
-		SetTargetType("webhook_endpoint").SetTargetID("9").SetIP("10.0.0.2").SetRequestID("req-b").Exec(ctx))
-	require.NoError(t, s.AuditEntry().Create().
-		SetEntryKey("f-3").SetOccurredAt(time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)).
-		SetActorKind("user").SetActorID("1").SetAction("integration.delete").
-		SetTargetType("integration").SetTargetID("6").SetIP("10.0.0.1").SetRequestID("req-c").Exec(ctx))
-}
-
 func actions(items []siteapi.SiteAuditEntryResource) []string {
 	out := make([]string, len(items))
 	for i, e := range items {
@@ -48,10 +28,11 @@ func mustExport(ctx context.Context, t *testing.T, c *siteapi.Client, p siteapi.
 	return res
 }
 
+// The filter tests run on Globex's fixture log: its base entry (user 2, membership.update,
+// January) plus the four fixture entries that differ in every filterable column.
 func TestAuditFiltersNarrowListAndExportAlike(t *testing.T) {
 	env := testhelper.Setup(t)
-	seedFilterLog(t, env)
-	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	owner := env.SiteActor(t, fixtures.OwnerJaneEmail)
 	ctx := context.Background()
 	day := func(m time.Month) siteapi.OptTimestamp {
 		return siteapi.NewOptTimestamp(siteapi.Timestamp(time.Date(2026, m, 1, 0, 0, 0, 0, time.UTC)))
@@ -108,7 +89,7 @@ func TestAuditFiltersNarrowListAndExportAlike(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.list.Slug, tc.export.Slug = fixtures.AcmeSlug, fixtures.AcmeSlug
+			tc.list.Slug, tc.export.Slug = fixtures.GlobexSlug, fixtures.GlobexSlug
 			res, err := owner.SiteAuditList(ctx, tc.list)
 			require.NoError(t, err)
 			page, ok := res.(*siteapi.SiteAuditEntryList)
@@ -123,11 +104,10 @@ func TestAuditFiltersNarrowListAndExportAlike(t *testing.T) {
 
 func TestAuditFilteredCursorPaginates(t *testing.T) {
 	env := testhelper.Setup(t)
-	seedFilterLog(t, env)
-	owner := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	owner := env.SiteActor(t, fixtures.OwnerJaneEmail)
 	ctx := context.Background()
 	params := siteapi.SiteAuditListParams{
-		Slug: fixtures.AcmeSlug, TargetType: siteapi.NewOptString("integration"), Limit: siteapi.NewOptInt32(1),
+		Slug: fixtures.GlobexSlug, TargetType: siteapi.NewOptString("integration"), Limit: siteapi.NewOptInt32(1),
 	}
 	res, err := owner.SiteAuditList(ctx, params)
 	require.NoError(t, err)

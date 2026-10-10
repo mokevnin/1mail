@@ -5,11 +5,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"io"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/auditapi"
 	"github.com/mokevnin/1mail/internal/events"
 )
 
@@ -54,10 +54,7 @@ func (l *Log) ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter
 }
 
 func exportRow(e *ent.AuditEntry) []string {
-	actorID, actorName := deref(e.ActorID), deref(e.ActorName)
-	if e.ActorKind == events.ActorOperator {
-		actorID, actorName = "", events.OperatorLabel
-	}
+	v := auditapi.ViewOf(e)
 	diff := ""
 	if len(e.Diff) > 0 {
 		if b, err := json.Marshal(e.Diff); err == nil {
@@ -65,27 +62,27 @@ func exportRow(e *ent.AuditEntry) []string {
 		}
 	}
 	row := []string{
-		strconv.FormatInt(e.ID, 10), e.OccurredAt.UTC().Format(time.RFC3339), e.ActorKind, actorID, actorName,
-		e.Action, e.TargetType, deref(e.TargetID), deref(e.TargetName), diff,
-		deref(e.RequestID), deref(e.IP), deref(e.UserAgent),
+		v.ID, v.OccurredAt.UTC().Format(time.RFC3339), v.ActorKind, valueOrEmpty(v.ActorID), valueOrEmpty(v.ActorName),
+		v.Action, v.TargetType, valueOrEmpty(v.TargetID), valueOrEmpty(v.TargetName), diff,
+		valueOrEmpty(v.RequestID), valueOrEmpty(v.IP), valueOrEmpty(v.UserAgent),
 	}
 	for i, cell := range row {
-		row[i] = neutralise(cell)
+		row[i] = defuseFormula(cell)
 	}
 	return row
 }
 
-// neutralise defuses CSV formula injection: a spreadsheet evaluates a cell that
+// defuseFormula defuses CSV formula injection: a spreadsheet evaluates a cell that
 // starts with one of = + - @ (or a tab or carriage return), and actor and target
 // names are free text, so such a cell is prefixed with an apostrophe.
-func neutralise(cell string) string {
+func defuseFormula(cell string) string {
 	if cell != "" && strings.ContainsRune("=+-@\t\r", rune(cell[0])) {
 		return "'" + cell
 	}
 	return cell
 }
 
-func deref(s *string) string {
+func valueOrEmpty(s *string) string {
 	if s == nil {
 		return ""
 	}

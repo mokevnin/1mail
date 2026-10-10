@@ -319,6 +319,16 @@ export type SiteAuditEntryResource = {
 };
 
 /**
+ * How long the Audit log is kept; the Enterprise advanced-retention control
+ */
+export type SiteAuditRetention = {
+  /**
+   * Entries older than this many days are pruned; null keeps them forever
+   */
+  retentionDays: number | null;
+};
+
+/**
  * What an audited change was done to
  */
 export type SiteAuditTarget = {
@@ -1872,7 +1882,7 @@ export type SiteApiTokenResourceParentKey = string;
 export type SiteAuditFilterAction = string;
 
 /**
- * Only entries by the actor with this id (a User id or an API token id)
+ * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
  */
 export type SiteAuditFilterActorId = string;
 
@@ -2604,7 +2614,7 @@ export type SiteAuditListData = {
      */
     actorKind?: SiteAuditActorKind;
     /**
-     * Only entries by the actor with this id (a User id or an API token id)
+     * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
      */
     actorId?: string;
     /**
@@ -2688,7 +2698,7 @@ export type SiteAuditExportData = {
      */
     actorKind?: SiteAuditActorKind;
     /**
-     * Only entries by the actor with this id (a User id or an API token id)
+     * Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind
      */
     actorId?: string;
     /**
@@ -2740,6 +2750,80 @@ export type SiteAuditExportResponses = {
 };
 
 export type SiteAuditExportResponse = SiteAuditExportResponses[keyof SiteAuditExportResponses];
+
+export type SiteAuditGetRetentionData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/audit-entries/retention';
+};
+
+export type SiteAuditGetRetentionErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditGetRetentionError = SiteAuditGetRetentionErrors[keyof SiteAuditGetRetentionErrors];
+
+export type SiteAuditGetRetentionResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditRetention;
+};
+
+export type SiteAuditGetRetentionResponse = SiteAuditGetRetentionResponses[keyof SiteAuditGetRetentionResponses];
+
+export type SiteAuditSetRetentionData = {
+  body: SiteAuditRetention;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/audit-entries/retention';
+};
+
+export type SiteAuditSetRetentionErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteAuditSetRetentionError = SiteAuditSetRetentionErrors[keyof SiteAuditSetRetentionErrors];
+
+export type SiteAuditSetRetentionResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteAuditRetention;
+};
+
+export type SiteAuditSetRetentionResponse = SiteAuditSetRetentionResponses[keyof SiteAuditSetRetentionResponses];
 
 export type SiteAutomationsListData = {
   body?: never;

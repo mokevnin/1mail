@@ -27,6 +27,7 @@
   "errors.confirm_link_bad": "invalid confirmation link",
   "errors.email_in_use": "that email is already in use",
   "errors.name_empty": "name must not be empty",
+  "errors.retention_days_range": "retention must be between 1 and 3650 days",
   "errors.current_password_required": "current password is required",
   "errors.current_password_incorrect": "current password is incorrect",
   "errors.new_email_required": "new email is required",

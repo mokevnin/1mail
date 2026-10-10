@@ -8,7 +8,9 @@ type OperationName = string
 const (
 	SiteAnalyticsOverviewOperation          OperationName = "SiteAnalyticsOverview"
 	SiteAuditExportOperation                OperationName = "SiteAuditExport"
+	SiteAuditGetRetentionOperation          OperationName = "SiteAuditGetRetention"
 	SiteAuditListOperation                  OperationName = "SiteAuditList"
+	SiteAuditSetRetentionOperation          OperationName = "SiteAuditSetRetention"
 	SiteAuthConfirmEmailChangeOperation     OperationName = "SiteAuthConfirmEmailChange"
 	SiteAuthDirectLoginOperation            OperationName = "SiteAuthDirectLogin"
 	SiteAuthForgotPasswordOperation         OperationName = "SiteAuthForgotPassword"

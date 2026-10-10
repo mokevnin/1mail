@@ -73,12 +73,44 @@ model AuditEntryList {
   nextCursor?: string | null;
 }
 
+/** Filters of the Audit log read; every one is optional and they combine with AND */
+model AuditFilter {
+  /** Only entries at or after this time */
+  @query from?: Timestamp;
+
+  /** Only entries strictly before this time */
+  @query to?: Timestamp;
+
+  /** Only entries by this kind of actor */
+  @query actorKind?: AuditActorKind;
+
+  /** Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind */
+  @query actorId?: string;
+
+  /** Only entries with exactly this action, e.g. membership.update */
+  @query action?: string;
+
+  /** Only entries about this target type, e.g. integration */
+  @query targetType?: string;
+
+  /** Only entries about the target with this id */
+  @query targetId?: string;
+
+  /** Only entries from this client address */
+  @query ip?: string;
+
+  /** Only entries made under this request id */
+  @query requestId?: string;
+}
+
 @route("/audit-entries")
 @tag("Audit")
 namespace AuditEntries {
   /** List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope) */
   @get
   op list(
+    ...AuditFilter,
+
     /** Cursor from a previous page */
     @query cursor?: string,
 
