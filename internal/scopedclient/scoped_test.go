@@ -284,3 +284,26 @@ func TestScopedWorkspaceIsTheOwnRow(t *testing.T) {
 	assert.EqualValues(t, fixtures.GlobexID, ws.ID)
 	assert.Equal(t, fixtures.GlobexSlug, ws.Slug)
 }
+
+// Modify hands a modifier assignment-only access: it can compute a column, but an
+// assignment to workspace_id is refused and never moves a row to another Workspace.
+func TestScopedUpdateModifyCannotAssignTheWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	s := env.DB.Scoped(acme)
+
+	n, err := s.SendLimiter().Update().
+		Modify(func(a *ent.ScopedAssign) { a.Set("second_fill", 0.5) }).
+		Save(ctx)
+	require.NoError(t, err)
+	assert.Positive(t, n, "a computed assignment on a regular column goes through")
+
+	_, err = s.SendLimiter().Update().
+		Modify(func(a *ent.ScopedAssign) { a.Set("workspace_id", globex) }).
+		Save(ctx)
+	require.ErrorIs(t, err, ent.ErrWorkspaceAssign)
+
+	row, err := env.DB.SendLimiter.Get(ctx, fixtures.SendLimiterAcmeID)
+	require.NoError(t, err)
+	assert.Equal(t, acme, row.WorkspaceID, "the row stayed in its Workspace")
+}

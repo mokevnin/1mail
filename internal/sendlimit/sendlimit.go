@@ -153,7 +153,7 @@ func take(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, now
 	})
 	return s.SendLimiter().Update().
 		Where(sendlimiter.IntegrationID(integrationID), enough).
-		Modify(func(u *entsql.UpdateBuilder) {
+		Modify(func(u *ent.ScopedAssign) {
 			for _, b := range bs {
 				if b.capacity == nil {
 					u.Set(b.column, 1.0) // not limited: keep it full for when a limit appears
