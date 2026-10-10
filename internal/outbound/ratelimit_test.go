@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/sendlimiter"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -176,16 +178,100 @@ func TestNoLimitMeansNoLimiterStateAndNoDeferral(t *testing.T) {
 	assert.Zero(t, n)
 }
 
-func TestTransactionalSendsAreNeverDeferred(t *testing.T) {
+func TestTransactionalSendsAreNeverDeferredEvenWithTheLimitSpent(t *testing.T) {
 	env := testhelper.Setup(t)
 	clock := newClock()
 	m := newModule(env, outbound.WithClock(clock.Now))
 	limited(t, env, ptr(1), nil)
 
 	require.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+	require.Equal(t, outbound.Deferral, send(t, m, env, "bc:2").Outcome)
+	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+		res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
+		require.NoError(t, err)
+		assert.Equal(t, outbound.Sent, res.Outcome)
+		assert.Zero(t, res.Wait)
+	}
+}
+
+func TestTransactionalSendsSpendCapacityAndDelayLaterMarketingSends(t *testing.T) {
+	env := testhelper.Setup(t)
+	clock := newClock()
+	m := newModule(env, outbound.WithClock(clock.Now))
+	limited(t, env, ptr(1), nil)
+	ctx := context.Background()
+
+	// Three Transactional sends drive the per-second bucket to minus two tokens.
+	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+		res, err := m.Send(ctx, acme(env), transactional(key, "a@example.com"))
+		require.NoError(t, err)
+		require.Equal(t, outbound.Sent, res.Outcome)
+	}
+
+	res := send(t, m, env, "bc:1")
+	require.Equal(t, outbound.Deferral, res.Outcome)
+	assert.Equal(t, 3*time.Second, res.Wait, "debt of two tokens plus the one the Broadcast needs")
+
+	clock.Advance(2 * time.Second)
+	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome)
+	clock.Advance(time.Second)
+	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome)
+}
+
+func TestTransactionalSendsCountTowardTheDailyBucketToo(t *testing.T) {
+	env := testhelper.Setup(t)
+	clock := newClock()
+	m := newModule(env, outbound.WithClock(clock.Now))
+	limited(t, env, nil, ptr(2))
+
+	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+		res, err := m.Send(context.Background(), acme(env), transactional(key, "a@example.com"))
+		require.NoError(t, err)
+		require.Equal(t, outbound.Sent, res.Outcome)
+	}
+	res := send(t, m, env, "bc:1")
+	require.Equal(t, outbound.Deferral, res.Outcome)
+	assert.Equal(t, 24*time.Hour, res.Wait, "2 per 24h: two tokens of debt plus one more, 12 hours each")
+}
+
+func TestTransactionalThatIsSkippedSpendsNoCapacity(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := newModule(env, outbound.WithClock(newClock().Now))
+	limited(t, env, ptr(1), nil)
+
+	res, err := m.Send(context.Background(), acme(env), transactional("tx:sup", suppressd))
+	require.NoError(t, err)
+	require.Equal(t, outbound.Skipped, res.Outcome)
+
+	assert.Equal(t, outbound.Sent, send(t, m, env, "bc:1").Outcome, "the suppressed Transactional took no token")
+}
+
+func TestUnlimitedIntegrationKeepsNoStateForTransactional(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := newModule(env, outbound.WithClock(newClock().Now))
+
 	res, err := m.Send(context.Background(), acme(env), transactional("tx:1", "a@example.com"))
 	require.NoError(t, err)
-	assert.Equal(t, outbound.Sent, res.Outcome)
+	require.Equal(t, outbound.Sent, res.Outcome)
+	n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
+	require.NoError(t, err)
+	assert.Zero(t, n)
+}
+
+func TestAutomationAndBroadcastSendsShareOneLimit(t *testing.T) {
+	env := testhelper.Setup(t)
+	clock := newClock()
+	m := newModule(env, outbound.WithClock(clock.Now))
+	limited(t, env, ptr(1), nil)
+
+	auto := marketing(t, env, "auto:1", fixtures.ContactAliceID)
+	auto.Kind = outboundmessage.KindAutomation
+	auto.Source = eligibility.AutomationSource(fixtures.AutomationHoldDemoID)
+	res, err := m.Send(context.Background(), acme(env), auto)
+	require.NoError(t, err)
+	require.Equal(t, outbound.Sent, res.Outcome)
+
+	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:1").Outcome, "the Automation send spent the Broadcast's token")
 }
 
 func TestChangedLimitTakesEffectImmediatelyAndProportionally(t *testing.T) {

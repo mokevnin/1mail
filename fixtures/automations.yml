@@ -27,7 +27,7 @@
   created_at: '{{daysAgo 30}}'
   updated_at: '{{daysAgo 30}}'
 # Anchor for the "held automation step" test: one email step, trigger unused elsewhere.
-- id: 103
+- id: 103 # fixture: AutomationHoldDemo
   name: Hold demo
   status: active
   trigger_event: hold_demo

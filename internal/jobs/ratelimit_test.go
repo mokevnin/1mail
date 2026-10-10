@@ -1,6 +1,7 @@
 package jobs_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,10 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
@@ -72,4 +76,74 @@ func TestBroadcastThroughALimitedIntegrationLosesNoRecipient(t *testing.T) {
 	assert.LessOrEqual(t, elapsed.Seconds(), n/2*1.2+2, "close to the limit, not far below it")
 	assert.Len(t, e.sender.sent, len(ids), "every recipient sent exactly once")
 	assert.Equal(t, broadcast.StatusSent, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
+}
+
+// An Automation step that finds the Integration's limit spent defers: the enrollment
+// stays active at the same step, asks to be rescheduled via ResumeAt, and the step
+// sends exactly once when capacity returns. Transactional traffic is what spends the
+// capacity here, and is itself never slowed.
+func TestAutomationStepDefersWhenTransactionalTrafficSpendsTheLimit(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	now := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
+	fs := &fakeSender{}
+	mod := outbound.New(env.Bus, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"),
+		outbound.WithClock(func() time.Time { return now }))
+	env.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
+
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
+	require.NoError(t, err)
+	require.Len(t, runIDs, 1)
+
+	for _, key := range []string{"tx:1", "tx:2", "tx:3"} {
+		res, err := mod.Send(ctx, env.DB.Scoped(fixtures.AcmeID), outbound.Request{
+			Kind: outboundmessage.KindTransactional, Key: key, Destination: "a@example.com",
+			Subject: "Receipt", Body: "<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>",
+		})
+		require.NoError(t, err)
+		require.Equal(t, outbound.Sent, res.Outcome, "Transactional is never delayed")
+	}
+	require.Len(t, fs.sent, 3)
+
+	before := time.Now()
+	res, err := jobs.RunStep(ctx, env.DB, mod, runIDs[0])
+	require.NoError(t, err, "a Deferral is not a failure, so no attempt is consumed")
+	assert.False(t, res.Done)
+	require.NotNil(t, res.ResumeAt, "the worker reschedules the same step")
+	assert.GreaterOrEqual(t, res.ResumeAt.Sub(before), 3*time.Second, "pushed out by the Transactional debt")
+	run := env.DB.AutomationRun.GetX(ctx, runIDs[0])
+	assert.Equal(t, automationrun.StatusActive, run.Status)
+	assert.Zero(t, run.CurrentStep, "the enrollment keeps its place")
+	assert.Len(t, fs.sent, 3, "the step has not sent")
+
+	now = now.Add(3 * time.Second)
+	res, err = jobs.RunStep(ctx, env.DB, mod, runIDs[0])
+	require.NoError(t, err)
+	assert.Nil(t, res.ResumeAt)
+	assert.Len(t, fs.sent, 4, "the step sends once capacity returns")
+	assert.Equal(t, 1, env.DB.AutomationRun.GetX(ctx, runIDs[0]).CurrentStep)
+}
+
+// Automation steps and Broadcast recipients draw on one Integration's limit.
+func TestAutomationStepAndBroadcastRecipientShareTheLimit(t *testing.T) {
+	e := newRiverEnv(t)
+	ctx := e.workCtx()
+	now := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
+	mod := outbound.New(e.Bus, fakeResolver{sender: e.sender}, tracking.New("test-secret", "http://local"),
+		outbound.WithClock(func() time.Time { return now }))
+	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
+
+	runIDs, err := jobs.EvaluateTrigger(ctx, e.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
+	require.NoError(t, err)
+	res, err := jobs.RunStep(ctx, e.DB, mod, runIDs[0])
+	require.NoError(t, err)
+	require.Nil(t, res.ResumeAt, "the first send takes the only token")
+	require.Len(t, e.sender.sent, 1)
+
+	ids, err := jobs.PlanBroadcast(ctx, e.DB, mod, fixtures.BroadcastDraftID)
+	require.NoError(t, err)
+	w := jobs.NewSendRecipientWorker(e.DB, mod)
+	err = w.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: ids[0], BroadcastID: fixtures.BroadcastDraftID}))
+	var snooze *river.JobSnoozeError
+	require.ErrorAs(t, err, &snooze, "the Broadcast recipient finds the Automation's spend")
 }
