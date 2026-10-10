@@ -2,7 +2,9 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -18,8 +20,10 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/jobkind"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/sendlimit"
 )
 
 // recipientInsertChunk bounds a single CreateBulk / InsertMany so a very large
@@ -78,14 +82,22 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 	if len(ids) == 0 {
 		return nil // empty audience: PlanBroadcast already finalized the broadcast
 	}
+	times, err := PaceRecipients(ctx, w.ent, job.Args.BroadcastID, len(ids), time.Now())
+	if err != nil {
+		return err
+	}
 	rc := river.ClientFromContext[pgx.Tx](ctx)
 	for i := 0; i < len(ids); i += recipientInsertChunk {
 		end := min(i+recipientInsertChunk, len(ids))
 		params := make([]river.InsertManyParams, 0, end-i)
-		for _, id := range ids[i:end] {
+		for j, id := range ids[i:end] {
+			opts := &river.InsertOpts{Queue: QueueBroadcasts, MaxAttempts: recipientMaxAttempts}
+			if times != nil {
+				opts.ScheduledAt = times[i+j]
+			}
 			params = append(params, river.InsertManyParams{
 				Args:       SendRecipientArgs{RecipientID: id, BroadcastID: job.Args.BroadcastID},
-				InsertOpts: &river.InsertOpts{Queue: QueueBroadcasts, MaxAttempts: recipientMaxAttempts},
+				InsertOpts: opts,
 			})
 		}
 		if _, err := rc.InsertMany(ctx, params); err != nil {
@@ -93,6 +105,42 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 		}
 	}
 	return nil
+}
+
+// PaceRecipients spreads n recipient jobs over time for a Broadcast whose Integration
+// has a Send rate limit (ADR 0023): the i-th job is scheduled i steps after the start,
+// a step being one over the effective rate, so the limiter is a guard and a Deferral
+// the rare case. The start is now, or the Broadcast's scheduled time when that is
+// later. It records the last scheduled time on the Broadcast, from which the ETA is
+// derived, and returns nil (plan as today, every job at once) when nothing limits the
+// Integration. Pacing decides only when a job runs: eligibility is still checked per
+// message at send time, so an unsubscribe or Suppression that lands meanwhile holds.
+func PaceRecipients(ctx context.Context, client *ent.Client, broadcastID int64, n int, now time.Time) ([]time.Time, error) {
+	b, err := client.Broadcast.Get(ctx, broadcastID)
+	if err != nil {
+		return nil, fmt.Errorf("load broadcast %d: %w", broadcastID, err)
+	}
+	s := client.Scoped(b.WorkspaceID)
+	integ, err := messaging.DefaultEmailIntegration(ctx, s)
+	if errors.Is(err, messaging.ErrNoProvider) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	step := sendlimit.EffectiveOf(integ).Limits().Interval()
+	if step <= 0 || n == 0 {
+		return nil, s.Broadcast().UpdateOneID(b.ID).ClearLastScheduledAt().Exec(ctx)
+	}
+	start := now
+	if b.ScheduledAt != nil && b.ScheduledAt.After(start) {
+		start = *b.ScheduledAt
+	}
+	times := make([]time.Time, n)
+	for i := range times {
+		times[i] = start.Add(time.Duration(i) * step)
+	}
+	return times, s.Broadcast().UpdateOneID(b.ID).SetLastScheduledAt(times[n-1]).Exec(ctx)
 }
 
 // BroadcastDue reports whether a queued send job should still run. A Broadcast that is
@@ -126,8 +174,8 @@ type SendRecipientWorker struct {
 
 func (w *SendRecipientWorker) Work(ctx context.Context, job *river.Job[SendRecipientArgs]) error {
 	if err := SendToRecipient(ctx, w.ent, w.mod, job.Args.RecipientID); err != nil {
-		if _, held := asHeld(err); held {
-			// A hold is not a failure: wait it out without spending an attempt.
+		if isDeferrable(err) {
+			// A hold or a Deferral is not a failure: wait it out without spending an attempt.
 			return snoozeIfDeferrable(err)
 		}
 		// On the final attempt, record the terminal failure so the broadcast can
@@ -294,8 +342,9 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 // the Outcome onto the recipient row. It is idempotent: a recipient already at a
 // final status is left alone, and the module's idempotency key makes a retry after
 // a committed send replay the recorded result. A returned error is retryable
-// (provider down, claim in flight); a *HeldError means the source is on hold and
-// the job should be deferred, not failed.
+// (provider down, claim in flight); a *HeldError means the source is on hold and a
+// *DeferredError that its Send rate limit is spent; either way the job should be
+// deferred, not failed.
 func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Module, recipientID int64) error {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if ent.IsNotFound(err) {
@@ -362,6 +411,29 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 		err = upd.SetStatus(broadcastrecipient.StatusSkipped).SetError(res.Reason).Exec(ctx)
 	case outbound.Failed:
 		err = upd.SetStatus(broadcastrecipient.StatusFailed).SetError(res.Reason).Exec(ctx)
+	case outbound.Deferral:
+		// The Integration is busy, not blocked: the Broadcast stays sending with no hold
+		// reason and this recipient stays pending, retried after the wait.
+		now := time.Now()
+		ahead, cerr := s.BroadcastRecipient().Query().
+			Where(
+				broadcastrecipient.BroadcastID(rec.BroadcastID),
+				broadcastrecipient.StatusEQ(broadcastrecipient.StatusPending),
+				broadcastrecipient.IDLT(rec.ID),
+				// Only the awake ones queue for a token; a recipient asleep on its own
+				// Deferral is not ahead of this one yet.
+				broadcastrecipient.Or(
+					broadcastrecipient.DeferredUntilIsNil(),
+					broadcastrecipient.DeferredUntilLTE(now),
+				),
+			).Count(ctx)
+		if cerr != nil {
+			ahead = 0 // the estimate only spreads retries; never fail the send over it
+		}
+		delay := deferralDelay(res.Wait, ahead, rand.Float64())
+		// Best effort, like the count: it only sharpens later jobs' backlog.
+		_ = upd.SetDeferredUntil(now.Add(delay)).Exec(ctx)
+		return &DeferredError{Wait: res.Wait, Backlog: ahead, Delay: delay}
 	default: // outbound.Held
 		setBroadcastHold(ctx, s, b.ID, res.Reason)
 		return &HeldError{Reason: res.Reason}

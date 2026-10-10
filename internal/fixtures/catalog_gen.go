@@ -35,6 +35,10 @@ const (
 	AutomationGlobexID = 900
 	// AutomationGlobexName is from fixtures/automations.
 	AutomationGlobexName = "Globex automation"
+	// AutomationHoldDemoID is from fixtures/automations.
+	AutomationHoldDemoID = 103
+	// AutomationHoldDemoName is from fixtures/automations.
+	AutomationHoldDemoName = "Hold demo"
 	// AutomationInitechID is from fixtures/automations.
 	AutomationInitechID = 300
 	// AutomationInitechName is from fixtures/automations.
@@ -357,6 +361,14 @@ const (
 	InitechName = "Initech"
 	// InitechSlug is from fixtures/workspaces.
 	InitechSlug = "initech"
+	// IntegrationAcmeDefaultID is from fixtures/integrations.
+	IntegrationAcmeDefaultID = 1
+	// IntegrationAcmeDefaultName is from fixtures/integrations.
+	IntegrationAcmeDefaultName = "Mailpit (dev SMTP)"
+	// IntegrationAcmeSesID is from fixtures/integrations.
+	IntegrationAcmeSesID = 2
+	// IntegrationAcmeSesName is from fixtures/integrations.
+	IntegrationAcmeSesName = "Amazon SES (disabled)"
 	// IntegrationGlobexID is from fixtures/integrations.
 	IntegrationGlobexID = 900
 	// IntegrationGlobexName is from fixtures/integrations.
@@ -433,6 +445,10 @@ const (
 	SegmentProPlanID = 100
 	// SegmentProPlanName is from fixtures/segments.
 	SegmentProPlanName = "Pro & team members"
+	// SendLimiterAcmeID is from fixtures/send_limiters.
+	SendLimiterAcmeID = 1
+	// SendLimiterGlobexID is from fixtures/send_limiters.
+	SendLimiterGlobexID = 900
 	// SendingDomainGlobexDomain is from fixtures/sending_domains.
 	SendingDomainGlobexDomain = "mail.globex.test"
 	// SendingDomainGlobexID is from fixtures/sending_domains.

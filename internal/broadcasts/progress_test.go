@@ -1,0 +1,82 @@
+package broadcasts_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/internal/broadcasts"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+// sendingWithPending puts the draft Broadcast into sending with n pending recipients
+// and no scheduled job ahead, so the ETA falls back to the Integration's rate.
+func sendingWithPending(t *testing.T, env *testhelper.TestEnv, n int) *broadcastsFixture {
+	t.Helper()
+	ctx := context.Background()
+	s := env.DB.Scoped(fixtures.AcmeID)
+	id := int64(fixtures.BroadcastDraftID)
+	require.NoError(t, s.Broadcast().UpdateOneID(id).SetStatus(broadcast.StatusSending).SetRecipientsTotal(n).Exec(ctx))
+	contacts := []int64{fixtures.ContactAliceID, fixtures.ContactBobID, fixtures.ContactCarolID}
+	for _, c := range contacts[:n] {
+		_, err := s.BroadcastRecipient().Create().SetBroadcastID(id).SetContactID(c).SetStatus(broadcastrecipient.StatusPending).Save(ctx)
+		require.NoError(t, err)
+	}
+	return &broadcastsFixture{id: id}
+}
+
+type broadcastsFixture struct{ id int64 }
+
+// With no job scheduled ahead the ETA is the remaining recipients at the effective
+// rate, and the effective rate includes the provider-discovered ceiling (ADR 0023).
+func TestProgressETAFallsBackToTheEffectiveRate(t *testing.T) {
+	cases := []struct {
+		name   string
+		manual *int
+		prov   *int
+		want   time.Duration // for 3 pending
+	}{
+		{"manual only", ptr(2), nil, 1500 * time.Millisecond},
+		{"provider only", nil, ptr(4), 750 * time.Millisecond},
+		{"provider lower than manual", ptr(10), ptr(1), 3 * time.Second},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			env := testhelper.Setup(t)
+			ctx := context.Background()
+			f := sendingWithPending(t, env, 3)
+			upd := env.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID)
+			if c.manual != nil {
+				upd.SetMaxPerSecond(*c.manual)
+			}
+			if c.prov != nil {
+				upd.SetProviderMaxPerSecond(*c.prov)
+			}
+			upd.ExecX(ctx)
+			b := env.DB.Broadcast.GetX(ctx, f.id)
+
+			now := time.Now()
+			p, err := broadcasts.ProgressOf(ctx, env.DB.Scoped(fixtures.AcmeID), b, now)
+			require.NoError(t, err)
+			require.NotNil(t, p.EstimatedCompletion)
+			assert.WithinDuration(t, now.Add(c.want), *p.EstimatedCompletion, time.Millisecond)
+		})
+	}
+}
+
+// Without any ceiling there is nothing to pace by, so no ETA.
+func TestProgressHasNoETAWithoutALimit(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	f := sendingWithPending(t, env, 3)
+	p, err := broadcasts.ProgressOf(ctx, env.DB.Scoped(fixtures.AcmeID), env.DB.Broadcast.GetX(ctx, f.id), time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, 3, p.Remaining)
+	assert.Nil(t, p.EstimatedCompletion)
+}

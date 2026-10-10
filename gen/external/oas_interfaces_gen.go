@@ -145,6 +145,10 @@ type EventsCreateRes interface {
 	eventsCreateRes()
 }
 
+type IntegrationsListRes interface {
+	integrationsListRes()
+}
+
 type SegmentsCreateRes interface {
 	segmentsCreateRes()
 }

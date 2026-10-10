@@ -35,8 +35,8 @@ test('renames the workspace and shows the tracking snippet and test command', as
     if (req.url.includes('/events')) {
       return eventsPage(0)
     }
-    // The settings page also lists API tokens for its keys section.
-    if (req.url.includes('/tokens')) {
+    // The settings page also lists API tokens and integrations (none here).
+    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
       return jsonResponse([])
     }
     return jsonResponse([workspace])
@@ -65,7 +65,7 @@ test('shows the connected install status once events arrive', async () => {
     if (req.url.includes('/events')) {
       return eventsPage(7)
     }
-    if (req.url.includes('/tokens')) {
+    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
       return jsonResponse([])
     }
     return jsonResponse([workspace])
@@ -82,7 +82,7 @@ function serveWorkspace() {
     if (req.url.includes('/events')) {
       return eventsPage(0)
     }
-    if (req.url.includes('/tokens')) {
+    if (req.url.includes('/tokens') || req.url.includes('/integrations')) {
       return jsonResponse([])
     }
     return jsonResponse([workspace])

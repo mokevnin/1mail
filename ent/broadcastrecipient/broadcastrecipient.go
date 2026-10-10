@@ -31,6 +31,8 @@ const (
 	FieldOutboundMessageID = "outbound_message_id"
 	// FieldError holds the string denoting the error field in the database.
 	FieldError = "error"
+	// FieldDeferredUntil holds the string denoting the deferred_until field in the database.
+	FieldDeferredUntil = "deferred_until"
 	// FieldSentAt holds the string denoting the sent_at field in the database.
 	FieldSentAt = "sent_at"
 	// FieldOpenedAt holds the string denoting the opened_at field in the database.
@@ -70,6 +72,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldOutboundMessageID,
 	FieldError,
+	FieldDeferredUntil,
 	FieldSentAt,
 	FieldOpenedAt,
 	FieldClickedAt,
@@ -168,6 +171,11 @@ func ByOutboundMessageID(opts ...sql.OrderTermOption) OrderOption {
 // ByError orders the results by the error field.
 func ByError(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldError, opts...).ToFunc()
+}
+
+// ByDeferredUntil orders the results by the deferred_until field.
+func ByDeferredUntil(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeferredUntil, opts...).ToFunc()
 }
 
 // BySentAt orders the results by the sent_at field.

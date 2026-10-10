@@ -31,6 +31,29 @@ var (
 // (or does not exist).
 var ErrNotInWorkspace = errors.New("ent: referenced entity is not in the workspace")
 
+// ErrWorkspaceAssign: a scoped update's Modify tried to assign workspace_id, which would
+// move rows to another Workspace.
+var ErrWorkspaceAssign = errors.New("ent: a scoped update cannot assign workspace_id")
+
+// ScopedAssign is what Modify hands a modifier: assignments only (a computed value the
+// typed setters cannot express, SET col = LEAST(col + ..., ...)), and never to
+// workspace_id. It exposes no way to widen or drop the statement's Workspace predicate.
+type ScopedAssign struct {
+	u         *sql.UpdateBuilder
+	workspace bool
+}
+
+// Set assigns a column. An assignment to workspace_id is refused (Save returns
+// ErrWorkspaceAssign) and never reaches the statement.
+func (a *ScopedAssign) Set(column string, v any) *ScopedAssign {
+	if column == "workspace_id" {
+		a.workspace = true
+		return a
+	}
+	a.u.Set(column, v)
+	return a
+}
+
 // Scoped is the entry point to every Workspace-owned entity, confined to one Workspace.
 // Build it from a client or from a transaction's client: `tx.Client().Scoped(ws)`.
 //
@@ -554,6 +577,8 @@ func (x *{{ $N }}ScopedUpdateOne) Exec(ctx context.Context) error {
 type {{ $N }}ScopedUpdate struct {
 	s *Scoped
 	b *{{ $N }}Update
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the {{ $N }} entities of the Workspace that match the predicates.
@@ -564,6 +589,23 @@ func (t *{{ $N }}Scoped) Update() *{{ $N }}ScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *{{ $N }}ScopedUpdate) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *{{ $N }}ScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *{{ $N }}ScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update({{ $P }}.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -578,6 +620,9 @@ func (x *{{ $N }}ScopedUpdate) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedUp
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *{{ $N }}ScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}

@@ -29,6 +29,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -367,6 +368,21 @@ func (_u *WorkspaceUpdate) AddSendingDomains(v ...*SendingDomain) *WorkspaceUpda
 		ids[i] = v[i].ID
 	}
 	return _u.AddSendingDomainIDs(ids...)
+}
+
+// AddSendLimiterIDs adds the "send_limiters" edge to the SendLimiter entity by IDs.
+func (_u *WorkspaceUpdate) AddSendLimiterIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddSendLimiterIDs(ids...)
+	return _u
+}
+
+// AddSendLimiters adds the "send_limiters" edges to the SendLimiter entity.
+func (_u *WorkspaceUpdate) AddSendLimiters(v ...*SendLimiter) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSendLimiterIDs(ids...)
 }
 
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
@@ -756,6 +772,27 @@ func (_u *WorkspaceUpdate) RemoveSendingDomains(v ...*SendingDomain) *WorkspaceU
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSendingDomainIDs(ids...)
+}
+
+// ClearSendLimiters clears all "send_limiters" edges to the SendLimiter entity.
+func (_u *WorkspaceUpdate) ClearSendLimiters() *WorkspaceUpdate {
+	_u.mutation.ClearSendLimiters()
+	return _u
+}
+
+// RemoveSendLimiterIDs removes the "send_limiters" edge to SendLimiter entities by IDs.
+func (_u *WorkspaceUpdate) RemoveSendLimiterIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveSendLimiterIDs(ids...)
+	return _u
+}
+
+// RemoveSendLimiters removes "send_limiters" edges to SendLimiter entities.
+func (_u *WorkspaceUpdate) RemoveSendLimiters(v ...*SendLimiter) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSendLimiterIDs(ids...)
 }
 
 // ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
@@ -1564,6 +1601,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimitersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSendLimitersIDs(); len(nodes) > 0 && !_u.mutation.SendLimitersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimitersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2496,6 +2578,21 @@ func (_u *WorkspaceUpdateOne) AddSendingDomains(v ...*SendingDomain) *WorkspaceU
 	return _u.AddSendingDomainIDs(ids...)
 }
 
+// AddSendLimiterIDs adds the "send_limiters" edge to the SendLimiter entity by IDs.
+func (_u *WorkspaceUpdateOne) AddSendLimiterIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddSendLimiterIDs(ids...)
+	return _u
+}
+
+// AddSendLimiters adds the "send_limiters" edges to the SendLimiter entity.
+func (_u *WorkspaceUpdateOne) AddSendLimiters(v ...*SendLimiter) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSendLimiterIDs(ids...)
+}
+
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
 func (_u *WorkspaceUpdateOne) AddBroadcastIDs(ids ...int64) *WorkspaceUpdateOne {
 	_u.mutation.AddBroadcastIDs(ids...)
@@ -2883,6 +2980,27 @@ func (_u *WorkspaceUpdateOne) RemoveSendingDomains(v ...*SendingDomain) *Workspa
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSendingDomainIDs(ids...)
+}
+
+// ClearSendLimiters clears all "send_limiters" edges to the SendLimiter entity.
+func (_u *WorkspaceUpdateOne) ClearSendLimiters() *WorkspaceUpdateOne {
+	_u.mutation.ClearSendLimiters()
+	return _u
+}
+
+// RemoveSendLimiterIDs removes the "send_limiters" edge to SendLimiter entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveSendLimiterIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveSendLimiterIDs(ids...)
+	return _u
+}
+
+// RemoveSendLimiters removes "send_limiters" edges to SendLimiter entities.
+func (_u *WorkspaceUpdateOne) RemoveSendLimiters(v ...*SendLimiter) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSendLimiterIDs(ids...)
 }
 
 // ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
@@ -3721,6 +3839,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimitersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSendLimitersIDs(); len(nodes) > 0 && !_u.mutation.SendLimitersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimitersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

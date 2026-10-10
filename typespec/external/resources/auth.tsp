@@ -20,6 +20,7 @@ enum ApiTokenScope {
   webhooksWrite: "webhooks:write",
   customFieldsRead: "custom_fields:read",
   sendingDomainsRead: "sending_domains:read",
+  integrationsRead: "integrations:read",
   emailsSend: "emails:send",
   broadcastsSend: "broadcasts:send",
   automationsActivate: "automations:activate",

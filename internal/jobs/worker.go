@@ -69,7 +69,7 @@ type Retention struct {
 // in account emails (reset/verify/change). db is the raw handle the instance-wide
 // outbox prune runs on; retention carries the prune settings. ext plugs in the
 // Enterprise Edition's workers and periodic jobs.
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, retention Retention, ext ...Extension) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, catalog *messaging.Catalog, appURL string, retention Retention, ext ...Extension) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -87,6 +87,10 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	// SES send quota discovery (ADR 0023): refreshed hourly because quotas grow as an
+	// account matures, and on Integration save by the API handlers.
+	river.AddWorker(workers, &RefreshSendQuotasWorker{ent: entClient})
+	river.AddWorker(workers, &RefreshIntegrationQuotaWorker{ent: entClient, cipher: cipher, catalog: catalog})
 	river.AddWorker(workers, &PurgeAuthAttemptsWorker{ent: entClient})
 	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
 	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
@@ -143,6 +147,13 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
+			river.NewPeriodicJob(
+				river.PeriodicInterval(time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return RefreshSendQuotasArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
 			// Drop failed-attempt rows past their window (ADR 0025).
 			river.NewPeriodicJob(
 				river.PeriodicInterval(time.Hour),
@@ -185,6 +196,14 @@ func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 		opts.ScheduledAt = *scheduledAt
 	}
 	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID, ScheduledAt: scheduledAt}, opts)
+	return err
+}
+
+// EnqueueIntegrationQuotaRefresh schedules a read of one Integration's provider send
+// quota (on save; the hourly tick covers the rest). Fire-and-forget: the result, or
+// the warning that it could not be read, lands on the row.
+func (c *Client) EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error {
+	_, err := c.river.Insert(ctx, RefreshIntegrationQuotaArgs{IntegrationID: integrationID}, nil)
 	return err
 }
 

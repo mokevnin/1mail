@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -50,6 +51,41 @@ func (Integration) Fields() []ent.Field {
 			Default(true),
 		field.Bool("is_default").
 			Default(false),
+		// Send rate limit (ADR 0023): the most messages that may leave this Integration
+		// per second and per rolling 24 hours. Nil means no limit of that kind.
+		field.Int("max_per_second").
+			Optional().
+			Nillable().
+			Positive(),
+		field.Int("max_per_day").
+			Optional().
+			Nillable().
+			Positive(),
+		// Provider-reported quota (ADR 0023): what SES GetSendQuota last said, folded into
+		// the effective ceiling by the minimum rule. Nil means the provider reported none.
+		field.Int("provider_max_per_second").
+			Optional().
+			Nillable(),
+		field.Int("provider_max_per_day").
+			Optional().
+			Nillable(),
+		// When the quota was last looked up, successfully or not.
+		field.Time("provider_quota_checked_at").
+			Optional().
+			Nillable(),
+		// The last lookup failed (no ses:GetSendQuota permission, an SES-compatible
+		// service); the UI warns and a later success clears it.
+		field.Bool("provider_quota_unavailable").
+			Default(false),
+	}
+}
+
+func (Integration) Edges() []ent.Edge {
+	return []ent.Edge{
+		// Deleting an Integration deletes its Send rate limiter state with it.
+		edge.To("send_limiter", SendLimiter.Type).
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 

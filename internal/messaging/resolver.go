@@ -29,16 +29,7 @@ func NewResolver(cipher *secrets.Cipher, catalog *Catalog) *Resolver {
 // EmailSender resolves the workspace's default, enabled email provider, decrypts
 // its config and builds a ready sender. Returns ErrNoProvider when none exists.
 func (r *Resolver) EmailSender(ctx context.Context, s *ent.Scoped) (EmailSender, error) {
-	row, err := s.Integration().Query().
-		Where(
-			integration.ChannelEQ(integration.ChannelEmail),
-			integration.IsDefault(true),
-			integration.Enabled(true),
-		).
-		Only(ctx)
-	if ent.IsNotFound(err) {
-		return nil, ErrNoProvider
-	}
+	row, err := DefaultEmailIntegration(ctx, s)
 	if err != nil {
 		return nil, err
 	}
@@ -49,4 +40,20 @@ func (r *Resolver) EmailSender(ctx context.Context, s *ent.Scoped) (EmailSender,
 	}
 	signer := NewDKIMSigner(s, r.cipher)
 	return r.catalog.BuildEmail(Provider(row.Provider), config, signer)
+}
+
+// DefaultEmailIntegration is the Workspace's default, enabled email Integration: the
+// one Outbound send goes through. It returns ErrNoProvider when there is none.
+func DefaultEmailIntegration(ctx context.Context, s *ent.Scoped) (*ent.Integration, error) {
+	row, err := s.Integration().Query().
+		Where(
+			integration.ChannelEQ(integration.ChannelEmail),
+			integration.IsDefault(true),
+			integration.Enabled(true),
+		).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return nil, ErrNoProvider
+	}
+	return row, err
 }

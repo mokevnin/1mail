@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -134,9 +135,170 @@ func (_u *IntegrationUpdate) SetNillableIsDefault(v *bool) *IntegrationUpdate {
 	return _u
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (_u *IntegrationUpdate) SetMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.ResetMaxPerSecond()
+	_u.mutation.SetMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableMaxPerSecond(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (_u *IntegrationUpdate) AddMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.AddMaxPerSecond(v)
+	return _u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (_u *IntegrationUpdate) ClearMaxPerSecond() *IntegrationUpdate {
+	_u.mutation.ClearMaxPerSecond()
+	return _u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (_u *IntegrationUpdate) SetMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.ResetMaxPerDay()
+	_u.mutation.SetMaxPerDay(v)
+	return _u
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableMaxPerDay(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (_u *IntegrationUpdate) AddMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.AddMaxPerDay(v)
+	return _u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (_u *IntegrationUpdate) ClearMaxPerDay() *IntegrationUpdate {
+	_u.mutation.ClearMaxPerDay()
+	return _u
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (_u *IntegrationUpdate) SetProviderMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.ResetProviderMaxPerSecond()
+	_u.mutation.SetProviderMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableProviderMaxPerSecond(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetProviderMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddProviderMaxPerSecond adds value to the "provider_max_per_second" field.
+func (_u *IntegrationUpdate) AddProviderMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.AddProviderMaxPerSecond(v)
+	return _u
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (_u *IntegrationUpdate) ClearProviderMaxPerSecond() *IntegrationUpdate {
+	_u.mutation.ClearProviderMaxPerSecond()
+	return _u
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (_u *IntegrationUpdate) SetProviderMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.ResetProviderMaxPerDay()
+	_u.mutation.SetProviderMaxPerDay(v)
+	return _u
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableProviderMaxPerDay(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetProviderMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddProviderMaxPerDay adds value to the "provider_max_per_day" field.
+func (_u *IntegrationUpdate) AddProviderMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.AddProviderMaxPerDay(v)
+	return _u
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (_u *IntegrationUpdate) ClearProviderMaxPerDay() *IntegrationUpdate {
+	_u.mutation.ClearProviderMaxPerDay()
+	return _u
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (_u *IntegrationUpdate) SetProviderQuotaCheckedAt(v time.Time) *IntegrationUpdate {
+	_u.mutation.SetProviderQuotaCheckedAt(v)
+	return _u
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationUpdate {
+	if v != nil {
+		_u.SetProviderQuotaCheckedAt(*v)
+	}
+	return _u
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (_u *IntegrationUpdate) ClearProviderQuotaCheckedAt() *IntegrationUpdate {
+	_u.mutation.ClearProviderQuotaCheckedAt()
+	return _u
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (_u *IntegrationUpdate) SetProviderQuotaUnavailable(v bool) *IntegrationUpdate {
+	_u.mutation.SetProviderQuotaUnavailable(v)
+	return _u
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationUpdate {
+	if v != nil {
+		_u.SetProviderQuotaUnavailable(*v)
+	}
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdate) SetWorkspace(v *Workspace) *IntegrationUpdate {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (_u *IntegrationUpdate) SetSendLimiterID(id int64) *IntegrationUpdate {
+	_u.mutation.SetSendLimiterID(id)
+	return _u
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableSendLimiterID(id *int64) *IntegrationUpdate {
+	if id != nil {
+		_u = _u.SetSendLimiterID(*id)
+	}
+	return _u
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdate) SetSendLimiter(v *SendLimiter) *IntegrationUpdate {
+	return _u.SetSendLimiterID(v.ID)
 }
 
 // Mutation returns the IntegrationMutation object of the builder.
@@ -147,6 +309,12 @@ func (_u *IntegrationUpdate) Mutation() *IntegrationMutation {
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdate) ClearWorkspace() *IntegrationUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdate) ClearSendLimiter() *IntegrationUpdate {
+	_u.mutation.ClearSendLimiter()
 	return _u
 }
 
@@ -203,6 +371,16 @@ func (_u *IntegrationUpdate) check() error {
 			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Integration.provider": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.MaxPerSecond(); ok {
+		if err := integration.MaxPerSecondValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_second", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_second": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MaxPerDay(); ok {
+		if err := integration.MaxPerDayValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Integration.workspace"`)
 	}
@@ -248,6 +426,51 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.MaxPerSecond(); ok {
+		_spec.SetField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.MaxPerDay(); ok {
+		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerDay(); ok {
+		_spec.AddField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerDayCleared() {
+		_spec.ClearField(integration.FieldMaxPerDay, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderMaxPerSecond(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProviderMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldProviderMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.ProviderMaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldProviderMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderMaxPerDay(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProviderMaxPerDay(); ok {
+		_spec.AddField(integration.FieldProviderMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.ProviderMaxPerDayCleared() {
+		_spec.ClearField(integration.FieldProviderMaxPerDay, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderQuotaCheckedAt(); ok {
+		_spec.SetField(integration.FieldProviderQuotaCheckedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProviderQuotaCheckedAtCleared() {
+		_spec.ClearField(integration.FieldProviderQuotaCheckedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ProviderQuotaUnavailable(); ok {
+		_spec.SetField(integration.FieldProviderQuotaUnavailable, field.TypeBool, value)
+	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -270,6 +493,35 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimiterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimiterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -403,9 +655,170 @@ func (_u *IntegrationUpdateOne) SetNillableIsDefault(v *bool) *IntegrationUpdate
 	return _u
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (_u *IntegrationUpdateOne) SetMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetMaxPerSecond()
+	_u.mutation.SetMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableMaxPerSecond(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (_u *IntegrationUpdateOne) AddMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.AddMaxPerSecond(v)
+	return _u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (_u *IntegrationUpdateOne) ClearMaxPerSecond() *IntegrationUpdateOne {
+	_u.mutation.ClearMaxPerSecond()
+	return _u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (_u *IntegrationUpdateOne) SetMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetMaxPerDay()
+	_u.mutation.SetMaxPerDay(v)
+	return _u
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableMaxPerDay(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (_u *IntegrationUpdateOne) AddMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.AddMaxPerDay(v)
+	return _u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (_u *IntegrationUpdateOne) ClearMaxPerDay() *IntegrationUpdateOne {
+	_u.mutation.ClearMaxPerDay()
+	return _u
+}
+
+// SetProviderMaxPerSecond sets the "provider_max_per_second" field.
+func (_u *IntegrationUpdateOne) SetProviderMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetProviderMaxPerSecond()
+	_u.mutation.SetProviderMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableProviderMaxPerSecond sets the "provider_max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableProviderMaxPerSecond(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetProviderMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddProviderMaxPerSecond adds value to the "provider_max_per_second" field.
+func (_u *IntegrationUpdateOne) AddProviderMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.AddProviderMaxPerSecond(v)
+	return _u
+}
+
+// ClearProviderMaxPerSecond clears the value of the "provider_max_per_second" field.
+func (_u *IntegrationUpdateOne) ClearProviderMaxPerSecond() *IntegrationUpdateOne {
+	_u.mutation.ClearProviderMaxPerSecond()
+	return _u
+}
+
+// SetProviderMaxPerDay sets the "provider_max_per_day" field.
+func (_u *IntegrationUpdateOne) SetProviderMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetProviderMaxPerDay()
+	_u.mutation.SetProviderMaxPerDay(v)
+	return _u
+}
+
+// SetNillableProviderMaxPerDay sets the "provider_max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableProviderMaxPerDay(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetProviderMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddProviderMaxPerDay adds value to the "provider_max_per_day" field.
+func (_u *IntegrationUpdateOne) AddProviderMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.AddProviderMaxPerDay(v)
+	return _u
+}
+
+// ClearProviderMaxPerDay clears the value of the "provider_max_per_day" field.
+func (_u *IntegrationUpdateOne) ClearProviderMaxPerDay() *IntegrationUpdateOne {
+	_u.mutation.ClearProviderMaxPerDay()
+	return _u
+}
+
+// SetProviderQuotaCheckedAt sets the "provider_quota_checked_at" field.
+func (_u *IntegrationUpdateOne) SetProviderQuotaCheckedAt(v time.Time) *IntegrationUpdateOne {
+	_u.mutation.SetProviderQuotaCheckedAt(v)
+	return _u
+}
+
+// SetNillableProviderQuotaCheckedAt sets the "provider_quota_checked_at" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableProviderQuotaCheckedAt(v *time.Time) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetProviderQuotaCheckedAt(*v)
+	}
+	return _u
+}
+
+// ClearProviderQuotaCheckedAt clears the value of the "provider_quota_checked_at" field.
+func (_u *IntegrationUpdateOne) ClearProviderQuotaCheckedAt() *IntegrationUpdateOne {
+	_u.mutation.ClearProviderQuotaCheckedAt()
+	return _u
+}
+
+// SetProviderQuotaUnavailable sets the "provider_quota_unavailable" field.
+func (_u *IntegrationUpdateOne) SetProviderQuotaUnavailable(v bool) *IntegrationUpdateOne {
+	_u.mutation.SetProviderQuotaUnavailable(v)
+	return _u
+}
+
+// SetNillableProviderQuotaUnavailable sets the "provider_quota_unavailable" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableProviderQuotaUnavailable(v *bool) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetProviderQuotaUnavailable(*v)
+	}
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdateOne) SetWorkspace(v *Workspace) *IntegrationUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (_u *IntegrationUpdateOne) SetSendLimiterID(id int64) *IntegrationUpdateOne {
+	_u.mutation.SetSendLimiterID(id)
+	return _u
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableSendLimiterID(id *int64) *IntegrationUpdateOne {
+	if id != nil {
+		_u = _u.SetSendLimiterID(*id)
+	}
+	return _u
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdateOne) SetSendLimiter(v *SendLimiter) *IntegrationUpdateOne {
+	return _u.SetSendLimiterID(v.ID)
 }
 
 // Mutation returns the IntegrationMutation object of the builder.
@@ -416,6 +829,12 @@ func (_u *IntegrationUpdateOne) Mutation() *IntegrationMutation {
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdateOne) ClearWorkspace() *IntegrationUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdateOne) ClearSendLimiter() *IntegrationUpdateOne {
+	_u.mutation.ClearSendLimiter()
 	return _u
 }
 
@@ -485,6 +904,16 @@ func (_u *IntegrationUpdateOne) check() error {
 			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Integration.provider": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.MaxPerSecond(); ok {
+		if err := integration.MaxPerSecondValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_second", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_second": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MaxPerDay(); ok {
+		if err := integration.MaxPerDayValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Integration.workspace"`)
 	}
@@ -547,6 +976,51 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.MaxPerSecond(); ok {
+		_spec.SetField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.MaxPerDay(); ok {
+		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerDay(); ok {
+		_spec.AddField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerDayCleared() {
+		_spec.ClearField(integration.FieldMaxPerDay, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderMaxPerSecond(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProviderMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldProviderMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.ProviderMaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldProviderMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderMaxPerDay(); ok {
+		_spec.SetField(integration.FieldProviderMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProviderMaxPerDay(); ok {
+		_spec.AddField(integration.FieldProviderMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.ProviderMaxPerDayCleared() {
+		_spec.ClearField(integration.FieldProviderMaxPerDay, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProviderQuotaCheckedAt(); ok {
+		_spec.SetField(integration.FieldProviderQuotaCheckedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProviderQuotaCheckedAtCleared() {
+		_spec.ClearField(integration.FieldProviderQuotaCheckedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ProviderQuotaUnavailable(); ok {
+		_spec.SetField(integration.FieldProviderQuotaUnavailable, field.TypeBool, value)
+	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -569,6 +1043,35 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimiterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimiterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

@@ -356,6 +356,16 @@ export const zSiteInvitationLookupResult = z.object({
 });
 
 /**
+ * A rolling 24-hour Send rate limit the operator may set
+ */
+export const zSiteMaxPerDay = z.int().gte(1).lte(100000000);
+
+/**
+ * A per-second Send rate limit the operator may set
+ */
+export const zSiteMaxPerSecond = z.int().gte(1).lte(10000);
+
+/**
  * A User's permission level in a Workspace
  */
 export const zSiteMembershipRole = z.enum([
@@ -422,6 +432,34 @@ export const zSiteRegisterInput = z.object({
 export const zSiteResetPasswordInput = z.object({
   token: z.string(),
   password: z.string()
+});
+
+/**
+ * Where an effective Send rate limit comes from
+ */
+export const zSiteSendLimitSource = z.enum(['manual', 'provider']);
+
+/**
+ * One effective ceiling: the lowest of the manual and provider values, manual on a tie
+ */
+export const zSiteSendLimitValue = z.object({
+  limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
+  source: zSiteSendLimitSource.nullable()
+});
+
+/**
+ * A reason to look at an Integration's Send rate limit
+ */
+export const zSiteSendLimitWarning = z.enum(['unlimited', 'providerQuotaUnavailable']);
+
+/**
+ * The Send rate limit as enforced, with the last 24 hours of usage
+ */
+export const zSiteSendLimitStatus = z.object({
+  perSecond: zSiteSendLimitValue,
+  perDay: zSiteSendLimitValue,
+  sentLast24h: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  warnings: z.array(zSiteSendLimitWarning)
 });
 
 /**
@@ -497,6 +535,8 @@ export const zSiteCreateIntegrationInput = z.object({
   name: z.string(),
   enabled: z.exactOptional(z.boolean()),
   isDefault: z.exactOptional(z.boolean()),
+  maxPerSecond: z.exactOptional(zSiteMaxPerSecond.nullable()),
+  maxPerDay: z.exactOptional(zSiteMaxPerDay.nullable()),
   config: zSiteIntegrationConfigInput
 });
 
@@ -583,6 +623,8 @@ export const zSiteUpdateIntegrationInput = z.object({
   name: z.exactOptional(z.string()),
   enabled: z.exactOptional(z.boolean()),
   isDefault: z.exactOptional(z.boolean()),
+  maxPerSecond: z.exactOptional(zSiteMaxPerSecond.nullable()),
+  maxPerDay: z.exactOptional(zSiteMaxPerDay.nullable()),
   config: z.exactOptional(zSiteIntegrationConfigInput.nullable())
 });
 
@@ -853,6 +895,17 @@ export const zSiteAutomationResource = z.object({
 });
 
 /**
+ * How far a sending broadcast has got. A broadcast limited by its Integration's Send
+ * rate limit is paced: recipients go out at an even interval, so the estimate is
+ * derived on the server from the last scheduled time and the recipients remaining.
+ */
+export const zSiteBroadcastProgress = z.object({
+  processedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  remainingCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  estimatedCompletionAt: z.exactOptional(zTimestamp.nullable())
+});
+
+/**
  * Broadcast resource used by the site UI
  */
 export const zSiteBroadcastResource = z.object({
@@ -870,6 +923,7 @@ export const zSiteBroadcastResource = z.object({
   scheduledAt: z.exactOptional(zTimestamp.nullable()),
   sentAt: z.exactOptional(zTimestamp.nullable()),
   stats: zSiteBroadcastStats,
+  progress: z.exactOptional(zSiteBroadcastProgress.nullable()),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });
@@ -955,6 +1009,9 @@ export const zSiteIntegrationResource = z.object({
   provider: zSiteIntegrationProvider,
   enabled: z.boolean(),
   isDefault: z.boolean(),
+  maxPerSecond: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
+  maxPerDay: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
+  sendLimit: zSiteSendLimitStatus,
   config: zSiteIntegrationConfig,
   createdAt: zTimestamp,
   updatedAt: zTimestamp

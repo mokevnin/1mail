@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/samber/lo"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -16,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
 	"github.com/mokevnin/1mail/internal/messaging/smtp"
+	"github.com/mokevnin/1mail/internal/sendlimit"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -38,9 +43,13 @@ func (h *Handlers) SiteIntegrationsList(ctx context.Context, params siteapi.Site
 		return nil, err
 	}
 
+	usage, err := sendlimit.Usage(ctx, s, time.Now())
+	if err != nil {
+		return nil, err
+	}
 	items := make(siteapi.SiteIntegrationsListOKApplicationJSON, len(rows))
 	for i, row := range rows {
-		res, err := h.integrationToResource(row)
+		res, err := h.integrationToResource(row, usage)
 		if err != nil {
 			return nil, err
 		}
@@ -84,10 +93,15 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
+	maxPerSecond, maxPerDay := limitValue(req.MaxPerSecond), limitValue(req.MaxPerDay)
+
 	enabled := req.Enabled.Or(true)
 	isDefault := req.IsDefault.Or(false)
 
-	row, err := h.createIntegration(ctx, s, name, channel, provider, encrypted, enabled, isDefault)
+	row, err := h.createIntegration(ctx, s, integrationDraft{
+		name: name, channel: channel, provider: provider, encrypted: encrypted,
+		enabled: enabled, isDefault: isDefault, maxPerSecond: maxPerSecond, maxPerDay: maxPerDay,
+	})
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteIntegrationsCreateConflict(problem(http.StatusConflict, "a default provider already exists for this channel"))
 		return &v, nil
@@ -96,7 +110,8 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	res, err := h.integrationToResource(row)
+	h.discoverQuota(ctx, row)
+	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +142,7 @@ func (h *Handlers) SiteIntegrationsGet(ctx context.Context, params siteapi.SiteI
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.integrationToResource(row)
+	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +200,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if v, ok := req.Enabled.Get(); ok {
 		setEnabled = &v
 	}
+	perSecond, perDay := limitValue(req.MaxPerSecond), limitValue(req.MaxPerDay)
 
 	if cfg, ok := req.Config.Get(); ok {
 		provider, _, plaintext, verr := h.encodeConfigInput(cfg)
@@ -249,6 +265,18 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 		if setEncrypted != nil {
 			upd.SetConfigEncrypted(*setEncrypted)
 		}
+		switch {
+		case perSecond != nil:
+			upd.SetMaxPerSecond(*perSecond)
+		case req.MaxPerSecond.IsSet(): // explicit null
+			upd.ClearMaxPerSecond()
+		}
+		switch {
+		case perDay != nil:
+			upd.SetMaxPerDay(*perDay)
+		case req.MaxPerDay.IsSet():
+			upd.ClearMaxPerDay()
+		}
 		if promote {
 			upd.SetIsDefault(true)
 		} else if setDefault != nil {
@@ -265,7 +293,11 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.integrationToResource(updated)
+	if setEncrypted != nil {
+		// New credentials or endpoint: what the provider allows may have changed.
+		h.discoverQuota(ctx, updated)
+	}
+	res, err := h.integrationResource(ctx, s, updated)
 	if err != nil {
 		return nil, err
 	}
@@ -303,25 +335,65 @@ func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.Si
 
 // --- helpers ---
 
+// integrationDraft is the validated input of a new Integration.
+type integrationDraft struct {
+	name         string
+	channel      integration.Channel
+	provider     integration.Provider
+	encrypted    string
+	enabled      bool
+	isDefault    bool
+	maxPerSecond *int
+	maxPerDay    *int
+}
+
+// discoverQuota schedules a saved SES Integration's send quota lookup (ADR 0023). The
+// lookup runs as a job, so the save's response does not carry its result: the provider
+// ceiling and any "quota unavailable" warning show on the next read, a moment later.
+// Scheduling is best-effort: a failure is logged, never returned, so it cannot fail the
+// save (the hourly job picks the Integration up anyway). Providers without a quota
+// (SMTP) are skipped.
+func (h *Handlers) discoverQuota(ctx context.Context, row *ent.Integration) {
+	if row.Provider != integration.ProviderSes {
+		return
+	}
+	if err := h.quotaRefresh.EnqueueIntegrationQuotaRefresh(ctx, row.ID); err != nil {
+		slog.WarnContext(ctx, "enqueue integration quota refresh failed", "integration_id", row.ID, "err", err)
+	}
+}
+
+// limitValue reads one Send rate limit from its request field: null (and, on create,
+// omitted) means no limit and yields a nil pointer. The contract bounds a set value.
+func limitValue[T ~int32](in interface{ Get() (T, bool) }) *int {
+	v, ok := in.Get()
+	if !ok {
+		return nil
+	}
+	n := int(v)
+	return &n
+}
+
 // createIntegration inserts a row in a tx, clearing any sibling default first
 // when this one is the new default (so the partial unique index never trips on
 // our own writes).
-func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, name string, channel integration.Channel, provider integration.Provider, encrypted string, enabled, isDefault bool) (*ent.Integration, error) {
+func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, d integrationDraft) (*ent.Integration, error) {
 	var row *ent.Integration
 	err := h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
-		if isDefault {
-			if err := clearDefault(ctx, ts, channel); err != nil {
+		if d.isDefault {
+			if err := clearDefault(ctx, ts, d.channel); err != nil {
 				return err
 			}
 		}
 		var err error
 		row, err = ts.Integration().Create().
-			SetName(name).
-			SetChannel(channel).
-			SetProvider(provider).
-			SetConfigEncrypted(encrypted).
-			SetEnabled(enabled).
-			SetIsDefault(isDefault).
+			SetName(d.name).
+			SetChannel(d.channel).
+			SetProvider(d.provider).
+			SetConfigEncrypted(d.encrypted).
+			SetEnabled(d.enabled).
+			SetIsDefault(d.isDefault).
+			SetNillableMaxPerSecond(d.maxPerSecond).
+			SetNillableMaxPerDay(d.maxPerDay).
 			Save(ctx)
 		return err
 	})
@@ -429,16 +501,19 @@ func mergeSecrets(provider integration.Provider, next, prev []byte) ([]byte, err
 
 // integrationToResource decrypts the stored config and builds the API resource
 // with all secrets redacted.
-func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteIntegrationResource, error) {
+func (h *Handlers) integrationToResource(row *ent.Integration, usage map[int64]int) (siteapi.SiteIntegrationResource, error) {
 	res := siteapi.SiteIntegrationResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(row.ID, 10)),
-		Name:      row.Name,
-		Channel:   siteapi.SiteIntegrationChannel(row.Channel.String()),
-		Provider:  siteapi.SiteIntegrationProvider(row.Provider.String()),
-		Enabled:   row.Enabled,
-		IsDefault: row.IsDefault,
-		CreatedAt: siteapi.Timestamp(row.CreatedAt),
-		UpdatedAt: siteapi.Timestamp(row.UpdatedAt),
+		ID:           siteapi.EntityId(strconv.FormatInt(row.ID, 10)),
+		Name:         row.Name,
+		Channel:      siteapi.SiteIntegrationChannel(row.Channel.String()),
+		Provider:     siteapi.SiteIntegrationProvider(row.Provider.String()),
+		Enabled:      row.Enabled,
+		IsDefault:    row.IsDefault,
+		MaxPerSecond: limitOpt(row.MaxPerSecond),
+		MaxPerDay:    limitOpt(row.MaxPerDay),
+		SendLimit:    sendLimitStatus(row, usage),
+		CreatedAt:    siteapi.Timestamp(row.CreatedAt),
+		UpdatedAt:    siteapi.Timestamp(row.UpdatedAt),
 	}
 
 	plaintext, err := h.cipher.Decrypt(row.ConfigEncrypted)
@@ -487,6 +562,14 @@ func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteInte
 	return res, nil
 }
 
+// limitOpt renders a stored limit: null when there is none.
+func limitOpt(v *int) siteapi.NilInt32 {
+	if v == nil {
+		return siteapi.NilInt32{Null: true}
+	}
+	return siteapi.NewNilInt32(int32(*v))
+}
+
 // optNilString returns a set OptNilString for non-empty input, else the zero
 // (unset) value — so redacted optional fields are omitted rather than blank.
 func optNilString(s string) siteapi.OptNilString {
@@ -494,4 +577,37 @@ func optNilString(s string) siteapi.OptNilString {
 		return siteapi.OptNilString{}
 	}
 	return siteapi.NewOptNilString(s)
+}
+
+// integrationResource renders one Integration with its 24-hour usage, for the
+// single-row responses (get, create, update).
+func (h *Handlers) integrationResource(ctx context.Context, s *ent.Scoped, row *ent.Integration) (siteapi.SiteIntegrationResource, error) {
+	usage, err := sendlimit.Usage(ctx, s, time.Now())
+	if err != nil {
+		return siteapi.SiteIntegrationResource{}, err
+	}
+	return h.integrationToResource(row, usage)
+}
+
+// sendLimitStatus renders an Integration's enforced Send rate limit with its sent
+// count over the last 24 hours (from the per-Integration usage map).
+func sendLimitStatus(row *ent.Integration, usage map[int64]int) siteapi.SiteSendLimitStatus {
+	eff := sendlimit.EffectiveOf(row)
+	out := siteapi.SiteSendLimitStatus{
+		PerSecond:   sendLimitValue(eff.PerSecond),
+		PerDay:      sendLimitValue(eff.PerDay),
+		SentLast24h: int32(usage[row.ID]),
+		Warnings:    lo.Map(eff.Warnings(), func(w sendlimit.Warning, _ int) siteapi.SiteSendLimitWarning { return siteapi.SiteSendLimitWarning(w) }),
+	}
+	return out
+}
+
+func sendLimitValue(v sendlimit.Value) siteapi.SiteSendLimitValue {
+	out := siteapi.SiteSendLimitValue{Limit: limitOpt(v.Limit)}
+	if v.Source == "" {
+		out.Source = siteapi.NilSiteSendLimitSource{Null: true}
+	} else {
+		out.Source = siteapi.NewNilSiteSendLimitSource(siteapi.SiteSendLimitSource(v.Source))
+	}
+	return out
 }

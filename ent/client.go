@@ -35,6 +35,7 @@ import (
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -87,6 +88,8 @@ type Client struct {
 	OutboundMessage *OutboundMessageClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
+	// SendLimiter is the client for interacting with the SendLimiter builders.
+	SendLimiter *SendLimiterClient
 	// SendingDomain is the client for interacting with the SendingDomain builders.
 	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
@@ -133,6 +136,7 @@ func (c *Client) init() {
 	c.OAuthCode = NewOAuthCodeClient(c.config)
 	c.OutboundMessage = NewOutboundMessageClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
+	c.SendLimiter = NewSendLimiterClient(c.config)
 	c.SendingDomain = NewSendingDomainClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
 	c.Tag = NewTagClient(c.config)
@@ -252,6 +256,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OAuthCode:          NewOAuthCodeClient(cfg),
 		OutboundMessage:    NewOutboundMessageClient(cfg),
 		Segment:            NewSegmentClient(cfg),
+		SendLimiter:        NewSendLimiterClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
 		Tag:                NewTagClient(cfg),
@@ -298,6 +303,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OAuthCode:          NewOAuthCodeClient(cfg),
 		OutboundMessage:    NewOutboundMessageClient(cfg),
 		Segment:            NewSegmentClient(cfg),
+		SendLimiter:        NewSendLimiterClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
 		Tag:                NewTagClient(cfg),
@@ -338,9 +344,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
 		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
-		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendingDomain,
-		c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendLimiter,
+		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -353,9 +359,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
 		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
-		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendingDomain,
-		c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendLimiter,
+		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -402,6 +408,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.OutboundMessage.mutate(ctx, m)
 	case *SegmentMutation:
 		return c.Segment.mutate(ctx, m)
+	case *SendLimiterMutation:
+		return c.SendLimiter.mutate(ctx, m)
 	case *SendingDomainMutation:
 		return c.SendingDomain.mutate(ctx, m)
 	case *SuppressionMutation:
@@ -2415,6 +2423,22 @@ func (c *IntegrationClient) QueryWorkspace(_m *Integration) *WorkspaceQuery {
 	return query
 }
 
+// QuerySendLimiter queries the send_limiter edge of a Integration.
+func (c *IntegrationClient) QuerySendLimiter(_m *Integration) *SendLimiterQuery {
+	query := (&SendLimiterClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(integration.Table, integration.FieldID, id),
+			sqlgraph.To(sendlimiter.Table, sendlimiter.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, integration.SendLimiterTable, integration.SendLimiterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *IntegrationClient) Hooks() []Hook {
 	return c.hooks.Integration
@@ -3363,6 +3387,171 @@ func (c *SegmentClient) mutate(ctx context.Context, m *SegmentMutation) (Value, 
 		return (&SegmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Segment mutation op: %q", m.Op())
+	}
+}
+
+// SendLimiterClient is a client for the SendLimiter schema.
+type SendLimiterClient struct {
+	config
+}
+
+// NewSendLimiterClient returns a client for the SendLimiter from the given config.
+func NewSendLimiterClient(c config) *SendLimiterClient {
+	return &SendLimiterClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sendlimiter.Hooks(f(g(h())))`.
+func (c *SendLimiterClient) Use(hooks ...Hook) {
+	c.hooks.SendLimiter = append(c.hooks.SendLimiter, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sendlimiter.Intercept(f(g(h())))`.
+func (c *SendLimiterClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SendLimiter = append(c.inters.SendLimiter, interceptors...)
+}
+
+// Create returns a builder for creating a SendLimiter entity.
+func (c *SendLimiterClient) Create() *SendLimiterCreate {
+	mutation := newSendLimiterMutation(c.config, OpCreate)
+	return &SendLimiterCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SendLimiter entities.
+func (c *SendLimiterClient) CreateBulk(builders ...*SendLimiterCreate) *SendLimiterCreateBulk {
+	return &SendLimiterCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SendLimiterClient) MapCreateBulk(slice any, setFunc func(*SendLimiterCreate, int)) *SendLimiterCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SendLimiterCreateBulk{err: fmt.Errorf("calling to SendLimiterClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SendLimiterCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SendLimiterCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SendLimiter.
+func (c *SendLimiterClient) Update() *SendLimiterUpdate {
+	mutation := newSendLimiterMutation(c.config, OpUpdate)
+	return &SendLimiterUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SendLimiterClient) UpdateOne(_m *SendLimiter) *SendLimiterUpdateOne {
+	mutation := newSendLimiterMutation(c.config, OpUpdateOne, withSendLimiter(_m))
+	return &SendLimiterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SendLimiterClient) UpdateOneID(id int64) *SendLimiterUpdateOne {
+	mutation := newSendLimiterMutation(c.config, OpUpdateOne, withSendLimiterID(id))
+	return &SendLimiterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SendLimiter.
+func (c *SendLimiterClient) Delete() *SendLimiterDelete {
+	mutation := newSendLimiterMutation(c.config, OpDelete)
+	return &SendLimiterDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SendLimiterClient) DeleteOne(_m *SendLimiter) *SendLimiterDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SendLimiterClient) DeleteOneID(id int64) *SendLimiterDeleteOne {
+	builder := c.Delete().Where(sendlimiter.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SendLimiterDeleteOne{builder}
+}
+
+// Query returns a query builder for SendLimiter.
+func (c *SendLimiterClient) Query() *SendLimiterQuery {
+	return &SendLimiterQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSendLimiter},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SendLimiter entity by its id.
+func (c *SendLimiterClient) Get(ctx context.Context, id int64) (*SendLimiter, error) {
+	return c.Query().Where(sendlimiter.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SendLimiterClient) GetX(ctx context.Context, id int64) *SendLimiter {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a SendLimiter.
+func (c *SendLimiterClient) QueryWorkspace(_m *SendLimiter) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sendlimiter.Table, sendlimiter.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sendlimiter.WorkspaceTable, sendlimiter.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIntegration queries the integration edge of a SendLimiter.
+func (c *SendLimiterClient) QueryIntegration(_m *SendLimiter) *IntegrationQuery {
+	query := (&IntegrationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sendlimiter.Table, sendlimiter.FieldID, id),
+			sqlgraph.To(integration.Table, integration.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, sendlimiter.IntegrationTable, sendlimiter.IntegrationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SendLimiterClient) Hooks() []Hook {
+	return c.hooks.SendLimiter
+}
+
+// Interceptors returns the client interceptors.
+func (c *SendLimiterClient) Interceptors() []Interceptor {
+	return c.inters.SendLimiter
+}
+
+func (c *SendLimiterClient) mutate(ctx context.Context, m *SendLimiterMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SendLimiterCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SendLimiterUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SendLimiterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SendLimiterDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SendLimiter mutation op: %q", m.Op())
 	}
 }
 
@@ -4709,6 +4898,22 @@ func (c *WorkspaceClient) QuerySendingDomains(_m *Workspace) *SendingDomainQuery
 	return query
 }
 
+// QuerySendLimiters queries the send_limiters edge of a Workspace.
+func (c *WorkspaceClient) QuerySendLimiters(_m *Workspace) *SendLimiterQuery {
+	query := (&SendLimiterClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(sendlimiter.Table, sendlimiter.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SendLimitersTable, workspace.SendLimitersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryBroadcasts queries the broadcasts edge of a Workspace.
 func (c *WorkspaceClient) QueryBroadcasts(_m *Workspace) *BroadcastQuery {
 	query := (&BroadcastClient{config: c.config}).Query()
@@ -4948,14 +5153,14 @@ type (
 		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
 		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
 		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
-		Segment, SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor,
-		WebhookEndpoint, Workspace []ent.Hook
+		Segment, SendLimiter, SendingDomain, Suppression, Tag, Unsubscribe, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
 		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
 		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
-		Segment, SendingDomain, Suppression, Tag, Unsubscribe, User, Visitor,
-		WebhookEndpoint, Workspace []ent.Interceptor
+		Segment, SendLimiter, SendingDomain, Suppression, Tag, Unsubscribe, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

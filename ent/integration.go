@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -36,6 +37,18 @@ type Integration struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// IsDefault holds the value of the "is_default" field.
 	IsDefault bool `json:"is_default,omitempty"`
+	// MaxPerSecond holds the value of the "max_per_second" field.
+	MaxPerSecond *int `json:"max_per_second,omitempty"`
+	// MaxPerDay holds the value of the "max_per_day" field.
+	MaxPerDay *int `json:"max_per_day,omitempty"`
+	// ProviderMaxPerSecond holds the value of the "provider_max_per_second" field.
+	ProviderMaxPerSecond *int `json:"provider_max_per_second,omitempty"`
+	// ProviderMaxPerDay holds the value of the "provider_max_per_day" field.
+	ProviderMaxPerDay *int `json:"provider_max_per_day,omitempty"`
+	// ProviderQuotaCheckedAt holds the value of the "provider_quota_checked_at" field.
+	ProviderQuotaCheckedAt *time.Time `json:"provider_quota_checked_at,omitempty"`
+	// ProviderQuotaUnavailable holds the value of the "provider_quota_unavailable" field.
+	ProviderQuotaUnavailable bool `json:"provider_quota_unavailable,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IntegrationQuery when eager-loading is set.
 	Edges        IntegrationEdges `json:"edges"`
@@ -46,9 +59,11 @@ type Integration struct {
 type IntegrationEdges struct {
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
+	// SendLimiter holds the value of the send_limiter edge.
+	SendLimiter *SendLimiter `json:"send_limiter,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -62,18 +77,29 @@ func (e IntegrationEdges) WorkspaceOrErr() (*Workspace, error) {
 	return nil, &NotLoadedError{edge: "workspace"}
 }
 
+// SendLimiterOrErr returns the SendLimiter value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e IntegrationEdges) SendLimiterOrErr() (*SendLimiter, error) {
+	if e.SendLimiter != nil {
+		return e.SendLimiter, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: sendlimiter.Label}
+	}
+	return nil, &NotLoadedError{edge: "send_limiter"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Integration) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case integration.FieldEnabled, integration.FieldIsDefault:
+		case integration.FieldEnabled, integration.FieldIsDefault, integration.FieldProviderQuotaUnavailable:
 			values[i] = new(sql.NullBool)
-		case integration.FieldID, integration.FieldWorkspaceID:
+		case integration.FieldID, integration.FieldWorkspaceID, integration.FieldMaxPerSecond, integration.FieldMaxPerDay, integration.FieldProviderMaxPerSecond, integration.FieldProviderMaxPerDay:
 			values[i] = new(sql.NullInt64)
 		case integration.FieldName, integration.FieldChannel, integration.FieldProvider, integration.FieldConfigEncrypted:
 			values[i] = new(sql.NullString)
-		case integration.FieldCreatedAt, integration.FieldUpdatedAt:
+		case integration.FieldCreatedAt, integration.FieldUpdatedAt, integration.FieldProviderQuotaCheckedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -150,6 +176,47 @@ func (_m *Integration) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.IsDefault = value.Bool
 			}
+		case integration.FieldMaxPerSecond:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field max_per_second", values[i])
+			} else if value.Valid {
+				_m.MaxPerSecond = new(int)
+				*_m.MaxPerSecond = int(value.Int64)
+			}
+		case integration.FieldMaxPerDay:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field max_per_day", values[i])
+			} else if value.Valid {
+				_m.MaxPerDay = new(int)
+				*_m.MaxPerDay = int(value.Int64)
+			}
+		case integration.FieldProviderMaxPerSecond:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_max_per_second", values[i])
+			} else if value.Valid {
+				_m.ProviderMaxPerSecond = new(int)
+				*_m.ProviderMaxPerSecond = int(value.Int64)
+			}
+		case integration.FieldProviderMaxPerDay:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_max_per_day", values[i])
+			} else if value.Valid {
+				_m.ProviderMaxPerDay = new(int)
+				*_m.ProviderMaxPerDay = int(value.Int64)
+			}
+		case integration.FieldProviderQuotaCheckedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_quota_checked_at", values[i])
+			} else if value.Valid {
+				_m.ProviderQuotaCheckedAt = new(time.Time)
+				*_m.ProviderQuotaCheckedAt = value.Time
+			}
+		case integration.FieldProviderQuotaUnavailable:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_quota_unavailable", values[i])
+			} else if value.Valid {
+				_m.ProviderQuotaUnavailable = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -166,6 +233,11 @@ func (_m *Integration) Value(name string) (ent.Value, error) {
 // QueryWorkspace queries the "workspace" edge of the Integration entity.
 func (_m *Integration) QueryWorkspace() *WorkspaceQuery {
 	return NewIntegrationClient(_m.config).QueryWorkspace(_m)
+}
+
+// QuerySendLimiter queries the "send_limiter" edge of the Integration entity.
+func (_m *Integration) QuerySendLimiter() *SendLimiterQuery {
+	return NewIntegrationClient(_m.config).QuerySendLimiter(_m)
 }
 
 // Update returns a builder for updating this Integration.
@@ -216,6 +288,34 @@ func (_m *Integration) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_default=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsDefault))
+	builder.WriteString(", ")
+	if v := _m.MaxPerSecond; v != nil {
+		builder.WriteString("max_per_second=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.MaxPerDay; v != nil {
+		builder.WriteString("max_per_day=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProviderMaxPerSecond; v != nil {
+		builder.WriteString("provider_max_per_second=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProviderMaxPerDay; v != nil {
+		builder.WriteString("provider_max_per_day=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProviderQuotaCheckedAt; v != nil {
+		builder.WriteString("provider_quota_checked_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("provider_quota_unavailable=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProviderQuotaUnavailable))
 	builder.WriteByte(')')
 	return builder.String()
 }

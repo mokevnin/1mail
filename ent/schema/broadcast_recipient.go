@@ -50,6 +50,13 @@ func (BroadcastRecipient) Fields() []ent.Field {
 		field.String("error").
 			Optional().
 			Nillable(),
+		// When a Deferral last put this recipient's job to sleep until (ADR 0023). A
+		// recipient whose job is still asleep is not queueing for a token, so the
+		// backlog a deferred job waits behind counts only pending recipients that are
+		// awake: no deferral recorded, or one that has passed.
+		field.Time("deferred_until").
+			Optional().
+			Nillable(),
 		field.Time("sent_at").
 			Optional().
 			Nillable(),

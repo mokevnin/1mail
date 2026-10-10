@@ -536,11 +536,15 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
 		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL,
+		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL,
 			jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention}, edition.Jobs())
 		if err != nil {
 			return nil, err
@@ -879,7 +883,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	return apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
+		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, QuotaRefresh: jc.Client,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit,
 	}, nil
 }

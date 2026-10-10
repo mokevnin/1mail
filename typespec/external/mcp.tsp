@@ -27,6 +27,7 @@ namespace OneMail;
 // Read-only reference data (ADR 0016).
 @@extension(CustomFields.list, "x-mcp", #{ name: "custom_fields_list" });
 @@extension(SendingDomains.list, "x-mcp", #{ name: "sending_domains_list" });
+@@extension(Integrations.list, "x-mcp", #{ name: "integrations_list" });
 @@extension(
   SendingDomainRates.list,
   "x-mcp",

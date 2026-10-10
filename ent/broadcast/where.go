@@ -160,6 +160,11 @@ func HoldReason(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldHoldReason, v))
 }
 
+// LastScheduledAt applies equality check predicate on the "last_scheduled_at" field. It's identical to LastScheduledAtEQ.
+func LastScheduledAt(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldLastScheduledAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldCreatedAt, v))
@@ -1243,6 +1248,56 @@ func HoldReasonEqualFold(v string) predicate.Broadcast {
 // HoldReasonContainsFold applies the ContainsFold predicate on the "hold_reason" field.
 func HoldReasonContainsFold(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldContainsFold(FieldHoldReason, v))
+}
+
+// LastScheduledAtEQ applies the EQ predicate on the "last_scheduled_at" field.
+func LastScheduledAtEQ(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtNEQ applies the NEQ predicate on the "last_scheduled_at" field.
+func LastScheduledAtNEQ(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtIn applies the In predicate on the "last_scheduled_at" field.
+func LastScheduledAtIn(vs ...time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldLastScheduledAt, vs...))
+}
+
+// LastScheduledAtNotIn applies the NotIn predicate on the "last_scheduled_at" field.
+func LastScheduledAtNotIn(vs ...time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldLastScheduledAt, vs...))
+}
+
+// LastScheduledAtGT applies the GT predicate on the "last_scheduled_at" field.
+func LastScheduledAtGT(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGT(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtGTE applies the GTE predicate on the "last_scheduled_at" field.
+func LastScheduledAtGTE(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGTE(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtLT applies the LT predicate on the "last_scheduled_at" field.
+func LastScheduledAtLT(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLT(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtLTE applies the LTE predicate on the "last_scheduled_at" field.
+func LastScheduledAtLTE(v time.Time) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLTE(FieldLastScheduledAt, v))
+}
+
+// LastScheduledAtIsNil applies the IsNil predicate on the "last_scheduled_at" field.
+func LastScheduledAtIsNil() predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIsNull(FieldLastScheduledAt))
+}
+
+// LastScheduledAtNotNil applies the NotNil predicate on the "last_scheduled_at" field.
+func LastScheduledAtNotNil() predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotNull(FieldLastScheduledAt))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

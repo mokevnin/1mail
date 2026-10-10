@@ -263,6 +263,7 @@ func (e *Broadcast) auditFields() map[string]any {
 		"failed_count":       e.FailedCount,
 		"skipped_count":      e.SkippedCount,
 		"hold_reason":        derefAudit(e.HoldReason),
+		"last_scheduled_at":  derefAudit(e.LastScheduledAt),
 	}
 }
 
@@ -471,12 +472,18 @@ var IntegrationAuditSensitive = map[string]bool{
 // auditFields maps every audited field of the Integration to its value.
 func (e *Integration) auditFields() map[string]any {
 	return map[string]any{
-		"name":             e.Name,
-		"channel":          e.Channel,
-		"provider":         e.Provider,
-		"config_encrypted": e.ConfigEncrypted,
-		"enabled":          e.Enabled,
-		"is_default":       e.IsDefault,
+		"name":                       e.Name,
+		"channel":                    e.Channel,
+		"provider":                   e.Provider,
+		"config_encrypted":           e.ConfigEncrypted,
+		"enabled":                    e.Enabled,
+		"is_default":                 e.IsDefault,
+		"max_per_second":             derefAudit(e.MaxPerSecond),
+		"max_per_day":                derefAudit(e.MaxPerDay),
+		"provider_max_per_second":    derefAudit(e.ProviderMaxPerSecond),
+		"provider_max_per_day":       derefAudit(e.ProviderMaxPerDay),
+		"provider_quota_checked_at":  derefAudit(e.ProviderQuotaCheckedAt),
+		"provider_quota_unavailable": e.ProviderQuotaUnavailable,
 	}
 }
 

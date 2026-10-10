@@ -24,6 +24,9 @@
       "name": "Sending domains"
     },
     {
+      "name": "Integrations"
+    },
+    {
       "name": "Consent"
     },
     {
@@ -4229,6 +4232,87 @@
         }
       }
     },
+    "/integrations": {
+      "get": {
+        "operationId": "Integrations_list",
+        "description": "List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IntegrationResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Integrations"],
+        "x-mcp": {
+          "name": "integrations_list"
+        }
+      }
+    },
     "/segments": {
       "get": {
         "operationId": "Segments_list",
@@ -6781,6 +6865,7 @@
           "webhooks:write",
           "custom_fields:read",
           "sending_domains:read",
+          "integrations:read",
           "emails:send",
           "broadcasts:send",
           "automations:activate",
@@ -8291,6 +8376,85 @@
         },
         "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
       },
+      "IntegrationChannel": {
+        "type": "string",
+        "enum": ["email", "sms"],
+        "description": "Delivery channel an integration belongs to"
+      },
+      "IntegrationProvider": {
+        "type": "string",
+        "enum": ["smtp", "ses"],
+        "description": "Concrete sending provider"
+      },
+      "IntegrationResource": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "channel",
+          "provider",
+          "enabled",
+          "isDefault",
+          "sendLimit",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable label",
+            "x-untrusted": true
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationChannel"
+              }
+            ],
+            "description": "Delivery channel"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationProvider"
+              }
+            ],
+            "description": "Concrete provider"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether this integration may be used for sending"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is the default provider for its channel"
+          },
+          "sendLimit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SendLimitStatus"
+              }
+            ],
+            "description": "The Send rate limit as enforced and 24-hour usage"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A sending-provider Integration, read-only: no credentials or provider config are exposed"
+      },
       "PreviewSegmentInput": {
         "type": "object",
         "properties": {
@@ -8487,6 +8651,73 @@
           }
         },
         "description": "Segment resource"
+      },
+      "SendLimitSource": {
+        "type": "string",
+        "enum": ["manual", "provider"],
+        "description": "Where an effective Send rate limit comes from"
+      },
+      "SendLimitStatus": {
+        "type": "object",
+        "required": ["perSecond", "perDay", "sentLast24h", "warnings"],
+        "properties": {
+          "perSecond": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SendLimitValue"
+              }
+            ],
+            "description": "Most messages per second"
+          },
+          "perDay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SendLimitValue"
+              }
+            ],
+            "description": "Most messages per rolling 24 hours"
+          },
+          "sentLast24h": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages the provider accepted from this Integration in the last 24 hours"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SendLimitWarning"
+            },
+            "description": "Reasons to review the limit; empty when there is nothing to flag"
+          }
+        },
+        "description": "The Send rate limit as enforced, with the last 24 hours of usage"
+      },
+      "SendLimitValue": {
+        "type": "object",
+        "required": ["limit", "source"],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "The ceiling in messages; null means this window is not limited"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SendLimitSource"
+              }
+            ],
+            "nullable": true,
+            "description": "Where the ceiling comes from; null when there is none"
+          }
+        },
+        "description": "One effective ceiling: the lowest of the manual and provider values, manual on a tie"
+      },
+      "SendLimitWarning": {
+        "type": "string",
+        "enum": ["unlimited", "providerQuotaUnavailable"],
+        "description": "A reason to look at an Integration's Send rate limit"
       },
       "SendTransactionalEmailInput": {
         "type": "object",

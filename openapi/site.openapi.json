@@ -7051,6 +7051,33 @@
         "enum": ["email", "wait", "apply_tag", "remove_tag"],
         "description": "Kind of automation step"
       },
+      "SiteBroadcastProgress": {
+        "type": "object",
+        "required": ["processedCount", "remainingCount"],
+        "properties": {
+          "processedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients already decided: sent, skipped or failed"
+          },
+          "remainingCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients still waiting to be sent"
+          },
+          "estimatedCompletionAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the last remaining recipient is expected to be sent. Null when it is not\nknowable: the broadcast is on hold, or it is not paced by a Send rate limit."
+          }
+        },
+        "description": "How far a sending broadcast has got. A broadcast limited by its Integration's Send\nrate limit is paced: recipients go out at an even interval, so the estimate is\nderived on the server from the last scheduled time and the recipients remaining."
+      },
       "SiteBroadcastResource": {
         "type": "object",
         "required": [
@@ -7164,6 +7191,16 @@
               }
             ],
             "description": "Delivery counters"
+          },
+          "progress": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteBroadcastProgress"
+              }
+            ],
+            "nullable": true,
+            "description": "Progress and ETA while the broadcast is sending; null otherwise. Returned by get and send only, never by the list"
           },
           "createdAt": {
             "allOf": [
@@ -7509,6 +7546,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "maxPerSecond": {
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerSecond"
+              }
+            ],
+            "nullable": true,
+            "description": "Most messages per second (1 to 10 000); omit or null for no limit"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerDay"
+              }
+            ],
+            "nullable": true,
+            "description": "Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit"
           },
           "config": {
             "$ref": "#/components/schemas/SiteIntegrationConfigInput"
@@ -7966,6 +8023,9 @@
           "provider",
           "enabled",
           "isDefault",
+          "maxPerSecond",
+          "maxPerDay",
+          "sendLimit",
           "config",
           "createdAt",
           "updatedAt"
@@ -8006,6 +8066,26 @@
           "isDefault": {
             "type": "boolean",
             "description": "Whether this is the default provider for its channel"
+          },
+          "maxPerSecond": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Send rate limit: most messages per second; null means no per-second limit"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Send rate limit: most messages per rolling 24 hours; null means no daily limit"
+          },
+          "sendLimit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitStatus"
+              }
+            ],
+            "description": "The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage"
           },
           "config": {
             "allOf": [
@@ -8113,6 +8193,20 @@
           }
         },
         "description": "A pending invitation of an email address to join the workspace"
+      },
+      "SiteMaxPerDay": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "maximum": 100000000,
+        "description": "A rolling 24-hour Send rate limit the operator may set"
+      },
+      "SiteMaxPerSecond": {
+        "type": "integer",
+        "format": "int32",
+        "minimum": 1,
+        "maximum": 10000,
+        "description": "A per-second Send rate limit the operator may set"
       },
       "SiteMembershipResource": {
         "type": "object",
@@ -8368,6 +8462,73 @@
           }
         },
         "description": "Segment resource used by the site UI"
+      },
+      "SiteSendLimitSource": {
+        "type": "string",
+        "enum": ["manual", "provider"],
+        "description": "Where an effective Send rate limit comes from"
+      },
+      "SiteSendLimitStatus": {
+        "type": "object",
+        "required": ["perSecond", "perDay", "sentLast24h", "warnings"],
+        "properties": {
+          "perSecond": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitValue"
+              }
+            ],
+            "description": "Most messages per second"
+          },
+          "perDay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitValue"
+              }
+            ],
+            "description": "Most messages per rolling 24 hours"
+          },
+          "sentLast24h": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages the provider accepted from this Integration in the last 24 hours"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteSendLimitWarning"
+            },
+            "description": "Reasons to review the limit; empty when there is nothing to flag"
+          }
+        },
+        "description": "The Send rate limit as enforced, with the last 24 hours of usage"
+      },
+      "SiteSendLimitValue": {
+        "type": "object",
+        "required": ["limit", "source"],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "The ceiling in messages; null means this window is not limited"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSendLimitSource"
+              }
+            ],
+            "nullable": true,
+            "description": "Where the ceiling comes from; null when there is none"
+          }
+        },
+        "description": "One effective ceiling: the lowest of the manual and provider values, manual on a tie"
+      },
+      "SiteSendLimitWarning": {
+        "type": "string",
+        "enum": ["unlimited", "providerQuotaUnavailable"],
+        "description": "A reason to look at an Integration's Send rate limit"
       },
       "SiteSendingDomainResource": {
         "type": "object",
@@ -8919,6 +9080,26 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "maxPerSecond": {
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerSecond"
+              }
+            ],
+            "nullable": true,
+            "description": "Most messages per second (1 to 10 000); null clears the limit, omit to keep"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMaxPerDay"
+              }
+            ],
+            "nullable": true,
+            "description": "Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep"
           },
           "config": {
             "allOf": [

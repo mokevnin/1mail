@@ -43,6 +43,14 @@ func NewRecheckSendingDomainsWorker(client *ent.Client) *RecheckSendingDomainsWo
 	return &RecheckSendingDomainsWorker{ent: client}
 }
 
+func NewRefreshSendQuotasWorker(client *ent.Client) *RefreshSendQuotasWorker {
+	return &RefreshSendQuotasWorker{ent: client}
+}
+
+func NewRefreshIntegrationQuotaWorker(client *ent.Client, cipher *secrets.Cipher, catalog *messaging.Catalog) *RefreshIntegrationQuotaWorker {
+	return &RefreshIntegrationQuotaWorker{ent: client, cipher: cipher, catalog: catalog}
+}
+
 func NewPruneOutboxWorker(db *sql.DB, floor time.Duration) *PruneOutboxWorker {
 	return &PruneOutboxWorker{db: db, floor: floor}
 }

@@ -53,6 +53,88 @@ model SendingDomainResource {
   createdAt: Timestamp;
 }
 
+/** Delivery channel an integration belongs to */
+enum IntegrationChannel {
+  email,
+  sms,
+}
+
+/** Concrete sending provider */
+enum IntegrationProvider {
+  smtp,
+  ses,
+}
+
+/** Where an effective Send rate limit comes from */
+enum SendLimitSource {
+  /** Set by the operator on the Integration */
+  manual,
+
+  /** Reported by the provider */
+  provider,
+}
+
+/** A reason to look at an Integration's Send rate limit */
+enum SendLimitWarning {
+  /** No ceiling applies: sends are not paced and the provider may throttle or block them */
+  unlimited,
+
+  /** The provider's send quota could not be read (no permission, or a compatible service without the call), so only the manual limit applies */
+  providerQuotaUnavailable,
+}
+
+/** One effective ceiling: the lowest of the manual and provider values, manual on a tie */
+model SendLimitValue {
+  /** The ceiling in messages; null means this window is not limited */
+  limit: int32 | null;
+
+  /** Where the ceiling comes from; null when there is none */
+  source: SendLimitSource | null;
+}
+
+/** The Send rate limit as enforced, with the last 24 hours of usage */
+model SendLimitStatus {
+  /** Most messages per second */
+  perSecond: SendLimitValue;
+
+  /** Most messages per rolling 24 hours */
+  perDay: SendLimitValue;
+
+  /** Messages the provider accepted from this Integration in the last 24 hours */
+  sentLast24h: int32;
+
+  /** Reasons to review the limit; empty when there is nothing to flag */
+  warnings: SendLimitWarning[];
+}
+
+/** A sending-provider Integration, read-only: no credentials or provider config are exposed */
+model IntegrationResource {
+  /** Unique identifier */
+  id: EntityId;
+
+  /** Human-readable label */
+  @extension("x-untrusted", true)
+  name: string;
+
+  /** Delivery channel */
+  channel: IntegrationChannel;
+
+  /** Concrete provider */
+  provider: IntegrationProvider;
+
+  /** Whether this integration may be used for sending */
+  enabled: boolean;
+
+  /** Whether this is the default provider for its channel */
+  isDefault: boolean;
+
+  /** The Send rate limit as enforced and 24-hour usage */
+  sendLimit: SendLimitStatus;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+}
+
 /**
  * A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is
  * null when the denominator is zero: an undefined rate is never reported as 0.
@@ -125,4 +207,15 @@ namespace SendingDomainRates {
     | BadRequestProblem
     | UnauthorizedProblem
     | TooManyRequestsProblem;
+}
+
+@route("/integrations")
+@tag("Integrations")
+namespace Integrations {
+  /** List the workspace's sending-provider integrations with their Send rate limit and 24-hour usage */
+  @get
+  op list(...PageQuery):
+    | Page<IntegrationResource>
+    | BadRequestProblem
+    | UnauthorizedProblem;
 }

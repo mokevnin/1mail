@@ -3,6 +3,7 @@ package messaging_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,4 +70,38 @@ func TestRecordSendOutcomeBounceAndComplaint(t *testing.T) {
 	scrape := metricstest.ScrapeMetrics(t)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "bounce"}), 0)
 	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", map[string]string{"provider": "ses", "status": "complaint"}), 0)
+}
+
+// A provider that says "slow down" or "daily quota spent" defers the message
+// (ADR 0023): it is not a failed send, so it must not feed the error ratio.
+func TestCatalogSenderCountsDeferralsApartFromErrors(t *testing.T) {
+	metricstest.StartMetrics(t)
+	catalog := messaging.NewCatalog(messaging.ProviderDescriptor{
+		Channel: messaging.ChannelEmail, Provider: messaging.ProviderSES,
+		Build: func(cfg []byte, _ messaging.Signer) (any, error) {
+			switch string(cfg) {
+			case "busy":
+				return outcomeSender{err: fmt.Errorf("throttled: %w", messaging.ErrBusy)}, nil
+			case "quota":
+				return outcomeSender{err: fmt.Errorf("daily: %w", messaging.ErrQuotaExceeded)}, nil
+			default:
+				return outcomeSender{err: errors.New("rejected")}, nil
+			}
+		},
+	})
+	ctx := t.Context()
+	for _, cfg := range []string{"busy", "quota", "quota", "other"} {
+		s, err := catalog.BuildEmail(messaging.ProviderSES, []byte(cfg), nil)
+		require.NoError(t, err)
+		_, err = s.Send(ctx, messaging.EmailMessage{})
+		require.Error(t, err)
+	}
+
+	scrape := metricstest.ScrapeMetrics(t)
+	labels := func(status string) map[string]string {
+		return map[string]string{"provider": "ses", "status": status}
+	}
+	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", labels("busy")), 0)
+	assert.InDelta(t, 2, scrape.Value(t, "email_send_outcomes_total", labels("quota_exceeded")), 0)
+	assert.InDelta(t, 1, scrape.Value(t, "email_send_outcomes_total", labels("error")), 0)
 }

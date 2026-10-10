@@ -211,6 +211,7 @@ var (
 		{Name: "failed_count", Type: field.TypeInt, Default: 0},
 		{Name: "skipped_count", Type: field.TypeInt, Default: 0},
 		{Name: "hold_reason", Type: field.TypeString, Nullable: true},
+		{Name: "last_scheduled_at", Type: field.TypeTime, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// BroadcastsTable holds the schema information for the "broadcasts" table.
@@ -221,7 +222,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcasts_workspaces_broadcasts",
-				Columns:    []*schema.Column{BroadcastsColumns[22]},
+				Columns:    []*schema.Column{BroadcastsColumns[23]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -230,7 +231,7 @@ var (
 			{
 				Name:    "broadcast_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastsColumns[22]},
+				Columns: []*schema.Column{BroadcastsColumns[23]},
 			},
 		},
 	}
@@ -243,6 +244,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "skipped", "failed"}, Default: "pending"},
 		{Name: "outbound_message_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "deferred_until", Type: field.TypeTime, Nullable: true},
 		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
 		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
 		{Name: "clicked_at", Type: field.TypeTime, Nullable: true},
@@ -257,13 +259,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcast_recipients_broadcasts_recipients",
-				Columns:    []*schema.Column{BroadcastRecipientsColumns[10]},
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[11]},
 				RefColumns: []*schema.Column{BroadcastsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "broadcast_recipients_workspaces_broadcast_recipients",
-				Columns:    []*schema.Column{BroadcastRecipientsColumns[11]},
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[12]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -272,17 +274,17 @@ var (
 			{
 				Name:    "broadcast_recipients_broadcast_id_contact_id",
 				Unique:  true,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[3]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[11], BroadcastRecipientsColumns[3]},
 			},
 			{
 				Name:    "broadcastrecipient_broadcast_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[10]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[11]},
 			},
 			{
 				Name:    "broadcastrecipient_workspace_id_sent_at",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[11], BroadcastRecipientsColumns[7]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[12], BroadcastRecipientsColumns[8]},
 			},
 		},
 	}
@@ -486,6 +488,12 @@ var (
 		{Name: "config_encrypted", Type: field.TypeString},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "is_default", Type: field.TypeBool, Default: false},
+		{Name: "max_per_second", Type: field.TypeInt, Nullable: true},
+		{Name: "max_per_day", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_max_per_second", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_max_per_day", Type: field.TypeInt, Nullable: true},
+		{Name: "provider_quota_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "provider_quota_unavailable", Type: field.TypeBool, Default: false},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// IntegrationsTable holds the schema information for the "integrations" table.
@@ -496,7 +504,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "integrations_workspaces_integrations",
-				Columns:    []*schema.Column{IntegrationsColumns[9]},
+				Columns:    []*schema.Column{IntegrationsColumns[15]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -505,7 +513,7 @@ var (
 			{
 				Name:    "integration_workspace_id_channel",
 				Unique:  true,
-				Columns: []*schema.Column{IntegrationsColumns[9], IntegrationsColumns[4]},
+				Columns: []*schema.Column{IntegrationsColumns[15], IntegrationsColumns[4]},
 				Annotation: &entsql.IndexAnnotation{
 					Where: "is_default",
 				},
@@ -653,6 +661,7 @@ var (
 		{Name: "automation_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "automation_run_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "automation_step", Type: field.TypeInt, Nullable: true},
+		{Name: "integration_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "template_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -664,7 +673,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "outbound_messages_workspaces_outbound_messages",
-				Columns:    []*schema.Column{OutboundMessagesColumns[21]},
+				Columns:    []*schema.Column{OutboundMessagesColumns[22]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -673,17 +682,22 @@ var (
 			{
 				Name:    "outbound_messages_workspace_id_idempotency_key",
 				Unique:  true,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[4]},
+				Columns: []*schema.Column{OutboundMessagesColumns[22], OutboundMessagesColumns[4]},
 			},
 			{
 				Name:    "outboundmessage_workspace_id_kind_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[3], OutboundMessagesColumns[1]},
+				Columns: []*schema.Column{OutboundMessagesColumns[22], OutboundMessagesColumns[3], OutboundMessagesColumns[1]},
+			},
+			{
+				Name:    "outboundmessage_workspace_id_integration_id_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{OutboundMessagesColumns[22], OutboundMessagesColumns[20], OutboundMessagesColumns[14]},
 			},
 			{
 				Name:    "outboundmessage_workspace_id_sending_domain_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[9], OutboundMessagesColumns[1]},
+				Columns: []*schema.Column{OutboundMessagesColumns[22], OutboundMessagesColumns[9], OutboundMessagesColumns[1]},
 			},
 		},
 	}
@@ -705,6 +719,37 @@ var (
 			{
 				Symbol:     "segments_workspaces_segments",
 				Columns:    []*schema.Column{SegmentsColumns[5]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// SendLimitersColumns holds the columns for the "send_limiters" table.
+	SendLimitersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "second_fill", Type: field.TypeFloat64},
+		{Name: "day_fill", Type: field.TypeFloat64},
+		{Name: "refilled_at", Type: field.TypeTime},
+		{Name: "integration_id", Type: field.TypeInt64, Unique: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// SendLimitersTable holds the schema information for the "send_limiters" table.
+	SendLimitersTable = &schema.Table{
+		Name:       "send_limiters",
+		Columns:    SendLimitersColumns,
+		PrimaryKey: []*schema.Column{SendLimitersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "send_limiters_integrations_send_limiter",
+				Columns:    []*schema.Column{SendLimitersColumns[6]},
+				RefColumns: []*schema.Column{IntegrationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "send_limiters_workspaces_send_limiters",
+				Columns:    []*schema.Column{SendLimitersColumns[7]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -1006,6 +1051,7 @@ var (
 		OauthCodesTable,
 		OutboundMessagesTable,
 		SegmentsTable,
+		SendLimitersTable,
 		SendingDomainsTable,
 		SuppressionsTable,
 		TagsTable,
@@ -1096,6 +1142,11 @@ func init() {
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
+	}
+	SendLimitersTable.ForeignKeys[0].RefTable = IntegrationsTable
+	SendLimitersTable.ForeignKeys[1].RefTable = WorkspacesTable
+	SendLimitersTable.Annotation = &entsql.Annotation{
+		Table: "send_limiters",
 	}
 	SendingDomainsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SendingDomainsTable.Annotation = &entsql.Annotation{

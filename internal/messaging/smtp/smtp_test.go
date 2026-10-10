@@ -35,6 +35,8 @@ type testServer struct {
 	messages []capture
 	// rejectData makes the server refuse DATA with a 554.
 	rejectData bool
+	// dataReply, when set, is the full reply line the server gives to DATA.
+	dataReply string
 }
 
 func newTestServer(ctx context.Context, t *testing.T, rejectData bool) *testServer {
@@ -99,6 +101,9 @@ func (s *session) Rcpt(to string, _ *gosmtp.RcptOptions) error {
 }
 
 func (s *session) Data(r io.Reader) error {
+	if reply := s.srv.dataReply; reply != "" {
+		return parseReply(reply)
+	}
 	if s.srv.rejectData {
 		return &gosmtp.SMTPError{Code: 554, EnhancedCode: gosmtp.EnhancedCode{5, 0, 0}, Message: "rejected"}
 	}
@@ -111,6 +116,17 @@ func (s *session) Data(r io.Reader) error {
 	s.srv.messages = append(s.srv.messages, s.cur)
 	s.srv.mu.Unlock()
 	return nil
+}
+
+// parseReply turns a "454 4.7.0 text" reply line into the error go-smtp sends back.
+func parseReply(reply string) error {
+	var code, class, subject, detail int
+	if _, err := fmt.Sscanf(reply, "%d %d.%d.%d", &code, &class, &subject, &detail); err != nil {
+		return fmt.Errorf("bad dataReply %q: %w", reply, err)
+	}
+	parts := strings.SplitN(reply, " ", 3)
+	return &gosmtp.SMTPError{Code: code, EnhancedCode: gosmtp.EnhancedCode{class, subject, detail}, Message: parts[2]}
+
 }
 
 // Reset keeps the credentials: AUTH happens once per connection, before each message.
@@ -200,6 +216,32 @@ func TestSendErrors(t *testing.T) {
 		_, err := sender.Send(ctx, msg)
 		assert.Error(t, err)
 		assert.Empty(t, srv.captured())
+	})
+
+	t.Run("transient too-fast reply is busy", func(t *testing.T) {
+		srv := newTestServer(ctx, t, false)
+		srv.dataReply = "454 4.7.0 Throttling failure: Maximum sending rate exceeded."
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrBusy)
+		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("transient daily quota reply is quota exceeded", func(t *testing.T) {
+		srv := newTestServer(ctx, t, false)
+		srv.dataReply = "454 4.7.0 Throttling failure: Daily message quota exceeded."
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("permanent reply is never busy", func(t *testing.T) {
+		srv := newTestServer(ctx, t, false)
+		srv.dataReply = "554 5.7.1 rate limit policy violation, rejected"
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		require.Error(t, err)
+		assert.NotErrorIs(t, err, messaging.ErrBusy)
 	})
 
 	t.Run("unreachable host", func(t *testing.T) {

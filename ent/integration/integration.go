@@ -33,8 +33,22 @@ const (
 	FieldEnabled = "enabled"
 	// FieldIsDefault holds the string denoting the is_default field in the database.
 	FieldIsDefault = "is_default"
+	// FieldMaxPerSecond holds the string denoting the max_per_second field in the database.
+	FieldMaxPerSecond = "max_per_second"
+	// FieldMaxPerDay holds the string denoting the max_per_day field in the database.
+	FieldMaxPerDay = "max_per_day"
+	// FieldProviderMaxPerSecond holds the string denoting the provider_max_per_second field in the database.
+	FieldProviderMaxPerSecond = "provider_max_per_second"
+	// FieldProviderMaxPerDay holds the string denoting the provider_max_per_day field in the database.
+	FieldProviderMaxPerDay = "provider_max_per_day"
+	// FieldProviderQuotaCheckedAt holds the string denoting the provider_quota_checked_at field in the database.
+	FieldProviderQuotaCheckedAt = "provider_quota_checked_at"
+	// FieldProviderQuotaUnavailable holds the string denoting the provider_quota_unavailable field in the database.
+	FieldProviderQuotaUnavailable = "provider_quota_unavailable"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
+	// EdgeSendLimiter holds the string denoting the send_limiter edge name in mutations.
+	EdgeSendLimiter = "send_limiter"
 	// Table holds the table name of the integration in the database.
 	Table = "integrations"
 	// WorkspaceTable is the table that holds the workspace relation/edge.
@@ -44,6 +58,13 @@ const (
 	WorkspaceInverseTable = "workspaces"
 	// WorkspaceColumn is the table column denoting the workspace relation/edge.
 	WorkspaceColumn = "workspace_id"
+	// SendLimiterTable is the table that holds the send_limiter relation/edge.
+	SendLimiterTable = "send_limiters"
+	// SendLimiterInverseTable is the table name for the SendLimiter entity.
+	// It exists in this package in order to avoid circular dependency with the "sendlimiter" package.
+	SendLimiterInverseTable = "send_limiters"
+	// SendLimiterColumn is the table column denoting the send_limiter relation/edge.
+	SendLimiterColumn = "integration_id"
 )
 
 // Columns holds all SQL columns for integration fields.
@@ -58,6 +79,12 @@ var Columns = []string{
 	FieldConfigEncrypted,
 	FieldEnabled,
 	FieldIsDefault,
+	FieldMaxPerSecond,
+	FieldMaxPerDay,
+	FieldProviderMaxPerSecond,
+	FieldProviderMaxPerDay,
+	FieldProviderQuotaCheckedAt,
+	FieldProviderQuotaUnavailable,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -83,6 +110,12 @@ var (
 	DefaultEnabled bool
 	// DefaultIsDefault holds the default value on creation for the "is_default" field.
 	DefaultIsDefault bool
+	// MaxPerSecondValidator is a validator for the "max_per_second" field. It is called by the builders before save.
+	MaxPerSecondValidator func(int) error
+	// MaxPerDayValidator is a validator for the "max_per_day" field. It is called by the builders before save.
+	MaxPerDayValidator func(int) error
+	// DefaultProviderQuotaUnavailable holds the default value on creation for the "provider_quota_unavailable" field.
+	DefaultProviderQuotaUnavailable bool
 )
 
 // Channel defines the type for the "channel" enum field.
@@ -187,10 +220,47 @@ func ByIsDefault(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsDefault, opts...).ToFunc()
 }
 
+// ByMaxPerSecond orders the results by the max_per_second field.
+func ByMaxPerSecond(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMaxPerSecond, opts...).ToFunc()
+}
+
+// ByMaxPerDay orders the results by the max_per_day field.
+func ByMaxPerDay(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMaxPerDay, opts...).ToFunc()
+}
+
+// ByProviderMaxPerSecond orders the results by the provider_max_per_second field.
+func ByProviderMaxPerSecond(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderMaxPerSecond, opts...).ToFunc()
+}
+
+// ByProviderMaxPerDay orders the results by the provider_max_per_day field.
+func ByProviderMaxPerDay(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderMaxPerDay, opts...).ToFunc()
+}
+
+// ByProviderQuotaCheckedAt orders the results by the provider_quota_checked_at field.
+func ByProviderQuotaCheckedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderQuotaCheckedAt, opts...).ToFunc()
+}
+
+// ByProviderQuotaUnavailable orders the results by the provider_quota_unavailable field.
+func ByProviderQuotaUnavailable(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderQuotaUnavailable, opts...).ToFunc()
+}
+
 // ByWorkspaceField orders the results by workspace field.
 func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// BySendLimiterField orders the results by send_limiter field.
+func BySendLimiterField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSendLimiterStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newWorkspaceStep() *sqlgraph.Step {
@@ -198,5 +268,12 @@ func newWorkspaceStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkspaceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+	)
+}
+func newSendLimiterStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SendLimiterInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, SendLimiterTable, SendLimiterColumn),
 	)
 }

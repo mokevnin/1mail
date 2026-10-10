@@ -218,9 +218,10 @@ _Avoid_: Status, result (unqualified)
 **Send rate limit**:
 The ceiling an Integration puts on how fast mail may leave it: a maximum messages per second and a
 maximum messages per rolling 24 hours, mirroring what the external provider account allows.
-Defaults come from the provider where it reports them (SES), and an operator-set value overrides
-them; with neither, the Integration is unlimited. Applies to Broadcast and Automation sends;
-Transactional sends are never delayed by it but still count against the 24-hour total.
+The provider reports its own ceiling where it can (SES) and an operator may set one; the lower of
+the two applies (the operator's on a tie), and with neither the Integration is unlimited. Applies
+to Broadcast and Automation sends; Transactional sends are never delayed or deferred by it but
+still count against the 24-hour total.
 _Avoid_: Throttle (as a noun for the limit), quota (quota is enforcement of billing, not this)
 
 **Deferral**:

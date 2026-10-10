@@ -120,6 +120,20 @@ func (_c *BroadcastRecipientCreate) SetNillableError(v *string) *BroadcastRecipi
 	return _c
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (_c *BroadcastRecipientCreate) SetDeferredUntil(v time.Time) *BroadcastRecipientCreate {
+	_c.mutation.SetDeferredUntil(v)
+	return _c
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetDeferredUntil(*v)
+	}
+	return _c
+}
+
 // SetSentAt sets the "sent_at" field.
 func (_c *BroadcastRecipientCreate) SetSentAt(v time.Time) *BroadcastRecipientCreate {
 	_c.mutation.SetSentAt(v)
@@ -311,6 +325,10 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 	if value, ok := _c.mutation.Error(); ok {
 		_spec.SetField(broadcastrecipient.FieldError, field.TypeString, value)
 		_node.Error = &value
+	}
+	if value, ok := _c.mutation.DeferredUntil(); ok {
+		_spec.SetField(broadcastrecipient.FieldDeferredUntil, field.TypeTime, value)
+		_node.DeferredUntil = &value
 	}
 	if value, ok := _c.mutation.SentAt(); ok {
 		_spec.SetField(broadcastrecipient.FieldSentAt, field.TypeTime, value)
@@ -521,6 +539,24 @@ func (u *BroadcastRecipientUpsert) UpdateError() *BroadcastRecipientUpsert {
 // ClearError clears the value of the "error" field.
 func (u *BroadcastRecipientUpsert) ClearError() *BroadcastRecipientUpsert {
 	u.SetNull(broadcastrecipient.FieldError)
+	return u
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (u *BroadcastRecipientUpsert) SetDeferredUntil(v time.Time) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldDeferredUntil, v)
+	return u
+}
+
+// UpdateDeferredUntil sets the "deferred_until" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateDeferredUntil() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldDeferredUntil)
+	return u
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (u *BroadcastRecipientUpsert) ClearDeferredUntil() *BroadcastRecipientUpsert {
+	u.SetNull(broadcastrecipient.FieldDeferredUntil)
 	return u
 }
 
@@ -759,6 +795,27 @@ func (u *BroadcastRecipientUpsertOne) UpdateError() *BroadcastRecipientUpsertOne
 func (u *BroadcastRecipientUpsertOne) ClearError() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.ClearError()
+	})
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (u *BroadcastRecipientUpsertOne) SetDeferredUntil(v time.Time) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetDeferredUntil(v)
+	})
+}
+
+// UpdateDeferredUntil sets the "deferred_until" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateDeferredUntil() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateDeferredUntil()
+	})
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (u *BroadcastRecipientUpsertOne) ClearDeferredUntil() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearDeferredUntil()
 	})
 }
 
@@ -1172,6 +1229,27 @@ func (u *BroadcastRecipientUpsertBulk) UpdateError() *BroadcastRecipientUpsertBu
 func (u *BroadcastRecipientUpsertBulk) ClearError() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.ClearError()
+	})
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (u *BroadcastRecipientUpsertBulk) SetDeferredUntil(v time.Time) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetDeferredUntil(v)
+	})
+}
+
+// UpdateDeferredUntil sets the "deferred_until" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateDeferredUntil() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateDeferredUntil()
+	})
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (u *BroadcastRecipientUpsertBulk) ClearDeferredUntil() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearDeferredUntil()
 	})
 }
 

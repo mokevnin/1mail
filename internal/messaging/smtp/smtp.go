@@ -6,6 +6,7 @@ package smtp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/wneessen/go-mail"
@@ -104,6 +105,13 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) (messagin
 		return messaging.Receipt{}, fmt.Errorf("smtp: client: %w", err)
 	}
 	if err := client.DialAndSendWithContext(ctx, m); err != nil {
+		// Only a transient (4xx) reply can mean "too fast"; a permanent one never does.
+		var sendErr *mail.SendError
+		if errors.As(err, &sendErr) && sendErr.IsTemp() {
+			if busy := messaging.ClassifyReply(err.Error()); busy != nil {
+				return messaging.Receipt{}, fmt.Errorf("%w: %w", busy, err)
+			}
+		}
 		return messaging.Receipt{}, err
 	}
 	return messaging.Receipt{MessageID: m.GetMessageID()}, nil

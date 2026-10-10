@@ -37,8 +37,9 @@ import (
 )
 
 // Outcome is what an Outbound send did. Sent, Skipped and Failed are final for the
-// destination; Held is a reversible hold on the source — nothing was consumed, the
-// caller should try the same Request again later.
+// destination; Held and Deferral are reversible per-source Outcomes — nothing was
+// consumed, the caller should try the same Request again later (a Held after its own
+// delay, a Deferral after Result.Wait).
 type Outcome string
 
 const (
@@ -50,7 +51,32 @@ const (
 	Failed Outcome = "failed"
 	// Held: the source cannot send right now. Reason is a Hold* constant.
 	Held Outcome = "held"
+	// Deferral: the Integration's Send rate limit is spent (ADR 0023). Nothing is wrong
+	// with the source, it is busy: no hold reason, no claim, no attempt consumed.
+	// Result.Wait says when capacity returns.
+	Deferral Outcome = "deferral"
 )
+
+// Backoffs for a provider reply that says it is busy (ADR 0023). The core does not
+// auto-tune the Send rate limit; it only waits. A daily quota refills gradually, so
+// its wait is long.
+const (
+	DeferralBackoff = 30 * time.Second
+	QuotaBackoff    = time.Hour
+)
+
+// deferralBackoff is the wait a provider "too fast" or "quota exceeded" error asks
+// for, zero when err is neither.
+func deferralBackoff(err error) time.Duration {
+	switch {
+	case errors.Is(err, messaging.ErrQuotaExceeded):
+		return QuotaBackoff
+	case errors.Is(err, messaging.ErrBusy):
+		return DeferralBackoff
+	default:
+		return 0
+	}
+}
 
 // SkipContactErased is the Skipped reason of a send whose Contact was erased after
 // the send was queued (ADR 0021). Nothing is recorded for it: the message row would
@@ -96,6 +122,8 @@ type Result struct {
 	Reason string
 	// MessageID is the Outbound message row; zero when Held (nothing was recorded).
 	MessageID int64
+	// Wait is, for a Deferral, how long until the Send rate limit has capacity again.
+	Wait time.Duration
 	// Replayed is true when the Outcome was read back from an earlier attempt.
 	Replayed bool
 }
@@ -124,6 +152,7 @@ type Module struct {
 	tracker  *tracking.Tracker
 	lease    time.Duration
 	freezers []Freezer
+	now      func() time.Time
 }
 
 // Option customizes a Module.
@@ -131,6 +160,10 @@ type Option func(*Module)
 
 // WithLease overrides DefaultLease (tests use a tiny lease to exercise takeover).
 func WithLease(d time.Duration) Option { return func(m *Module) { m.lease = d } }
+
+// WithClock overrides the time source the Send rate limit refills against (tests
+// drive it by hand).
+func WithClock(now func() time.Time) Option { return func(m *Module) { m.now = now } }
 
 // WithFreezers adds extra freeze reasons after the core suspension check.
 func WithFreezers(f ...Freezer) Option {
@@ -145,7 +178,7 @@ func (m *Module) AsSystem(s *ent.Scoped) *ent.Scoped {
 
 // New builds the module. tracker may be nil only if no marketing Request is sent.
 func New(bus *events.Bus, senders Senders, tracker *tracking.Tracker, opts ...Option) *Module {
-	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease}
+	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease, now: time.Now}
 	for _, o := range opts {
 		o(m)
 	}
@@ -276,6 +309,18 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 	built.msg.From, built.msg.FromName = g.from, g.fromName
 	built.msg.To = dest
 
+	// Send rate limit: the last gate before the provider, so a message that was
+	// Skipped, Held or failed to render never spends capacity.
+	if wait, err := m.reserve(ctx, s, req, g.integration); err != nil {
+		m.release(ctx, s, msg)
+		return Result{}, err
+	} else if wait > 0 {
+		// Busy, not blocked: drop the claim so the retry starts clean and no attempt
+		// is consumed.
+		_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
+		return Result{Outcome: Deferral, Wait: wait}, nil
+	}
+
 	receipt, err := g.sender.Send(ctx, built.msg)
 	if err != nil {
 		if errors.Is(err, messaging.ErrUnverifiedSendingDomain) {
@@ -283,6 +328,15 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 			// not a failure. The claim is dropped so the same Request can run again.
 			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Held, Reason: HoldUnverifiedDomain}, nil
+		}
+		if wait := deferralBackoff(err); wait > 0 && req.Kind != outboundmessage.KindTransactional {
+			// The provider answered "too fast" or "quota exceeded": it refused the
+			// message, so nothing left. A Deferral, like our own spent limit: the claim
+			// is dropped, no attempt is consumed and the same Request runs again later.
+			// Transactional mail never defers (ADR 0023): it falls through to the
+			// retryable error below, which releases the claim for the caller's retry.
+			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
+			return Result{Outcome: Deferral, Wait: wait}, nil
 		}
 		m.release(ctx, s, msg)
 		return Result{}, fmt.Errorf("outbound: send to %s: %w", dest, err)
@@ -347,11 +401,14 @@ func (m *Module) workspace(ctx context.Context, s *ent.Scoped) (*ent.Workspace, 
 
 // gateResult is the outcome of the source-level checks plus what they resolved.
 type gateResult struct {
-	hold     string
-	sender   messaging.EmailSender
-	from     string
-	fromName string
-	domain   string
+	hold string
+	// integration is the default Integration the message goes through; nil when the
+	// sender has no Integration row (a test double).
+	integration *ent.Integration
+	sender      messaging.EmailSender
+	from        string
+	fromName    string
+	domain      string
 }
 
 // gate runs the source-level checks, in order: Workspace freeze, an Integration to
@@ -393,7 +450,11 @@ func (m *Module) gate(ctx context.Context, s *ent.Scoped, ws *ent.Workspace, fro
 	if !verified {
 		return gateResult{hold: HoldUnverifiedDomain}, nil
 	}
-	return gateResult{sender: sender, from: from, fromName: name, domain: messaging.DomainOf(from)}, nil
+	integ, err := messaging.DefaultEmailIntegration(ctx, s)
+	if err != nil && !errors.Is(err, messaging.ErrNoProvider) {
+		return gateResult{}, fmt.Errorf("outbound: load integration: %w", err)
+	}
+	return gateResult{sender: sender, integration: integ, from: from, fromName: name, domain: messaging.DomainOf(from)}, nil
 }
 
 func replayResult(msg *ent.OutboundMessage) Result {
@@ -505,6 +566,9 @@ func (m *Module) recordSent(ctx context.Context, s *ent.Scoped, req Request, msg
 			Where(holds(msg)...).
 			SetStatus(outboundmessage.StatusSent).
 			SetSentAt(now)
+		if g.integration != nil {
+			upd.SetIntegrationID(g.integration.ID)
+		}
 		if receipt.MessageID != "" {
 			upd.SetProviderMessageID(receipt.MessageID)
 		}

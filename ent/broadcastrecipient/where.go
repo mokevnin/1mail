@@ -90,6 +90,11 @@ func Error(v string) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldError, v))
 }
 
+// DeferredUntil applies equality check predicate on the "deferred_until" field. It's identical to DeferredUntilEQ.
+func DeferredUntil(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldDeferredUntil, v))
+}
+
 // SentAt applies equality check predicate on the "sent_at" field. It's identical to SentAtEQ.
 func SentAt(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldSentAt, v))
@@ -418,6 +423,56 @@ func ErrorEqualFold(v string) predicate.BroadcastRecipient {
 // ErrorContainsFold applies the ContainsFold predicate on the "error" field.
 func ErrorContainsFold(v string) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldContainsFold(FieldError, v))
+}
+
+// DeferredUntilEQ applies the EQ predicate on the "deferred_until" field.
+func DeferredUntilEQ(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldDeferredUntil, v))
+}
+
+// DeferredUntilNEQ applies the NEQ predicate on the "deferred_until" field.
+func DeferredUntilNEQ(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldDeferredUntil, v))
+}
+
+// DeferredUntilIn applies the In predicate on the "deferred_until" field.
+func DeferredUntilIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIn(FieldDeferredUntil, vs...))
+}
+
+// DeferredUntilNotIn applies the NotIn predicate on the "deferred_until" field.
+func DeferredUntilNotIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldDeferredUntil, vs...))
+}
+
+// DeferredUntilGT applies the GT predicate on the "deferred_until" field.
+func DeferredUntilGT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGT(FieldDeferredUntil, v))
+}
+
+// DeferredUntilGTE applies the GTE predicate on the "deferred_until" field.
+func DeferredUntilGTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGTE(FieldDeferredUntil, v))
+}
+
+// DeferredUntilLT applies the LT predicate on the "deferred_until" field.
+func DeferredUntilLT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLT(FieldDeferredUntil, v))
+}
+
+// DeferredUntilLTE applies the LTE predicate on the "deferred_until" field.
+func DeferredUntilLTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLTE(FieldDeferredUntil, v))
+}
+
+// DeferredUntilIsNil applies the IsNil predicate on the "deferred_until" field.
+func DeferredUntilIsNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIsNull(FieldDeferredUntil))
+}
+
+// DeferredUntilNotNil applies the NotNil predicate on the "deferred_until" field.
+func DeferredUntilNotNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotNull(FieldDeferredUntil))
 }
 
 // SentAtEQ applies the EQ predicate on the "sent_at" field.

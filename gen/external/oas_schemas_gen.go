@@ -142,6 +142,7 @@ const (
 	ApiTokenScopeWebhooksWrite       ApiTokenScope = "webhooks:write"
 	ApiTokenScopeCustomFieldsRead    ApiTokenScope = "custom_fields:read"
 	ApiTokenScopeSendingDomainsRead  ApiTokenScope = "sending_domains:read"
+	ApiTokenScopeIntegrationsRead    ApiTokenScope = "integrations:read"
 	ApiTokenScopeEmailsSend          ApiTokenScope = "emails:send"
 	ApiTokenScopeBroadcastsSend      ApiTokenScope = "broadcasts:send"
 	ApiTokenScopeAutomationsActivate ApiTokenScope = "automations:activate"
@@ -171,6 +172,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeWebhooksWrite,
 		ApiTokenScopeCustomFieldsRead,
 		ApiTokenScopeSendingDomainsRead,
+		ApiTokenScopeIntegrationsRead,
 		ApiTokenScopeEmailsSend,
 		ApiTokenScopeBroadcastsSend,
 		ApiTokenScopeAutomationsActivate,
@@ -217,6 +219,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeCustomFieldsRead:
 		return []byte(s), nil
 	case ApiTokenScopeSendingDomainsRead:
+		return []byte(s), nil
+	case ApiTokenScopeIntegrationsRead:
 		return []byte(s), nil
 	case ApiTokenScopeEmailsSend:
 		return []byte(s), nil
@@ -290,6 +294,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeSendingDomainsRead:
 		*s = ApiTokenScopeSendingDomainsRead
+		return nil
+	case ApiTokenScopeIntegrationsRead:
+		*s = ApiTokenScopeIntegrationsRead
 		return nil
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
@@ -4123,6 +4130,267 @@ type EventsCreateUnprocessableEntity ProblemDetails
 
 func (*EventsCreateUnprocessableEntity) eventsCreateRes() {}
 
+// Delivery channel an integration belongs to.
+// Ref: #/components/schemas/IntegrationChannel
+type IntegrationChannel string
+
+const (
+	IntegrationChannelEmail IntegrationChannel = "email"
+	IntegrationChannelSMS   IntegrationChannel = "sms"
+)
+
+// AllValues returns all IntegrationChannel values.
+func (IntegrationChannel) AllValues() []IntegrationChannel {
+	return []IntegrationChannel{
+		IntegrationChannelEmail,
+		IntegrationChannelSMS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s IntegrationChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case IntegrationChannelEmail:
+		return []byte(s), nil
+	case IntegrationChannelSMS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *IntegrationChannel) UnmarshalText(data []byte) error {
+	switch IntegrationChannel(data) {
+	case IntegrationChannelEmail:
+		*s = IntegrationChannelEmail
+		return nil
+	case IntegrationChannelSMS:
+		*s = IntegrationChannelSMS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Concrete sending provider.
+// Ref: #/components/schemas/IntegrationProvider
+type IntegrationProvider string
+
+const (
+	IntegrationProviderSMTP IntegrationProvider = "smtp"
+	IntegrationProviderSes  IntegrationProvider = "ses"
+)
+
+// AllValues returns all IntegrationProvider values.
+func (IntegrationProvider) AllValues() []IntegrationProvider {
+	return []IntegrationProvider{
+		IntegrationProviderSMTP,
+		IntegrationProviderSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s IntegrationProvider) MarshalText() ([]byte, error) {
+	switch s {
+	case IntegrationProviderSMTP:
+		return []byte(s), nil
+	case IntegrationProviderSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *IntegrationProvider) UnmarshalText(data []byte) error {
+	switch IntegrationProvider(data) {
+	case IntegrationProviderSMTP:
+		*s = IntegrationProviderSMTP
+		return nil
+	case IntegrationProviderSes:
+		*s = IntegrationProviderSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A sending-provider Integration, read-only: no credentials or provider config are exposed.
+// Ref: #/components/schemas/IntegrationResource
+type IntegrationResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Human-readable label.
+	Name string `json:"name"`
+	// Delivery channel.
+	Channel IntegrationChannel `json:"channel"`
+	// Concrete provider.
+	Provider IntegrationProvider `json:"provider"`
+	// Whether this integration may be used for sending.
+	Enabled bool `json:"enabled"`
+	// Whether this is the default provider for its channel.
+	IsDefault bool `json:"isDefault"`
+	// The Send rate limit as enforced and 24-hour usage.
+	SendLimit SendLimitStatus `json:"sendLimit"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *IntegrationResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *IntegrationResource) GetName() string {
+	return s.Name
+}
+
+// GetChannel returns the value of Channel.
+func (s *IntegrationResource) GetChannel() IntegrationChannel {
+	return s.Channel
+}
+
+// GetProvider returns the value of Provider.
+func (s *IntegrationResource) GetProvider() IntegrationProvider {
+	return s.Provider
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *IntegrationResource) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *IntegrationResource) GetIsDefault() bool {
+	return s.IsDefault
+}
+
+// GetSendLimit returns the value of SendLimit.
+func (s *IntegrationResource) GetSendLimit() SendLimitStatus {
+	return s.SendLimit
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *IntegrationResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *IntegrationResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *IntegrationResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *IntegrationResource) SetChannel(val IntegrationChannel) {
+	s.Channel = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *IntegrationResource) SetProvider(val IntegrationProvider) {
+	s.Provider = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *IntegrationResource) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *IntegrationResource) SetIsDefault(val bool) {
+	s.IsDefault = val
+}
+
+// SetSendLimit sets the value of SendLimit.
+func (s *IntegrationResource) SetSendLimit(val SendLimitStatus) {
+	s.SendLimit = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *IntegrationResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+type IntegrationsListBadRequest ProblemDetails
+
+func (*IntegrationsListBadRequest) integrationsListRes() {}
+
+// Paginated response.
+type IntegrationsListOK struct {
+	// List of items.
+	Items []IntegrationResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *IntegrationsListOK) GetItems() []IntegrationResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *IntegrationsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *IntegrationsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *IntegrationsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *IntegrationsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *IntegrationsListOK) SetItems(val []IntegrationResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *IntegrationsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *IntegrationsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *IntegrationsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *IntegrationsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*IntegrationsListOK) integrationsListRes() {}
+
+type IntegrationsListUnauthorized ProblemDetails
+
+func (*IntegrationsListUnauthorized) integrationsListRes() {}
+
 // NewNilEntityId returns new NilEntityId with value set to v.
 func NewNilEntityId(v EntityId) NilEntityId {
 	return NilEntityId{
@@ -4207,6 +4475,96 @@ func (o NilFloat64) Get() (v float64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o NilFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewNilInt32 returns new NilInt32 with value set to v.
+func NewNilInt32(v int32) NilInt32 {
+	return NilInt32{
+		Value: v,
+	}
+}
+
+// NilInt32 is nullable int32.
+type NilInt32 struct {
+	Value int32
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilInt32) SetTo(v int32) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilInt32) SetToNull() {
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewNilSendLimitSource returns new NilSendLimitSource with value set to v.
+func NewNilSendLimitSource(v SendLimitSource) NilSendLimitSource {
+	return NilSendLimitSource{
+		Value: v,
+	}
+}
+
+// NilSendLimitSource is nullable SendLimitSource.
+type NilSendLimitSource struct {
+	Value SendLimitSource
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilSendLimitSource) SetTo(v SendLimitSource) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilSendLimitSource) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilSendLimitSource) SetToNull() {
+	o.Null = true
+	var v SendLimitSource
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilSendLimitSource) Get() (v SendLimitSource, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilSendLimitSource) Or(d SendLimitSource) SendLimitSource {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -6177,6 +6535,174 @@ func (*SegmentsUpdateUnauthorized) segmentsUpdateRes() {}
 type SegmentsUpdateUnprocessableEntity ProblemDetails
 
 func (*SegmentsUpdateUnprocessableEntity) segmentsUpdateRes() {}
+
+// Where an effective Send rate limit comes from.
+// Ref: #/components/schemas/SendLimitSource
+type SendLimitSource string
+
+const (
+	SendLimitSourceManual   SendLimitSource = "manual"
+	SendLimitSourceProvider SendLimitSource = "provider"
+)
+
+// AllValues returns all SendLimitSource values.
+func (SendLimitSource) AllValues() []SendLimitSource {
+	return []SendLimitSource{
+		SendLimitSourceManual,
+		SendLimitSourceProvider,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SendLimitSource) MarshalText() ([]byte, error) {
+	switch s {
+	case SendLimitSourceManual:
+		return []byte(s), nil
+	case SendLimitSourceProvider:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SendLimitSource) UnmarshalText(data []byte) error {
+	switch SendLimitSource(data) {
+	case SendLimitSourceManual:
+		*s = SendLimitSourceManual
+		return nil
+	case SendLimitSourceProvider:
+		*s = SendLimitSourceProvider
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// The Send rate limit as enforced, with the last 24 hours of usage.
+// Ref: #/components/schemas/SendLimitStatus
+type SendLimitStatus struct {
+	// Most messages per second.
+	PerSecond SendLimitValue `json:"perSecond"`
+	// Most messages per rolling 24 hours.
+	PerDay SendLimitValue `json:"perDay"`
+	// Messages the provider accepted from this Integration in the last 24 hours.
+	SentLast24h int32 `json:"sentLast24h"`
+	// Reasons to review the limit; empty when there is nothing to flag.
+	Warnings []SendLimitWarning `json:"warnings"`
+}
+
+// GetPerSecond returns the value of PerSecond.
+func (s *SendLimitStatus) GetPerSecond() SendLimitValue {
+	return s.PerSecond
+}
+
+// GetPerDay returns the value of PerDay.
+func (s *SendLimitStatus) GetPerDay() SendLimitValue {
+	return s.PerDay
+}
+
+// GetSentLast24h returns the value of SentLast24h.
+func (s *SendLimitStatus) GetSentLast24h() int32 {
+	return s.SentLast24h
+}
+
+// GetWarnings returns the value of Warnings.
+func (s *SendLimitStatus) GetWarnings() []SendLimitWarning {
+	return s.Warnings
+}
+
+// SetPerSecond sets the value of PerSecond.
+func (s *SendLimitStatus) SetPerSecond(val SendLimitValue) {
+	s.PerSecond = val
+}
+
+// SetPerDay sets the value of PerDay.
+func (s *SendLimitStatus) SetPerDay(val SendLimitValue) {
+	s.PerDay = val
+}
+
+// SetSentLast24h sets the value of SentLast24h.
+func (s *SendLimitStatus) SetSentLast24h(val int32) {
+	s.SentLast24h = val
+}
+
+// SetWarnings sets the value of Warnings.
+func (s *SendLimitStatus) SetWarnings(val []SendLimitWarning) {
+	s.Warnings = val
+}
+
+// One effective ceiling: the lowest of the manual and provider values, manual on a tie.
+// Ref: #/components/schemas/SendLimitValue
+type SendLimitValue struct {
+	// The ceiling in messages; null means this window is not limited.
+	Limit NilInt32 `json:"limit"`
+	// Where the ceiling comes from; null when there is none.
+	Source NilSendLimitSource `json:"source"`
+}
+
+// GetLimit returns the value of Limit.
+func (s *SendLimitValue) GetLimit() NilInt32 {
+	return s.Limit
+}
+
+// GetSource returns the value of Source.
+func (s *SendLimitValue) GetSource() NilSendLimitSource {
+	return s.Source
+}
+
+// SetLimit sets the value of Limit.
+func (s *SendLimitValue) SetLimit(val NilInt32) {
+	s.Limit = val
+}
+
+// SetSource sets the value of Source.
+func (s *SendLimitValue) SetSource(val NilSendLimitSource) {
+	s.Source = val
+}
+
+// A reason to look at an Integration's Send rate limit.
+// Ref: #/components/schemas/SendLimitWarning
+type SendLimitWarning string
+
+const (
+	SendLimitWarningUnlimited                SendLimitWarning = "unlimited"
+	SendLimitWarningProviderQuotaUnavailable SendLimitWarning = "providerQuotaUnavailable"
+)
+
+// AllValues returns all SendLimitWarning values.
+func (SendLimitWarning) AllValues() []SendLimitWarning {
+	return []SendLimitWarning{
+		SendLimitWarningUnlimited,
+		SendLimitWarningProviderQuotaUnavailable,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SendLimitWarning) MarshalText() ([]byte, error) {
+	switch s {
+	case SendLimitWarningUnlimited:
+		return []byte(s), nil
+	case SendLimitWarningProviderQuotaUnavailable:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SendLimitWarning) UnmarshalText(data []byte) error {
+	switch SendLimitWarning(data) {
+	case SendLimitWarningUnlimited:
+		*s = SendLimitWarningUnlimited
+		return nil
+	case SendLimitWarningProviderQuotaUnavailable:
+		*s = SendLimitWarningProviderQuotaUnavailable
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Send a single transactional email by rendering a referenced template.
 // Ref: #/components/schemas/SendTransactionalEmailInput

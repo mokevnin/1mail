@@ -18,7 +18,11 @@ We add a **Send rate limit** to the **Integration** (GLOSSARY) and a new reversi
 - **Provider quota refresh.** SES `GetSendQuota` is read when the Integration is saved and then hourly by the
   existing periodic job, because SES quotas grow as an account matures. If the call fails (missing
   `ses:GetSendQuota` permission, an SES-compatible service such as Postbox), the manual value applies, or the
-  Integration is unlimited, with a warning; a failed call never blocks sending.
+  Integration is unlimited, with a warning; a failed call never blocks sending. A failure after an earlier success
+  keeps the last known provider values (a transient blip must not lift a ceiling), and only raises the warning.
+  The save enqueues the lookup as a job, so the save's own response does not carry its result: the provider ceiling
+  and the warning appear on the next read, shortly after. The manual ceilings are bounded when set: 1 to 10 000 per
+  second and 1 to 100 000 000 per 24 hours, and a value outside the range is a 400.
 - **A per-Sending-domain daily cap is reserved in the model, not built.** It is the reputation lever a warmup ramps
   (ADR 0014); the effective ceiling is the minimum of the manual, provider and warmup values.
 - **Pace at enqueue time, not by snoozing.** The Broadcast planner spreads recipient jobs over time, setting each
@@ -26,7 +30,8 @@ We add a **Send rate limit** to the **Integration** (GLOSSARY) and a new reversi
   lowered mid-send, Transactional traffic spending capacity, provider throttling). Without this a 50 000-recipient
   Broadcast wakes its whole backlog every second and 14 of it sends. The ETA is derived from the last `ScheduledAt`
   and the recipients remaining. A Deferral that does happen snoozes for the computed wait plus jitter, scaled by
-  the backlog ahead of the job.
+  the backlog ahead of the job: the pending recipients with a lower id that are awake, that is, not themselves
+  asleep on an earlier Deferral (recorded on the recipient as `deferred_until`), since only those queue for a token.
 - **Where it is reserved:** inside Outbound send, after Send-eligibility and the `Hold` checks and before the
   provider call, so Skipped or Held messages never spend capacity. Reservation takes one token from both buckets or
   none.
@@ -40,6 +45,8 @@ We add a **Send rate limit** to the **Integration** (GLOSSARY) and a new reversi
   exactly as for a `Hold` (ADR 0015). The UI shows progress and an ETA
   derived from the limit and remaining recipients, not a blocked state. A provider reply meaning "too fast" (SES
   `Throttling`, daily quota exceeded) is classified as a Deferral too; the limit is not auto-tuned in the core.
+  Transactional never returns a Deferral, a provider reply included: it stays a retryable error (the claim is
+  released) and the caller retries.
 - **State lives in Postgres**, one row per Integration holding **two token buckets**, per-second (capacity and refill from `max per second`) and
   daily (capacity `max per 24h`, refill `max per 24h / 86400` per second), so the 24-hour limit is rolling rather than
   a fixed-window counter, declared in

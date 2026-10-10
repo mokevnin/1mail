@@ -16,6 +16,58 @@ enum SiteIntegrationProvider {
   ses,
 }
 
+/** A per-second Send rate limit the operator may set */
+@minValue(1)
+@maxValue(10000)
+scalar SiteMaxPerSecond extends int32;
+
+/** A rolling 24-hour Send rate limit the operator may set */
+@minValue(1)
+@maxValue(100000000)
+scalar SiteMaxPerDay extends int32;
+
+/** Where an effective Send rate limit comes from */
+enum SiteSendLimitSource {
+  /** Set by the operator on the Integration */
+  manual,
+
+  /** Reported by the provider */
+  provider,
+}
+
+/** A reason to look at an Integration's Send rate limit */
+enum SiteSendLimitWarning {
+  /** No ceiling applies: sends are not paced and the provider may throttle or block them */
+  unlimited,
+
+  /** The provider's send quota could not be read (no permission, or a compatible service without the call), so only the manual limit applies */
+  providerQuotaUnavailable,
+}
+
+/** One effective ceiling: the lowest of the manual and provider values, manual on a tie */
+model SiteSendLimitValue {
+  /** The ceiling in messages; null means this window is not limited */
+  limit: int32 | null;
+
+  /** Where the ceiling comes from; null when there is none */
+  source: SiteSendLimitSource | null;
+}
+
+/** The Send rate limit as enforced, with the last 24 hours of usage */
+model SiteSendLimitStatus {
+  /** Most messages per second */
+  perSecond: SiteSendLimitValue;
+
+  /** Most messages per rolling 24 hours */
+  perDay: SiteSendLimitValue;
+
+  /** Messages the provider accepted from this Integration in the last 24 hours */
+  sentLast24h: int32;
+
+  /** Reasons to review the limit; empty when there is nothing to flag */
+  warnings: SiteSendLimitWarning[];
+}
+
 // --- Output config (secrets redacted; never echo passwords/keys) ---
 
 /** SMTP config without the password */
@@ -108,6 +160,15 @@ model SiteIntegrationResource {
   /** Whether this is the default provider for its channel */
   isDefault: boolean;
 
+  /** Send rate limit: most messages per second; null means no per-second limit */
+  maxPerSecond: int32 | null;
+
+  /** Send rate limit: most messages per rolling 24 hours; null means no daily limit */
+  maxPerDay: int32 | null;
+
+  /** The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage */
+  sendLimit: SiteSendLimitStatus;
+
   /** Provider config (secrets redacted) */
   config: SiteIntegrationConfig;
 
@@ -123,6 +184,13 @@ model SiteCreateIntegrationInput {
   name: string;
   enabled?: boolean;
   isDefault?: boolean;
+
+  /** Most messages per second (1 to 10 000); omit or null for no limit */
+  maxPerSecond?: SiteMaxPerSecond | null;
+
+  /** Most messages per rolling 24 hours (1 to 100 000 000); omit or null for no limit */
+  maxPerDay?: SiteMaxPerDay | null;
+
   config: SiteIntegrationConfigInput;
 }
 
@@ -131,6 +199,13 @@ model SiteUpdateIntegrationInput {
   name?: string;
   enabled?: boolean;
   isDefault?: boolean;
+
+  /** Most messages per second (1 to 10 000); null clears the limit, omit to keep */
+  maxPerSecond?: SiteMaxPerSecond | null;
+
+  /** Most messages per rolling 24 hours (1 to 100 000 000); null clears the limit, omit to keep */
+  maxPerDay?: SiteMaxPerDay | null;
+
   config?: SiteIntegrationConfigInput | null;
 }
 
