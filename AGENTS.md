@@ -85,10 +85,14 @@ Run a single Go test (arguments after `--` go to `go test`; the default is `./..
 mise run test -- ./internal/api/site -run TestSiteContactsRequireAuth
 ```
 
+Go tests always run with `-shuffle=on` (the seed is printed; reproduce an order with
+`-shuffle=<seed>`), so a test must not depend on another's side effects.
+
 End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
 `mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
-app in-process. Scenarios are domain steps on `e2e.Workspace` (`env.NewWorkspace(t).Ready()`,
-`ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
+app in-process. `HOLD=true mise run test:e2e` keeps the app and Mailpit up after the run (their URLs are
+printed) until Ctrl-C, to inspect a failed scenario in the Mailpit UI. Scenarios are domain steps on
+`e2e.Workspace` (`env.NewWorkspace(t).Ready()`, `ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
 (`workspace.go`, `integration.go`, `contacts.go`, `broadcast.go`, `automation.go`, `consent.go`); `_test.go`
 files hold only scenarios, and bodies are authored with `e2e.MJML(text)`. Mail is observed only through
 the Workspace's `Inbox`: one wait (`w.Inbox.Wait(e2e.Match{To, Subject})`) and one absence check
