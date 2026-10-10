@@ -69,7 +69,26 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 
 	logger := slog.Default()
-	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
+	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{river: rc, ent: entClient}, nil
+}
+
+// River job retention, explicit rather than river's defaults: bounds the
+// river_job table (Event retention is separate, ADR 0019).
+const (
+	completedJobRetention = 24 * time.Hour
+	cancelledJobRetention = 24 * time.Hour
+	discardedJobRetention = 14 * 24 * time.Hour
+)
+
+func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
+	return &river.Config{
+		CompletedJobRetentionPeriod: completedJobRetention,
+		CancelledJobRetentionPeriod: cancelledJobRetention,
+		DiscardedJobRetentionPeriod: discardedJobRetention,
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 5},
 			QueueBroadcasts:    {MaxWorkers: 10},
@@ -92,11 +111,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
-	return &Client{river: rc, ent: entClient}, nil
 }
 
 // Start begins processing jobs (run in a goroutine; returns once started).

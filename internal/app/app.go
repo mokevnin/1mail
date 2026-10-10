@@ -14,6 +14,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel/metric"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
@@ -114,9 +115,11 @@ type dkimLookup struct {
 // database/sql pool the ent client and pubsub use).
 type pgxPool struct {
 	*pgxpool.Pool
+	metrics metric.Registration
 }
 
 func (p *pgxPool) Shutdown() {
+	_ = p.metrics.Unregister()
 	p.Close()
 }
 
@@ -321,6 +324,8 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
+		db.ConfigurePool(database, cfg.DBPool)
+
 		return &sqlDB{DB: database}, nil
 	})
 
@@ -438,11 +443,20 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		return &pgxPool{Pool: pool}, nil
+		pool, err := db.NewPGXPool(context.Background(), cfg.DatabaseURL, cfg.DBPool)
+		if err != nil {
+			return nil, err
+		}
+		reg, err := db.RegisterPoolMetrics(database.DB, pool)
+		if err != nil {
+			pool.Close()
+			return nil, err
+		}
+		return &pgxPool{Pool: pool, metrics: reg}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*jobsClient, error) {
