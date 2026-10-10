@@ -14,10 +14,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"image/png"
 	"strings"
@@ -32,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/service"
 )
 
 // Issuer names the instance in the authenticator app.
@@ -305,7 +304,7 @@ func (m *Module) verify(ctx context.Context, tx *ent.Client, pub events.Publishe
 	n, err := tx.RecoveryCode.Update().
 		Where(
 			recoverycode.UserID(u.ID),
-			recoverycode.CodeHash(HashRecoveryCode(code)),
+			recoverycode.CodeHash(service.HashRecoveryCode(code)),
 			recoverycode.UsedAtIsNil(),
 		).
 		SetUsedAt(m.now()).
@@ -380,7 +379,7 @@ func replaceRecoveryCodes(ctx context.Context, tx *ent.Client, userID int64) ([]
 	builders := make([]*ent.RecoveryCodeCreate, RecoveryCodeCount)
 	for i := range codes {
 		codes[i] = newRecoveryCode()
-		builders[i] = tx.RecoveryCode.Create().SetUserID(userID).SetCodeHash(HashRecoveryCode(codes[i]))
+		builders[i] = tx.RecoveryCode.Create().SetUserID(userID).SetCodeHash(service.HashRecoveryCode(codes[i]))
 	}
 	if err := tx.RecoveryCode.CreateBulk(builders...).Exec(ctx); err != nil {
 		return nil, err
@@ -392,15 +391,6 @@ func replaceRecoveryCodes(ctx context.Context, tx *ent.Client, userID int64) ([]
 func newRecoveryCode() string {
 	s := strings.ToLower(rand.Text()[:10])
 	return s[:5] + "-" + s[5:]
-}
-
-// HashRecoveryCode is the stored form of a Recovery code: the SHA-256 of the code
-// lower-cased with spaces and dashes removed, so it may be typed either way. The
-// codes are random, so an unsalted fast hash is enough.
-func HashRecoveryCode(code string) string {
-	norm := strings.NewReplacer("-", "", " ", "").Replace(strings.ToLower(strings.TrimSpace(code)))
-	sum := sha256.Sum256([]byte(norm))
-	return hex.EncodeToString(sum[:])
 }
 
 // isTOTP reports whether code has the shape of a TOTP code (six digits).

@@ -10,7 +10,6 @@ import (
 	"github.com/go-crypt/crypt/algorithm/argon2"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -48,7 +47,7 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 		"inviteHash": service.HashInviteToken,
 		// Recovery codes are stored only as a hash (ADR 0020); the fixture states the
 		// code and the generator lifts it into the catalog (fixtures.<Name>Code).
-		"recoveryCodeHash": secondfactor.HashRecoveryCode,
+		"recoveryCodeHash": service.HashRecoveryCode,
 		// Anchor credentials: the fixture states the plaintext and the hash is derived
 		// at load time, so hash and secret cannot drift apart. The fixture generator
 		// lifts the plaintext literal into the catalog (e.g. fixtures.OwnerJohnPassword).
