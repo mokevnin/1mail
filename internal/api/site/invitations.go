@@ -2,25 +2,19 @@ package site
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/invitation"
-	"github.com/mokevnin/1mail/ent/membership"
-	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/service"
 )
-
-// inviteTokenTTL is how long an invitation link stays valid.
-const inviteTokenTTL = 7 * 24 * time.Hour
 
 // invitationResource projects an Invitation (optionally with its inviter edge)
 // into the site DTO.
@@ -83,41 +77,22 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 		return &v, nil
 	}
 
-	email := strings.TrimSpace(string(req.Email))
-	if email == "" {
+	a := auth.GetSiteAuth(ctx)
+	// Token, hash, expiry and the upsert are the accounts operation's; the site only
+	// maps its refusals.
+	inv, token, err := h.accounts.Invite(ctx, s, h.actor(ctx), accounts.InviteInput{
+		Email: string(req.Email), Role: invitation.Role(req.Role), InvitedBy: a.UserID,
+	})
+	switch {
+	case errors.Is(err, accounts.ErrEmailEmpty):
 		v := siteapi.SiteInvitationsCreateUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity, i18n.T("errors.email_empty", nil),
 			map[string][]string{"email": {i18n.T("errors.email_empty", nil)}}))
 		return &v, nil
-	}
-
-	// Already a member? Nothing to invite.
-	alreadyMember, err := s.Membership().Query().
-		Where(membership.HasUserWith(entuser.Email(email))).
-		Exist(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if alreadyMember {
+	case errors.Is(err, accounts.ErrAlreadyMember):
 		v := siteapi.SiteInvitationsCreateConflict(problem(http.StatusConflict, i18n.T("errors.already_member", nil)))
 		return &v, nil
-	}
-
-	token, err := service.GenerateInviteToken()
-	if err != nil {
-		return nil, err
-	}
-	tokenHash := service.HashInviteToken(token)
-	role := invitation.Role(req.Role)
-	expiresAt := time.Now().Add(inviteTokenTTL)
-	a := auth.GetSiteAuth(ctx)
-
-	// Upsert on the (workspace, email) unique key: re-inviting reissues the token
-	// and expiry and clears any prior acceptance. Recorded as an Audit entry.
-	inv, err := h.accounts.Invite(ctx, s, h.actor(ctx), accounts.InviteInput{
-		Email: email, Role: role, TokenHash: tokenHash, ExpiresAt: expiresAt, InvitedBy: a.UserID,
-	})
-	if err != nil {
+	case err != nil:
 		return nil, err
 	}
 
@@ -133,7 +108,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	if caller, cerr := h.accounts.User(ctx, a.UserID); cerr == nil {
 		inviterName = caller.Name
 	}
-	if merr := h.sysmail.EnqueueMemberInvite(ctx, email, inviteURL, wsEnt.Name, inviterName); merr != nil {
+	if merr := h.sysmail.EnqueueMemberInvite(ctx, inv.Email, inviteURL, wsEnt.Name, inviterName); merr != nil {
 		slog.WarnContext(ctx, "member invite email not enqueued", "error", merr, "invitation_id", inv.ID)
 	}
 
