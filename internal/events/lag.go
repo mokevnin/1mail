@@ -41,7 +41,7 @@ func RegisterLagGauge(db *sql.DB) (func() error, error) {
 		return nil, fmt.Errorf("outbox lag gauge: %w", err)
 	}
 	reg, err := meter.RegisterCallback(func(ctx context.Context, o metric.Observer) error {
-		rows, err := db.QueryContext(ctx, lagQuery, ConsumerGroups)
+		rows, err := db.QueryContext(ctx, lagQuery, ConsumerGroups())
 		if err != nil {
 			return fmt.Errorf("outbox lag: %w", err)
 		}

@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 var strongSecret = strings.Repeat("k7", 16)
@@ -42,6 +43,65 @@ func TestConfigLoad_JWTSecret(t *testing.T) {
 	}
 }
 
+func TestConfigLoadDBPoolDefaults(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := DBPool{MaxOpenConns: 15, MaxIdleConns: 15, ConnMaxLifetime: 30 * time.Minute, PGXMaxConns: 25}
+	if cfg.DBPool != want {
+		t.Fatalf("defaults = %+v, want %+v", cfg.DBPool, want)
+	}
+}
+
+func TestConfigLoadDBPoolFromEnv(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("DB_MAX_OPEN_CONNS", "7")
+	t.Setenv("DB_MAX_IDLE_CONNS", "3")
+	t.Setenv("DB_CONN_MAX_LIFETIME", "5m")
+	t.Setenv("PGX_MAX_CONNS", "11")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := DBPool{MaxOpenConns: 7, MaxIdleConns: 3, ConnMaxLifetime: 5 * time.Minute, PGXMaxConns: 11}
+	if cfg.DBPool != want {
+		t.Fatalf("pool = %+v, want %+v", cfg.DBPool, want)
+	}
+}
+
+func TestConfigLoadDBPoolIdleFollowsOpen(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("DB_MAX_OPEN_CONNS", "9")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.DBPool.MaxIdleConns != 9 {
+		t.Fatalf("idle = %d, want 9", cfg.DBPool.MaxIdleConns)
+	}
+}
+
+func TestConfigLoadDBPoolRejectsInvalid(t *testing.T) {
+	for name, env := range map[string]map[string]string{
+		"zero open":     {"DB_MAX_OPEN_CONNS": "0"},
+		"idle > open":   {"DB_MAX_OPEN_CONNS": "2", "DB_MAX_IDLE_CONNS": "3"},
+		"zero lifetime": {"DB_CONN_MAX_LIFETIME": "0s"},
+		"zero pgx":      {"PGX_MAX_CONNS": "0"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("DATABASE_URL", "postgres://x")
+			for k, v := range env {
+				t.Setenv(k, v)
+			}
+			if _, err := Load("test"); err == nil {
+				t.Fatal("want error")
+			}
+		})
+	}
+}
+
 func TestConfigLoadBodyLimitDefaults(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://x")
 	cfg, err := Load("test")
@@ -50,6 +110,31 @@ func TestConfigLoadBodyLimitDefaults(t *testing.T) {
 	}
 	if cfg.BodyLimits != (BodyLimits{Default: 1 << 20, Collect: 64 << 10}) {
 		t.Fatalf("defaults = %+v", cfg.BodyLimits)
+	}
+}
+
+func TestConfigLoadOutboxFloor(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.OutboxFloor != 7*24*time.Hour {
+		t.Fatalf("default OutboxFloor = %v, want 7 days", cfg.OutboxFloor)
+	}
+
+	t.Setenv("OUTBOX_RETENTION_FLOOR_DAYS", "14")
+	cfg, err = Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.OutboxFloor != 14*24*time.Hour {
+		t.Fatalf("OutboxFloor = %v, want 14 days", cfg.OutboxFloor)
+	}
+
+	t.Setenv("OUTBOX_RETENTION_FLOOR_DAYS", "-1")
+	if _, err := Load("test"); err == nil {
+		t.Fatal("a negative floor must be rejected")
 	}
 }
 

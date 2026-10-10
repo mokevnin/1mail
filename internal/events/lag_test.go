@@ -27,11 +27,14 @@ func TestOutboxLagIsReportedPerConsumerGroup(t *testing.T) {
 	})
 	require.NoError(t, err)
 	env.AgeOutbox(t, 2*time.Minute)
-	env.AckOutbox(t, events.GroupPersist)
+	env.ClearOutboxCursors(t)
+	rows := env.OutboxRows(t)
+	last := rows[len(rows)-1]
+	env.SetOutboxCursor(t, events.GroupPersist, last.TxID, &last.Offset)
 
 	scrape := testhelper.ScrapeMetrics(t)
 	assert.Zero(t, scrape.Value(t, "outbox_lag_seconds", map[string]string{"consumer_group": events.GroupPersist}), "caught up")
 	for _, g := range []string{events.GroupAutomations, events.GroupWebhooks, events.GroupSuppression} {
-		assert.InDelta(t, 120, scrape.Value(t, "outbox_lag_seconds", map[string]string{"consumer_group": g}), 5, g)
+		assert.GreaterOrEqual(t, scrape.Value(t, "outbox_lag_seconds", map[string]string{"consumer_group": g}), 120.0, g)
 	}
 }

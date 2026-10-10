@@ -23,8 +23,8 @@ import (
 // producer writes, the table the consumers read, and the table InitSchema creates
 // cannot drift apart.
 var (
-	outboxSchema  watermillsql.SchemaAdapter  = watermillsql.DefaultPostgreSQLSchema{}
-	outboxOffsets watermillsql.OffsetsAdapter = watermillsql.DefaultPostgreSQLOffsetsAdapter{}
+	outboxSchema  = watermillsql.DefaultPostgreSQLSchema{}
+	outboxOffsets = watermillsql.DefaultPostgreSQLOffsetsAdapter{}
 )
 
 // Publisher publishes a typed domain event onto the bus. The implementation
@@ -166,11 +166,22 @@ func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {
 	return p.wm.Publish(TopicDomainEvents, msg)
 }
 
-// InitSchema creates the outbox topic's message and offsets tables. It is
-// idempotent (CREATE TABLE IF NOT EXISTS) and must run at boot before any
-// producer publishes — the tx publisher cannot self-initialize the schema.
+// InitSchema creates the outbox topic's message and offsets tables and tunes
+// their autovacuum. It is idempotent (CREATE TABLE IF NOT EXISTS, ALTER TABLE
+// SET) and must run at boot before any producer publishes: the tx publisher
+// cannot self-initialize the schema. The outbox tables are created here rather
+// than by the Atlas migrations, so their per-table autovacuum settings live here
+// too.
+//
+// The outbox is insert-heavy and pruned in batches (PruneOutbox), so it carries
+// a steady stream of dead tuples; the offsets table is a handful of rows updated
+// on every ack. Vacuuming both at a low dead-tuple ratio keeps bloat small.
 func InitSchema(ctx context.Context, db *sql.DB) error {
 	queries := append(outboxSchema.SchemaInitializingQueries(TopicDomainEvents), outboxOffsets.SchemaInitializingQueries(TopicDomainEvents)...)
+	queries = append(queries,
+		fmt.Sprintf(`ALTER TABLE %s SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000, autovacuum_analyze_scale_factor = 0.02)`, outboxTable()),
+		fmt.Sprintf(`ALTER TABLE %s SET (autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 50, autovacuum_analyze_scale_factor = 0, autovacuum_analyze_threshold = 50)`, offsetsTable()),
+	)
 	for _, q := range queries {
 		if _, err := db.ExecContext(ctx, q); err != nil {
 			return fmt.Errorf("init domain-events outbox schema: %w", err)

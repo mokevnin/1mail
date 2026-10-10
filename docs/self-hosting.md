@@ -26,6 +26,11 @@ the binary). `APP_ENV` selects the environment (`development` by default; set it
 | `CORS_ORIGINS`                                                      | no              | —                         | Comma/space-separated origins allowed credentialed CORS on the cookie-authenticated API (`/site`, `/auth`). Empty means same-origin only, which is what the bundled SPA needs; the bearer-token APIs are unaffected. |
 | `MAX_BODY_BYTES`                                                    | no              | `1048576`                 | Largest accepted request body (bytes) on every surface except `/collect`; larger bodies get `413`.                                                                                                                   |
 | `COLLECT_MAX_BODY_BYTES`                                            | no              | `65536`                   | Largest accepted request body (bytes) on `/collect`.                                                                                                                                                                 |
+| `DB_MAX_OPEN_CONNS`                                                 | no              | `15`                      | Maximum open connections in the `database/sql` pool (API, ent, event bus).                                                                                                                                           |
+| `DB_MAX_IDLE_CONNS`                                                 | no              | `DB_MAX_OPEN_CONNS`       | Maximum idle connections kept in that pool. Must not exceed `DB_MAX_OPEN_CONNS`.                                                                                                                                     |
+| `DB_CONN_MAX_LIFETIME`                                              | no              | `30m`                     | Maximum lifetime of a pooled connection (Go duration).                                                                                                                                                               |
+| `PGX_MAX_CONNS`                                                     | no              | `25`                      | Maximum connections in the river (job queue) pool. Must cover river's MaxWorkers sum (20) plus LISTEN and runtime services.                                                                                          |
+| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | no              | `7`                       | Minimum age (days) before a domain-event outbox row that every consumer has processed is pruned. The prune job runs every 10 minutes.                                                                                |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no              | `SMTP_PORT=1025`          | Outbound email over SMTP.                                                                                                                                                                                            |
 | `SYSTEM_EMAIL_PROVIDER`                                             | no              | `smtp`                    | Platform (system) email provider: `smtp` or `ses`.                                                                                                                                                                   |
 | `SYSTEM_EMAIL_FROM`                                                 | no              | `noreply@1mail.localhost` | From address for platform mail (e.g. welcome emails).                                                                                                                                                                |
@@ -47,6 +52,9 @@ Migrations are embedded in the binary. You apply them one of two ways:
 
   Use it as a pre-deploy job or a Kubernetes init container, then start the servers
   without `AUTO_MIGRATE`.
+
+Before upgrading, take a database backup; see [Upgrading](./operations/upgrading) for the
+full procedure and [Backup and restore](./operations/backup) for what to protect.
 
 > The binary tracks applied migrations (via goose) in its own `goose_db_version` table. Don't point
 > it at a database previously managed by the Atlas dev-CLI flow (which uses
@@ -115,3 +123,8 @@ scrape_configs:
 ```
 
 OTLP push (`OTEL_EXPORTER_OTLP_*`) is independent of this and unchanged.
+
+## Operations
+
+Sizing, [backup and restore](./operations/backup) and [upgrading](./operations/upgrading)
+(including PostgreSQL major upgrades) are covered in the [Operations](./operations/) section.
