@@ -2,10 +2,10 @@ package site_test
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"testing"
 
+	"github.com/go-faster/jx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,15 +14,18 @@ import (
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-func readSiteExport(t *testing.T, res siteapi.SiteContactsExportRes) map[string]json.RawMessage {
+// readSiteExport decodes the streamed body as the contract's ContactExportDocument,
+// which fails on a missing member or a malformed value.
+func readSiteExport(t *testing.T, res siteapi.SiteContactsExportRes) siteapi.ContactExportDocument {
 	t.Helper()
-	ok, isOK := res.(*siteapi.SiteContactsExportOKHeaders)
+	ok, isOK := res.(*siteapi.SiteContactsExportOKApplicationOctetStreamHeaders)
 	require.Truef(t, isOK, "got %T", res)
 	assert.Contains(t, ok.ContentDisposition, "attachment")
 	raw, err := io.ReadAll(ok.Response)
 	require.NoError(t, err)
-	var doc map[string]json.RawMessage
-	require.NoError(t, json.Unmarshal(raw, &doc), string(raw))
+	var doc siteapi.ContactExportDocument
+	require.NoError(t, doc.Decode(jx.DecodeBytes(raw)), string(raw))
+	require.NoError(t, doc.Validate())
 	return doc
 }
 
@@ -39,12 +42,9 @@ func TestSiteContactsExportIsOpenToAnyMember(t *testing.T) {
 	require.NoError(t, err)
 	doc := readSiteExport(t, res)
 
-	var events []map[string]any
-	require.NoError(t, json.Unmarshal(doc["events"], &events))
-	assert.Len(t, events, 3)
-	for _, key := range []string{"contact", "tags", "visitors", "unsubscribes", "suppressions", "confirmations", "outbound_messages", "broadcast_recipients"} {
-		assert.Contains(t, doc, key)
-	}
+	assert.Len(t, doc.Events, 3)
+	assert.Len(t, doc.OutboundMessages, 2)
+	assert.Len(t, doc.BroadcastRecipients, 1)
 }
 
 func TestSiteContactsExportByEmail(t *testing.T) {
@@ -58,9 +58,8 @@ func TestSiteContactsExportByEmail(t *testing.T) {
 	require.NoError(t, err)
 	doc := readSiteExport(t, res)
 
-	var contact map[string]any
-	require.NoError(t, json.Unmarshal(doc["contact"], &contact))
-	assert.EqualValues(t, fixtures.ContactExportSubjectID, contact["id"])
+	assert.Equal(t, siteapi.EntityId("800"), doc.Contact.ID)
+	assert.Equal(t, fixtures.ContactExportSubjectEmail, doc.Contact.Email.Value)
 }
 
 func TestSiteContactsExportStaysInsideTheWorkspace(t *testing.T) {

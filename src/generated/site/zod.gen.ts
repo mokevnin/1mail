@@ -3,6 +3,11 @@
 
 import * as z from 'zod';
 
+/**
+ * An arbitrary JSON object: typed custom field values or event properties
+ */
+export const zContactExportJson = z.record(z.string(), z.unknown());
+
 export const zEmailAddress = z.email();
 
 export const zEntityId = z.string().regex(/^[0-9]+$/);
@@ -667,6 +672,143 @@ export const zSiteUpdateContactInput = z.object({
 });
 
 export const zTimestamp = z.iso.datetime();
+
+/**
+ * The contact's delivery record in one broadcast
+ */
+export const zContactExportBroadcastRecipient = z.object({
+  id: zEntityId,
+  broadcastId: zEntityId,
+  status: z.string(),
+  error: z.exactOptional(z.string().nullable()),
+  sentAt: z.exactOptional(zTimestamp.nullable()),
+  openedAt: z.exactOptional(zTimestamp.nullable()),
+  clickedAt: z.exactOptional(zTimestamp.nullable()),
+  createdAt: zTimestamp
+});
+
+/**
+ * A recorded confirmation of a channel destination
+ */
+export const zContactExportConfirmation = z.object({
+  id: zEntityId,
+  channel: z.string(),
+  destination: z.string(),
+  provenance: z.string(),
+  createdAt: zTimestamp
+});
+
+/**
+ * The contact itself
+ */
+export const zContactExportContact = z.object({
+  id: zEntityId,
+  subjectId: z.exactOptional(z.string().nullable()),
+  email: z.exactOptional(z.string().nullable()),
+  phone: z.exactOptional(z.string().nullable()),
+  firstName: z.exactOptional(z.string().nullable()),
+  lastName: z.exactOptional(z.string().nullable()),
+  timeZone: z.exactOptional(z.string().nullable()),
+  customFields: z.exactOptional(zContactExportJson.nullable()),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
+});
+
+/**
+ * An event tracked for the contact or its visitors
+ */
+export const zContactExportEvent = z.object({
+  id: zEntityId,
+  sourceId: z.exactOptional(z.string().nullable()),
+  visitorId: z.exactOptional(z.string().nullable()),
+  subjectId: z.string(),
+  email: z.exactOptional(z.string().nullable()),
+  phone: z.exactOptional(z.string().nullable()),
+  action: z.string(),
+  properties: z.exactOptional(zContactExportJson.nullable()),
+  occurredAt: z.exactOptional(zTimestamp.nullable()),
+  createdAt: zTimestamp
+});
+
+/**
+ * Delivery metadata of one outbound message; the rendered message is not included
+ */
+export const zContactExportOutboundMessage = z.object({
+  id: zEntityId,
+  kind: z.string(),
+  channel: z.string(),
+  destination: z.string(),
+  sendingSource: z.exactOptional(z.string().nullable()),
+  sendingDomain: z.exactOptional(z.string().nullable()),
+  providerMessageId: z.exactOptional(z.string().nullable()),
+  status: z.string(),
+  reason: z.exactOptional(z.string().nullable()),
+  claimedAt: zTimestamp,
+  sentAt: z.exactOptional(zTimestamp.nullable()),
+  broadcastId: z.exactOptional(zEntityId.nullable()),
+  automationId: z.exactOptional(zEntityId.nullable()),
+  automationStep: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()),
+  templateId: z.exactOptional(zEntityId.nullable()),
+  createdAt: zTimestamp
+});
+
+/**
+ * A suppression of a channel destination
+ */
+export const zContactExportSuppression = z.object({
+  id: zEntityId,
+  channel: z.string(),
+  destination: z.string(),
+  reason: z.string(),
+  createdAt: zTimestamp
+});
+
+/**
+ * A tag the contact carries
+ */
+export const zContactExportTag = z.object({
+  id: zEntityId,
+  name: z.string(),
+  createdAt: zTimestamp
+});
+
+/**
+ * An opt-out of a channel destination
+ */
+export const zContactExportUnsubscribe = z.object({
+  id: zEntityId,
+  channel: z.string(),
+  destination: z.string(),
+  sendingSource: z.string(),
+  createdAt: zTimestamp
+});
+
+/**
+ * An anonymous device (visitor) bound to the contact
+ */
+export const zContactExportVisitor = z.object({
+  id: zEntityId,
+  visitorId: z.string(),
+  lastSeenAt: zTimestamp,
+  createdAt: zTimestamp
+});
+
+/**
+ * Everything held about one contact (subject access, GDPR Art. 15/20). The
+ * download is this document streamed member by member; rendered message bodies
+ * are never part of it.
+ */
+export const zContactExportDocument = z.object({
+  contact: zContactExportContact,
+  tags: z.array(zContactExportTag),
+  visitors: z.array(zContactExportVisitor),
+  unsubscribes: z.array(zContactExportUnsubscribe),
+  suppressions: z.array(zContactExportSuppression),
+  confirmations: z.array(zContactExportConfirmation),
+  events: z.array(zContactExportEvent),
+  outboundMessages: z.array(zContactExportOutboundMessage),
+  broadcastRecipients: z.array(zContactExportBroadcastRecipient)
+});
 
 /**
  * A workspace API token (secret shown only once, at creation)
@@ -1511,9 +1653,9 @@ export const zSiteContactsExportQuery = z.object({
 });
 
 /**
- * Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)
+ * Attachment download of everything held about one contact (subject access, GDPR Art. 15/20): the ContactExportDocument JSON, streamed
  */
-export const zSiteContactsExportResponse = z.string();
+export const zSiteContactsExportResponse = zContactExportDocument;
 
 export const zSiteTagsListForContactPath = z.object({
   slug: z.string(),

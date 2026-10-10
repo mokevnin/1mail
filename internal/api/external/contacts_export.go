@@ -7,6 +7,7 @@ import (
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/api/external/resources"
 	"github.com/mokevnin/1mail/internal/contactexport"
 )
 
@@ -36,8 +37,10 @@ func (h *Handlers) ContactsExport(ctx context.Context, params externalapi.Contac
 		return nil, err
 	}
 
-	return &externalapi.ContactsExportOKHeaders{
+	return &externalapi.ContactsExportOKApplicationOctetStreamHeaders{
 		ContentDisposition: `attachment; filename="` + contactexport.Filename(c) + `"`,
-		Response:           externalapi.ContactsExportOK{Data: contactexport.Open(ctx, s, c)},
+		Response: externalapi.ContactsExportOKApplicationOctetStream{
+			Data: contactexport.Open(ctx, s, resources.ExportMapper{Converter: mapper}, c),
+		},
 	}, nil
 }

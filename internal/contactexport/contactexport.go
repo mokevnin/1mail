@@ -3,8 +3,10 @@
 // Tags, Visitors, all Events, the Unsubscribe/Suppression/Confirmation rows for
 // its Destinations and the OutboundMessage / BroadcastRecipient delivery
 // metadata. Rendered message bodies are never part of it (no entity read here
-// carries one). Large collections are read in keyset pages and written straight to
-// the writer, so the document is never buffered whole.
+// carries one). Each row is projected onto the contract's typed
+// ContactExportDocument members by a Mapper, never encoded as the stored entity.
+// Large collections are read in keyset pages and written straight to the writer,
+// so the document is never buffered whole.
 package contactexport
 
 import (
@@ -76,7 +78,7 @@ func Find(ctx context.Context, s *ent.Scoped, id, email *string) (*ent.Contact, 
 
 // Stream writes the export of c to w as one JSON object. The Contact and every
 // member are read through s, so nothing outside the Workspace can appear.
-func Stream(ctx context.Context, s *ent.Scoped, w io.Writer, c *ent.Contact) error {
+func Stream(ctx context.Context, s *ent.Scoped, m Mapper, w io.Writer, c *ent.Contact) error {
 	visitors, err := s.Visitor().Query().Where(visitor.ContactID(c.ID)).Order(ent.Asc(visitor.FieldID)).All(ctx)
 	if err != nil {
 		return err
@@ -114,19 +116,20 @@ func Stream(ctx context.Context, s *ent.Scoped, w io.Writer, c *ent.Contact) err
 		return err
 	}
 
+	// The keys below are the members of the contract's ContactExportDocument.
 	sw := &streamWriter{w: w}
 	sw.raw(`{"contact":`)
-	sw.value(c)
+	sw.value(m.Contact(c))
 	sw.raw(`,"tags":`)
-	sw.value(nonNil(tags))
+	writeList(sw, tags, m.Tag)
 	sw.raw(`,"visitors":`)
-	sw.value(nonNil(visitors))
+	writeList(sw, visitors, m.Visitor)
 	sw.raw(`,"unsubscribes":`)
-	sw.value(nonNil(unsubscribes))
+	writeList(sw, unsubscribes, m.Unsubscribe)
 	sw.raw(`,"suppressions":`)
-	sw.value(nonNil(suppressions))
+	writeList(sw, suppressions, m.Suppression)
 	sw.raw(`,"confirmations":`)
-	sw.value(nonNil(confirmations))
+	writeList(sw, confirmations, m.Confirmation)
 
 	// Events are matched by contact_id and by the Contact's visitor ids (ADR 0021);
 	// an empty visitor list matches nothing.
@@ -135,27 +138,27 @@ func Stream(ctx context.Context, s *ent.Scoped, w io.Writer, c *ent.Contact) err
 		return s.Event().Query().
 			Where(event.Or(event.ContactID(c.ID), event.VisitorIDIn(visitorIDs...)), event.IDGT(after)).
 			Order(ent.Asc(event.FieldID)).Limit(pageSize).All(ctx)
-	}, func(e *ent.Event) int64 { return e.ID })
+	}, func(e *ent.Event) int64 { return e.ID }, m.Event)
 	if err != nil {
 		return err
 	}
 
-	sw.raw(`,"outbound_messages":`)
+	sw.raw(`,"outboundMessages":`)
 	err = streamPages(ctx, sw, func(after int64) ([]*ent.OutboundMessage, error) {
 		return s.OutboundMessage().Query().
 			Where(outboundmessage.Or(outboundmessage.ContactID(c.ID), outboundmessage.DestinationIn(destinations...)), outboundmessage.IDGT(after)).
 			Order(ent.Asc(outboundmessage.FieldID)).Limit(pageSize).All(ctx)
-	}, func(m *ent.OutboundMessage) int64 { return m.ID })
+	}, func(o *ent.OutboundMessage) int64 { return o.ID }, m.OutboundMessage)
 	if err != nil {
 		return err
 	}
 
-	sw.raw(`,"broadcast_recipients":`)
+	sw.raw(`,"broadcastRecipients":`)
 	err = streamPages(ctx, sw, func(after int64) ([]*ent.BroadcastRecipient, error) {
 		return s.BroadcastRecipient().Query().
 			Where(broadcastrecipient.ContactID(c.ID), broadcastrecipient.IDGT(after)).
 			Order(ent.Asc(broadcastrecipient.FieldID)).Limit(pageSize).All(ctx)
-	}, func(r *ent.BroadcastRecipient) int64 { return r.ID })
+	}, func(r *ent.BroadcastRecipient) int64 { return r.ID }, m.BroadcastRecipient)
 	if err != nil {
 		return err
 	}
@@ -166,9 +169,9 @@ func Stream(ctx context.Context, s *ent.Scoped, w io.Writer, c *ent.Contact) err
 // Open starts the export of c in the background and returns the stream to hand to
 // the HTTP response: the document is produced as the response is read. The
 // producer ends with the request's context, so an abandoned download cannot leak it.
-func Open(ctx context.Context, s *ent.Scoped, c *ent.Contact) io.Reader {
+func Open(ctx context.Context, s *ent.Scoped, m Mapper, c *ent.Contact) io.Reader {
 	pr, pw := io.Pipe()
-	go func() { pw.CloseWithError(Stream(ctx, s, pw, c)) }()
+	go func() { pw.CloseWithError(Stream(ctx, s, m, pw, c)) }()
 	go func() {
 		<-ctx.Done()
 		pr.CloseWithError(ctx.Err())
@@ -181,17 +184,27 @@ func Filename(c *ent.Contact) string {
 	return "contact-" + strconv.FormatInt(c.ID, 10) + "-export.json"
 }
 
-// nonNil keeps an empty collection a JSON array rather than null.
-func nonNil[T any](xs []T) []T {
-	if xs == nil {
-		return []T{}
-	}
-	return xs
+// Mapper projects stored rows onto the members of the surface's generated
+// ContactExportDocument. Each surface (site, external) generates its own copy of
+// those types from the shared TypeSpec model, so a Mapper hands back each member as
+// a json.Marshaler and the document is assembled here without knowing which
+// surface it serves. Stored rows are never encoded directly: the contract, not
+// the ent JSON tags, decides what a person sees.
+type Mapper interface {
+	Contact(*ent.Contact) json.Marshaler
+	Tag(*ent.Tag) json.Marshaler
+	Visitor(*ent.Visitor) json.Marshaler
+	Event(*ent.Event) json.Marshaler
+	Unsubscribe(*ent.Unsubscribe) json.Marshaler
+	Suppression(*ent.Suppression) json.Marshaler
+	Confirmation(*ent.Confirmation) json.Marshaler
+	OutboundMessage(*ent.OutboundMessage) json.Marshaler
+	BroadcastRecipient(*ent.BroadcastRecipient) json.Marshaler
 }
 
 // streamPages writes a JSON array whose elements are read page by page, ordered
 // by ascending id, so at most one page is in memory.
-func streamPages[T any](ctx context.Context, sw *streamWriter, page func(after int64) ([]T, error), id func(T) int64) error {
+func streamPages[T any](ctx context.Context, sw *streamWriter, page func(after int64) ([]T, error), id func(T) int64, project func(T) json.Marshaler) error {
 	sw.raw(`[`)
 	var after int64
 	first := true
@@ -205,7 +218,7 @@ func streamPages[T any](ctx context.Context, sw *streamWriter, page func(after i
 				sw.raw(`,`)
 			}
 			first = false
-			sw.value(r)
+			sw.value(project(r))
 			after = id(r)
 		}
 		if len(rows) < pageSize {
@@ -229,11 +242,23 @@ func (s *streamWriter) raw(text string) {
 	}
 }
 
-func (s *streamWriter) value(v any) {
+// writeList writes rows as a JSON array; no rows is [], never null.
+func writeList[T any](sw *streamWriter, rows []T, project func(T) json.Marshaler) {
+	sw.raw(`[`)
+	for i, r := range rows {
+		if i > 0 {
+			sw.raw(`,`)
+		}
+		sw.value(project(r))
+	}
+	sw.raw(`]`)
+}
+
+func (s *streamWriter) value(v json.Marshaler) {
 	if s.err != nil {
 		return
 	}
-	b, err := json.Marshal(v)
+	b, err := v.MarshalJSON()
 	if err != nil {
 		s.err = err
 		return

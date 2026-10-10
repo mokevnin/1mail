@@ -11,6 +11,13 @@ import (
 // Bus.WithinTx implements it over the same transaction, so a purge commits (or
 // rolls back) with the state change that asks for it. Erasure is its only caller
 // (ADR 0021); it is a separate interface so ordinary producers cannot reach it.
+//
+// The job deletes are SQL on river_job on purpose. river's Tx API would work here
+// (riverdatabasesql v0.49.0 matches river, and JobListTx/JobDeleteManyTx run on this
+// *sql.Tx), but JobDeleteManyParams has no args predicate and JobListParams only an
+// args-capable Where(sql, args) escape hatch, so the match would still be this same
+// SQL, wrapped in a second river client, a new driver dependency and a list-then-delete
+// loop. The tests' own queue access does use river's API (internal/testhelper/jobs.go).
 type QueuePurger interface {
 	// PurgeOutbox deletes the Workspace's outbox envelopes that name the Contact,
 	// by id or by one of its destinations (matched case-insensitively).

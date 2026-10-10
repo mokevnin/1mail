@@ -70,6 +70,8 @@ func AutomationSteps(steps []externalapi.AutomationStep) []automations.Step {
 // goverter:extend optNilTimestamp
 // goverter:extend optNilEntityID
 // goverter:extend contactCustomFields
+// goverter:extend optNilInt32
+// goverter:extend exportJSON
 type Converter interface {
 	ContactToResource(source *ent.Contact) externalapi.ContactResource
 	BroadcastToResource(source *ent.Broadcast) externalapi.BroadcastResource
@@ -81,6 +83,67 @@ type Converter interface {
 	TagToResource(source *ent.Tag) externalapi.TagResource
 	// goverter:map Definition Steps | automationSteps
 	AutomationToResource(source *ent.Automation) externalapi.AutomationResource
+
+	// The Data export members (ADR 0021): the contract's typed projection of the
+	// stored rows, so the ent JSON tags are never the public format.
+	ContactToExport(source *ent.Contact) externalapi.ContactExportContact
+	TagToExport(source *ent.Tag) externalapi.ContactExportTag
+	VisitorToExport(source *ent.Visitor) externalapi.ContactExportVisitor
+	EventToExport(source *ent.Event) externalapi.ContactExportEvent
+	UnsubscribeToExport(source *ent.Unsubscribe) externalapi.ContactExportUnsubscribe
+	SuppressionToExport(source *ent.Suppression) externalapi.ContactExportSuppression
+	ConfirmationToExport(source *ent.Confirmation) externalapi.ContactExportConfirmation
+	OutboundMessageToExport(source *ent.OutboundMessage) externalapi.ContactExportOutboundMessage
+	BroadcastRecipientToExport(source *ent.BroadcastRecipient) externalapi.ContactExportBroadcastRecipient
+}
+
+// ExportMapper adapts the Converter to contactexport.Mapper.
+type ExportMapper struct{ Converter }
+
+func (m ExportMapper) Contact(r *ent.Contact) json.Marshaler { return ptr(m.ContactToExport(r)) }
+func (m ExportMapper) Tag(r *ent.Tag) json.Marshaler         { return ptr(m.TagToExport(r)) }
+func (m ExportMapper) Visitor(r *ent.Visitor) json.Marshaler { return ptr(m.VisitorToExport(r)) }
+func (m ExportMapper) Event(r *ent.Event) json.Marshaler     { return ptr(m.EventToExport(r)) }
+func (m ExportMapper) Unsubscribe(r *ent.Unsubscribe) json.Marshaler {
+	return ptr(m.UnsubscribeToExport(r))
+}
+func (m ExportMapper) Suppression(r *ent.Suppression) json.Marshaler {
+	return ptr(m.SuppressionToExport(r))
+}
+func (m ExportMapper) Confirmation(r *ent.Confirmation) json.Marshaler {
+	return ptr(m.ConfirmationToExport(r))
+}
+func (m ExportMapper) OutboundMessage(r *ent.OutboundMessage) json.Marshaler {
+	return ptr(m.OutboundMessageToExport(r))
+}
+func (m ExportMapper) BroadcastRecipient(r *ent.BroadcastRecipient) json.Marshaler {
+	return ptr(m.BroadcastRecipientToExport(r))
+}
+
+// ptr returns the address of v; the generated JSON encoders have pointer receivers.
+func ptr[T any](v T) *T { return &v }
+
+func optNilInt32(v *int) externalapi.OptNilInt32 {
+	if v == nil {
+		return externalapi.OptNilInt32{}
+	}
+	return externalapi.NewOptNilInt32(int32(*v))
+}
+
+// exportJSON renders a stored JSON object (custom fields, event properties).
+func exportJSON(m map[string]any) externalapi.OptNilContactExportJson {
+	if len(m) == 0 {
+		return externalapi.OptNilContactExportJson{}
+	}
+	out := make(externalapi.ContactExportJson, len(m))
+	for k, v := range m {
+		b, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		out[k] = jx.Raw(b)
+	}
+	return externalapi.NewOptNilContactExportJson(out)
 }
 
 func entityID(id int64) externalapi.EntityId {

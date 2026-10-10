@@ -51,7 +51,14 @@ adds the per-person path that ADR 0019's "evidentiary Events are never deleted" 
 - **Export:** one Contact, streamed JSON download, no job and no file storage. Contents: Contact,
   Custom fields, Tags, Visitors, Events, Unsubscribe/Suppression/Confirmation for its Destinations,
   `OutboundMessage` and `BroadcastRecipient` metadata; no rendered bodies. Readable by anyone with
-  contact read access.
+  contact read access. The document is a typed model in the contract (`ContactExportDocument` and
+  its members, declared once in `typespec/common/contact-export.tsp`), not the stored rows: each
+  member is a goverter projection of its entity, so the ent JSON tags are never the public format.
+  ogen can only stream an `io.Reader` for a binary body, so the download is declared as
+  `application/octet-stream` and the same operation lists the `application/json` document variant
+  for typed clients; the server always streams the first, encoding each typed member as it reads
+  keyset pages. A test checks that every stored column of a member has a DTO field or is named as
+  deliberately left out, because goverter cannot notice a withheld column.
 
 ## Considered options
 
