@@ -1,17 +1,25 @@
 package accounts_test
 
 import (
+	"context"
+	"database/sql"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent/authattempt"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
+
+const unknownAddress = "nobody@attempts.test" // no account has it
 
 // clock is the injected `now` of the attempts module.
 type clock struct{ t time.Time }
@@ -105,10 +113,10 @@ func TestEmailsAreNormalizedAndKindsAreSeparate(t *testing.T) {
 
 func TestUnknownEmailsGetRowsLikeKnownOnes(t *testing.T) {
 	a, _, env := newAttempts(t)
-	fail(t, a, "nobody@attempts.test", 5)
-	assert.Equal(t, 1*time.Second, delay(t, a, "nobody@attempts.test"))
+	fail(t, a, unknownAddress, 5)
+	assert.Equal(t, 1*time.Second, delay(t, a, unknownAddress))
 	row, err := env.DB.AuthAttempt.Query().
-		Where(authattempt.Email("nobody@attempts.test"), authattempt.KindEQ(authattempt.KindLogin)).Only(t.Context())
+		Where(authattempt.Email(unknownAddress), authattempt.KindEQ(authattempt.KindLogin)).Only(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, 5, row.Failures)
 }
@@ -136,34 +144,73 @@ func TestPurgeRemovesStaleRowsOnly(t *testing.T) {
 	assert.NoError(t, err, "the current row stays")
 }
 
-func TestResetBudgetIsReachedAtTheThresholdAndReopensAfterTheWindow(t *testing.T) {
+func TestResetBudgetGrantsThresholdSlotsAndReopensAfterTheWindow(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := &clock{t: time.Now()}
 	a := accounts.NewAttempts(env.DB,
 		accounts.WithClock(c.now),
 		accounts.WithRule(accounts.KindPasswordReset, accounts.ResetRule(3)))
 	const email = "Reset@Attempts.test"
-	reached := func() bool {
-		r, err := a.Reached(t.Context(), accounts.KindPasswordReset, email)
+	take := func() bool {
+		ok, err := a.Take(t.Context(), accounts.KindPasswordReset, email)
 		require.NoError(t, err)
-		return r
+		return ok
 	}
 
-	for range 2 {
-		require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, email))
+	for i := range 3 {
+		assert.True(t, take(), "slot %d is granted", i+1)
 	}
-	assert.False(t, reached(), "below the threshold")
-	require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, email))
-	assert.True(t, reached(), "threshold reached")
-	c.advance(time.Hour + time.Second)
-	assert.False(t, reached(), "the budget reopens once the window has passed")
+	assert.False(t, take(), "the budget is spent")
+	c.advance(time.Minute)
+	assert.False(t, take(), "a refused request does not extend the window")
+	c.advance(time.Hour)
+	assert.True(t, take(), "the budget reopens an hour after the last granted slot")
+	assert.True(t, take())
+	assert.True(t, take())
+	assert.False(t, take(), "and counts from one again")
 }
 
-func TestResetBudgetIsNeverReachedWhenDisabled(t *testing.T) {
+func TestResetBudgetNeverRefusesWhenDisabled(t *testing.T) {
 	env := testhelper.Setup(t)
 	a := accounts.NewAttempts(env.DB)
-	require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, "x@attempts.test"))
-	r, err := a.Reached(t.Context(), accounts.KindPasswordReset, "x@attempts.test")
+	for range 5 {
+		ok, err := a.Take(t.Context(), accounts.KindPasswordReset, "x@attempts.test")
+		require.NoError(t, err)
+		assert.True(t, ok)
+	}
+}
+
+// Check and count are one statement, so concurrent requests for one address cannot
+// each see a free slot and all take it. The other tests ride one go-txdb transaction,
+// which serializes statements, so this one opens its own pool on the real database
+// (and removes its row afterwards).
+func TestResetBudgetGrantsExactlyThresholdSlotsUnderConcurrency(t *testing.T) {
+	testhelper.Setup(t) // loads the schema into the real database once
+	cfg, err := config.Load("test")
 	require.NoError(t, err)
-	assert.False(t, r)
+	pool, err := sql.Open("pgx", cfg.DatabaseURL)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = pool.Close() })
+	client := db.NewEntClient(pool)
+	const email = "race@attempts.test"
+	t.Cleanup(func() {
+		_, err := client.AuthAttempt.Delete().Where(authattempt.Email(email)).Exec(context.Background())
+		assert.NoError(t, err)
+	})
+
+	a := accounts.NewAttempts(client, accounts.WithRule(accounts.KindPasswordReset, accounts.ResetRule(3)))
+	const workers = 24
+	var granted atomic.Int32
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Go(func() {
+			ok, err := a.Take(context.Background(), accounts.KindPasswordReset, email)
+			assert.NoError(t, err)
+			if ok {
+				granted.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	assert.EqualValues(t, 3, granted.Load())
 }

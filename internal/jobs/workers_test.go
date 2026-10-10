@@ -108,7 +108,7 @@ func TestClientEnqueuesEveryJobKind(t *testing.T) {
 	later := time.Now().Add(time.Hour)
 	require.NoError(t, e.client.EnqueueBroadcast(ctx, fixtures.BroadcastDraftID, &later))
 	require.NoError(t, e.client.EnqueueWelcome(ctx, "new@example.com", "New"))
-	require.NoError(t, e.client.EnqueuePasswordReset(ctx, "a@example.com", "tok"))
+	require.NoError(t, e.client.EnqueuePasswordReset(ctx, "a@example.com", "tok", true))
 	require.NoError(t, e.client.EnqueueEmailVerification(ctx, "a@example.com", "tok"))
 	require.NoError(t, e.client.EnqueueEmailChangeConfirm(ctx, "a@example.com", "tok"))
 	require.NoError(t, e.client.EnqueueMemberInvite(ctx, "a@example.com", "https://x/invite", "Acme", "Jane"))
@@ -193,6 +193,16 @@ func TestAuthMailWorker(t *testing.T) {
 
 	require.Error(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "nope", Email: "a@example.com"})))
 	require.Error(t, jobs.NewAuthMailWorker(nil, "").Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "password_reset"})))
+}
+
+// A Discard job does the whole job (builds the mail) but sends nothing: forgot-password
+// enqueues one for an unknown or over-limit address so every request costs the same.
+func TestAuthMailWorkerDiscardSendsNothing(t *testing.T) {
+	env := testhelper.Setup(t)
+	w := jobs.NewAuthMailWorker(env.SystemMail, "https://app.example/")
+	require.NoError(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "password_reset", Email: "a@example.com", Token: "t", Discard: true})))
+	assert.Empty(t, env.SystemMail.Messages())
+	require.Error(t, w.Work(context.Background(), job(jobs.SendAuthMailArgs{Flow: "nope", Email: "a@example.com", Discard: true})), "a discarded job still validates what it renders")
 }
 
 func TestMemberInviteWorker(t *testing.T) {

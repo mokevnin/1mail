@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,21 @@ func TestForgotPasswordSendsNoMoreThanTheLimitPerAddressAndStaysSilent(t *testin
 	rec := forgot(t, env, fixtures.OwnerJohnEmail)
 	assert.Equal(t, http.StatusAccepted, rec.Code, "over the limit is still a silent 202")
 	assert.Len(t, env.SystemMail.Messages(), forgotAddress, "nothing is sent over the limit")
+}
+
+// Parallel requests for one address must not slip a further mail past the budget.
+func TestForgotPasswordSendsNoMoreThanTheLimitUnderConcurrency(t *testing.T) {
+	env := forgotEnv(t, forgotAddress, 0)
+	const requests = 20
+	var wg sync.WaitGroup
+	for range requests {
+		wg.Go(func() {
+			rec := forgot(t, env, fixtures.OwnerJohnEmail)
+			assert.Equal(t, http.StatusAccepted, rec.Code)
+		})
+	}
+	wg.Wait()
+	assert.Len(t, env.SystemMail.Messages(), forgotAddress)
 }
 
 func TestForgotPasswordAddressLimitIsCaseInsensitive(t *testing.T) {
