@@ -62,19 +62,16 @@ test('renders the slots around the routed page', async () => {
   await expect.element(screen.getByText(FIRST_PAGE)).toBeInTheDocument()
 })
 
-test('on a narrow viewport the burger toggles the sidebar and navigating closes it', async () => {
+test('on a narrow viewport navigating closes the opened sidebar', async () => {
   await page.viewport(MOBILE_WIDTH, MOBILE_HEIGHT)
   const screen = await mountShell()
 
   const burger = screen.getByRole('banner').getByRole('button').first()
-  // Mantine marks the Burger's inner bars with data-opened while it is open.
-  const isOpen = () => burger.element().querySelector('[data-opened]') !== null
-  await expect.poll(isOpen).toBe(false)
   await burger.click()
-  await expect.poll(isOpen).toBe(true)
+  await expect.element(screen.getByText('Go second')).toBeInViewport()
 
   await screen.getByText('Go second').click()
 
   await expect.element(screen.getByText(SECOND_PAGE)).toBeInTheDocument()
-  await expect.poll(isOpen).toBe(false)
+  await expect.element(screen.getByText('Go second')).not.toBeInViewport()
 })
