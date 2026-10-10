@@ -7,13 +7,17 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/membership"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/apitokens"
+	"github.com/mokevnin/1mail/internal/events"
 )
 
 // EmailTimeout bounds every wait for an email; asynchronous steps are polled, never slept.
@@ -47,6 +51,8 @@ type Workspace struct {
 	FromName string
 
 	msgIDs []string
+
+	scoped *ent.Scoped
 }
 
 // uniq is a short random token for unique domains and recipients.
@@ -87,6 +93,7 @@ func (e *Env) NewWorkspace(t testing.TB) *Workspace {
 		Domain:    id + ".e2e.test",
 		FromEmail: "news@" + id + ".e2e.test",
 		FromName:  "E2E News",
+		scoped:    scoped,
 	}
 	t.Cleanup(func() {
 		// Delete only this test's messages: other tests share the inbox.
@@ -227,3 +234,46 @@ func (w *Workspace) waitForEmail(recipient, subject string) Message {
 
 // String names the Workspace in failures.
 func (w *Workspace) String() string { return fmt.Sprintf("e2e workspace %s", w.Domain) }
+
+// AddOwner makes a second owner of the Workspace and returns the Membership ids of all
+// its owners (the founder first).
+func (w *Workspace) AddOwner() []int64 {
+	w.t.Helper()
+	ctx := w.t.Context()
+	id := uniq()
+	user, err := w.env.accounts.CreateUser(ctx, "E2E co-owner "+id, "co-owner-"+id+"@e2e.test", "!")
+	require.NoError(w.t, err)
+	_, err = w.scoped.Membership().Create().SetUserID(user.ID).SetRole(membership.RoleOwner).Save(ctx)
+	require.NoError(w.t, err)
+	return w.OwnerMembershipIDs()
+}
+
+// OwnerMembershipIDs lists the Membership ids of the Workspace's owners, ascending.
+func (w *Workspace) OwnerMembershipIDs() []int64 {
+	w.t.Helper()
+	ids, err := w.scoped.Membership().Query().
+		Where(membership.RoleEQ(membership.RoleOwner)).
+		Order(ent.Asc(membership.FieldID)).
+		IDs(w.t.Context())
+	require.NoError(w.t, err)
+	return ids
+}
+
+// DemoteConcurrently demotes each Membership to member, all at once, as an owner would,
+// and returns the error of each attempt.
+func (w *Workspace) DemoteConcurrently(ids ...int64) []error {
+	w.t.Helper()
+	errs := make([]error, len(ids))
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i, id := range ids {
+		wg.Go(func() {
+			<-start
+			_, errs[i] = w.env.accounts.ChangeMembershipRole(w.t.Context(), w.scoped, events.Actor{Kind: events.ActorSystem},
+				membership.RoleOwner, id, membership.RoleMember)
+		})
+	}
+	close(start)
+	wg.Wait()
+	return errs
+}

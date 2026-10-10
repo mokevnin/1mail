@@ -2,12 +2,14 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/i18n"
 )
 
@@ -23,12 +25,6 @@ func membershipResource(m *ent.Membership) siteapi.SiteMembershipResource {
 		Role:      siteapi.SiteMembershipRole(m.Role),
 		CreatedAt: siteapi.Timestamp(m.CreatedAt),
 	}
-}
-
-// canManageMembers is the coarse core gate: owner and admin manage members and
-// invites; member cannot. Fine-grained per-permission RBAC is an EE feature.
-func canManageMembers(role membership.Role) bool {
-	return role == membership.RoleOwner || role == membership.RoleAdmin
 }
 
 // SiteMembershipsList returns the workspace's members. Any member may view them.
@@ -68,7 +64,7 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(callerRole) {
+	if !accounts.CanManageMembers(callerRole) {
 		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -79,52 +75,24 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 		return &v, nil
 	}
 
-	target, err := s.Membership().Query().
-		Where(membership.ID(id)).
-		WithUser().
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	updated, err := h.accounts.ChangeMembershipRole(ctx, s, h.actor(ctx), callerRole, id, membership.Role(req.Role))
+	switch {
+	case ent.IsNotFound(err):
 		v := siteapi.SiteMembershipsUpdateNotFound(problem(http.StatusNotFound, "member not found"))
 		return &v, nil
-	}
-	if err != nil {
+	case errors.Is(err, accounts.ErrOwnerOnly):
+		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "only an owner may grant the owner role or change an owner's role"))
+		return &v, nil
+	case errors.Is(err, accounts.ErrLastOwner):
+		v := siteapi.SiteMembershipsUpdateUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"cannot demote the last owner",
+			map[string][]string{"role": {i18n.T("errors.keep_one_owner", nil)}},
+		))
+		return &v, nil
+	case err != nil:
 		return nil, err
 	}
-
-	desired := membership.Role(req.Role)
-	// Only an owner may grant/transfer the owner role.
-	if desired == membership.RoleOwner && callerRole != membership.RoleOwner {
-		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "only an owner may grant the owner role"))
-		return &v, nil
-	}
-	// Only an owner may modify another owner (an admin cannot demote a co-owner).
-	if target.Role == membership.RoleOwner && callerRole != membership.RoleOwner {
-		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "only an owner may change an owner's role"))
-		return &v, nil
-	}
-	// The last owner cannot be demoted, or the workspace would be ownerless.
-	if target.Role == membership.RoleOwner && desired != membership.RoleOwner {
-		owners, err := s.Membership().Query().
-			Where(membership.RoleEQ(membership.RoleOwner)).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if owners <= 1 {
-			v := siteapi.SiteMembershipsUpdateUnprocessableEntity(problemWithErrors(
-				http.StatusUnprocessableEntity,
-				"cannot demote the last owner",
-				map[string][]string{"role": {i18n.T("errors.keep_one_owner", nil)}},
-			))
-			return &v, nil
-		}
-	}
-
-	updated, err := h.accounts.ChangeMembershipRole(ctx, s, h.actor(ctx), target, target.Edges.User.Name, desired)
-	if err != nil {
-		return nil, err
-	}
-	updated.Edges.User = target.Edges.User
 	resource := membershipResource(updated)
 	return &resource, nil
 }
@@ -140,7 +108,7 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(callerRole) {
+	if !accounts.CanManageMembers(callerRole) {
 		v := siteapi.SiteMembershipsDeleteForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -151,39 +119,22 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 		return &v, nil
 	}
 
-	target, err := s.Membership().Get(ctx, id)
-	if ent.IsNotFound(err) {
+	err = h.accounts.RemoveMembership(ctx, s, callerRole, id)
+	switch {
+	case ent.IsNotFound(err):
 		v := siteapi.SiteMembershipsDeleteNotFound(problem(http.StatusNotFound, "member not found"))
 		return &v, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	// Only an owner may remove another owner (an admin cannot remove a co-owner).
-	if target.Role == membership.RoleOwner && callerRole != membership.RoleOwner {
+	case errors.Is(err, accounts.ErrOwnerOnly):
 		v := siteapi.SiteMembershipsDeleteForbidden(problem(http.StatusForbidden, "only an owner may remove an owner"))
 		return &v, nil
-	}
-
-	if target.Role == membership.RoleOwner {
-		owners, err := s.Membership().Query().
-			Where(membership.RoleEQ(membership.RoleOwner)).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if owners <= 1 {
-			v := siteapi.SiteMembershipsDeleteUnprocessableEntity(problemWithErrors(
-				http.StatusUnprocessableEntity,
-				"cannot remove the last owner",
-				map[string][]string{"member": {i18n.T("errors.keep_one_owner", nil)}},
-			))
-			return &v, nil
-		}
-	}
-
-	if err := s.Membership().DeleteOneID(target.ID).Exec(ctx); err != nil {
+	case errors.Is(err, accounts.ErrLastOwner):
+		v := siteapi.SiteMembershipsDeleteUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"cannot remove the last owner",
+			map[string][]string{"member": {i18n.T("errors.keep_one_owner", nil)}},
+		))
+		return &v, nil
+	case err != nil:
 		return nil, err
 	}
 	return &siteapi.SiteMembershipsDeleteNoContent{}, nil
