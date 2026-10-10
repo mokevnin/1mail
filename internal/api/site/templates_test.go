@@ -68,3 +68,26 @@ func TestSiteBroadcastsTestSendWithoutIntegration(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsTestSendUnprocessableEntity{}, out)
 }
+
+// Mapping only: the blank-name rule itself is tested at the templates module.
+func TestSiteTemplatesMapABlankNameTo422(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+
+	upd, err := c.SiteTemplatesUpdate(ctx, &siteapi.SiteUpdateEmailTemplateInput{Name: siteapi.NewOptString("")},
+		siteapi.SiteTemplatesUpdateParams{Slug: fixtures.AcmeSlug, ID: idStr(fixtures.TemplateWelcomeID)})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTemplatesUpdateUnprocessableEntity{}, upd)
+	assert.Equal(t, fixtures.TemplateWelcomeName, env.DB.EmailTemplate.GetX(ctx, fixtures.TemplateWelcomeID).Name)
+}
+
+func TestSiteTemplatesCreateMapsABlankNameTo422(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+
+	created, err := c.SiteTemplatesCreate(context.Background(), &siteapi.SiteCreateEmailTemplateInput{Name: ""},
+		siteapi.SiteTemplatesCreateParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTemplatesCreateUnprocessableEntity{}, created)
+}
