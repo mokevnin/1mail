@@ -71,6 +71,15 @@ func main() {
 		return
 	}
 
+	// `server user reset-second-factor <email>` resets a User's Second factor for an
+	// instance with nobody to do it in the product (ADR 0020).
+	if len(os.Args) > 1 && os.Args[1] == "user" {
+		if err := runUserCommand(env, os.Args[2:]); err != nil {
+			fatal("user", err)
+		}
+		return
+	}
+
 	cfg, err := config.Load(env)
 	if err != nil {
 		fatal("load config", err)
@@ -198,4 +207,16 @@ func runWorkspaceCommand(env string, args []string) error {
 	defer cancel()
 	defer func() { _ = a.Shutdown(ctx) }()
 	return runWorkspace(ctx, a, args, os.Stdout)
+}
+
+// runUserCommand boots the minimal operator app and runs one user command against it.
+func runUserCommand(env string, args []string) error {
+	a, err := app.NewOperator(env)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	defer func() { _ = a.Shutdown(ctx) }()
+	return runUser(ctx, a, args, os.Stdout)
 }

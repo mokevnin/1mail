@@ -2,13 +2,16 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 )
 
 // membershipResource projects a Membership (with its User edge loaded) into the
@@ -22,6 +25,8 @@ func membershipResource(m *ent.Membership) siteapi.SiteMembershipResource {
 		Name:      u.Name,
 		Role:      siteapi.SiteMembershipRole(m.Role),
 		CreatedAt: siteapi.Timestamp(m.CreatedAt),
+
+		SecondFactorEnabled: secondfactor.Active(u),
 	}
 }
 
@@ -187,4 +192,64 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 		return nil, err
 	}
 	return &siteapi.SiteMembershipsDeleteNoContent{}, nil
+}
+
+// SiteMembershipsResetSecondFactor resets a member's Second factor (ADR 0020):
+// owner/admin only, owner-only for an owner's. It ends every session of the member
+// and records `user.second_factor_reset` in this Workspace; the acting session is
+// someone else's, so nothing is reissued. A member resets nobody, and nobody resets
+// their own here (disabling takes a password and a code).
+func (h *Handlers) SiteMembershipsResetSecondFactor(ctx context.Context, params siteapi.SiteMembershipsResetSecondFactorParams) (siteapi.SiteMembershipsResetSecondFactorRes, error) {
+	s, callerRole, err := h.scopedWithRoleFor(ctx, params.Slug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteMembershipsResetSecondFactorNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !canManageMembers(callerRole) {
+		v := siteapi.SiteMembershipsResetSecondFactorForbidden(problem(http.StatusForbidden, "insufficient role"))
+		return &v, nil
+	}
+
+	id, err := strconv.ParseInt(string(params.ID), 10, 64)
+	if err != nil {
+		v := siteapi.SiteMembershipsResetSecondFactorNotFound(problem(http.StatusNotFound, "member not found"))
+		return &v, nil
+	}
+	target, err := s.Membership().Get(ctx, id)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteMembershipsResetSecondFactorNotFound(problem(http.StatusNotFound, "member not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if target.Role == membership.RoleOwner && callerRole != membership.RoleOwner {
+		v := siteapi.SiteMembershipsResetSecondFactorForbidden(problem(http.StatusForbidden, "only an owner may reset an owner's second factor"))
+		return &v, nil
+	}
+	if a := auth.GetSiteAuth(ctx); a != nil && a.UserID == target.UserID {
+		v := siteapi.SiteMembershipsResetSecondFactorUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"cannot reset your own second factor",
+			map[string][]string{"member": {i18n.T("errors.second_factor_reset_self", nil)}},
+		))
+		return &v, nil
+	}
+
+	err = h.secondFactor.Reset(ctx, target.UserID, h.actor(ctx), s.WorkspaceID())
+	if errors.Is(err, secondfactor.ErrNotActive) {
+		v := siteapi.SiteMembershipsResetSecondFactorUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"the member has no second factor",
+			map[string][]string{"member": {i18n.T("errors.second_factor_not_active", nil)}},
+		))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &siteapi.SiteMembershipsResetSecondFactorNoContent{}, nil
 }

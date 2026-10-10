@@ -448,6 +448,17 @@ func (UnimplementedHandler) SiteMembershipsList(ctx context.Context, params Site
 	return r, ht.ErrNotImplemented
 }
 
+// SiteMembershipsResetSecondFactor implements SiteMemberships_resetSecondFactor operation.
+//
+// Reset the member's Second factor (owner/admin only; owner-only for an owner): clears the factor and
+// its Recovery codes and ends every session of theirs. The acting session is untouched. 422 when the
+// member has no Second factor or is the caller (who disables their own with a password and a code).
+//
+// POST /workspaces/{slug}/memberships/{id}/reset-second-factor
+func (UnimplementedHandler) SiteMembershipsResetSecondFactor(ctx context.Context, params SiteMembershipsResetSecondFactorParams) (r SiteMembershipsResetSecondFactorRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteMembershipsUpdate implements SiteMemberships_update operation.
 //
 // Change a member's role (owner/admin only; owner-only to grant owner).

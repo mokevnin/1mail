@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -361,6 +362,38 @@ func TestSuspendAndUnsuspendRejectBadInput(t *testing.T) {
 	changed, err := a.SuspendWorkspace(ctx, "app-suspend-input-test", "", "reason")
 	assert.False(t, changed)
 	assert.ErrorContains(t, err, "an actor and a reason are required")
+}
+
+func TestResetSecondFactorByEmail(t *testing.T) {
+	baseline(t)
+	a, err := NewOperator("test")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = a.Shutdown(context.Background()) })
+	ownedWorkspace(t, a, "app-2fa-reset-test", "owner@app-2fa-reset.test")
+	ctx := context.Background()
+	client, err := invokeEnt(a)
+	require.NoError(t, err)
+	owner := func() *ent.User {
+		return client.User.Query().Where(user.Email("owner@app-2fa-reset.test")).OnlyX(ctx)
+	}
+	before := owner()
+	client.User.UpdateOneID(before.ID).
+		SetSecondFactorSecretEncrypted("sealed").SetSecondFactorConfirmedAt(time.Now()).ExecX(ctx)
+
+	changed, err := a.ResetSecondFactor(ctx, "owner@app-2fa-reset.test")
+	require.NoError(t, err)
+	assert.True(t, changed)
+	after := owner()
+	assert.Nil(t, after.SecondFactorConfirmedAt)
+	assert.Empty(t, after.SecondFactorSecretEncrypted)
+	assert.Greater(t, after.SessionEpoch, before.SessionEpoch, "every session ends")
+
+	changed, err = a.ResetSecondFactor(ctx, "owner@app-2fa-reset.test")
+	require.NoError(t, err)
+	assert.False(t, changed, "no second factor: nothing changes")
+
+	_, err = a.ResetSecondFactor(ctx, "nobody@app-2fa-reset.test")
+	assert.ErrorContains(t, err, `user "nobody@app-2fa-reset.test"`)
 }
 
 func TestBuildSystemSender(t *testing.T) {

@@ -101,7 +101,8 @@ func TestResetClearsTheFactorAndEndsEverySession(t *testing.T) {
 	ctx := t.Context()
 	session := env.SiteToken(t, fixtures.SecondFactorSamEmail, nil)
 
-	require.NoError(t, env.SecondFactor.Reset(ctx, fixtures.SecondFactorSamID))
+	jane := events.Actor{Kind: events.ActorUser, ID: "2", Name: "Jane"}
+	require.NoError(t, env.SecondFactor.Reset(ctx, fixtures.SecondFactorSamID, jane, fixtures.GlobexID))
 
 	st, err := env.SecondFactor.Status(ctx, fixtures.SecondFactorSamID)
 	require.NoError(t, err)
@@ -114,4 +115,52 @@ func TestResetClearsTheFactorAndEndsEverySession(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "JWT", Value: session})
 	env.Server.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestResetIsAuditedInTheActingWorkspaceOnly(t *testing.T) {
+	env, _ := setup(t)
+	ctx := t.Context()
+	jane := events.Actor{Kind: events.ActorUser, ID: "2", Name: "Jane"}
+
+	require.NoError(t, env.SecondFactor.Reset(ctx, fixtures.SecondFactorSamID, jane, fixtures.GlobexID))
+
+	env.DeliverToEE(t)
+	got, err := env.DB.AuditEntry.Query().Where(auditentry.Action(events.ActionUserSecondFactorReset)).All(ctx)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, int64(fixtures.GlobexID), got[0].WorkspaceID)
+	assert.Equal(t, "Jane", *got[0].ActorName)
+	assert.Equal(t, "user", got[0].TargetType)
+	assert.Equal(t, "Sam", *got[0].TargetName)
+}
+
+func TestResetWithoutASecondFactorChangesNothing(t *testing.T) {
+	env, _ := setup(t)
+	ctx := t.Context()
+	before, err := env.DB.User.Get(ctx, fixtures.OwnerJohnID)
+	require.NoError(t, err)
+
+	err = env.SecondFactor.Reset(ctx, fixtures.OwnerJohnID, events.Actor{Kind: events.ActorUser, ID: "2"}, fixtures.AcmeID)
+	require.ErrorIs(t, err, secondfactor.ErrNotActive)
+
+	after, err := env.DB.User.Get(ctx, fixtures.OwnerJohnID)
+	require.NoError(t, err)
+	assert.Equal(t, before.SessionEpoch, after.SessionEpoch, "no session ends")
+}
+
+func TestOperatorResetIsAuditedInEveryWorkspaceOfTheUser(t *testing.T) {
+	env, _ := setup(t)
+	ctx := t.Context()
+
+	require.NoError(t, env.SecondFactor.ResetByOperator(ctx, fixtures.SecondFactorSamID, "cli"))
+
+	st, err := env.SecondFactor.Status(ctx, fixtures.SecondFactorSamID)
+	require.NoError(t, err)
+	assert.False(t, st.Enabled)
+	env.DeliverToEE(t)
+	got, err := env.DB.AuditEntry.Query().Where(auditentry.Action(events.ActionUserSecondFactorReset)).All(ctx)
+	require.NoError(t, err)
+	require.Len(t, got, 1, "Sam belongs to Globex only")
+	assert.Equal(t, int64(fixtures.GlobexID), got[0].WorkspaceID)
+	assert.Equal(t, events.ActorOperator, got[0].ActorKind)
 }

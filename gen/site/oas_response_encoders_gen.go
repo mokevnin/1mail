@@ -2480,6 +2480,54 @@ func encodeSiteMembershipsListResponse(response SiteMembershipsListRes, w http.R
 	}
 }
 
+func encodeSiteMembershipsResetSecondFactorResponse(response SiteMembershipsResetSecondFactorRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteMembershipsResetSecondFactorNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *SiteMembershipsResetSecondFactorForbidden:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(403)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteMembershipsResetSecondFactorNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteMembershipsResetSecondFactorUnprocessableEntity:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(422)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeSiteMembershipsUpdateResponse(response SiteMembershipsUpdateRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SiteMembershipResource:

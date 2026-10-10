@@ -53,6 +53,7 @@ const (
 	SiteInvitationsListOperation                     OperationName = "SiteInvitationsList"
 	SiteMembershipsDeleteOperation                   OperationName = "SiteMembershipsDelete"
 	SiteMembershipsListOperation                     OperationName = "SiteMembershipsList"
+	SiteMembershipsResetSecondFactorOperation        OperationName = "SiteMembershipsResetSecondFactor"
 	SiteMembershipsUpdateOperation                   OperationName = "SiteMembershipsUpdate"
 	SiteOAuthDecideOperation                         OperationName = "SiteOAuthDecide"
 	SiteOAuthDescribeOperation                       OperationName = "SiteOAuthDescribe"
