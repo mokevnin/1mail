@@ -26,6 +26,7 @@ import (
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/tags"
+	"github.com/mokevnin/1mail/internal/templates"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
@@ -78,6 +79,7 @@ type Handlers struct {
 	contacts       *contacts.Module
 	erasure        *erasure.Module
 	tags           *tags.Module
+	templates      *templates.Module
 	automations    *automations.Module
 	oauth          *oauthserver.Service
 	audit          AuditLog
@@ -116,6 +118,7 @@ type Deps struct {
 	Contacts       *contacts.Module
 	Erasure        *erasure.Module
 	Tags           *tags.Module
+	Templates      *templates.Module
 	Automations    *automations.Module
 	Broadcasts     *broadcasts.Module
 	Welcome        WelcomeEnqueuer
@@ -132,7 +135,7 @@ type Deps struct {
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
 		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound,
-		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
+		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags, templates: d.Templates,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth, audit: d.Audit, analytics: d.Analytics,

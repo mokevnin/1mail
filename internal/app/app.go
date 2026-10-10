@@ -49,6 +49,7 @@ import (
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/telemetry"
+	"github.com/mokevnin/1mail/internal/templates"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
 	"go.opentelemetry.io/otel/metric"
@@ -727,6 +728,9 @@ func register(injector do.Injector, env string, o options) {
 		return sendingdomains.New(bus.Bus, cipher, jc.Client), nil
 	})
 
+	do.Provide(injector, func(do.Injector) (*templates.Module, error) {
+		return templates.New(), nil
+	})
 	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
 		return tags.New(), nil
 	})
@@ -876,6 +880,10 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	tpl, err := do.Invoke[*templates.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	tg, err := do.Invoke[*tags.Module](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
@@ -906,7 +914,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	}
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Templates: tpl, Automations: auto,
 		Broadcasts: bc, Reputation: rep, Integrations: integ, SendingDomains: sd, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
 	}, nil
 }
@@ -950,6 +958,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	er, err := do.Invoke[*erasure.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	tpl, err := do.Invoke[*templates.Module](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -1002,7 +1014,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	}
 	return apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Templates: tpl, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit, Analytics: an,
 	}, nil

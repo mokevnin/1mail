@@ -2,14 +2,16 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/templates"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) SiteTemplatesList(ctx context.Context, params siteapi.SiteTemplatesListParams) (siteapi.SiteTemplatesListRes, error) {
@@ -22,38 +24,19 @@ func (h *Handlers) SiteTemplatesList(ctx context.Context, params siteapi.SiteTem
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := scoped.EmailTemplate().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items, err := q.Order(ent.Desc(emailtemplate.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
+	page, err := h.templates.List(ctx, scoped, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 
-	resources := make([]siteapi.SiteEmailTemplateResource, len(items))
-	for i, tpl := range items {
-		resources[i] = mapper.EmailTemplateToResource(tpl)
-	}
 	return &siteapi.SiteTemplatesListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(t *ent.EmailTemplate, _ int) siteapi.SiteEmailTemplateResource {
+			return mapper.EmailTemplateToResource(t)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 
@@ -67,14 +50,15 @@ func (h *Handlers) SiteTemplatesCreate(ctx context.Context, req *siteapi.SiteCre
 		return nil, err
 	}
 
-	q := scoped.EmailTemplate().Create().SetName(req.Name)
-	if v, ok := req.Subject.Get(); ok {
-		q = q.SetSubject(v)
+	tpl, err := h.templates.Create(ctx, scoped, templates.CreateInput{
+		Name:    req.Name,
+		Subject: convert.StringPtr(req.Subject),
+		Body:    convert.StringPtr(req.Body),
+	})
+	if errors.Is(err, templates.ErrBlankName) {
+		v := siteapi.SiteTemplatesCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
+		return &v, nil
 	}
-	if v, ok := req.Body.Get(); ok {
-		q = q.SetBody(v)
-	}
-	tpl, err := q.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +81,8 @@ func (h *Handlers) SiteTemplatesGet(ctx context.Context, params siteapi.SiteTemp
 		v := siteapi.SiteTemplatesGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	tpl, err := scoped.EmailTemplate().Get(ctx, id)
-	if ent.IsNotFound(err) {
+	tpl, err := h.templates.Get(ctx, scoped, id)
+	if errors.Is(err, templates.ErrNotFound) {
 		v := siteapi.SiteTemplatesGetNotFound(problem(http.StatusNotFound, "template not found"))
 		return &v, nil
 	}
@@ -125,13 +109,17 @@ func (h *Handlers) SiteTemplatesUpdate(ctx context.Context, req *siteapi.SiteUpd
 		return &v, nil
 	}
 
-	q := scoped.EmailTemplate().UpdateOneID(id).
-		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableSubject(convert.StringPtr(req.Subject)).
-		SetNillableBody(convert.StringPtr(req.Body))
-	tpl, err := q.Save(ctx)
-	if ent.IsNotFound(err) {
+	tpl, err := h.templates.Update(ctx, scoped, id, templates.UpdateInput{
+		Name:    convert.StringPtr(req.Name),
+		Subject: convert.StringPtr(req.Subject),
+		Body:    convert.StringPtr(req.Body),
+	})
+	if errors.Is(err, templates.ErrNotFound) {
 		v := siteapi.SiteTemplatesUpdateNotFound(problem(http.StatusNotFound, "template not found"))
+		return &v, nil
+	}
+	if errors.Is(err, templates.ErrBlankName) {
+		v := siteapi.SiteTemplatesUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
 		return &v, nil
 	}
 	if err != nil {
@@ -156,8 +144,8 @@ func (h *Handlers) SiteTemplatesDelete(ctx context.Context, params siteapi.SiteT
 		v := siteapi.SiteTemplatesDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = scoped.EmailTemplate().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.templates.Delete(ctx, scoped, id)
+	if errors.Is(err, templates.ErrNotFound) {
 		v := siteapi.SiteTemplatesDeleteNotFound(problem(http.StatusNotFound, "template not found"))
 		return &v, nil
 	}
