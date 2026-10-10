@@ -30,11 +30,11 @@ func NewMetricsServer(addr string) *MetricsServer {
 }
 
 // Listen binds the configured address.
-func (m *MetricsServer) Listen() error {
+func (m *MetricsServer) Listen(ctx context.Context) error {
 	if m == nil {
 		return nil
 	}
-	ln, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", m.srv.Addr)
+	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", m.srv.Addr)
 	if err != nil {
 		return fmt.Errorf("bind metrics listener %s: %w", m.srv.Addr, err)
 	}

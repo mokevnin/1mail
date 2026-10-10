@@ -17,9 +17,9 @@ func TestBroadcastToImportedContactsIsDelivered(t *testing.T) {
 	w.ImportContacts(to)
 	w.SendBroadcast(Broadcast{
 		Subject: "Hello from e2e",
-		Body:    `<mjml><mj-body><mj-section><mj-column><mj-text>Welcome aboard, friend</mj-text></mj-column></mj-section></mj-body></mjml>`,
+		Body:    MJML("Welcome aboard, friend"),
 	})
-	msg := w.WaitForEmail(to)
+	msg := w.Inbox.Wait(Match{To: to})
 
 	assert.Equal(t, w.FromEmail, msg.From.Address)
 	assert.Equal(t, w.FromName, msg.From.Name)

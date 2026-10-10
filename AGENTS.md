@@ -9,6 +9,11 @@ Go backend + React/Vite frontend in a single repo. The data model is workspace-s
 (multi-tenant): contacts, events, api tokens, and tracking entities all belong to a
 `workspace`.
 
+**The project is greenfield.** There are no production users and no legacy contracts to
+preserve: no backward compatibility, no compat shims, deprecation paths or fallbacks.
+Rewrite whatever the cleanest design needs: the TypeSpec contract, ent schema, tests and
+every caller (regenerate afterwards), rather than layering the new design over the old.
+
 ## Codegen pipeline (read this first)
 
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
@@ -83,7 +88,11 @@ mise run test -- ./internal/api/site -run TestSiteContactsRequireAuth
 End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
 `mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
 app in-process. Scenarios are domain steps on `e2e.Workspace` (`env.NewWorkspace(t).Ready()`,
-`ImportContacts`, `SendBroadcast`, `WaitForEmail`).
+`ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
+(`workspace.go`, `integration.go`, `contacts.go`, `broadcast.go`, `automation.go`, `consent.go`); `_test.go`
+files hold only scenarios, and bodies are authored with `e2e.MJML(text)`. Mail is observed only through
+the Workspace's `Inbox`: one wait (`w.Inbox.Wait(e2e.Match{To, Subject})`) and one absence check
+(`w.Inbox.RequireNone`); it deletes every message it saw on cleanup.
 
 Frontend tests: `mise run test:watch`.
 

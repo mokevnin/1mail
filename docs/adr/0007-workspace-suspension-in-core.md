@@ -36,3 +36,5 @@ a reversible, source-level hold, not a per-recipient skip: a Broadcast in flight
 remaining recipients still pending and resumes on unsuspend, Automation Enrollments are held, and
 Transactional requests get a 4xx. Billing hold (ADR 0009) is a second freeze reason answered by
 the same question, never merged with this one.
+
+See [[0026-operator-console-and-abuse-detector]] for the Operator console and the detector.

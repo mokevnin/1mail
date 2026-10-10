@@ -399,6 +399,22 @@ _reputation_ freeze; a Billing hold is a separate money-driven freeze on the sam
 chokepoint — the two are independent reasons, never merged.
 _Avoid_: Ban, lockout, disable, quota (suspension is not a billing state — see Billing hold)
 
+**Operator console**:
+The Operator's own web surface (a fourth API surface beside `/site`, `/api`, `/collect`) for
+acting across Workspaces. It shows Workspace **metadata only** (identity, suspension state,
+deliverability rates, send volume, Audit log) — never Contacts, content, or Events — and offers
+suspend and unsuspend. Impersonation is out of scope. A SaaS/platform concept, absent from a
+plain self-hosted install.
+_Avoid_: Admin panel, back office
+
+**Abuse detector**:
+The automated actor (`system`) that watches each Workspace's **Complaint rate** and **Bounce
+rate** and freezes sending through **Workspace suspension** when they cross a limit, above a
+minimum send volume. A lower limit only **warns** the owner and freezes nothing. It counts only
+events after the last time a suspension was cleared, never reverses a suspension itself (only an
+Operator does), and skips a Workspace an Operator has exempted. A SaaS/platform concept.
+_Avoid_: Spam filter, auto-ban
+
 **Webhook endpoint** (outbound):
 A workspace-scoped HTTP destination that **1mail calls** when domain events occur — subscribes
 to event types (empty = all) and signs each delivery (HMAC). Outbound only; the opposite of an
