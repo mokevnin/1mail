@@ -113,6 +113,11 @@ Daemons:
 | db       | `127.0.0.1:15432` (`mise env`) | mise `postgres` preset, dev DB `1mail_development`          |
 | mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                |
 
+> These are the primary checkout's ports. A linked worktree gets offset ports and its own origin
+> (`https://<dir>.1mail.localhost:<port>`, printed by `mise env`), so stacks never collide. With
+> many worktrees, share one Postgres between them (`MISE_ENV=shared`, see AGENTS.md, "Dev
+> environment").
+>
 > The backend runs the real Go server under [air](https://github.com/air-verse/air) for
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
 > self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.
