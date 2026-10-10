@@ -4,8 +4,16 @@ The hosted offering (Sphericon, `getsphericon.com`) is described entirely in Ter
 `infra/`: nothing is created by hand in the DigitalOcean console or through an MCP server. One
 root module, one environment (production; it is a test deployment that is destroyed and recreated
 freely, so there is no deletion protection and no standby node). State lives in a private DO
-Spaces bucket through the S3 backend; the bucket is the single manual bootstrap step (`doctl`),
-because the backend cannot create its own storage.
+Spaces bucket through the S3 backend, created by `mise run infra:bootstrap` (the backend cannot
+create its own storage, and `doctl` cannot create buckets, so the AWS CLI does it over the S3 API).
+
+`doctl` is the single credential source. Its token (`doctl auth token`) is the DigitalOcean
+provider's `DIGITALOCEAN_TOKEN`, and a DO Secrets Manager container holds everything else: the
+Spaces key (shown only at creation, so it goes from `doctl` straight into the container), the
+generated app secrets (`ENCRYPTION_KEY`, `JWT_SECRET`, `BOOTSTRAP_TOKEN`) and the keys entered once
+(AWS, SES, GHCR, `LICENSE_KEY`). `mise run infra` reads the container into the process environment
+and runs Terraform: no secret lives in a file, in argv or in the shell history. The bootstrap
+never touches an existing container, so `ENCRYPTION_KEY` is never rotated.
 
 The runtime is one App Platform **service** plus one `PRE_DEPLOY` **job** running `sphericon migrate`
 (`AUTO_MIGRATE` stays unset). river and watermill run inside the server process, so there is no
@@ -42,7 +50,8 @@ SES identity and DMARC.
   relies on LISTEN/NOTIFY.
 - Secrets (`JWT_SECRET`, `ENCRYPTION_KEY`, `LICENSE_KEY`, SES keys, `BOOTSTRAP_TOKEN`) enter as
   sensitive variables and therefore appear in state, which is why the bucket is private.
-  `ENCRYPTION_KEY` is generated once outside Terraform: losing it makes stored secrets unreadable.
+  `ENCRYPTION_KEY` is generated once outside Terraform (by the bootstrap, into the Secrets Manager
+  container): losing it makes stored secrets unreadable.
 - Spaces may not support state locking; with a single operator that is accepted.
 - **Open risk: customer CNAME tracking domains.** Letting customers point their own subdomain at
   the tracker needs per-tenant domains and certificates. App Platform's per-app domain limit and

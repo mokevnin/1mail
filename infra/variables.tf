@@ -150,3 +150,15 @@ variable "ses_secret_access_key" {
   type        = string
   sensitive   = true
 }
+
+variable "aws_access_key_id" {
+  description = "Access key of the AWS identity Terraform itself uses for the SES resources (identity, DKIM, MAIL FROM). Passed to the aws provider explicitly because AWS_ACCESS_KEY_ID carries the Spaces key for the state backend."
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "Secret of the AWS identity above."
+  type        = string
+  sensitive   = true
+}

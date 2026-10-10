@@ -1,5 +1,5 @@
-# Copy to production.tfvars (gitignored) and adjust. Secrets are NOT set here: export them as
-# TF_VAR_* environment variables (see README.md).
+# Copy to production.tfvars (gitignored) and adjust. Secrets are NOT set here: `mise run infra`
+# reads them from the doctl Secrets Manager container (see README.md).
 image_registry    = "mokevnin"
 image_repository  = "sphericon"
 image_tag         = "v0.1.0"

@@ -1,6 +1,0 @@
-# Copy to backend.hcl (gitignored, mode 600) and fill in. The Spaces key lives here, not in the
-# AWS_* variables: the aws provider (SES) reads those.
-bucket     = "<your-state-bucket>"
-key        = "production/terraform.tfstate"
-access_key = "<Spaces access key of the bucket-only key>"
-secret_key = "<Spaces secret key>"

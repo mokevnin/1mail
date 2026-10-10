@@ -309,6 +309,7 @@ depends = [
   "check:env",
   "check:helm",
   "check:infra",
+  "check:shell",
 ]
 
 ["check:fe"]
@@ -410,6 +411,10 @@ run = [
   "terraform -chdir=infra validate",
 ]
 
+["check:shell"]
+description = "shellcheck the bash scripts under mise/scripts"
+run = "shellcheck -x --source-path=SCRIPTDIR mise/scripts/*.sh"
+
 ["check:security"]
 description = "Secrets and workflow linters"
 run = ["gitleaks git --no-banner --redact", "jactionlint", "zizmor --no-progress .github"]
@@ -461,3 +466,17 @@ description = "Lines-of-code report (scc) over hand-written files only"
 run = '''
 git ls-files | git check-attr --stdin linguist-generated | awk -F': ' '$3!="true"{print $1}' | xargs scc
 '''
+
+# --- hosted deployment (infra/, ADR 0028) ---------------------------------------------------
+
+["infra:bootstrap"]
+description = "Once, idempotent: create the doctl Secrets Manager container (Spaces key, ENCRYPTION_KEY, JWT_SECRET, BOOTSTRAP_TOKEN) and the private state bucket; never rotates an existing container"
+run = "bash mise/scripts/infra-bootstrap.sh"
+
+["infra:secret"]
+description = "Store one value in the infra secret container (prompted without echo): mise run infra:secret LICENSE_KEY"
+run = "bash mise/scripts/infra-secret.sh"
+
+[infra]
+description = "Terraform in infra/ with credentials from doctl and its Secrets Manager: mise run infra -- plan|apply|destroy|init|output"
+run = "bash mise/scripts/infra.sh"
