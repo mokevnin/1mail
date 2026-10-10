@@ -206,6 +206,14 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 		if _, unprojected := ev.(Unprojected); unprojected {
 			name = env.Name
 		}
+		data := env.Data
+		if entry, ok := ev.(*AuditEntry); ok {
+			// The staff identity never reaches a customer's endpoint (ADR 0022).
+			entry.MaskOperator()
+			if data, err = json.Marshal(entry); err != nil {
+				return fmt.Errorf("marshal audit entry: %w", err)
+			}
+		}
 		body, err := json.Marshal(webhookPayload{
 			ID:          env.ID,
 			Type:        name,
@@ -213,7 +221,7 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 			WorkspaceID: env.WorkspaceID,
 			Subject:     p.Subject,
 			ContactID:   p.ContactID,
-			Data:        env.Data,
+			Data:        data,
 		})
 		if err != nil {
 			return fmt.Errorf("marshal webhook payload: %w", err)

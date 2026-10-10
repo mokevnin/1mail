@@ -103,6 +103,15 @@ func (*AuditEntry) EventVersion() int  { return 1 }
 func (e *AuditEntry) Workspace() int64 { return e.WorkspaceID }
 func (*AuditEntry) Unprojected()       {}
 
+// MaskOperator replaces an Operator actor with the customer-facing label and drops the
+// staff id, for every surface that leaves the platform (ADR 0022). The stored entry
+// keeps the real identity.
+func (e *AuditEntry) MaskOperator() {
+	if e.Actor.Kind == ActorOperator {
+		e.Actor = Actor{Kind: ActorOperator, Name: OperatorLabel}
+	}
+}
+
 // Project is never persisted (AuditEntry is Unprojected); it only names the action.
 func (e *AuditEntry) Project() Projection { return Projection{Action: e.Action} }
 
