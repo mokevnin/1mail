@@ -43,6 +43,26 @@ func Consumer(client *ent.Client, lic *licensekey.License) events.Consumer {
 	}
 }
 
+// Forwarder wraps the webhook dispatcher so `audit.entry` reaches Webhook endpoints
+// only under a license that includes the audit feature (ADR 0022); without one nothing
+// is delivered, whatever an endpoint's free-form event types list. Customer events pass
+// through untouched.
+func Forwarder(next events.WebhookDispatcher, lic *licensekey.License) events.WebhookDispatcher {
+	return forwarder{next: next, lic: lic}
+}
+
+type forwarder struct {
+	next events.WebhookDispatcher
+	lic  *licensekey.License
+}
+
+func (f forwarder) Dispatch(ctx context.Context, s *ent.Scoped, eventName, deliveryID string, body []byte) error {
+	if eventName == events.NameAuditEntry && !f.lic.Has(licensekey.FeatureAudit) {
+		return nil
+	}
+	return f.next.Dispatch(ctx, s, eventName, deliveryID, body)
+}
+
 func persist(ctx context.Context, client *ent.Client, env events.Envelope, e *events.AuditEntry) error {
 	create := client.Scoped(env.WorkspaceID).AuditEntry().Create().
 		SetEntryKey(env.ID).

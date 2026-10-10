@@ -35,6 +35,33 @@ type Actor struct {
 	Name string `json:"name,omitempty"`
 }
 
+// Actions recorded through the explicit seam (ADR 0022): raw-client packages and
+// actions that are not a row write. A test drives every one of them and compares with
+// ExplicitAuditActions, so adding an explicit path means listing it here.
+const (
+	ActionMembershipUpdate   = "membership.update"
+	ActionInvitationCreate   = "invitation.create"
+	ActionInvitationAccept   = "invitation.accept"
+	ActionInvitationRevoke   = "invitation.revoke"
+	ActionUserLogin          = "user.login"
+	ActionUserPasswordChange = "user.password_change"
+	ActionWorkspaceSuspend   = "workspace.suspend"
+	ActionWorkspaceUnsuspend = "workspace.unsuspend"
+)
+
+// ExplicitAuditActions lists every action emitted by an explicit RecordAudit call.
+// Data exports are not here yet: no export exists on this branch.
+var ExplicitAuditActions = []string{
+	ActionMembershipUpdate,
+	ActionInvitationCreate,
+	ActionInvitationAccept,
+	ActionInvitationRevoke,
+	ActionUserLogin,
+	ActionUserPasswordChange,
+	ActionWorkspaceSuspend,
+	ActionWorkspaceUnsuspend,
+}
+
 // Unprojected is an optional DomainEvent capability: an event that is not a
 // data-plane fact. The persist consumer (no Event row), the automation trigger
 // consumer and the webhooks consumer skip it, and an endpoint with an empty

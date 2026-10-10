@@ -92,7 +92,7 @@ func (a *Accounts) ChangeMembershipRole(ctx context.Context, s *ent.Scoped, acto
 		return events.RecordAudit(ctx, pub, &events.AuditEntry{
 			WorkspaceID: s.WorkspaceID(),
 			Actor:       actor,
-			Action:      "membership.update",
+			Action:      events.ActionMembershipUpdate,
 			TargetType:  "membership",
 			TargetID:    strconv.FormatInt(target.ID, 10),
 			TargetName:  name,
@@ -184,21 +184,69 @@ func (a *Accounts) CreateUser(ctx context.Context, name, email, passwordHash str
 }
 
 // UpdateProfile sets the User's name and/or password hash (nil leaves a field
-// unchanged) and returns the stored User.
+// unchanged) and returns the stored User. A password change is recorded as an Audit
+// entry in every Workspace the User belongs to, in the same transaction.
 func (a *Accounts) UpdateProfile(ctx context.Context, id int64, name, passwordHash *string) (*ent.User, error) {
-	upd := a.ent.User.UpdateOneID(id)
-	if name != nil {
-		upd = upd.SetName(*name)
-	}
-	if passwordHash != nil {
-		upd = upd.SetPasswordHash(*passwordHash)
-	}
-	return upd.Save(ctx)
+	var saved *ent.User
+	err := a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		upd := tx.User.UpdateOneID(id)
+		if name != nil {
+			upd = upd.SetName(*name)
+		}
+		if passwordHash != nil {
+			upd = upd.SetPasswordHash(*passwordHash)
+		}
+		u, err := upd.Save(ctx)
+		if err != nil {
+			return err
+		}
+		saved = u
+		if passwordHash == nil {
+			return nil
+		}
+		return recordUserAction(ctx, tx, pub, u, events.ActionUserPasswordChange, map[string]any{"password": "changed"})
+	})
+	return saved, err
 }
 
-// SetPassword replaces the User's password hash.
+// SetPassword replaces the User's password hash (a reset by emailed link) and records
+// the change like UpdateProfile.
 func (a *Accounts) SetPassword(ctx context.Context, id int64, passwordHash string) error {
-	return a.ent.User.UpdateOneID(id).SetPasswordHash(passwordHash).Exec(ctx)
+	_, err := a.UpdateProfile(ctx, id, nil, &passwordHash)
+	return err
+}
+
+// RecordLogin records a successful sign-in of the User as `user.login` in the log of
+// every Workspace they belong to (ADR 0022: a login belongs to a User, not a
+// Workspace, so there is no account-level log).
+func (a *Accounts) RecordLogin(ctx context.Context, u *ent.User) error {
+	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		return recordUserAction(ctx, tx, pub, u, events.ActionUserLogin, nil)
+	})
+}
+
+// recordUserAction publishes one Audit entry per Workspace the User holds a
+// Membership in, and none anywhere else. The User is the actor and the target.
+func recordUserAction(ctx context.Context, tx *ent.Client, pub events.Publisher, u *ent.User, action string, diff map[string]any) error {
+	memberships, err := tx.Membership.Query().Where(membership.UserID(u.ID)).All(ctx)
+	if err != nil {
+		return err
+	}
+	id := strconv.FormatInt(u.ID, 10)
+	for _, m := range memberships {
+		if err := events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: m.WorkspaceID,
+			Actor:       events.Actor{Kind: events.ActorUser, ID: id, Name: u.Name},
+			Action:      action,
+			TargetType:  "user",
+			TargetID:    id,
+			TargetName:  u.Name,
+			Diff:        diff,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // MarkEmailVerified stamps the User's email as verified now.
@@ -233,7 +281,7 @@ func (a *Accounts) PendingInvitation(ctx context.Context, token string) (*ent.In
 // Workspace (a duplicate is not an error) and marks the Invitation accepted.
 func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, name, password string) error {
 	role := membership.Role(inv.Role)
-	return a.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
+	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		u, uerr := tx.User.Query().Where(user.Email(inv.Email)).Only(ctx)
 		if ent.IsNotFound(uerr) {
 			hash, herr := service.HashPassword(password)
@@ -259,6 +307,91 @@ func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, na
 			return merr
 		}
 
-		return ts.Invitation().UpdateOneID(inv.ID).SetAcceptedAt(time.Now()).Exec(ctx)
+		if err := ts.Invitation().UpdateOneID(inv.ID).SetAcceptedAt(time.Now()).Exec(ctx); err != nil {
+			return err
+		}
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: inv.WorkspaceID,
+			Actor:       events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(u.ID, 10), Name: u.Name},
+			Action:      events.ActionInvitationAccept,
+			TargetType:  "invitation",
+			TargetID:    strconv.FormatInt(inv.ID, 10),
+			TargetName:  inv.Email,
+			Diff:        map[string]any{"role": map[string]any{"to": string(inv.Role)}},
+		})
 	})
+}
+
+// InviteInput is a new (or reissued) Invitation.
+type InviteInput struct {
+	Email     string
+	Role      invitation.Role
+	TokenHash string
+	ExpiresAt time.Time
+	InvitedBy int64
+}
+
+// Invite creates the Invitation for an email, or reissues the pending one (token,
+// expiry, role; a prior acceptance is cleared), and records `invitation.create` in
+// the same transaction. The token itself is never logged.
+func (a *Accounts) Invite(ctx context.Context, s *ent.Scoped, actor events.Actor, in InviteInput) (*ent.Invitation, error) {
+	var inv *ent.Invitation
+	err := a.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		existing, err := ts.Invitation().Query().Where(invitation.Email(in.Email)).Only(ctx)
+		switch {
+		case ent.IsNotFound(err):
+			inv, err = ts.Invitation().Create().
+				SetEmail(in.Email).SetRole(in.Role).SetTokenHash(in.TokenHash).
+				SetExpiresAt(in.ExpiresAt).SetInvitedBy(in.InvitedBy).
+				Save(ctx)
+		case err != nil:
+		default:
+			inv, err = ts.Invitation().UpdateOneID(existing.ID).
+				SetRole(in.Role).SetTokenHash(in.TokenHash).
+				SetExpiresAt(in.ExpiresAt).SetInvitedBy(in.InvitedBy).
+				ClearAcceptedAt().
+				Save(ctx)
+		}
+		if err != nil {
+			return err
+		}
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: s.WorkspaceID(),
+			Actor:       actor,
+			Action:      events.ActionInvitationCreate,
+			TargetType:  "invitation",
+			TargetID:    strconv.FormatInt(inv.ID, 10),
+			TargetName:  inv.Email,
+			Diff:        map[string]any{"role": map[string]any{"to": string(inv.Role)}},
+		})
+	})
+	return inv, err
+}
+
+// RevokeInvitation deletes a pending Invitation and records `invitation.revoke`. It
+// reports whether the Invitation existed in the scoped Workspace.
+func (a *Accounts) RevokeInvitation(ctx context.Context, s *ent.Scoped, actor events.Actor, id int64) (bool, error) {
+	found := false
+	err := a.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		inv, err := ts.Invitation().Query().Where(invitation.ID(id)).Only(ctx)
+		if ent.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if err := ts.Invitation().DeleteOneID(id).Exec(ctx); err != nil {
+			return err
+		}
+		found = true
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: s.WorkspaceID(),
+			Actor:       actor,
+			Action:      events.ActionInvitationRevoke,
+			TargetType:  "invitation",
+			TargetID:    strconv.FormatInt(id, 10),
+			TargetName:  inv.Email,
+		})
+	})
+	return found, err
 }

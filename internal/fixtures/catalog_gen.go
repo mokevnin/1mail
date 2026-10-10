@@ -139,6 +139,8 @@ const (
 	GlobexID = 2
 	// GlobexIngestKey is from fixtures/workspaces.
 	GlobexIngestKey = "omik_test_globex_ingest_key"
+	// GlobexMaryMembershipID is from fixtures/memberships.
+	GlobexMaryMembershipID = 4
 	// GlobexName is from fixtures/workspaces.
 	GlobexName = "Globex"
 	// GlobexOwnerMembershipID is from fixtures/memberships.
