@@ -77,26 +77,3 @@ func (w *Workspace) RequireUnsubscribed(email string) {
 		return false
 	}, EmailTimeout, 100*time.Millisecond, "%s never read as unsubscribed from broadcasts", email)
 }
-
-// WaitForEmailWithSubject is WaitForEmail for a specific message: it waits for one
-// addressed to recipient whose subject is exactly subject (an earlier Broadcast's
-// mail to the same address does not count).
-func (w *Workspace) WaitForEmailWithSubject(recipient, subject string) Message {
-	w.t.Helper()
-	return w.waitForEmail(recipient, subject)
-}
-
-// RequireNoEmailWithSubject asserts that no message with subject reaches recipient
-// within window. Absence cannot be awaited, so callers first wait for a sibling's
-// delivery of the same send and keep the window short.
-func (w *Workspace) RequireNoEmailWithSubject(recipient, subject string, window time.Duration) {
-	w.t.Helper()
-	require.Never(w.t, func() bool { return w.has(recipient, subject) },
-		window, 100*time.Millisecond, "unexpected email %q for %s", subject, recipient)
-}
-
-// has reports whether the inbox holds a message for recipient with subject.
-func (w *Workspace) has(recipient, subject string) bool {
-	id, err := w.env.Mailpit.FindID(w.t.Context(), recipient, subject)
-	return err == nil && id != ""
-}

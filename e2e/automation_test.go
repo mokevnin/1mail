@@ -3,9 +3,7 @@
 package e2e
 
 import (
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,7 +46,7 @@ func (w *Workspace) ActivateAutomation(a Automation) {
 }
 
 // RecordEvent records an event for the Contact with the given email through the
-// public API. Ingest is accept-then-process: observe the effect with WaitForEmail.
+// public API. Ingest is accept-then-process: observe the effect with Inbox.Wait.
 func (w *Workspace) RecordEvent(email, action string) {
 	w.t.Helper()
 	res, err := w.api.EventsCreate(w.t.Context(), &externalapi.RecordEventsInput{
@@ -63,26 +61,6 @@ func (w *Workspace) RecordEvent(email, action string) {
 	require.True(w.t, isNoContent, "record event: unexpected response %T: %+v", res, res)
 }
 
-// ExpectNoEmail asserts that nothing addressed to recipient is in the inbox after the
-// grace period. It proves absence only when called after a positive wait showed the
-// pipeline had caught up, so the grace period is short.
-func (w *Workspace) ExpectNoEmail(recipient string, grace time.Duration) {
-	w.t.Helper()
-	select {
-	case <-time.After(grace):
-	case <-w.t.Context().Done():
-		w.t.Fatal("cancelled while waiting to assert absence")
-	}
-	found, err := w.env.Mailpit.Search(w.t.Context(), `to:"`+recipient+`"`)
-	require.NoError(w.t, err)
-	for _, s := range found {
-		w.msgIDs = append(w.msgIDs, s.ID)
-		for _, a := range s.To {
-			assert.False(w.t, strings.EqualFold(a.Address, recipient), "unexpected email to %s: %q", recipient, s.Subject)
-		}
-	}
-}
-
 func TestRecordedEventTriggersAutomationEmail(t *testing.T) {
 	t.Parallel()
 	w := env.NewWorkspace(t).Ready()
@@ -91,19 +69,19 @@ func TestRecordedEventTriggersAutomationEmail(t *testing.T) {
 	w.ActivateAutomation(Automation{
 		TriggerEvent: "e2e.signed_up",
 		Subject:      "Welcome from the automation",
-		Body:         `<mjml><mj-body><mj-section><mj-column><mj-text>Glad you signed up</mj-text></mj-column></mj-section></mj-body></mjml>`,
+		Body:         mjml("Glad you signed up"),
 	})
 
 	// A non-matching event first, for a Contact the matching event never touches.
 	w.RecordEvent(other, "e2e.something_else")
 	w.RecordEvent(matching, "e2e.signed_up")
 
-	msg := w.WaitForEmail(matching)
+	msg := w.Inbox.Wait(Match{To: matching})
 	assert.Equal(t, w.FromEmail, msg.From.Address)
 	assert.Equal(t, "Welcome from the automation", msg.Subject)
 	assert.Contains(t, msg.HTML, "Glad you signed up")
 
 	// The matching event's email has arrived, so the earlier non-matching event has
 	// long been through the same pipeline: its Contact must have received nothing.
-	w.ExpectNoEmail(other, 3*time.Second)
+	w.Inbox.RequireNone(Match{To: other})
 }

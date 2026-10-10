@@ -16,9 +16,6 @@ import (
 	"github.com/mokevnin/1mail/internal/apitokens"
 )
 
-// EmailTimeout bounds every wait for an email; asynchronous steps are polled, never slept.
-const EmailTimeout = 60 * time.Second
-
 // tokenScopes are everything the scenario steps need; a test's token carries them all.
 var tokenScopes = []string{
 	"integrations:read", "integrations:write",
@@ -31,7 +28,7 @@ var tokenScopes = []string{
 
 // Workspace is one test's own tenant: a fresh User, Workspace and API token made with
 // the product's own domain functions, a unique Sending domain and a client for the
-// external API. Nothing is cleaned up; everything is Workspace-scoped, so tests are
+// external API. Everything is Workspace-scoped, so tests are
 // independent and may run in parallel.
 type Workspace struct {
 	t   testing.TB
@@ -46,7 +43,8 @@ type Workspace struct {
 	// FromName is the sender display name configured on the Integration.
 	FromName string
 
-	msgIDs []string
+	// Inbox is the only way a scenario observes mail.
+	Inbox *Inbox
 }
 
 // uniq is a short random token for unique domains and recipients.
@@ -64,7 +62,7 @@ func (b bearer) BearerAuth(context.Context, externalapi.OperationName) (external
 
 // NewWorkspace is the arrange step: a User, a Workspace and its first API token, made
 // with internal/accounts and internal/apitokens (the bootstrap token is not used, it
-// only addresses the oldest Workspace). It registers cleanup of the test's own mail.
+// only addresses the oldest Workspace). Its Inbox deletes the test's own mail on cleanup.
 func (e *Env) NewWorkspace(t testing.TB) *Workspace {
 	t.Helper()
 	ctx := t.Context()
@@ -88,10 +86,7 @@ func (e *Env) NewWorkspace(t testing.TB) *Workspace {
 		FromEmail: "news@" + id + ".e2e.test",
 		FromName:  "E2E News",
 	}
-	t.Cleanup(func() {
-		// Delete only this test's messages: other tests share the inbox.
-		_ = e.Mailpit.Delete(context.WithoutCancel(ctx), w.msgIDs...)
-	})
+	w.Inbox = newInbox(t, e.mailpit)
 	return w
 }
 
@@ -125,8 +120,8 @@ func (w *Workspace) CreateMailpitIntegration() {
 	w.t.Helper()
 	cfg := externalapi.SmtpConfigInput{
 		Kind:     externalapi.SmtpConfigInputKindSMTP,
-		Host:     w.env.Mailpit.SMTPHost,
-		Port:     int32(w.env.Mailpit.SMTPPort),
+		Host:     w.env.mailpit.SMTPHost,
+		Port:     int32(w.env.mailpit.SMTPPort),
 		From:     externalapi.EmailAddress(w.FromEmail),
 		FromName: externalapi.NewOptNilString(w.FromName),
 	}
@@ -183,7 +178,7 @@ type Broadcast struct {
 
 // SendBroadcast creates a Broadcast from the Workspace's FromEmail/FromName, sets its
 // audience to all active Contacts and schedules it for now. The send itself is an
-// asynchronous job: observe it with WaitForEmail.
+// asynchronous job: observe it with Inbox.Wait.
 func (w *Workspace) SendBroadcast(b Broadcast) {
 	w.t.Helper()
 	ctx := w.t.Context()
@@ -208,22 +203,10 @@ func (w *Workspace) SendBroadcast(b Broadcast) {
 	ok[externalapi.BroadcastResource](w.t, "schedule broadcast", sched, err)
 }
 
-// WaitForEmail waits (bounded by EmailTimeout) for a message addressed to recipient and
-// returns it with its headers. The failure message lists what the inbox held.
-func (w *Workspace) WaitForEmail(recipient string) Message {
-	w.t.Helper()
-	return w.waitForEmail(recipient, "")
-}
-
-// waitForEmail is the shared wait behind WaitForEmail and WaitForEmailWithSubject
-// (subject "" matches any); it remembers the message for cleanup.
-func (w *Workspace) waitForEmail(recipient, subject string) Message {
-	w.t.Helper()
-	msg, err := w.env.Mailpit.WaitForMessage(w.t.Context(), recipient, subject, EmailTimeout)
-	require.NoError(w.t, err)
-	w.msgIDs = append(w.msgIDs, msg.ID)
-	return msg
-}
-
 // String names the Workspace in failures.
 func (w *Workspace) String() string { return fmt.Sprintf("e2e workspace %s", w.Domain) }
+
+// mjml wraps text in the minimal MJML body (the product's one body format).
+func mjml(text string) string {
+	return "<mjml><mj-body><mj-section><mj-column><mj-text>" + text + "</mj-text></mj-column></mj-section></mj-body></mjml>"
+}

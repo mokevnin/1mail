@@ -23,8 +23,8 @@ type Address struct {
 	Address string
 }
 
-// Summary is one inbox row, as listed.
-type Summary struct {
+// summary is one inbox row, as listed.
+type summary struct {
 	ID      string
 	From    Address
 	To      []Address
@@ -116,17 +116,17 @@ func (m *Mailpit) do(ctx context.Context, method, path string, body any, out any
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-// List returns the newest inbox rows (Mailpit pages at 50 by default; limit raises it).
-func (m *Mailpit) List(ctx context.Context, limit int) ([]Summary, error) {
+// list returns the newest inbox rows (Mailpit pages at 50 by default; limit raises it).
+func (m *Mailpit) list(ctx context.Context, limit int) ([]summary, error) {
 	return m.summaries(ctx, "/api/v1/messages", url.Values{"limit": {fmt.Sprint(limit)}})
 }
 
-// Search returns the inbox rows matching a Mailpit search query (e.g. `to:a@b.test`).
-func (m *Mailpit) Search(ctx context.Context, query string) ([]Summary, error) {
+// search returns the inbox rows matching a Mailpit search query (e.g. `to:a@b.test`).
+func (m *Mailpit) search(ctx context.Context, query string) ([]summary, error) {
 	return m.summaries(ctx, "/api/v1/search", url.Values{"query": {query}, "limit": {"100"}})
 }
 
-func (m *Mailpit) summaries(ctx context.Context, path string, q url.Values) ([]Summary, error) {
+func (m *Mailpit) summaries(ctx context.Context, path string, q url.Values) ([]summary, error) {
 	var resp struct {
 		Messages []struct {
 			ID      string `json:"ID"`
@@ -138,15 +138,15 @@ func (m *Mailpit) summaries(ctx context.Context, path string, q url.Values) ([]S
 	if err := m.do(ctx, http.MethodGet, path+"?"+q.Encode(), nil, &resp); err != nil {
 		return nil, err
 	}
-	out := make([]Summary, len(resp.Messages))
+	out := make([]summary, len(resp.Messages))
 	for i, s := range resp.Messages {
-		out[i] = Summary{ID: s.ID, From: s.From.toAddress(), To: addresses(s.To), Subject: s.Subject}
+		out[i] = summary{ID: s.ID, From: s.From.toAddress(), To: addresses(s.To), Subject: s.Subject}
 	}
 	return out, nil
 }
 
-// Get loads one message with its body and raw headers.
-func (m *Mailpit) Get(ctx context.Context, id string) (Message, error) {
+// get loads one message with its body and raw headers.
+func (m *Mailpit) get(ctx context.Context, id string) (Message, error) {
 	var msg struct {
 		ID      string `json:"ID"`
 		From    apiAddress
@@ -169,109 +169,13 @@ func (m *Mailpit) Get(ctx context.Context, id string) (Message, error) {
 	return Message{ID: msg.ID, From: msg.From.toAddress(), To: addresses(msg.To), Subject: msg.Subject, Text: msg.Text, HTML: msg.HTML, Headers: headers}, nil
 }
 
-// Delete removes the given messages. Parallel tests delete only their own ids, never
+// remove deletes the given messages. Parallel tests delete only their own ids, never
 // the whole inbox.
-func (m *Mailpit) Delete(ctx context.Context, ids ...string) error {
+func (m *Mailpit) remove(ctx context.Context, ids ...string) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	return m.do(ctx, http.MethodDelete, "/api/v1/messages", map[string][]string{"IDs": ids}, nil)
-}
-
-// NoMailError is WaitForRecipient's timeout: it lists what the inbox held instead,
-// so a failing scenario shows whether mail went to the wrong address or nowhere.
-type NoMailError struct {
-	Recipient string
-	// Subject is the awaited subject; empty when any subject would do.
-	Subject string
-	Waited  time.Duration
-	Inbox   []Summary
-	// ListErr is set when the diagnostic listing itself failed.
-	ListErr error
-}
-
-func (e *NoMailError) Error() string {
-	var b strings.Builder
-	if e.Subject != "" {
-		fmt.Fprintf(&b, "no email %q for %s within %s; ", e.Subject, e.Recipient, e.Waited)
-	} else {
-		fmt.Fprintf(&b, "no email for %s within %s; ", e.Recipient, e.Waited)
-	}
-	switch {
-	case e.ListErr != nil:
-		fmt.Fprintf(&b, "could not list the inbox: %v", e.ListErr)
-	case len(e.Inbox) == 0:
-		b.WriteString("the inbox is empty")
-	default:
-		fmt.Fprintf(&b, "the inbox holds %d message(s):", len(e.Inbox))
-		for _, s := range e.Inbox {
-			to := make([]string, len(s.To))
-			for i, a := range s.To {
-				to[i] = a.Address
-			}
-			fmt.Fprintf(&b, "\n  - to=[%s] from=%s subject=%q", strings.Join(to, ", "), s.From.Address, s.Subject)
-		}
-	}
-	return b.String()
-}
-
-// WaitForRecipient polls until a message addressed to recipient is in the inbox and
-// returns it. It gives up after timeout with a *NoMailError that lists the inbox.
-func (m *Mailpit) WaitForRecipient(ctx context.Context, recipient string, timeout time.Duration) (Message, error) {
-	return m.WaitForMessage(ctx, recipient, "", timeout)
-}
-
-// WaitForMessage is WaitForRecipient narrowed to a subject (exact match; "" matches any).
-func (m *Mailpit) WaitForMessage(ctx context.Context, recipient, subject string, timeout time.Duration) (Message, error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	var lastErr error
-	for {
-		id, err := m.FindID(ctx, recipient, subject)
-		if err == nil && id != "" {
-			return m.Get(context.WithoutCancel(ctx), id)
-		}
-		lastErr = err
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			lastErr = nil // our own timeout cutting a request short says nothing about the inbox
-		}
-		select {
-		case <-ctx.Done():
-			diag, lerr := m.List(context.WithoutCancel(ctx), 100)
-			if lerr == nil && lastErr != nil {
-				lerr = lastErr
-			}
-			return Message{}, &NoMailError{Recipient: recipient, Subject: subject, Waited: timeout, Inbox: diag, ListErr: lerr}
-		case <-time.After(m.poll):
-		}
-	}
-}
-
-// FindID returns the id of an inbox message addressed to recipient (and, when subject
-// is not empty, carrying exactly that subject), or "" when there is none.
-func (m *Mailpit) FindID(ctx context.Context, recipient, subject string) (string, error) {
-	found, err := m.Search(ctx, `to:"`+recipient+`"`)
-	if err != nil {
-		return "", err
-	}
-	// Search is a substring match; insist on the exact recipient.
-	for _, s := range found {
-		if subject != "" && s.Subject != subject {
-			continue
-		}
-		for _, a := range s.To {
-			if strings.EqualFold(a.Address, recipient) {
-				return s.ID, nil
-			}
-		}
-	}
-	return "", nil
-}
-
-// IsNoMail reports whether err is a WaitForRecipient timeout.
-func IsNoMail(err error) bool {
-	var e *NoMailError
-	return errors.As(err, &e)
 }
 
 // StartMailpit runs the toolchain's mailpit binary on two free loopback ports and
@@ -302,7 +206,7 @@ func StartMailpit(ctx context.Context) (*Mailpit, func(), error) {
 	deadline, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	for {
-		if _, err := mp.List(deadline, 1); err == nil {
+		if _, err := mp.list(deadline, 1); err == nil {
 			return mp, stop, nil
 		}
 		select {
