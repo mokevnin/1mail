@@ -53,44 +53,25 @@ func Boot() (*Env, func(), error) {
 		stopMailpit()
 		return nil, nil, fmt.Errorf("start application: %w", err)
 	}
-	if err := a.BindMetrics(); err != nil {
-		_ = a.Shutdown(ctx)
-		stopMailpit()
-		return nil, nil, err
-	}
-
 	// The arrange step goes through the product's own Accounts module, taken from the
 	// application's container (no second pool).
 	acc, err := a.Accounts()
 	if err != nil {
-		_ = a.Shutdown(ctx)
+		_ = a.Close(ctx)
 		stopMailpit()
 		return nil, nil, fmt.Errorf("resolve accounts: %w", err)
 	}
-
-	runCtx, cancel := context.WithCancel(ctx)
-	serveErr := make(chan error, 1)
-	go func() { _ = a.RunEvents(runCtx) }()
-	if err := a.RunJobs(runCtx); err != nil {
-		cancel()
-		_ = a.Shutdown(ctx)
+	// The same start/stop ordering as the binary; Start unwinds itself on failure.
+	if err := a.Start(ctx); err != nil {
 		stopMailpit()
-		return nil, nil, fmt.Errorf("start job queue: %w", err)
+		return nil, nil, err
 	}
-	go func() { serveErr <- a.Serve() }()
 
 	stop := func() {
-		cancel()
-		sctx, scancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer scancel()
-		_ = a.Stop(sctx)
-		_ = a.Shutdown(sctx)
+		cctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		_ = a.Close(cctx)
 		stopMailpit()
-		select {
-		case err := <-serveErr:
-			_ = err
-		case <-sctx.Done():
-		}
 	}
 	return &Env{
 		BaseURL:  a.Config.AppURL,

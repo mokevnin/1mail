@@ -67,6 +67,12 @@ type App struct {
 	events         *eventsRuntime
 	jobs           *jobsClient
 	shutdownOnce   sync.Once
+	closeOnce      sync.Once
+	closeErr       error
+	cancel         context.CancelFunc
+	eventsDone     chan struct{}
+	jobsStarted    bool
+	done           chan error
 	shutdownReport *do.ShutdownReport
 }
 
@@ -88,12 +94,17 @@ func (c *entClient) Shutdown() error {
 
 // eventsRuntime is the consume side of the domain-event system: the watermill
 // router hosting the persist/automations/webhooks subscribers. (The produce side
-// is eventsBus.) Run the router via RunEvents; Shutdown closes it.
+// is eventsBus.) Start runs the router; Shutdown closes it.
 type eventsRuntime struct {
 	router *message.Router
 }
 
 func (e *eventsRuntime) Shutdown() error {
+	// A router that never ran has nothing to drain, and Close would wait out its
+	// timeout for handlers that were never started.
+	if !e.router.IsRunning() && !e.router.IsClosed() {
+		return nil
+	}
 	return e.router.Close()
 }
 
@@ -172,7 +183,7 @@ func WithE2EDKIMLookup() Option {
 // WithListener makes the App serve on a listener the caller already opened (a free
 // port, say). The configured public URL (APP_URL, the base of unsubscribe, confirm
 // and tracking links) and PORT are derived from the listener's address, so the order
-// is: open the listener, then New, then Serve. Stop closes the listener.
+// is: open the listener, then New, then Start. Close closes the listener.
 func WithListener(ln net.Listener) Option {
 	return func(o *options) { o.listener = ln }
 }
@@ -259,24 +270,119 @@ func New(env string, opts ...Option) (*App, error) {
 			IdleTimeout:       120 * time.Second,
 		},
 		injector: injector,
+		done:     make(chan error, 1),
 		events:   evRuntime,
 		jobs:     jobsCli,
 	}, nil
 }
 
-// BindMetrics binds the metrics listener when one is configured. Call it before
-// Serve (ideally before anything else starts) so a bind failure is fatal and
-// synchronous rather than a silently unmonitored instance.
-func (a *App) BindMetrics() error { return a.Metrics.Listen() }
+// ErrNotServable: Start was called on an app that has no servers (the operator app).
+var ErrNotServable = errors.New("app: this app has no servers to start")
 
-// Serve serves the metrics listener (bound by BindMetrics) and the public server.
-// It blocks until the public server stops; Stop shuts both down.
-func (a *App) Serve() error {
+// Start brings the application up and returns without blocking: it binds the metrics
+// listener, starts the domain-event router and the job queue, then serves the public
+// HTTP server. It returns the first startup error after unwinding whatever it had
+// already started (the container included), so a failed Start leaves nothing running.
+//
+// Start owns its cancellation: it derives its own context from ctx, and Close cancels
+// it. Done reports how the public server ends; Close stops everything.
+func (a *App) Start(ctx context.Context) error {
+	if a.Server == nil {
+		return ErrNotServable
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	a.cancel = cancel
+	if err := a.start(runCtx); err != nil {
+		unwind, stop := context.WithTimeout(context.WithoutCancel(ctx), unwindTimeout)
+		defer stop()
+		return errors.Join(err, a.Close(unwind))
+	}
+	return nil
+}
+
+// unwindTimeout bounds the teardown of a Start that failed partway.
+const unwindTimeout = 15 * time.Second
+
+func (a *App) start(ctx context.Context) error {
+	// The metrics listener is bound first: a bind failure (port in use) must fail the
+	// boot, not leave an unmonitored instance.
+	if err := a.bindMetrics(ctx); err != nil {
+		return err
+	}
 	go func() {
 		if err := a.Metrics.Serve(); err != nil {
 			slog.Error("metrics server stopped", "err", err)
 		}
 	}()
+
+	eventsErr := make(chan error, 1)
+	a.eventsDone = make(chan struct{})
+	go func() {
+		defer close(a.eventsDone)
+		if err := a.runEvents(ctx); err != nil {
+			eventsErr <- err
+		}
+	}()
+	select {
+	case <-a.events.router.Running():
+	case err := <-eventsErr:
+		return fmt.Errorf("start event router: %w", err)
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	if err := a.runJobs(ctx); err != nil {
+		return fmt.Errorf("start job queue: %w", err)
+	}
+	a.jobsStarted = true
+
+	go func() { a.done <- a.serve() }()
+	return nil
+}
+
+// Done delivers the public server's terminating error (nil after a graceful Close),
+// once. A binary waits on it next to its signals.
+func (a *App) Done() <-chan error { return a.done }
+
+// Close cancels the event router and the job workers, waits for them to stop, shuts
+// the HTTP servers down and then the container. Safe to call more than once and after
+// a failed Start; every call returns the first call's result.
+func (a *App) Close(ctx context.Context) error {
+	a.closeOnce.Do(func() { a.closeErr = a.close(ctx) })
+	return a.closeErr
+}
+
+func (a *App) close(ctx context.Context) error {
+	if a.cancel != nil {
+		a.cancel()
+	}
+	var errs []error
+	if a.eventsDone != nil {
+		select {
+		case <-a.eventsDone:
+		case <-ctx.Done():
+			errs = append(errs, fmt.Errorf("event router did not stop: %w", ctx.Err()))
+		}
+	}
+	if a.jobsStarted {
+		select {
+		case <-a.jobs.Stopped():
+		case <-ctx.Done():
+			errs = append(errs, fmt.Errorf("job workers did not stop: %w", ctx.Err()))
+		}
+	}
+	errs = append(errs, a.stop(ctx))
+	if report := a.Shutdown(ctx); !report.Succeed {
+		errs = append(errs, fmt.Errorf("shutdown incomplete: %w", *report))
+	}
+	return errors.Join(errs...)
+}
+
+// bindMetrics binds the metrics listener when one is configured.
+func (a *App) bindMetrics(ctx context.Context) error { return a.Metrics.Listen(ctx) }
+
+// serve serves the public server and blocks until it stops.
+func (a *App) serve() error {
 	var err error
 	if a.listener != nil {
 		err = a.Server.Serve(a.listener)
@@ -289,9 +395,17 @@ func (a *App) Serve() error {
 	return nil
 }
 
-// Stop gracefully stops the HTTP servers (public and metrics), under one context.
-func (a *App) Stop(ctx context.Context) error {
-	return errors.Join(a.Server.Shutdown(ctx), a.Metrics.Shutdown(ctx))
+// stop gracefully stops the HTTP servers (public and metrics), under one context.
+// A caller-provided listener is closed too, so a Start that failed before serving
+// does not leave it bound (closing one the server already closed is harmless).
+func (a *App) stop(ctx context.Context) error {
+	errs := []error{a.Server.Shutdown(ctx), a.Metrics.Shutdown(ctx)}
+	if a.listener != nil {
+		if err := a.listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // NewOperator builds the minimal app the operator commands need (config, database,
@@ -311,15 +425,15 @@ func NewOperator(env string) (*App, error) {
 	return &App{Config: cfg, injector: injector}, nil
 }
 
-// RunEvents runs the domain-event router (persist/automations/webhooks
+// runEvents runs the domain-event router (persist/automations/webhooks
 // subscribers). Blocks until ctx is cancelled; stop happens via Shutdown.
-func (a *App) RunEvents(ctx context.Context) error {
+func (a *App) runEvents(ctx context.Context) error {
 	return a.events.router.Run(ctx)
 }
 
-// RunJobs starts the river worker pool. It returns once started; workers run
+// runJobs starts the river worker pool. It returns once started; workers run
 // until the context is cancelled (stop happens via Shutdown).
-func (a *App) RunJobs(ctx context.Context) error {
+func (a *App) runJobs(ctx context.Context) error {
 	return a.jobs.Start(ctx)
 }
 

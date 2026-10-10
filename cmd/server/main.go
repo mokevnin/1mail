@@ -110,55 +110,29 @@ func main() {
 		fatal("init app", err)
 	}
 
-	// Bind the opt-in metrics listener before anything starts serving: a bind
-	// failure (e.g. port in use) must crash the boot, not run unmonitored.
-	if err := application.BindMetrics(); err != nil {
-		_ = application.Shutdown(context.Background())
-		fatal("bind metrics", err)
-	}
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go func() {
-		if err := application.RunEvents(ctx); err != nil {
-			slog.Error("events router stopped", "err", err)
-		}
-	}()
-
-	// A degraded instance that silently drops Broadcasts is worse than one that
-	// refuses to start, so a job-queue start failure is fatal.
-	if err := application.RunJobs(ctx); err != nil {
-		stop()
-		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-		_ = application.Stop(shutdownCtx)
-		_ = application.Shutdown(shutdownCtx)
-		cancel()
-		fatal("start job queue", err)
+	// Start binds the opt-in metrics listener, starts the event router and the job
+	// queue and serves HTTP; any of them failing is fatal (a degraded instance that
+	// drops Broadcasts or runs unmonitored is worse than none), after Start has
+	// unwound what it began.
+	if err := application.Start(ctx); err != nil {
+		fatal("start app", err)
 	}
 
-	go func() {
-		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-		defer cancel()
-		_ = application.Stop(shutdownCtx)
-		report := application.Shutdown(shutdownCtx)
-		if !report.Succeed {
-			slog.Error("shutdown incomplete", "report", report)
+	select {
+	case <-ctx.Done():
+	case err := <-application.Done():
+		if err != nil {
+			slog.Error("server stopped", "err", err)
 		}
-	}()
-
-	if err := application.Serve(); err != nil {
-		slog.Error("server stopped", "err", err)
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 	defer cancel()
-	// Also covers a public listener that failed at boot: the metrics server is up.
-	_ = application.Stop(shutdownCtx)
-	report := application.Shutdown(shutdownCtx)
-	if !report.Succeed {
-		slog.Error("shutdown incomplete", "report", report)
+	if err := application.Close(shutdownCtx); err != nil {
+		slog.Error("shutdown incomplete", "err", err)
 	}
 }
 

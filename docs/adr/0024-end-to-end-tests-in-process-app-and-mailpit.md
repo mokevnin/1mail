@@ -15,8 +15,9 @@ sends through a real SMTP server and observes the result only in that server's i
   event outbox or an in-memory sender.
 - **The application runs in the test process**, with the real event router, job queue and HTTP server, started on a
   caller-provided listener so the public URL (the base of unsubscribe, confirm and tracking links) is the test
-  server's own address. In-process beats driving the compiled binary: it is faster, debuggable, and reuses the
-  existing run, stop and shutdown entry points. Binary and reverse-proxy routing are left to a separate smoke test.
+  server's own address. In-process beats driving the compiled binary: it is faster, debuggable, and reuses
+  the application's own Start/Close lifecycle module, the same one the binary uses. Binary and reverse-proxy routing are
+  left to a separate smoke test.
 - **A dedicated database, rebuilt on every run, and a fresh Workspace per test.** The per-test transaction rollback
   used elsewhere (go-txdb) cannot work here: the job queue and bus workers use their own connections and would never
   see uncommitted rows. Everything is Workspace-scoped (ADR 0017), so tests need no cleanup and may run in parallel.
