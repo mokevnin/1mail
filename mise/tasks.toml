@@ -193,6 +193,7 @@ depends = [
   "check:security",
   "check:ast",
   "check:typos",
+  "check:helm",
 ]
 
 ["check:fe"]
@@ -235,6 +236,23 @@ run = "typos"
 ["check:tracker-size"]
 description = "Tracker (t.js) gzip size budget (package.json size-limit); builds it first"
 run = ["pnpm build:tracker", "pnpm exec size-limit"]
+
+["check:helm"]
+description = "Helm chart: lint, schema-validated render (default and all-features), and refusal without existingSecret"
+run = '''
+set -eu
+chart=charts/1mail
+helm lint "$chart" --set existingSecret=1mail-secrets
+if helm template r "$chart" >/dev/null 2>&1; then
+  echo 'error: chart rendered without existingSecret'; exit 1
+fi
+# ServiceMonitor is a CRD kind: kubeconform has no built-in schema for it.
+kc='kubeconform -strict -summary -ignore-missing-schemas'
+helm template r "$chart" --set existingSecret=1mail-secrets | $kc
+helm template r "$chart" --set existingSecret=1mail-secrets \
+  --set ingress.enabled=true --set ingress.tls.enabled=true --set ingress.tls.secretName=tls \
+  --set metrics.enabled=true --set metrics.serviceMonitor.enabled=true | $kc
+'''
 
 ["check:security"]
 description = "Secrets and workflow linters"

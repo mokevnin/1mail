@@ -1,0 +1,35 @@
+# Runs `1mail migrate` (goose migrations and river's schema) before install and upgrade.
+# Hooks run before regular resources, so the Deployment only rolls once this succeeded.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "1mail.fullname" . }}-migrate
+  labels:
+    {{- include "1mail.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "1mail.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: migrate
+          image: {{ include "1mail.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate"]
+          envFrom:
+            {{- include "1mail.envFrom" . | nindent 12 }}
+          env:
+            {{- include "1mail.env" . | nindent 12 }}

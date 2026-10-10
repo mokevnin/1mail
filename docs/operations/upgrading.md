@@ -38,7 +38,15 @@ then roll the servers.
    ```
 
    For the plain binary run `./1mail migrate` with the same environment. Use it as a
-   pre-deploy job or an init container.
+   pre-deploy job or an init container. It applies the application migrations and river's
+   own job-queue schema.
+
+   On Kubernetes use the in-repo Helm chart (`charts/1mail`): it runs `migrate` as a
+   pre-install/pre-upgrade hook Job, so the Deployment only rolls after it succeeds. Create a
+   Secret with `DATABASE_URL`, `JWT_SECRET` and `ENCRYPTION_KEY` first and pass its name as
+   `existingSecret` (the chart refuses to render without it). Metrics stay off unless you set
+   `metrics.enabled`; `metrics.serviceMonitor.enabled` adds a Prometheus Operator
+   ServiceMonitor that scrapes the internal listener only.
 
 2. Roll the replicas to the new version one at a time, waiting for `GET /readyz` to return
    `200` on each before moving on.
