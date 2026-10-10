@@ -67,6 +67,10 @@ const (
 	BroadcastProSegmentName = "Pro plan perks"
 	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
 	BroadcastRecipientSentID = 1000
+	// BroadcastRecipientUnengagedFirstID is from fixtures/broadcast_recipients.
+	BroadcastRecipientUnengagedFirstID = 1005
+	// BroadcastRecipientUnengagedSecondID is from fixtures/broadcast_recipients.
+	BroadcastRecipientUnengagedSecondID = 1006
 	// BroadcastScheduledID is from fixtures/broadcasts.
 	BroadcastScheduledID = 101
 	// BroadcastScheduledName is from fixtures/broadcasts.

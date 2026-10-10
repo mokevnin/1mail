@@ -32,10 +32,13 @@ type RateLimits struct {
 	// FailedAuth caps failed credential checks (bearer token, collect key) per
 	// client IP per minute; successful ones are not counted.
 	FailedAuth int
+	// Tracking caps how many opens and clicks one client IP may have recorded per
+	// minute. It never refuses a recipient: over it the event is not recorded.
+	Tracking int
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30}
+var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600}
 
 type Config struct {
 	DatabaseURL    string
@@ -110,6 +113,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
 	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
 	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", DefaultRateLimits.FailedAuth)
+	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -159,6 +163,7 @@ func Load(envName string) (*Config, error) {
 			APIBurst:     v.GetInt("RATE_LIMIT_API_BURST_PER_SECOND"),
 			APIPerMinute: v.GetInt("RATE_LIMIT_API_PER_MINUTE"),
 			FailedAuth:   v.GetInt("RATE_LIMIT_FAILED_AUTH_PER_MINUTE"),
+			Tracking:     v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
@@ -203,6 +208,9 @@ func (c *Config) validate(envName string) error {
 		if limit < 0 {
 			return fmt.Errorf("%s must not be negative (0 disables)", name)
 		}
+	}
+	if c.RateLimits.Tracking < 0 {
+		return fmt.Errorf("RATE_LIMIT_TRACKING_PER_MINUTE must not be negative (0 disables)")
 	}
 	return c.validateMetricsAddr()
 }
