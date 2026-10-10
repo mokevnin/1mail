@@ -29,6 +29,8 @@ import (
 // must stay a small bounded set.
 const (
 	PolicyHuman = "human"
+	// PolicyTracking is the recording guard of opens and clicks. It never refuses.
+	PolicyTracking = "tracking"
 )
 
 const window = time.Minute
@@ -61,6 +63,25 @@ func (p *Policy) Allow(w http.ResponseWriter, r *http.Request, key string) bool 
 	return false
 }
 
+// Exceeded counts one request against key and reports whether the budget is spent.
+// Unlike Allow it never answers the request: it is for a recording guard, where the
+// caller keeps serving the response and only skips the side effect (tracking never
+// refuses a recipient, ADR 0018). An exceeded request is counted and logged.
+func (p *Policy) Exceeded(r *http.Request, key string) bool {
+	if p == nil || !p.rl.OnLimit(discardWriter{}, r, key) {
+		return false
+	}
+	Rejected(r.Context(), p.name)
+	return true
+}
+
+// discardWriter swallows the X-RateLimit-* headers a recording guard must not send.
+type discardWriter struct{}
+
+func (discardWriter) Header() http.Header         { return http.Header{} }
+func (discardWriter) Write(b []byte) (int, error) { return len(b), nil }
+func (discardWriter) WriteHeader(int)             {}
+
 // Rejected records one rejection under policy: ratelimit_rejected_total{policy} and
 // a warn log. It carries the policy and the client address only, never an email or
 // a path (paths hold tokens).
@@ -87,12 +108,23 @@ func WriteProblem(w http.ResponseWriter) {
 
 // Limiter holds every policy built from the configured limits.
 type Limiter struct {
-	human *Policy
+	human    *Policy
+	tracking *Policy
 }
 
 // New builds the policies from limits.
 func New(limits config.RateLimits) *Limiter {
-	return &Limiter{human: NewPolicy(PolicyHuman, limits.Human, window)}
+	return &Limiter{
+		human:    NewPolicy(PolicyHuman, limits.Human, window),
+		tracking: NewPolicy(PolicyTracking, limits.Tracking, window),
+	}
+}
+
+// RecordsTracking reports whether the engagement of this request may be recorded:
+// false once the client IP spent the tracking guard. The caller must still serve the
+// pixel or the redirect; only the recording is skipped.
+func (l *Limiter) RecordsTracking(r *http.Request) bool {
+	return !l.tracking.Exceeded(r, httprate.CanonicalizeIP(clientip.FromContext(r.Context())))
 }
 
 // Middleware applies the policy of the request's route. It sits after the client

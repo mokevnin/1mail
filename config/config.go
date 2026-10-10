@@ -25,10 +25,13 @@ type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
 	// consent confirm) per client IP and endpoint.
 	Human int
+	// Tracking caps how many opens and clicks one client IP may have recorded per
+	// minute. It never refuses a recipient: over it the event is not recorded.
+	Tracking int
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60}
+var DefaultRateLimits = RateLimits{Human: 60, Tracking: 600}
 
 type Config struct {
 	DatabaseURL    string
@@ -100,6 +103,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
+	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -145,7 +149,8 @@ func Load(envName string) (*Config, error) {
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
 		},
 		RateLimits: RateLimits{
-			Human: v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			Human:    v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			Tracking: v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
@@ -183,6 +188,9 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.RateLimits.Human < 0 {
 		return fmt.Errorf("RATE_LIMIT_HUMAN_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.Tracking < 0 {
+		return fmt.Errorf("RATE_LIMIT_TRACKING_PER_MINUTE must not be negative (0 disables)")
 	}
 	return c.validateMetricsAddr()
 }
