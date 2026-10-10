@@ -47,6 +47,9 @@ Migrations are embedded in the binary. You apply them one of two ways:
   Use it as a pre-deploy job or a Kubernetes init container, then start the servers
   without `AUTO_MIGRATE`.
 
+Before upgrading, take a database backup; see [Upgrading](./operations/upgrading) for the
+full procedure and [Backup and restore](./operations/backup) for what to protect.
+
 > The binary tracks applied migrations (via goose) in its own `goose_db_version` table. Don't point
 > it at a database previously managed by the Atlas dev-CLI flow (which uses
 > `atlas_schema_revisions`).
@@ -124,3 +127,8 @@ export APP_URL="https://mail.example.com"
 
 Wire `/healthz` to liveness and `/readyz` to readiness probes (Kubernetes, load
 balancers, the Docker `HEALTHCHECK`).
+
+## Operations
+
+Sizing, [backup and restore](./operations/backup) and [upgrading](./operations/upgrading)
+(including PostgreSQL major upgrades) are covered in the [Operations](./operations/) section.
