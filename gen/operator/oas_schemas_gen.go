@@ -3,6 +3,8 @@
 package operatorapi
 
 import (
+	"time"
+
 	"github.com/go-faster/errors"
 )
 
@@ -294,6 +296,265 @@ func (s *OperatorSecondFactorInput) SetCode(val string) {
 	s.Code = val
 }
 
+// A Workspace's suspension state (ADR 0007).
+// Ref: #/components/schemas/OperatorSuspension
+type OperatorSuspension struct {
+	// When outbound sending was suspended.
+	At Timestamp `json:"at"`
+	// Who suspended it.
+	Actor OperatorSuspensionActor `json:"actor"`
+	// Why, as given by the actor.
+	Reason OptNilString `json:"reason"`
+}
+
+// GetAt returns the value of At.
+func (s *OperatorSuspension) GetAt() Timestamp {
+	return s.At
+}
+
+// GetActor returns the value of Actor.
+func (s *OperatorSuspension) GetActor() OperatorSuspensionActor {
+	return s.Actor
+}
+
+// GetReason returns the value of Reason.
+func (s *OperatorSuspension) GetReason() OptNilString {
+	return s.Reason
+}
+
+// SetAt sets the value of At.
+func (s *OperatorSuspension) SetAt(val Timestamp) {
+	s.At = val
+}
+
+// SetActor sets the value of Actor.
+func (s *OperatorSuspension) SetActor(val OperatorSuspensionActor) {
+	s.Actor = val
+}
+
+// SetReason sets the value of Reason.
+func (s *OperatorSuspension) SetReason(val OptNilString) {
+	s.Reason = val
+}
+
+// The actor of a suspension. Unlike a customer, an Operator sees the real Operator id.
+// Ref: #/components/schemas/OperatorSuspensionActor
+type OperatorSuspensionActor struct {
+	Kind OperatorSuspensionActorKind `json:"kind"`
+	// The Operator id; present only for the `operator` kind.
+	ID OptNilString `json:"id"`
+}
+
+// GetKind returns the value of Kind.
+func (s *OperatorSuspensionActor) GetKind() OperatorSuspensionActorKind {
+	return s.Kind
+}
+
+// GetID returns the value of ID.
+func (s *OperatorSuspensionActor) GetID() OptNilString {
+	return s.ID
+}
+
+// SetKind sets the value of Kind.
+func (s *OperatorSuspensionActor) SetKind(val OperatorSuspensionActorKind) {
+	s.Kind = val
+}
+
+// SetID sets the value of ID.
+func (s *OperatorSuspensionActor) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// Who set a Workspace suspension (ADR 0026).
+// Ref: #/components/schemas/OperatorSuspensionActorKind
+type OperatorSuspensionActorKind string
+
+const (
+	OperatorSuspensionActorKindSystem   OperatorSuspensionActorKind = "system"
+	OperatorSuspensionActorKindCli      OperatorSuspensionActorKind = "cli"
+	OperatorSuspensionActorKindOperator OperatorSuspensionActorKind = "operator"
+)
+
+// AllValues returns all OperatorSuspensionActorKind values.
+func (OperatorSuspensionActorKind) AllValues() []OperatorSuspensionActorKind {
+	return []OperatorSuspensionActorKind{
+		OperatorSuspensionActorKindSystem,
+		OperatorSuspensionActorKindCli,
+		OperatorSuspensionActorKindOperator,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s OperatorSuspensionActorKind) MarshalText() ([]byte, error) {
+	switch s {
+	case OperatorSuspensionActorKindSystem:
+		return []byte(s), nil
+	case OperatorSuspensionActorKindCli:
+		return []byte(s), nil
+	case OperatorSuspensionActorKindOperator:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *OperatorSuspensionActorKind) UnmarshalText(data []byte) error {
+	switch OperatorSuspensionActorKind(data) {
+	case OperatorSuspensionActorKindSystem:
+		*s = OperatorSuspensionActorKindSystem
+		return nil
+	case OperatorSuspensionActorKindCli:
+		*s = OperatorSuspensionActorKindCli
+		return nil
+	case OperatorSuspensionActorKindOperator:
+		*s = OperatorSuspensionActorKindOperator
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A Workspace as the Operator console sees it: metadata only, never Contacts, content or Events (ADR
+// 0026).
+// Ref: #/components/schemas/OperatorWorkspaceResource
+type OperatorWorkspaceResource struct {
+	// Unique identifier.
+	ID   EntityId `json:"id"`
+	Slug string   `json:"slug"`
+	Name string   `json:"name"`
+	// When the Workspace was created.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Present only while sending is suspended.
+	Suspension OptNilOperatorSuspension `json:"suspension"`
+}
+
+// GetID returns the value of ID.
+func (s *OperatorWorkspaceResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetSlug returns the value of Slug.
+func (s *OperatorWorkspaceResource) GetSlug() string {
+	return s.Slug
+}
+
+// GetName returns the value of Name.
+func (s *OperatorWorkspaceResource) GetName() string {
+	return s.Name
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *OperatorWorkspaceResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetSuspension returns the value of Suspension.
+func (s *OperatorWorkspaceResource) GetSuspension() OptNilOperatorSuspension {
+	return s.Suspension
+}
+
+// SetID sets the value of ID.
+func (s *OperatorWorkspaceResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetSlug sets the value of Slug.
+func (s *OperatorWorkspaceResource) SetSlug(val string) {
+	s.Slug = val
+}
+
+// SetName sets the value of Name.
+func (s *OperatorWorkspaceResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *OperatorWorkspaceResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetSuspension sets the value of Suspension.
+func (s *OperatorWorkspaceResource) SetSuspension(val OptNilOperatorSuspension) {
+	s.Suspension = val
+}
+
+func (*OperatorWorkspaceResource) operatorWorkspacesGetRes() {}
+
+type OperatorWorkspacesGetNotFound ProblemDetails
+
+func (*OperatorWorkspacesGetNotFound) operatorWorkspacesGetRes() {}
+
+type OperatorWorkspacesGetUnauthorized ProblemDetails
+
+func (*OperatorWorkspacesGetUnauthorized) operatorWorkspacesGetRes() {}
+
+// Paginated response.
+type OperatorWorkspacesListOK struct {
+	// List of items.
+	Items []OperatorWorkspaceResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *OperatorWorkspacesListOK) GetItems() []OperatorWorkspaceResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *OperatorWorkspacesListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *OperatorWorkspacesListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *OperatorWorkspacesListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *OperatorWorkspacesListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *OperatorWorkspacesListOK) SetItems(val []OperatorWorkspaceResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *OperatorWorkspacesListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *OperatorWorkspacesListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *OperatorWorkspacesListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *OperatorWorkspacesListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*OperatorWorkspacesListOK) operatorWorkspacesListRes() {}
+
 // NewOptInt32 returns new OptInt32 with value set to v.
 func NewOptInt32(v int32) OptInt32 {
 	return OptInt32{
@@ -334,6 +595,142 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilOperatorSuspension returns new OptNilOperatorSuspension with value set to v.
+func NewOptNilOperatorSuspension(v OperatorSuspension) OptNilOperatorSuspension {
+	return OptNilOperatorSuspension{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilOperatorSuspension is optional nullable OperatorSuspension.
+type OptNilOperatorSuspension struct {
+	Value OperatorSuspension
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilOperatorSuspension was set.
+func (o OptNilOperatorSuspension) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilOperatorSuspension) Reset() {
+	var v OperatorSuspension
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilOperatorSuspension) SetTo(v OperatorSuspension) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilOperatorSuspension) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilOperatorSuspension) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v OperatorSuspension
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilOperatorSuspension) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilOperatorSuspension) Get() (v OperatorSuspension, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilOperatorSuspension) Or(d OperatorSuspension) OperatorSuspension {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilString returns new OptNilString with value set to v.
+func NewOptNilString(v string) OptNilString {
+	return OptNilString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilString is optional nullable string.
+type OptNilString struct {
+	Value string
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilString was set.
+func (o OptNilString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilString) SetTo(v string) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilString) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilString) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v string
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilString) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilString) Get() (v string, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilString) Or(d string) string {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -734,6 +1131,7 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 func (*ProblemDetails) operatorAuthLoginRes()        {}
 func (*ProblemDetails) operatorAuthSecondFactorRes() {}
 func (*ProblemDetails) operatorMeGetRes()            {}
+func (*ProblemDetails) operatorWorkspacesListRes()   {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -820,3 +1218,5 @@ func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
 
 func (*ProblemDetailsHeaders) operatorAuthLoginRes()        {}
 func (*ProblemDetailsHeaders) operatorAuthSecondFactorRes() {}
+
+type Timestamp time.Time

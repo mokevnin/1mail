@@ -35,6 +35,18 @@ type Handler interface {
 	//
 	// GET /me
 	OperatorMeGet(ctx context.Context) (OperatorMeGetRes, error)
+	// OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
+	//
+	// One Workspace's metadata and suspension state.
+	//
+	// GET /workspaces/{workspaceId}
+	OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (OperatorWorkspacesGetRes, error)
+	// OperatorWorkspacesList implements OperatorWorkspaces_list operation.
+	//
+	// List all Workspaces, newest first, optionally narrowed by a slug search.
+	//
+	// GET /workspaces
+	OperatorWorkspacesList(ctx context.Context, params OperatorWorkspacesListParams) (OperatorWorkspacesListRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

@@ -382,10 +382,17 @@ export const consoleAuthedRoute = createRoute({
   component: lazyRouteComponent(() => import('./console/layout.tsx'), 'ConsoleLayout'),
 })
 
+// The console's home is the Workspace list.
 export const consoleHomeRoute = createRoute({
   getParentRoute: () => consoleAuthedRoute,
   path: '/',
-  component: lazyRouteComponent(() => import('./console/home.tsx'), 'ConsoleHomePage'),
+  component: lazyRouteComponent(() => import('./console/workspaces.tsx'), 'ConsoleWorkspacesPage'),
+})
+
+export const consoleWorkspaceRoute = createRoute({
+  getParentRoute: () => consoleAuthedRoute,
+  path: 'workspaces/$workspaceId',
+  component: lazyRouteComponent(() => import('./console/workspace.tsx'), 'ConsoleWorkspacePage'),
 })
 
 const routeTree = rootRoute.addChildren([
@@ -402,7 +409,10 @@ const routeTree = rootRoute.addChildren([
   acceptInvitationRoute,
   oauthConsentRoute,
   accountRoute.addChildren([profileRoute, securityRoute]),
-  consoleRoute.addChildren([consoleLoginRoute, consoleAuthedRoute.addChildren([consoleHomeRoute])]),
+  consoleRoute.addChildren([
+    consoleLoginRoute,
+    consoleAuthedRoute.addChildren([consoleHomeRoute, consoleWorkspaceRoute]),
+  ]),
   workspaceRoute.addChildren([
     overviewRoute,
     contactsRoute,

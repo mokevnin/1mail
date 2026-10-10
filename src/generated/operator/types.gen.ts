@@ -38,13 +38,6 @@ export type GoneProblem = {
 };
 
 /**
- * RFC 7807 not found response
- */
-export type NotFoundProblem = {
-  body: ProblemDetails;
-};
-
-/**
  * A TOTP secret awaiting its first confirming code
  */
 export type OperatorEnrolment = {
@@ -126,6 +119,70 @@ export type OperatorSecondFactorInput = {
 };
 
 /**
+ * A Workspace's suspension state (ADR 0007)
+ */
+export type OperatorSuspension = {
+  /**
+   * When outbound sending was suspended
+   */
+  at: Timestamp;
+  /**
+   * Who suspended it
+   */
+  actor: OperatorSuspensionActor;
+  /**
+   * Why, as given by the actor
+   */
+  reason?: string | null;
+};
+
+/**
+ * The actor of a suspension. Unlike a customer, an Operator sees the real Operator id.
+ */
+export type OperatorSuspensionActor = {
+  kind: OperatorSuspensionActorKind;
+  /**
+   * The Operator id; present only for the `operator` kind
+   */
+  id?: string | null;
+};
+
+/**
+ * Who set a Workspace suspension (ADR 0026)
+ */
+export const OperatorSuspensionActorKind = {
+  SYSTEM: 'system',
+  CLI: 'cli',
+  OPERATOR: 'operator'
+} as const;
+
+/**
+ * Who set a Workspace suspension (ADR 0026)
+ */
+export type OperatorSuspensionActorKind = typeof OperatorSuspensionActorKind[keyof typeof OperatorSuspensionActorKind];
+
+/**
+ * A Workspace as the Operator console sees it: metadata only, never Contacts,
+ * content or Events (ADR 0026).
+ */
+export type OperatorWorkspaceResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  slug: string;
+  name: string;
+  /**
+   * When the Workspace was created
+   */
+  createdAt: Timestamp;
+  /**
+   * Present only while sending is suspended
+   */
+  suspension?: OperatorSuspension | null;
+};
+
+/**
  * RFC 7807 payment required response: the feature needs an Enterprise license
  */
 export type PaymentRequiredProblem = {
@@ -202,6 +259,21 @@ export type Timestamp = string;
 export type UnprocessableEntityProblem = {
   body: ProblemDetails;
 };
+
+/**
+ * Only Workspaces whose slug contains this text (case-insensitive)
+ */
+export type OperatorWorkspaceSearch = string;
+
+/**
+ * Page number (1-based)
+ */
+export type PageQueryPage = number;
+
+/**
+ * Page size
+ */
+export type PageQueryPageSize = number;
 
 export type OperatorAuthLoginData = {
   body: OperatorLoginInput;
@@ -301,3 +373,93 @@ export type OperatorMeGetResponses = {
 };
 
 export type OperatorMeGetResponse = OperatorMeGetResponses[keyof OperatorMeGetResponses];
+
+export type OperatorWorkspacesListData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Only Workspaces whose slug contains this text (case-insensitive)
+     */
+    slug?: string;
+    /**
+     * Page number (1-based)
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    pageSize?: number;
+  };
+  url: '/workspaces';
+};
+
+export type OperatorWorkspacesListErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+};
+
+export type OperatorWorkspacesListError = OperatorWorkspacesListErrors[keyof OperatorWorkspacesListErrors];
+
+export type OperatorWorkspacesListResponses = {
+  /**
+   * Paginated response
+   */
+  200: {
+    /**
+     * List of items
+     */
+    items: Array<OperatorWorkspaceResource>;
+    /**
+     * Page number (1-based)
+     */
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
+    /**
+     * Total number of elements
+     */
+    totalItems: number;
+    /**
+     * Total number of pages
+     */
+    totalPages: number;
+  };
+};
+
+export type OperatorWorkspacesListResponse = OperatorWorkspacesListResponses[keyof OperatorWorkspacesListResponses];
+
+export type OperatorWorkspacesGetData = {
+  body?: never;
+  path: {
+    workspaceId: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{workspaceId}';
+};
+
+export type OperatorWorkspacesGetErrors = {
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type OperatorWorkspacesGetError = OperatorWorkspacesGetErrors[keyof OperatorWorkspacesGetErrors];
+
+export type OperatorWorkspacesGetResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: OperatorWorkspaceResource;
+};
+
+export type OperatorWorkspacesGetResponse = OperatorWorkspacesGetResponses[keyof OperatorWorkspacesGetResponses];

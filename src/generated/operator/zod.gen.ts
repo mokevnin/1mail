@@ -56,6 +56,23 @@ export const zOperatorSecondFactorInput = z.object({
 });
 
 /**
+ * Who set a Workspace suspension (ADR 0026)
+ */
+export const zOperatorSuspensionActorKind = z.enum([
+  'system',
+  'cli',
+  'operator'
+]);
+
+/**
+ * The actor of a suspension. Unlike a customer, an Operator sees the real Operator id.
+ */
+export const zOperatorSuspensionActor = z.object({
+  kind: zOperatorSuspensionActorKind,
+  id: z.exactOptional(z.string().nullable())
+});
+
+/**
  * A machine-readable reason a client branches on, beyond the HTTP status
  */
 export const zProblemCode = z.enum(['second_factor_required']);
@@ -105,13 +122,6 @@ export const zGoneProblem = z.object({
 });
 
 /**
- * RFC 7807 not found response
- */
-export const zNotFoundProblem = z.object({
-  body: zProblemDetails
-});
-
-/**
  * RFC 7807 payment required response: the feature needs an Enterprise license
  */
 export const zPaymentRequiredProblem = z.object({
@@ -123,11 +133,47 @@ export const zTimeZoneName = z.string();
 export const zTimestamp = z.iso.datetime();
 
 /**
+ * A Workspace's suspension state (ADR 0007)
+ */
+export const zOperatorSuspension = z.object({
+  at: zTimestamp,
+  actor: zOperatorSuspensionActor,
+  reason: z.exactOptional(z.string().nullable())
+});
+
+/**
+ * A Workspace as the Operator console sees it: metadata only, never Contacts,
+ * content or Events (ADR 0026).
+ */
+export const zOperatorWorkspaceResource = z.object({
+  id: zEntityId,
+  slug: z.string(),
+  name: z.string(),
+  createdAt: zTimestamp,
+  suspension: z.exactOptional(zOperatorSuspension.nullable())
+});
+
+/**
  * RFC 7807 validation response
  */
 export const zUnprocessableEntityProblem = z.object({
   body: zProblemDetails
 });
+
+/**
+ * Only Workspaces whose slug contains this text (case-insensitive)
+ */
+export const zOperatorWorkspaceSearch = z.string();
+
+/**
+ * Page number (1-based)
+ */
+export const zPageQueryPage = z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).default(1);
+
+/**
+ * Page size
+ */
+export const zPageQueryPageSize = z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).default(25);
 
 export const zOperatorAuthLoginBody = zOperatorLoginInput;
 
@@ -152,3 +198,29 @@ export const zOperatorAuthSecondFactorResponse = zOperatorResource;
  * The request has succeeded.
  */
 export const zOperatorMeGetResponse = zOperatorResource;
+
+export const zOperatorWorkspacesListQuery = z.object({
+  slug: z.exactOptional(z.string()),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zOperatorWorkspacesListResponse = z.object({
+  items: z.array(zOperatorWorkspaceResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zOperatorWorkspacesGetPath = z.object({
+  workspaceId: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zOperatorWorkspacesGetResponse = zOperatorWorkspaceResource;

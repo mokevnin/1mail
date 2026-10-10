@@ -1,0 +1,188 @@
+package operator_test
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	operatorapi "github.com/mokevnin/sphericon/gen/operator"
+	"github.com/mokevnin/sphericon/internal/fixtures"
+	"github.com/mokevnin/sphericon/internal/testhelper"
+)
+
+// requireMetadataOnly fails when a Workspace response carries anything but metadata
+// (never Contacts, content, Events or the Workspace's secret keys).
+func requireMetadataOnly(t *testing.T, w map[string]any) {
+	t.Helper()
+	allowed := []string{"id", "slug", "name", "createdAt", "suspension"}
+	for k := range w {
+		assert.Contains(t, allowed, k)
+	}
+	for _, k := range []string{"id", "slug", "name", "createdAt"} {
+		assert.Contains(t, w, k)
+	}
+}
+
+// operatorSession logs the enrolled fixture Operator in and returns a client bearing
+// the session, and the cookie for raw requests.
+func (h *harness) operatorSession(t *testing.T) (*operatorapi.Client, *http.Cookie) {
+	t.Helper()
+	cookie := h.session(t, fixtures.OperatorEnrolledEmail, fixtures.OperatorEnrolledPassword, fixtures.OperatorEnrolledTotpSecret)
+	return h.env.OperatorWithToken(t, cookie.Value), cookie
+}
+
+func (h *harness) listWorkspaces(t *testing.T, c *operatorapi.Client, params operatorapi.OperatorWorkspacesListParams) *operatorapi.OperatorWorkspacesListOK {
+	t.Helper()
+	res, err := c.OperatorWorkspacesList(t.Context(), params)
+	require.NoError(t, err)
+	page, ok := res.(*operatorapi.OperatorWorkspacesListOK)
+	require.Truef(t, ok, "got %T", res)
+	return page
+}
+
+func (h *harness) getWorkspace(t *testing.T, c *operatorapi.Client, id string) operatorapi.OperatorWorkspacesGetRes {
+	t.Helper()
+	res, err := c.OperatorWorkspacesGet(t.Context(), operatorapi.OperatorWorkspacesGetParams{WorkspaceId: operatorapi.EntityId(id)})
+	require.NoError(t, err)
+	return res
+}
+
+func slugs(items []operatorapi.OperatorWorkspaceResource) []string {
+	out := make([]string, 0, len(items))
+	for _, w := range items {
+		out = append(out, w.Slug)
+	}
+	return out
+}
+
+func TestTheWorkspaceListShowsEveryWorkspaceNewestFirst(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	page := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{})
+
+	assert.Equal(t, []string{"hooli", "umbrella", "initech", "globex", "acme"}, slugs(page.Items))
+	assert.EqualValues(t, 5, page.TotalItems)
+	assert.EqualValues(t, 1, page.TotalPages)
+	assert.EqualValues(t, 1, page.Page)
+}
+
+func TestTheWorkspaceListIsPaginated(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	second := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{
+		Page: operatorapi.NewOptInt32(2), PageSize: operatorapi.NewOptInt32(2),
+	})
+
+	assert.Equal(t, []string{"initech", "globex"}, slugs(second.Items))
+	assert.EqualValues(t, 5, second.TotalItems)
+	assert.EqualValues(t, 3, second.TotalPages)
+	assert.EqualValues(t, 2, second.PageSize)
+}
+
+func TestTheWorkspaceListSearchesBySlug(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	partial := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{Slug: operatorapi.NewOptString("OOL")})
+	none := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{Slug: operatorapi.NewOptString("nothing-like-this")})
+	wildcard := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{Slug: operatorapi.NewOptString("%")})
+
+	assert.Equal(t, []string{"hooli"}, slugs(partial.Items))
+	assert.EqualValues(t, 1, partial.TotalItems)
+	assert.Empty(t, none.Items)
+	assert.EqualValues(t, 0, none.TotalItems)
+	assert.Empty(t, wildcard.Items, "a wildcard character is matched literally")
+}
+
+func TestASuspendedWorkspaceShowsItsActorReasonAndTime(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	page := h.listWorkspaces(t, c, operatorapi.OperatorWorkspacesListParams{Slug: operatorapi.NewOptString("hooli")})
+
+	require.Len(t, page.Items, 1)
+	hooli := page.Items[0]
+	assert.EqualValues(t, strconv.Itoa(fixtures.HooliID), hooli.ID)
+	assert.Equal(t, fixtures.HooliName, hooli.Name)
+	require.True(t, hooli.Suspension.Set)
+	s := hooli.Suspension.Value
+	// The fixture time is a wall-clock value; allow for the zone it is read in.
+	assert.WithinDuration(t, time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC), time.Time(s.At), 24*time.Hour)
+	assert.Equal(t, operatorapi.OperatorSuspensionActorKindOperator, s.Actor.Kind)
+	assert.Equal(t, "op-fixture", s.Actor.ID.Value, "an Operator sees the real Operator id")
+	assert.Equal(t, "abuse report", s.Reason.Value)
+}
+
+func TestTheDetailShowsMetadataAndTheSuspensionState(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	acme, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.AcmeID)).(*operatorapi.OperatorWorkspaceResource)
+	require.True(t, ok)
+	assert.Equal(t, fixtures.AcmeSlug, acme.Slug)
+	assert.Equal(t, fixtures.AcmeName, acme.Name)
+	assert.False(t, acme.Suspension.Set, "an active Workspace has no suspension")
+
+	hooli, ok := h.getWorkspace(t, c, strconv.Itoa(fixtures.HooliID)).(*operatorapi.OperatorWorkspaceResource)
+	require.True(t, ok)
+	require.True(t, hooli.Suspension.Set)
+	assert.Equal(t, operatorapi.OperatorSuspensionActorKindOperator, hooli.Suspension.Value.Actor.Kind)
+	assert.Equal(t, "op-fixture", hooli.Suspension.Value.Actor.ID.Value)
+	assert.Equal(t, "abuse report", hooli.Suspension.Value.Reason.Value)
+}
+
+func TestAnUnknownWorkspaceIsNotFound(t *testing.T) {
+	h := newHarness(t)
+	c, _ := h.operatorSession(t)
+
+	assert.IsType(t, &operatorapi.OperatorWorkspacesGetNotFound{}, h.getWorkspace(t, c, "999999"))
+}
+
+func TestWorkspaceResponsesCarryMetadataOnly(t *testing.T) {
+	h := newHarness(t)
+	_, cookie := h.operatorSession(t)
+
+	rec := get(t, h.env.Server, "/operator/workspaces/"+strconv.Itoa(fixtures.AcmeID), cookie)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var detail map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &detail))
+	requireMetadataOnly(t, detail)
+
+	rec = get(t, h.env.Server, "/operator/workspaces", cookie)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var list struct {
+		Items []map[string]any `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &list))
+	require.NotEmpty(t, list.Items)
+	for _, item := range list.Items {
+		requireMetadataOnly(t, item)
+	}
+	assert.NotContains(t, rec.Body.String(), fixtures.AcmeCollectKey)
+	assert.NotContains(t, rec.Body.String(), fixtures.AcmeIngestKey)
+}
+
+func TestTheWorkspaceEndpointsRequireAnOperatorSession(t *testing.T) {
+	h := newHarness(t)
+	userToken := h.env.SiteToken(t, fixtures.OwnerJohnEmail, nil)
+
+	for _, path := range []string{"/operator/workspaces", "/operator/workspaces/" + strconv.Itoa(fixtures.AcmeID)} {
+		assert.Equal(t, http.StatusUnauthorized, get(t, h.env.Server, path).Code, path)
+		assert.Equal(t, http.StatusUnauthorized, get(t, h.env.Server, path, &http.Cookie{Name: "JWT", Value: userToken}).Code, path)
+	}
+}
+
+func TestTheWorkspaceEndpointsAnswer404WithoutTheLicense(t *testing.T) {
+	h := newHarness(t, testhelper.WithoutLicense())
+
+	for _, path := range []string{"/operator/workspaces", "/operator/workspaces/" + strconv.Itoa(fixtures.AcmeID)} {
+		assert.Equal(t, http.StatusNotFound, get(t, h.env.Server, path).Code, path)
+	}
+}

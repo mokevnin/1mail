@@ -24,6 +24,7 @@
   "errors.email_exists": "el email ya existe",
   "errors.invalid_credentials": "email o contraseña incorrectos",
   "errors.login_challenge_invalid": "el paso de inicio de sesión caducó, inicia sesión de nuevo",
+  "errors.workspace_not_found": "espacio de trabajo no encontrado",
   "errors.phone_exists": "el teléfono ya existe",
   "errors.subject_id_exists": "el identificador de usuario ya existe",
   "errors.reset_link_invalid": "el enlace de restablecimiento no es válido o ha caducado",

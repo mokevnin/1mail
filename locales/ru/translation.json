@@ -249,10 +249,6 @@
     "title": "Подтвердите подписку"
   },
   "console": {
-    "home": {
-      "description": "Здесь появятся инструменты для рабочих пространств.",
-      "title": "Консоль оператора"
-    },
     "login": {
       "codeLabel": "Код аутентификации",
       "confirmButton": "Подтвердить и войти",
@@ -287,7 +283,38 @@
       "logoutErrorTitle": "Не удалось выйти"
     },
     "nav": {
-      "home": "Главная"
+      "workspaces": "Рабочие пространства"
+    },
+    "workspace": {
+      "actorOperator": "Оператор {{id}}",
+      "actors": {
+        "cli": "Командная строка",
+        "operator": "Оператор",
+        "system": "Автоматический детектор"
+      },
+      "back": "Все рабочие пространства",
+      "detailsTitle": "Сведения",
+      "id": "ID",
+      "loadError": "Не удалось загрузить рабочее пространство",
+      "noReason": "Причина не указана",
+      "notSuspended": "Отправка не приостановлена.",
+      "reason": "Причина",
+      "suspendedAt": "Приостановлено",
+      "suspendedBy": "Кем",
+      "suspensionTitle": "Приостановка"
+    },
+    "workspaces": {
+      "active": "Активно",
+      "createdAt": "Создано",
+      "empty": "Рабочие пространства не найдены",
+      "loadError": "Не удалось загрузить рабочие пространства",
+      "name": "Название",
+      "searchLabel": "Поиск по slug",
+      "searchPlaceholder": "Поиск по slug",
+      "slug": "Slug",
+      "status": "Статус",
+      "suspended": "Приостановлено",
+      "title": "Рабочие пространства"
     }
   },
   "contacts": {

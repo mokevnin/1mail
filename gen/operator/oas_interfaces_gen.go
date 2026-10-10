@@ -12,3 +12,11 @@ type OperatorAuthSecondFactorRes interface {
 type OperatorMeGetRes interface {
 	operatorMeGetRes()
 }
+
+type OperatorWorkspacesGetRes interface {
+	operatorWorkspacesGetRes()
+}
+
+type OperatorWorkspacesListRes interface {
+	operatorWorkspacesListRes()
+}

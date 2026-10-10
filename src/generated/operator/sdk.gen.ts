@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses } from './types.gen.ts';
-import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody } from './zod.gen.ts';
+import type { OperatorAuthLoginData, OperatorAuthLoginErrors, OperatorAuthLoginResponses, OperatorAuthLogoutData, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorErrors, OperatorAuthSecondFactorResponses, OperatorMeGetData, OperatorMeGetErrors, OperatorMeGetResponses, OperatorWorkspacesGetData, OperatorWorkspacesGetErrors, OperatorWorkspacesGetResponses, OperatorWorkspacesListData, OperatorWorkspacesListErrors, OperatorWorkspacesListResponses } from './types.gen.ts';
+import { zOperatorAuthLoginBody, zOperatorAuthSecondFactorBody, zOperatorWorkspacesGetPath, zOperatorWorkspacesListQuery } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
   /**
@@ -88,5 +88,41 @@ export const operatorMeGet = <ThrowOnError extends boolean = false>(options?: Op
       type: 'apiKey'
     }],
   url: '/me',
+  ...options
+});
+
+/**
+ * List all Workspaces, newest first, optionally narrowed by a slug search
+ */
+export const operatorWorkspacesList = <ThrowOnError extends boolean = false>(options?: Options<OperatorWorkspacesListData, ThrowOnError>): RequestResult<OperatorWorkspacesListResponses, OperatorWorkspacesListErrors, ThrowOnError> => (options?.client ?? client).get<OperatorWorkspacesListResponses, OperatorWorkspacesListErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: z.never().optional(),
+    query: zOperatorWorkspacesListQuery.optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'OPERATOR_JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces',
+  ...options
+});
+
+/**
+ * One Workspace's metadata and suspension state
+ */
+export const operatorWorkspacesGet = <ThrowOnError extends boolean = false>(options: Options<OperatorWorkspacesGetData, ThrowOnError>): RequestResult<OperatorWorkspacesGetResponses, OperatorWorkspacesGetErrors, ThrowOnError> => (options.client ?? client).get<OperatorWorkspacesGetResponses, OperatorWorkspacesGetErrors, ThrowOnError>({
+  requestValidator: async (data) => await z.object({
+    body: z.never().optional(),
+    path: zOperatorWorkspacesGetPath,
+    query: z.never().optional()
+  }).parseAsync(data),
+  security: [{
+      in: 'cookie',
+      name: 'OPERATOR_JWT',
+      type: 'apiKey'
+    }],
+  url: '/workspaces/{workspaceId}',
   ...options
 });

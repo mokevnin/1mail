@@ -5,10 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/mokevnin/sphericon/ent"
+	"github.com/mokevnin/sphericon/ent/workspace"
 	operatorapi "github.com/mokevnin/sphericon/gen/operator"
 	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/pagination"
 )
 
 // Surface is the /operator API: the handlers and the security handler over one
@@ -109,4 +112,77 @@ func unauthorized(detail string) *problem {
 		Title:  operatorapi.NewOptString(http.StatusText(http.StatusUnauthorized)),
 		Detail: operatorapi.NewOptString(detail),
 	}
+}
+
+// OperatorWorkspacesList is a page of Workspaces, newest first, narrowed by a slug
+// search. Metadata only: no Contacts, content or Events.
+func (h *Handlers) OperatorWorkspacesList(ctx context.Context, params operatorapi.OperatorWorkspacesListParams) (operatorapi.OperatorWorkspacesListRes, error) {
+	page, err := h.module.ListWorkspaces(ctx, strings.TrimSpace(params.Slug.Value), pagination.ParamsOf(params.Page, params.PageSize))
+	if err != nil {
+		return nil, err
+	}
+	items := make([]operatorapi.OperatorWorkspaceResource, 0, len(page.Items))
+	for _, w := range page.Items {
+		items = append(items, workspaceResource(w))
+	}
+	return &operatorapi.OperatorWorkspacesListOK{
+		Items:      items,
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
+	}, nil
+}
+
+// OperatorWorkspacesGet is one Workspace's metadata and suspension state.
+func (h *Handlers) OperatorWorkspacesGet(ctx context.Context, params operatorapi.OperatorWorkspacesGetParams) (operatorapi.OperatorWorkspacesGetRes, error) {
+	id, err := strconv.ParseInt(string(params.WorkspaceId), 10, 64)
+	if err != nil {
+		return workspaceNotFound(), nil
+	}
+	w, err := h.module.GetWorkspace(ctx, id)
+	if ent.IsNotFound(err) {
+		return workspaceNotFound(), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	res := workspaceResource(w)
+	return &res, nil
+}
+
+func workspaceNotFound() *operatorapi.OperatorWorkspacesGetNotFound {
+	p := operatorapi.OperatorWorkspacesGetNotFound(operatorapi.ProblemDetails{
+		Status: operatorapi.NewOptInt32(http.StatusNotFound),
+		Title:  operatorapi.NewOptString(http.StatusText(http.StatusNotFound)),
+		Detail: operatorapi.NewOptString(i18n.T("errors.workspace_not_found", nil)),
+	})
+	return &p
+}
+
+// workspaceResource is the console's view of a Workspace: metadata and suspension
+// state only. The Operator sees the real actor id, which a customer never does.
+func workspaceResource(w *ent.Workspace) operatorapi.OperatorWorkspaceResource {
+	res := operatorapi.OperatorWorkspaceResource{
+		ID:        operatorapi.EntityId(strconv.FormatInt(w.ID, 10)),
+		Slug:      w.Slug,
+		Name:      w.Name,
+		CreatedAt: operatorapi.Timestamp(w.CreatedAt),
+	}
+	if w.SuspendedAt == nil {
+		return res
+	}
+	actor := operatorapi.OperatorSuspensionActor{}
+	if w.SuspendedByKind != nil {
+		actor.Kind = operatorapi.OperatorSuspensionActorKind(*w.SuspendedByKind)
+	}
+	if w.SuspendedByKind != nil && *w.SuspendedByKind == workspace.SuspendedByKindOperator && w.SuspendedByID != nil {
+		actor.ID = operatorapi.NewOptNilString(*w.SuspendedByID)
+	}
+	s := operatorapi.OperatorSuspension{At: operatorapi.Timestamp(*w.SuspendedAt), Actor: actor}
+	if w.SuspensionReason != nil {
+		s.Reason = operatorapi.NewOptNilString(*w.SuspensionReason)
+	}
+	res.Suspension = operatorapi.NewOptNilOperatorSuspension(s)
+	return res
 }

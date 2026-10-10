@@ -3,7 +3,7 @@
 
 import { http, type HttpHandler, HttpResponse, type HttpResponseResolver, type RequestHandlerOptions as RequestHandlerOptions2 } from 'msw';
 
-import type { ClientOptions, OperatorAuthLoginData, OperatorAuthLoginResponses, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorResponses, OperatorMeGetResponses } from './types.gen.ts';
+import type { ClientOptions, OperatorAuthLoginData, OperatorAuthLoginResponses, OperatorAuthLogoutResponses, OperatorAuthSecondFactorData, OperatorAuthSecondFactorResponses, OperatorMeGetResponses, OperatorWorkspacesGetResponses, OperatorWorkspacesListResponses } from './types.gen.ts';
 
 export type RequestHandlerOptions = RequestHandlerOptions2 & {
   baseUrl?: ClientOptions['baseUrl'];
@@ -118,6 +118,64 @@ export function handleOperatorMeGet(response?: HandleOperatorMeGetResponse | Htt
   }, options);
 }
 
+export type HandleOperatorWorkspacesListResponse = {
+  body: OperatorWorkspacesListResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `GET /workspaces` operation.
+ */
+export function handleOperatorWorkspacesList(response?: HandleOperatorWorkspacesListResponse | HttpResponseResolver<never, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.get<never, never>(`${options?.baseUrl ?? '*'}/workspaces`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
+export type HandleOperatorWorkspacesGetResponse = {
+  body: OperatorWorkspacesGetResponses[200];
+  status?: 200;
+};
+
+/**
+ * Handler for the `GET /workspaces/{workspaceId}` operation.
+ */
+export function handleOperatorWorkspacesGet(response?: HandleOperatorWorkspacesGetResponse | HttpResponseResolver<{
+  workspaceId: string;
+}, never>, options?: RequestHandlerOptions): HttpHandler {
+  return http.get<{
+    workspaceId: string;
+  }, never>(`${options?.baseUrl ?? '*'}/workspaces/:workspaceId`, info => {
+    if (typeof response === 'function') {
+      return response(info);
+    }
+    const body = response?.body;
+    if (body !== undefined) {
+      return HttpResponse.json(body, { status: response?.status ?? 200 });
+    }
+    if (options?.responseFallback === 'passthrough') {
+      return;
+    }
+    return new Response('Not Implemented', {
+      status: 501,
+      statusText: 'Not Implemented'
+    });
+  }, options);
+}
+
 export type MswHandlerFactories = {
   /**
    * Handler for the `POST /auth/login` operation.
@@ -135,6 +193,14 @@ export type MswHandlerFactories = {
    * Handler for the `GET /me` operation.
    */
   operatorMeGet: typeof handleOperatorMeGet;
+  /**
+   * Handler for the `GET /workspaces` operation.
+   */
+  operatorWorkspacesList: typeof handleOperatorWorkspacesList;
+  /**
+   * Handler for the `GET /workspaces/{workspaceId}` operation.
+   */
+  operatorWorkspacesGet: typeof handleOperatorWorkspacesGet;
 };
 
 export type CreateMswHandlersResult = {
@@ -155,7 +221,9 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
     operatorAuthLogin: wrap(handleOperatorAuthLogin),
     operatorAuthLogout: wrap(handleOperatorAuthLogout),
     operatorAuthSecondFactor: wrap(handleOperatorAuthSecondFactor),
-    operatorMeGet: wrap(handleOperatorMeGet)
+    operatorMeGet: wrap(handleOperatorMeGet),
+    operatorWorkspacesList: wrap(handleOperatorWorkspacesList),
+    operatorWorkspacesGet: wrap(handleOperatorWorkspacesGet)
   };
   const all: CreateMswHandlersResult['all'] = (options = {}) => {
     type OverrideValue<R> = R | [
@@ -170,7 +238,9 @@ export function createMswHandlers(config: RequestHandlerOptions = {}): CreateMsw
       invoke(pick.operatorAuthLogin, overrides.operatorAuthLogin),
       invoke(pick.operatorAuthLogout, overrides.operatorAuthLogout),
       invoke(pick.operatorAuthSecondFactor, overrides.operatorAuthSecondFactor),
-      invoke(pick.operatorMeGet, overrides.operatorMeGet)
+      invoke(pick.operatorWorkspacesGet, overrides.operatorWorkspacesGet),
+      invoke(pick.operatorMeGet, overrides.operatorMeGet),
+      invoke(pick.operatorWorkspacesList, overrides.operatorWorkspacesList)
     ];
   };
   return { all, pick };

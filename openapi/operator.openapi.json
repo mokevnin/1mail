@@ -10,6 +10,9 @@
     },
     {
       "name": "Operator"
+    },
+    {
+      "name": "Operator Workspaces"
     }
   ],
   "paths": {
@@ -244,6 +247,126 @@
         },
         "tags": ["Operator"]
       }
+    },
+    "/workspaces": {
+      "get": {
+        "operationId": "OperatorWorkspaces_list",
+        "description": "List all Workspaces, newest first, optionally narrowed by a slug search",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OperatorWorkspaceSearch"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OperatorWorkspaceResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Operator Workspaces"]
+      }
+    },
+    "/workspaces/{workspaceId}": {
+      "get": {
+        "operationId": "OperatorWorkspaces_get",
+        "description": "One Workspace's metadata and suspension state",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorWorkspaceResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Operator Workspaces"]
+      }
     }
   },
   "security": [
@@ -252,6 +375,42 @@
     }
   ],
   "components": {
+    "parameters": {
+      "OperatorWorkspaceSearch": {
+        "name": "slug",
+        "in": "query",
+        "required": false,
+        "description": "Only Workspaces whose slug contains this text (case-insensitive)",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "PageQuery.page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Page number (1-based)",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "default": 1
+        },
+        "explode": false
+      },
+      "PageQuery.pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "required": false,
+        "description": "Page size",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "default": 25
+        },
+        "explode": false
+      }
+    },
     "schemas": {
       "BadRequestProblem": {
         "type": "object",
@@ -300,16 +459,6 @@
           }
         },
         "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
-      },
-      "NotFoundProblem": {
-        "type": "object",
-        "required": ["body"],
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/ProblemDetails"
-          }
-        },
-        "description": "RFC 7807 not found response"
       },
       "OperatorEnrolment": {
         "type": "object",
@@ -405,6 +554,93 @@
           }
         },
         "description": "The second login step: the challenge from the password step and a TOTP code"
+      },
+      "OperatorSuspension": {
+        "type": "object",
+        "required": ["at", "actor"],
+        "properties": {
+          "at": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When outbound sending was suspended"
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorSuspensionActor"
+              }
+            ],
+            "description": "Who suspended it"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why, as given by the actor"
+          }
+        },
+        "description": "A Workspace's suspension state (ADR 0007)"
+      },
+      "OperatorSuspensionActor": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/OperatorSuspensionActorKind"
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Operator id; present only for the `operator` kind"
+          }
+        },
+        "description": "The actor of a suspension. Unlike a customer, an Operator sees the real Operator id."
+      },
+      "OperatorSuspensionActorKind": {
+        "type": "string",
+        "enum": ["system", "cli", "operator"],
+        "description": "Who set a Workspace suspension (ADR 0026)"
+      },
+      "OperatorWorkspaceResource": {
+        "type": "object",
+        "required": ["id", "slug", "name", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the Workspace was created"
+          },
+          "suspension": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorSuspension"
+              }
+            ],
+            "nullable": true,
+            "description": "Present only while sending is suspended"
+          }
+        },
+        "description": "A Workspace as the Operator console sees it: metadata only, never Contacts,\ncontent or Events (ADR 0026)."
       },
       "PaymentRequiredProblem": {
         "type": "object",

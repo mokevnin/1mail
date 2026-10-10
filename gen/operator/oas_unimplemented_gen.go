@@ -51,3 +51,21 @@ func (UnimplementedHandler) OperatorAuthSecondFactor(ctx context.Context, req *O
 func (UnimplementedHandler) OperatorMeGet(ctx context.Context) (r OperatorMeGetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
+//
+// One Workspace's metadata and suspension state.
+//
+// GET /workspaces/{workspaceId}
+func (UnimplementedHandler) OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (r OperatorWorkspacesGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// OperatorWorkspacesList implements OperatorWorkspaces_list operation.
+//
+// List all Workspaces, newest first, optionally narrowed by a slug search.
+//
+// GET /workspaces
+func (UnimplementedHandler) OperatorWorkspacesList(ctx context.Context, params OperatorWorkspacesListParams) (r OperatorWorkspacesListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

@@ -243,10 +243,6 @@ export default interface Resources {
       "deleteTitle": "Are you sure?"
     },
     "console": {
-      "home": {
-        "description": "Workspace tools will appear here.",
-        "title": "Operator console"
-      },
       "login": {
         "codeLabel": "Authentication code",
         "confirmButton": "Confirm and sign in",
@@ -273,7 +269,38 @@ export default interface Resources {
         "logoutErrorTitle": "Sign out failed"
       },
       "nav": {
-        "home": "Home"
+        "workspaces": "Workspaces"
+      },
+      "workspace": {
+        "actorOperator": "Operator {{id}}",
+        "actors": {
+          "cli": "Command line",
+          "operator": "Operator",
+          "system": "Automated detector"
+        },
+        "back": "All workspaces",
+        "detailsTitle": "Details",
+        "id": "ID",
+        "loadError": "Could not load the workspace",
+        "noReason": "No reason given",
+        "notSuspended": "Sending is not suspended.",
+        "reason": "Reason",
+        "suspendedAt": "Suspended at",
+        "suspendedBy": "Suspended by",
+        "suspensionTitle": "Suspension"
+      },
+      "workspaces": {
+        "active": "Active",
+        "createdAt": "Created",
+        "empty": "No workspaces found",
+        "loadError": "Could not load workspaces",
+        "name": "Name",
+        "searchLabel": "Search by slug",
+        "searchPlaceholder": "Search by slug",
+        "slug": "Slug",
+        "status": "Status",
+        "suspended": "Suspended",
+        "title": "Workspaces"
       }
     },
     "contacts": {

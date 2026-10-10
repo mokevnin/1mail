@@ -4,7 +4,9 @@ import "@typespec/openapi";
 
 import "../common/scalars.tsp";
 import "../common/errors.tsp";
+import "../common/pagination.tsp";
 import "./resources/auth.tsp";
+import "./resources/workspaces.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

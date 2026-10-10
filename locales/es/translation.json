@@ -247,10 +247,6 @@
     "title": "Confirma tu suscripción"
   },
   "console": {
-    "home": {
-      "description": "Aquí aparecerán las herramientas de los espacios de trabajo.",
-      "title": "Consola de operador"
-    },
     "login": {
       "codeLabel": "Código de autenticación",
       "confirmButton": "Confirmar e iniciar sesión",
@@ -283,7 +279,38 @@
       "logoutErrorTitle": "Error al cerrar sesión"
     },
     "nav": {
-      "home": "Inicio"
+      "workspaces": "Espacios de trabajo"
+    },
+    "workspace": {
+      "actorOperator": "Operador {{id}}",
+      "actors": {
+        "cli": "Línea de comandos",
+        "operator": "Operador",
+        "system": "Detector automático"
+      },
+      "back": "Todos los espacios de trabajo",
+      "detailsTitle": "Detalles",
+      "id": "ID",
+      "loadError": "No se pudo cargar el espacio de trabajo",
+      "noReason": "Sin motivo indicado",
+      "notSuspended": "El envío no está suspendido.",
+      "reason": "Motivo",
+      "suspendedAt": "Suspendido el",
+      "suspendedBy": "Suspendido por",
+      "suspensionTitle": "Suspensión"
+    },
+    "workspaces": {
+      "active": "Activo",
+      "createdAt": "Creado",
+      "empty": "No se encontraron espacios de trabajo",
+      "loadError": "No se pudieron cargar los espacios de trabajo",
+      "name": "Nombre",
+      "searchLabel": "Buscar por slug",
+      "searchPlaceholder": "Buscar por slug",
+      "slug": "Slug",
+      "status": "Estado",
+      "suspended": "Suspendido",
+      "title": "Espacios de trabajo"
     }
   },
   "contacts": {

@@ -17,7 +17,7 @@ function ConsoleNavbar() {
   return (
     <Stack gap="xs">
       <NavLink
-        label={t(($) => $.console.nav.home)}
+        label={t(($) => $.console.nav.workspaces)}
         leftSection={<IconHome size={18} />}
         active={Boolean(matchRoute({ to: consoleHomeRoute.to }))}
         onClick={() => navigate({ to: consoleHomeRoute.to })}
