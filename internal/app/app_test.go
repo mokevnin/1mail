@@ -211,6 +211,7 @@ func TestNewOperatorIsMinimal(t *testing.T) {
 
 	require.NotNil(t, a.Config)
 	assert.Nil(t, a.Server)
+	assert.Nil(t, a.Metrics, "no metrics listener for operator commands")
 	assert.Nil(t, a.events)
 	assert.Nil(t, a.jobs)
 }
