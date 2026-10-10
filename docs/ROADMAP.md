@@ -90,7 +90,11 @@ tracking.
 > stitching run at Collect ingest.
 > (Done since: events-bus P0–P2 + typed union + webhooks; legacy email/pubsub
 > retired with an inline jobs adapter; Phase 2 event-based segment conditions;
-> ADR 0001/0002 refactors; transactional send [ADR 0005]; visual automation builder.)
+> ADR 0001/0002 refactors; transactional send [ADR 0005]; visual automation builder;
+> multi-user workspaces [ADR 0004]; sending domains + native DKIM [ADR 0010]; complaint/bounce
+> rates [ADR 0011]; RFC 8058 one-click unsubscribe [ADR 0012]; double opt-in [ADR 0013];
+> one outbound-send chokepoint [ADR 0015]; MCP surface [ADR 0016]; generated scoped client
+> [ADR 0017]; tags; OAuth server; health/readiness probes, Prometheus metrics and OTel.)
 
 > **⚠️ Authoritative model — read `GLOSSARY.md` + `docs/adr/*` first.** This phased
 > roadmap predates the domain model in `GLOSSARY.md` and the accepted ADRs, which
@@ -231,6 +235,13 @@ usage signal; plan and document them together, not as two disconnected features.
 
 ## Phase 1 — Broadcasts MVP (detailed)
 
+> **Historical plan.** Kept as the record of how Phase 1 was scoped; it is not maintained as a
+> description of the code. Where it disagrees with `GLOSSARY.md`, the ADRs or the code, those
+> win. Known drift: there is no `Contact.status` (opt-out is an `Unsubscribe` row, ADR 0001);
+> `GET /e/u/{token}` renders the confirm page and only `POST` opts out (ADR 0012); bodies are
+> MJML in a textarea, not `@mantine/tiptap`; river is started by `App.RunJobs`; the goverter
+> converters live in `internal/api/site/resources`; Campaigns is a real navbar section.
+
 Goal of the MVP: a user can **create a broadcast, pick an audience, write an email, send (or schedule) it,
 and see a report** (sent / opened / clicked / unsubscribed). This is the first "sellable" value.
 
@@ -295,7 +306,7 @@ river is chosen for the actual sending (retries/concurrency); worker registratio
 > `client.Start(ctx)` in a goroutine from `main.go`, stop it in `Shutdown`).
 
 - **`SendBroadcastJob{broadcast_id}`** — moves the broadcast to `sending`, resolves the audience (all
-  active contacts or snapshot-segment members), creates `BroadcastRecipient` rows (status=pending), and
+  active contacts or live-segment members), creates `BroadcastRecipient` rows (status=pending), and
   enqueues a `SendMessageJob` per recipient. On completion → `sent`.
 - **`SendMessageJob{recipient_id}`** — renders html/text (merge tags via Liquid), rewrites links +
   injects the open pixel + unsubscribe link, resolves the sender via `internal/messaging` (the
@@ -328,7 +339,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 - Enable the **Campaigns** item in `src/components/AppNavbar.tsx` (currently disabled "Coming soon").
 - Routes (pattern: `src/routes/segments/` and `src/routes/contacts/`): list, create/edit (composer),
   report. Register them in `src/router.tsx`.
-- **Composer:** name, audience selector (all active / snapshot segment), subject, from, and an
+- **Composer:** name, audience selector (all active / segment), subject, from, and an
   **HTML editor** using **`@mantine/tiptap`** (official Mantine package — no custom CSS, Mantine only).
 - **Send/Schedule:** buttons calling the generated `siteBroadcastsSend/Schedule` hooks from
   `src/generated/site`.
@@ -369,5 +380,6 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 
 - ~~**Snapshot segments:**~~ **Resolved: rejected.** A segment is always a live rule (no
   `SegmentMember` membership table). See `GLOSSARY.md` anti-vocabulary.
-- **Bounce/complaint handling** (SES SNS / SMTP DSN) — Phase 6 (deliverability).
-- **External API broadcasts** — after the site contract stabilizes.
+- ~~**Bounce/complaint handling**~~ **Done:** SES-over-SNS ingestion → Suppression (Phase 6);
+  SMTP DSN is still open.
+- ~~**External API broadcasts**~~ **Done:** `typespec/external/resources/broadcasts.tsp`.
