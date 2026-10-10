@@ -514,7 +514,7 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL, cfg.OutboxFloor)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL, cfg.OutboxFloor, cfg.EventsRetention)
 		if err != nil {
 			return nil, err
 		}
