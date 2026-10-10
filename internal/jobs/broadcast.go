@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -125,7 +126,7 @@ func PaceRecipients(ctx context.Context, client *ent.Client, broadcastID int64, 
 	if err != nil {
 		return nil, err
 	}
-	step := (sendlimit.Limits{PerSecond: integ.MaxPerSecond, PerDay: integ.MaxPerDay}).Interval()
+	step := sendlimit.EffectiveOf(integ).Limits().Interval()
 	if step <= 0 || n == 0 {
 		return nil, s.Broadcast().UpdateOneID(b.ID).ClearLastScheduledAt().Exec(ctx)
 	}
@@ -405,16 +406,26 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 	case outbound.Deferral:
 		// The Integration is busy, not blocked: the Broadcast stays sending with no hold
 		// reason and this recipient stays pending, retried after the wait.
+		now := time.Now()
 		ahead, cerr := s.BroadcastRecipient().Query().
 			Where(
 				broadcastrecipient.BroadcastID(rec.BroadcastID),
 				broadcastrecipient.StatusEQ(broadcastrecipient.StatusPending),
 				broadcastrecipient.IDLT(rec.ID),
+				// Only the awake ones queue for a token; a recipient asleep on its own
+				// Deferral is not ahead of this one yet.
+				broadcastrecipient.Or(
+					broadcastrecipient.DeferredUntilIsNil(),
+					broadcastrecipient.DeferredUntilLTE(now),
+				),
 			).Count(ctx)
 		if cerr != nil {
 			ahead = 0 // the estimate only spreads retries; never fail the send over it
 		}
-		return &DeferredError{Wait: res.Wait, Backlog: ahead}
+		delay := deferralDelay(res.Wait, ahead, rand.Float64())
+		// Best effort, like the count: it only sharpens later jobs' backlog.
+		_ = upd.SetDeferredUntil(now.Add(delay)).Exec(ctx)
+		return &DeferredError{Wait: res.Wait, Backlog: ahead, Delay: delay}
 	default: // outbound.Held
 		setBroadcastHold(ctx, s, b.ID, res.Reason)
 		return &HeldError{Reason: res.Reason}

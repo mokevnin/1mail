@@ -35,7 +35,8 @@ func optEntityID[O interface {
 }
 
 // broadcastResource maps a Broadcast and, while it is sending, attaches its progress
-// and ETA (ADR 0023), derived on the server from its recipients.
+// and ETA (ADR 0023), derived on the server from its recipients. Only the single-row
+// responses (get, send) use it: the list leaves progress out.
 func broadcastResource(ctx context.Context, s *ent.Scoped, b *ent.Broadcast) (siteapi.SiteBroadcastResource, error) {
 	res := mapper.BroadcastToResource(b)
 	p, err := broadcasts.ProgressOf(ctx, s, b, time.Now())
@@ -89,9 +90,8 @@ func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBr
 
 	resources := make([]siteapi.SiteBroadcastResource, len(items))
 	for i, b := range items {
-		if resources[i], err = broadcastResource(ctx, ws, b); err != nil {
-			return nil, err
-		}
+		// No progress here: it costs a query per sending row and the list does not show it.
+		resources[i] = mapper.BroadcastToResource(b)
 	}
 
 	return &siteapi.SiteBroadcastsListOK{

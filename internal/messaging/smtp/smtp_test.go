@@ -213,12 +213,12 @@ func TestSendErrors(t *testing.T) {
 		assert.Empty(t, srv.captured())
 	})
 
-	t.Run("transient too-fast reply is throttling", func(t *testing.T) {
+	t.Run("transient too-fast reply is busy", func(t *testing.T) {
 		srv := newFakeServer(ctx, t, false)
 		srv.dataReply = "454 4.7.0 Throttling failure: Maximum sending rate exceeded."
 		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
 		_, err := sender.Send(ctx, msg)
-		assert.ErrorIs(t, err, messaging.ErrThrottled)
+		assert.ErrorIs(t, err, messaging.ErrBusy)
 		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 
@@ -230,13 +230,13 @@ func TestSendErrors(t *testing.T) {
 		assert.ErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 
-	t.Run("permanent reply is never throttling", func(t *testing.T) {
+	t.Run("permanent reply is never busy", func(t *testing.T) {
 		srv := newFakeServer(ctx, t, false)
 		srv.dataReply = "554 5.7.1 rate limit policy violation, rejected"
 		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
 		_, err := sender.Send(ctx, msg)
 		require.Error(t, err)
-		assert.NotErrorIs(t, err, messaging.ErrThrottled)
+		assert.NotErrorIs(t, err, messaging.ErrBusy)
 	})
 
 	t.Run("unreachable host", func(t *testing.T) {

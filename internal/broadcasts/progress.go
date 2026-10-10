@@ -55,7 +55,7 @@ func ProgressOf(ctx context.Context, s *ent.Scoped, b *ent.Broadcast, now time.T
 	if err != nil {
 		return nil, err
 	}
-	if step := (sendlimit.Limits{PerSecond: integ.MaxPerSecond, PerDay: integ.MaxPerDay}).Interval(); step > 0 {
+	if step := sendlimit.EffectiveOf(integ).Limits().Interval(); step > 0 {
 		eta := now.Add(time.Duration(pending) * step)
 		p.EstimatedCompletion = &eta
 	}

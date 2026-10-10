@@ -120,10 +120,10 @@ func TestSendErrors(t *testing.T) {
 		assert.ErrorContains(t, err, "MessageRejected")
 	})
 
-	t.Run("throttling is classified as too fast", func(t *testing.T) {
+	t.Run("a Throttling reply is classified as too fast", func(t *testing.T) {
 		api := newSESAPI(t, http.StatusBadRequest, throttledBody("Maximum sending rate exceeded."))
 		_, err := build(t, api.srv.URL).Send(ctx, msg)
-		assert.ErrorIs(t, err, messaging.ErrThrottled)
+		assert.ErrorIs(t, err, messaging.ErrBusy)
 		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 
@@ -133,10 +133,10 @@ func TestSendErrors(t *testing.T) {
 		assert.ErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 
-	t.Run("a rejected message is not throttling", func(t *testing.T) {
+	t.Run("a rejected message is not busy", func(t *testing.T) {
 		api := newSESAPI(t, http.StatusBadRequest, rejectedBody)
 		_, err := build(t, api.srv.URL).Send(ctx, msg)
-		assert.NotErrorIs(t, err, messaging.ErrThrottled)
+		assert.NotErrorIs(t, err, messaging.ErrBusy)
 		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
 	})
 

@@ -349,6 +349,9 @@ func ScopedEntities() []ScopedEntity {
 				if src.Error != nil {
 					b.SetError(*src.Error)
 				}
+				if src.DeferredUntil != nil {
+					b.SetDeferredUntil(*src.DeferredUntil)
+				}
 				if src.SentAt != nil {
 					b.SetSentAt(*src.SentAt)
 				}

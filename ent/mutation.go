@@ -4857,6 +4857,7 @@ type BroadcastRecipientMutation struct {
 	outbound_message_id    *int64
 	addoutbound_message_id *int64
 	error                  *string
+	deferred_until         *time.Time
 	sent_at                *time.Time
 	opened_at              *time.Time
 	clicked_at             *time.Time
@@ -5329,6 +5330,55 @@ func (m *BroadcastRecipientMutation) ResetError() {
 	delete(m.clearedFields, broadcastrecipient.FieldError)
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (m *BroadcastRecipientMutation) SetDeferredUntil(t time.Time) {
+	m.deferred_until = &t
+}
+
+// DeferredUntil returns the value of the "deferred_until" field in the mutation.
+func (m *BroadcastRecipientMutation) DeferredUntil() (r time.Time, exists bool) {
+	v := m.deferred_until
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeferredUntil returns the old "deferred_until" field's value of the BroadcastRecipient entity.
+// If the BroadcastRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BroadcastRecipientMutation) OldDeferredUntil(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeferredUntil is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeferredUntil requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeferredUntil: %w", err)
+	}
+	return oldValue.DeferredUntil, nil
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (m *BroadcastRecipientMutation) ClearDeferredUntil() {
+	m.deferred_until = nil
+	m.clearedFields[broadcastrecipient.FieldDeferredUntil] = struct{}{}
+}
+
+// DeferredUntilCleared returns if the "deferred_until" field was cleared in this mutation.
+func (m *BroadcastRecipientMutation) DeferredUntilCleared() bool {
+	_, ok := m.clearedFields[broadcastrecipient.FieldDeferredUntil]
+	return ok
+}
+
+// ResetDeferredUntil resets all changes to the "deferred_until" field.
+func (m *BroadcastRecipientMutation) ResetDeferredUntil() {
+	m.deferred_until = nil
+	delete(m.clearedFields, broadcastrecipient.FieldDeferredUntil)
+}
+
 // SetSentAt sets the "sent_at" field.
 func (m *BroadcastRecipientMutation) SetSentAt(t time.Time) {
 	m.sent_at = &t
@@ -5564,7 +5614,7 @@ func (m *BroadcastRecipientMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BroadcastRecipientMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, broadcastrecipient.FieldCreatedAt)
 	}
@@ -5588,6 +5638,9 @@ func (m *BroadcastRecipientMutation) Fields() []string {
 	}
 	if m.error != nil {
 		fields = append(fields, broadcastrecipient.FieldError)
+	}
+	if m.deferred_until != nil {
+		fields = append(fields, broadcastrecipient.FieldDeferredUntil)
 	}
 	if m.sent_at != nil {
 		fields = append(fields, broadcastrecipient.FieldSentAt)
@@ -5622,6 +5675,8 @@ func (m *BroadcastRecipientMutation) Field(name string) (ent.Value, bool) {
 		return m.OutboundMessageID()
 	case broadcastrecipient.FieldError:
 		return m.Error()
+	case broadcastrecipient.FieldDeferredUntil:
+		return m.DeferredUntil()
 	case broadcastrecipient.FieldSentAt:
 		return m.SentAt()
 	case broadcastrecipient.FieldOpenedAt:
@@ -5653,6 +5708,8 @@ func (m *BroadcastRecipientMutation) OldField(ctx context.Context, name string) 
 		return m.OldOutboundMessageID(ctx)
 	case broadcastrecipient.FieldError:
 		return m.OldError(ctx)
+	case broadcastrecipient.FieldDeferredUntil:
+		return m.OldDeferredUntil(ctx)
 	case broadcastrecipient.FieldSentAt:
 		return m.OldSentAt(ctx)
 	case broadcastrecipient.FieldOpenedAt:
@@ -5723,6 +5780,13 @@ func (m *BroadcastRecipientMutation) SetField(name string, value ent.Value) erro
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetError(v)
+		return nil
+	case broadcastrecipient.FieldDeferredUntil:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeferredUntil(v)
 		return nil
 	case broadcastrecipient.FieldSentAt:
 		v, ok := value.(time.Time)
@@ -5808,6 +5872,9 @@ func (m *BroadcastRecipientMutation) ClearedFields() []string {
 	if m.FieldCleared(broadcastrecipient.FieldError) {
 		fields = append(fields, broadcastrecipient.FieldError)
 	}
+	if m.FieldCleared(broadcastrecipient.FieldDeferredUntil) {
+		fields = append(fields, broadcastrecipient.FieldDeferredUntil)
+	}
 	if m.FieldCleared(broadcastrecipient.FieldSentAt) {
 		fields = append(fields, broadcastrecipient.FieldSentAt)
 	}
@@ -5836,6 +5903,9 @@ func (m *BroadcastRecipientMutation) ClearField(name string) error {
 		return nil
 	case broadcastrecipient.FieldError:
 		m.ClearError()
+		return nil
+	case broadcastrecipient.FieldDeferredUntil:
+		m.ClearDeferredUntil()
 		return nil
 	case broadcastrecipient.FieldSentAt:
 		m.ClearSentAt()
@@ -5877,6 +5947,9 @@ func (m *BroadcastRecipientMutation) ResetField(name string) error {
 		return nil
 	case broadcastrecipient.FieldError:
 		m.ResetError()
+		return nil
+	case broadcastrecipient.FieldDeferredUntil:
+		m.ResetDeferredUntil()
 		return nil
 	case broadcastrecipient.FieldSentAt:
 		m.ResetSentAt()

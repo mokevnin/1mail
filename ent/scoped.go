@@ -44,6 +44,29 @@ var (
 // (or does not exist).
 var ErrNotInWorkspace = errors.New("ent: referenced entity is not in the workspace")
 
+// ErrWorkspaceAssign: a scoped update's Modify tried to assign workspace_id, which would
+// move rows to another Workspace.
+var ErrWorkspaceAssign = errors.New("ent: a scoped update cannot assign workspace_id")
+
+// ScopedAssign is what Modify hands a modifier: assignments only (a computed value the
+// typed setters cannot express, SET col = LEAST(col + ..., ...)), and never to
+// workspace_id. It exposes no way to widen or drop the statement's Workspace predicate.
+type ScopedAssign struct {
+	u         *sql.UpdateBuilder
+	workspace bool
+}
+
+// Set assigns a column. An assignment to workspace_id is refused (Save returns
+// ErrWorkspaceAssign) and never reaches the statement.
+func (a *ScopedAssign) Set(column string, v any) *ScopedAssign {
+	if column == "workspace_id" {
+		a.workspace = true
+		return a
+	}
+	a.u.Set(column, v)
+	return a
+}
+
 // Scoped is the entry point to every Workspace-owned entity, confined to one Workspace.
 // Build it from a client or from a transaction's client: `tx.Client().Scoped(ws)`.
 type Scoped struct {
@@ -968,6 +991,8 @@ func (x *ApiTokenScopedUpdateOne) Exec(ctx context.Context) error {
 type ApiTokenScopedUpdate struct {
 	s *Scoped
 	b *ApiTokenUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the ApiToken entities of the Workspace that match the predicates.
@@ -982,10 +1007,19 @@ func (x *ApiTokenScopedUpdate) Where(ps ...predicate.ApiToken) *ApiTokenScopedUp
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *ApiTokenScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ApiTokenScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *ApiTokenScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *ApiTokenScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(apitoken.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -1094,6 +1128,9 @@ func (x *ApiTokenScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *ApiTokenScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -1591,6 +1628,8 @@ func (x *AutomationScopedUpdateOne) Exec(ctx context.Context) error {
 type AutomationScopedUpdate struct {
 	s *Scoped
 	b *AutomationUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Automation entities of the Workspace that match the predicates.
@@ -1605,10 +1644,19 @@ func (x *AutomationScopedUpdate) Where(ps ...predicate.Automation) *AutomationSc
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *AutomationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AutomationScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *AutomationScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *AutomationScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(automation.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -1708,6 +1756,9 @@ func (x *AutomationScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *AutomationScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -2245,6 +2296,8 @@ func (x *AutomationRunScopedUpdateOne) Exec(ctx context.Context) error {
 type AutomationRunScopedUpdate struct {
 	s *Scoped
 	b *AutomationRunUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the AutomationRun entities of the Workspace that match the predicates.
@@ -2259,10 +2312,19 @@ func (x *AutomationRunScopedUpdate) Where(ps ...predicate.AutomationRun) *Automa
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *AutomationRunScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AutomationRunScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *AutomationRunScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *AutomationRunScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(automationrun.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -2379,6 +2441,9 @@ func (x *AutomationRunScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *AutomationRunScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -3658,6 +3723,8 @@ func (x *BroadcastScopedUpdateOne) Exec(ctx context.Context) error {
 type BroadcastScopedUpdate struct {
 	s *Scoped
 	b *BroadcastUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Broadcast entities of the Workspace that match the predicates.
@@ -3672,10 +3739,19 @@ func (x *BroadcastScopedUpdate) Where(ps ...predicate.Broadcast) *BroadcastScope
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *BroadcastScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *BroadcastScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *BroadcastScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(broadcast.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -4079,6 +4155,9 @@ func (x *BroadcastScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *BroadcastScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -4201,6 +4280,18 @@ func (x *BroadcastRecipientScopedCreate) SetError(v string) *BroadcastRecipientS
 // SetNillableError sets the "error" field if the given value is not nil.
 func (x *BroadcastRecipientScopedCreate) SetNillableError(v *string) *BroadcastRecipientScopedCreate {
 	x.b.SetNillableError(v)
+	return x
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedCreate) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedCreate {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedCreate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedCreate {
+	x.b.SetNillableDeferredUntil(v)
 	return x
 }
 
@@ -4390,6 +4481,24 @@ func (u *BroadcastRecipientScopedUpsert) UpdateError() *BroadcastRecipientScoped
 // ClearError clears the value of the "error" field.
 func (u *BroadcastRecipientScopedUpsert) ClearError() *BroadcastRecipientScopedUpsert {
 	u.u.SetNull(broadcastrecipient.FieldError)
+	return u
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (u *BroadcastRecipientScopedUpsert) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpsert {
+	u.u.Set(broadcastrecipient.FieldDeferredUntil, v)
+	return u
+}
+
+// UpdateDeferredUntil sets the "deferred_until" field to the value that was provided on create.
+func (u *BroadcastRecipientScopedUpsert) UpdateDeferredUntil() *BroadcastRecipientScopedUpsert {
+	u.u.SetExcluded(broadcastrecipient.FieldDeferredUntil)
+	return u
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (u *BroadcastRecipientScopedUpsert) ClearDeferredUntil() *BroadcastRecipientScopedUpsert {
+	u.u.SetNull(broadcastrecipient.FieldDeferredUntil)
 	return u
 }
 
@@ -4669,6 +4778,24 @@ func (x *BroadcastRecipientScopedUpdateOne) ClearError() *BroadcastRecipientScop
 	return x
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdateOne) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpdateOne {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedUpdateOne) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedUpdateOne {
+	x.b.SetNillableDeferredUntil(v)
+	return x
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdateOne) ClearDeferredUntil() *BroadcastRecipientScopedUpdateOne {
+	x.b.ClearDeferredUntil()
+	return x
+}
+
 // SetSentAt sets the "sent_at" field.
 func (x *BroadcastRecipientScopedUpdateOne) SetSentAt(v time.Time) *BroadcastRecipientScopedUpdateOne {
 	x.b.SetSentAt(v)
@@ -4772,6 +4899,8 @@ func (x *BroadcastRecipientScopedUpdateOne) Exec(ctx context.Context) error {
 type BroadcastRecipientScopedUpdate struct {
 	s *Scoped
 	b *BroadcastRecipientUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the BroadcastRecipient entities of the Workspace that match the predicates.
@@ -4786,10 +4915,19 @@ func (x *BroadcastRecipientScopedUpdate) Where(ps ...predicate.BroadcastRecipien
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *BroadcastRecipientScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastRecipientScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *BroadcastRecipientScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *BroadcastRecipientScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(broadcastrecipient.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -4883,6 +5021,24 @@ func (x *BroadcastRecipientScopedUpdate) ClearError() *BroadcastRecipientScopedU
 	return x
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdate) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpdate {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedUpdate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedUpdate {
+	x.b.SetNillableDeferredUntil(v)
+	return x
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdate) ClearDeferredUntil() *BroadcastRecipientScopedUpdate {
+	x.b.ClearDeferredUntil()
+	return x
+}
+
 // SetSentAt sets the "sent_at" field.
 func (x *BroadcastRecipientScopedUpdate) SetSentAt(v time.Time) *BroadcastRecipientScopedUpdate {
 	x.b.SetSentAt(v)
@@ -4971,6 +5127,9 @@ func (x *BroadcastRecipientScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *BroadcastRecipientScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -5444,6 +5603,8 @@ func (x *ConfirmationScopedUpdateOne) Exec(ctx context.Context) error {
 type ConfirmationScopedUpdate struct {
 	s *Scoped
 	b *ConfirmationUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Confirmation entities of the Workspace that match the predicates.
@@ -5458,10 +5619,19 @@ func (x *ConfirmationScopedUpdate) Where(ps ...predicate.Confirmation) *Confirma
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *ConfirmationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ConfirmationScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *ConfirmationScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *ConfirmationScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(confirmation.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -5540,6 +5710,9 @@ func (x *ConfirmationScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *ConfirmationScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -6277,6 +6450,8 @@ func (x *ContactScopedUpdateOne) Exec(ctx context.Context) error {
 type ContactScopedUpdate struct {
 	s *Scoped
 	b *ContactUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Contact entities of the Workspace that match the predicates.
@@ -6291,10 +6466,19 @@ func (x *ContactScopedUpdate) Where(ps ...predicate.Contact) *ContactScopedUpdat
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *ContactScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ContactScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *ContactScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *ContactScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(contact.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -6499,6 +6683,9 @@ func (x *ContactScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *ContactScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -6912,6 +7099,8 @@ func (x *CustomFieldScopedUpdateOne) Exec(ctx context.Context) error {
 type CustomFieldScopedUpdate struct {
 	s *Scoped
 	b *CustomFieldUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the CustomField entities of the Workspace that match the predicates.
@@ -6926,10 +7115,19 @@ func (x *CustomFieldScopedUpdate) Where(ps ...predicate.CustomField) *CustomFiel
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *CustomFieldScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CustomFieldScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *CustomFieldScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *CustomFieldScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(customfield.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -6984,6 +7182,9 @@ func (x *CustomFieldScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *CustomFieldScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -7403,6 +7604,8 @@ func (x *EmailTemplateScopedUpdateOne) Exec(ctx context.Context) error {
 type EmailTemplateScopedUpdate struct {
 	s *Scoped
 	b *EmailTemplateUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the EmailTemplate entities of the Workspace that match the predicates.
@@ -7417,10 +7620,19 @@ func (x *EmailTemplateScopedUpdate) Where(ps ...predicate.EmailTemplate) *EmailT
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *EmailTemplateScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailTemplateScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *EmailTemplateScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *EmailTemplateScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(emailtemplate.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -7475,6 +7687,9 @@ func (x *EmailTemplateScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *EmailTemplateScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -8206,6 +8421,8 @@ func (x *EventScopedUpdateOne) Exec(ctx context.Context) error {
 type EventScopedUpdate struct {
 	s *Scoped
 	b *EventUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Event entities of the Workspace that match the predicates.
@@ -8220,10 +8437,19 @@ func (x *EventScopedUpdate) Where(ps ...predicate.Event) *EventScopedUpdate {
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *EventScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EventScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *EventScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *EventScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(event.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -8398,6 +8624,9 @@ func (x *EventScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *EventScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -9285,6 +9514,8 @@ func (x *IntegrationScopedUpdateOne) Exec(ctx context.Context) error {
 type IntegrationScopedUpdate struct {
 	s *Scoped
 	b *IntegrationUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Integration entities of the Workspace that match the predicates.
@@ -9299,10 +9530,19 @@ func (x *IntegrationScopedUpdate) Where(ps ...predicate.Integration) *Integratio
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *IntegrationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *IntegrationScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *IntegrationScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *IntegrationScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(integration.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -9546,6 +9786,9 @@ func (x *IntegrationScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *IntegrationScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -10121,6 +10364,8 @@ func (x *InvitationScopedUpdateOne) Exec(ctx context.Context) error {
 type InvitationScopedUpdate struct {
 	s *Scoped
 	b *InvitationUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Invitation entities of the Workspace that match the predicates.
@@ -10135,10 +10380,19 @@ func (x *InvitationScopedUpdate) Where(ps ...predicate.Invitation) *InvitationSc
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *InvitationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *InvitationScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *InvitationScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *InvitationScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(invitation.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -10265,6 +10519,9 @@ func (x *InvitationScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *InvitationScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -10660,6 +10917,8 @@ func (x *MembershipScopedUpdateOne) Exec(ctx context.Context) error {
 type MembershipScopedUpdate struct {
 	s *Scoped
 	b *MembershipUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Membership entities of the Workspace that match the predicates.
@@ -10674,10 +10933,19 @@ func (x *MembershipScopedUpdate) Where(ps ...predicate.Membership) *MembershipSc
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *MembershipScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *MembershipScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *MembershipScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *MembershipScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(membership.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -10732,6 +11000,9 @@ func (x *MembershipScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *MembershipScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -11905,6 +12176,8 @@ func (x *OutboundMessageScopedUpdateOne) Exec(ctx context.Context) error {
 type OutboundMessageScopedUpdate struct {
 	s *Scoped
 	b *OutboundMessageUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the OutboundMessage entities of the Workspace that match the predicates.
@@ -11919,10 +12192,19 @@ func (x *OutboundMessageScopedUpdate) Where(ps ...predicate.OutboundMessage) *Ou
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *OutboundMessageScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *OutboundMessageScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *OutboundMessageScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *OutboundMessageScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(outboundmessage.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -12306,6 +12588,9 @@ func (x *OutboundMessageScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *OutboundMessageScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -12701,6 +12986,8 @@ func (x *SegmentScopedUpdateOne) Exec(ctx context.Context) error {
 type SegmentScopedUpdate struct {
 	s *Scoped
 	b *SegmentUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Segment entities of the Workspace that match the predicates.
@@ -12715,10 +13002,19 @@ func (x *SegmentScopedUpdate) Where(ps ...predicate.Segment) *SegmentScopedUpdat
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *SegmentScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SegmentScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *SegmentScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *SegmentScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(segment.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -12767,6 +13063,9 @@ func (x *SegmentScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *SegmentScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -13216,6 +13515,8 @@ func (x *SendLimiterScopedUpdateOne) Exec(ctx context.Context) error {
 type SendLimiterScopedUpdate struct {
 	s *Scoped
 	b *SendLimiterUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the SendLimiter entities of the Workspace that match the predicates.
@@ -13230,10 +13531,19 @@ func (x *SendLimiterScopedUpdate) Where(ps ...predicate.SendLimiter) *SendLimite
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *SendLimiterScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SendLimiterScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *SendLimiterScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *SendLimiterScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(sendlimiter.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -13303,6 +13613,9 @@ func (x *SendLimiterScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *SendLimiterScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -13872,6 +14185,8 @@ func (x *SendingDomainScopedUpdateOne) Exec(ctx context.Context) error {
 type SendingDomainScopedUpdate struct {
 	s *Scoped
 	b *SendingDomainUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the SendingDomain entities of the Workspace that match the predicates.
@@ -13886,10 +14201,19 @@ func (x *SendingDomainScopedUpdate) Where(ps ...predicate.SendingDomain) *Sendin
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *SendingDomainScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SendingDomainScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *SendingDomainScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *SendingDomainScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(sendingdomain.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -14004,6 +14328,9 @@ func (x *SendingDomainScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *SendingDomainScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -14483,6 +14810,8 @@ func (x *SuppressionScopedUpdateOne) Exec(ctx context.Context) error {
 type SuppressionScopedUpdate struct {
 	s *Scoped
 	b *SuppressionUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Suppression entities of the Workspace that match the predicates.
@@ -14497,10 +14826,19 @@ func (x *SuppressionScopedUpdate) Where(ps ...predicate.Suppression) *Suppressio
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *SuppressionScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SuppressionScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *SuppressionScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *SuppressionScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(suppression.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -14579,6 +14917,9 @@ func (x *SuppressionScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *SuppressionScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -14974,6 +15315,8 @@ func (x *TagScopedUpdateOne) Exec(ctx context.Context) error {
 type TagScopedUpdate struct {
 	s *Scoped
 	b *TagUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Tag entities of the Workspace that match the predicates.
@@ -14988,10 +15331,19 @@ func (x *TagScopedUpdate) Where(ps ...predicate.Tag) *TagScopedUpdate {
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *TagScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TagScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *TagScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *TagScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(tag.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -15055,6 +15407,9 @@ func (x *TagScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *TagScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -15526,6 +15881,8 @@ func (x *UnsubscribeScopedUpdateOne) Exec(ctx context.Context) error {
 type UnsubscribeScopedUpdate struct {
 	s *Scoped
 	b *UnsubscribeUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Unsubscribe entities of the Workspace that match the predicates.
@@ -15540,10 +15897,19 @@ func (x *UnsubscribeScopedUpdate) Where(ps ...predicate.Unsubscribe) *Unsubscrib
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *UnsubscribeScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UnsubscribeScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *UnsubscribeScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *UnsubscribeScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(unsubscribe.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -15627,6 +15993,9 @@ func (x *UnsubscribeScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *UnsubscribeScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -16076,6 +16445,8 @@ func (x *VisitorScopedUpdateOne) Exec(ctx context.Context) error {
 type VisitorScopedUpdate struct {
 	s *Scoped
 	b *VisitorUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the Visitor entities of the Workspace that match the predicates.
@@ -16090,10 +16461,19 @@ func (x *VisitorScopedUpdate) Where(ps ...predicate.Visitor) *VisitorScopedUpdat
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *VisitorScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *VisitorScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *VisitorScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *VisitorScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(visitor.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -16169,6 +16549,9 @@ func (x *VisitorScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *VisitorScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
@@ -16624,6 +17007,8 @@ func (x *WebhookEndpointScopedUpdateOne) Exec(ctx context.Context) error {
 type WebhookEndpointScopedUpdate struct {
 	s *Scoped
 	b *WebhookEndpointUpdate
+	// modErr is set when a Modify modifier tried to assign workspace_id.
+	modErr error
 }
 
 // Update updates the WebhookEndpoint entities of the Workspace that match the predicates.
@@ -16638,10 +17023,19 @@ func (x *WebhookEndpointScopedUpdate) Where(ps ...predicate.WebhookEndpoint) *We
 }
 
 // Modify adds a statement modifier for computed assignments the typed setters cannot
-// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
-// of the statement, so a modifier can only narrow it, never widen it.
-func (x *WebhookEndpointScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *WebhookEndpointScopedUpdate {
-	x.b.Modify(modifiers...)
+// express (SET col = LEAST(col + ..., ...)). A modifier gets assignment-only access
+// (ScopedAssign), so it cannot widen the Workspace predicate; an assignment to
+// workspace_id is refused: each modifier is probed against a scratch statement here, and
+// Save fails with ErrWorkspaceAssign.
+func (x *WebhookEndpointScopedUpdate) Modify(modifiers ...func(a *ScopedAssign)) *WebhookEndpointScopedUpdate {
+	for _, m := range modifiers {
+		probe := &ScopedAssign{u: sql.Update(webhookendpoint.Table)}
+		m(probe)
+		if probe.workspace {
+			x.modErr = ErrWorkspaceAssign
+		}
+		x.b.Modify(func(u *sql.UpdateBuilder) { m(&ScopedAssign{u: u}) })
+	}
 	return x
 }
 
@@ -16714,6 +17108,9 @@ func (x *WebhookEndpointScopedUpdate) check(ctx context.Context) error {
 // Save verifies the references against the Workspace, then updates the rows and
 // returns how many changed.
 func (x *WebhookEndpointScopedUpdate) Save(ctx context.Context) (int, error) {
+	if x.modErr != nil {
+		return 0, x.modErr
+	}
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}

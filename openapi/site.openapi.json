@@ -5722,7 +5722,7 @@
               }
             ],
             "nullable": true,
-            "description": "Progress and ETA while the broadcast is sending; null otherwise"
+            "description": "Progress and ETA while the broadcast is sending; null otherwise. Returned by get and send only, never by the list"
           },
           "createdAt": {
             "allOf": [

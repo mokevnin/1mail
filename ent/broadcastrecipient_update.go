@@ -147,6 +147,26 @@ func (_u *BroadcastRecipientUpdate) ClearError() *BroadcastRecipientUpdate {
 	return _u
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (_u *BroadcastRecipientUpdate) SetDeferredUntil(v time.Time) *BroadcastRecipientUpdate {
+	_u.mutation.SetDeferredUntil(v)
+	return _u
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientUpdate {
+	if v != nil {
+		_u.SetDeferredUntil(*v)
+	}
+	return _u
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (_u *BroadcastRecipientUpdate) ClearDeferredUntil() *BroadcastRecipientUpdate {
+	_u.mutation.ClearDeferredUntil()
+	return _u
+}
+
 // SetSentAt sets the "sent_at" field.
 func (_u *BroadcastRecipientUpdate) SetSentAt(v time.Time) *BroadcastRecipientUpdate {
 	_u.mutation.SetSentAt(v)
@@ -330,6 +350,12 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 	}
 	if _u.mutation.ErrorCleared() {
 		_spec.ClearField(broadcastrecipient.FieldError, field.TypeString)
+	}
+	if value, ok := _u.mutation.DeferredUntil(); ok {
+		_spec.SetField(broadcastrecipient.FieldDeferredUntil, field.TypeTime, value)
+	}
+	if _u.mutation.DeferredUntilCleared() {
+		_spec.ClearField(broadcastrecipient.FieldDeferredUntil, field.TypeTime)
 	}
 	if value, ok := _u.mutation.SentAt(); ok {
 		_spec.SetField(broadcastrecipient.FieldSentAt, field.TypeTime, value)
@@ -542,6 +568,26 @@ func (_u *BroadcastRecipientUpdateOne) SetNillableError(v *string) *BroadcastRec
 // ClearError clears the value of the "error" field.
 func (_u *BroadcastRecipientUpdateOne) ClearError() *BroadcastRecipientUpdateOne {
 	_u.mutation.ClearError()
+	return _u
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (_u *BroadcastRecipientUpdateOne) SetDeferredUntil(v time.Time) *BroadcastRecipientUpdateOne {
+	_u.mutation.SetDeferredUntil(v)
+	return _u
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdateOne) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientUpdateOne {
+	if v != nil {
+		_u.SetDeferredUntil(*v)
+	}
+	return _u
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (_u *BroadcastRecipientUpdateOne) ClearDeferredUntil() *BroadcastRecipientUpdateOne {
+	_u.mutation.ClearDeferredUntil()
 	return _u
 }
 
@@ -758,6 +804,12 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 	}
 	if _u.mutation.ErrorCleared() {
 		_spec.ClearField(broadcastrecipient.FieldError, field.TypeString)
+	}
+	if value, ok := _u.mutation.DeferredUntil(); ok {
+		_spec.SetField(broadcastrecipient.FieldDeferredUntil, field.TypeTime, value)
+	}
+	if _u.mutation.DeferredUntilCleared() {
+		_spec.ClearField(broadcastrecipient.FieldDeferredUntil, field.TypeTime)
 	}
 	if value, ok := _u.mutation.SentAt(); ok {
 		_spec.SetField(broadcastrecipient.FieldSentAt, field.TypeTime, value)

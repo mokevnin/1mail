@@ -60,18 +60,18 @@ const (
 // auto-tune the Send rate limit; it only waits. A daily quota refills gradually, so
 // its wait is long.
 const (
-	ThrottleBackoff = 30 * time.Second
+	DeferralBackoff = 30 * time.Second
 	QuotaBackoff    = time.Hour
 )
 
-// throttleBackoff is the wait a provider "too fast" or "quota exceeded" error asks
+// deferralBackoff is the wait a provider "too fast" or "quota exceeded" error asks
 // for, zero when err is neither.
-func throttleBackoff(err error) time.Duration {
+func deferralBackoff(err error) time.Duration {
 	switch {
 	case errors.Is(err, messaging.ErrQuotaExceeded):
 		return QuotaBackoff
-	case errors.Is(err, messaging.ErrThrottled):
-		return ThrottleBackoff
+	case errors.Is(err, messaging.ErrBusy):
+		return DeferralBackoff
 	default:
 		return 0
 	}
@@ -308,10 +308,12 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Held, Reason: HoldUnverifiedDomain}, nil
 		}
-		if wait := throttleBackoff(err); wait > 0 {
+		if wait := deferralBackoff(err); wait > 0 && req.Kind != outboundmessage.KindTransactional {
 			// The provider answered "too fast" or "quota exceeded": it refused the
 			// message, so nothing left. A Deferral, like our own spent limit: the claim
 			// is dropped, no attempt is consumed and the same Request runs again later.
+			// Transactional mail never defers (ADR 0023): it falls through to the
+			// retryable error below, which releases the claim for the caller's retry.
 			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Deferral, Wait: wait}, nil
 		}

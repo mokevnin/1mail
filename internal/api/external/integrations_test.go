@@ -2,6 +2,7 @@ package external_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,5 +65,36 @@ func TestExternalIntegrationsListIsPaginatedAndWorkspaceScoped(t *testing.T) {
 	assert.Len(t, all.(*externalapi.IntegrationsListOK).Items, n)
 	for _, it := range all.(*externalapi.IntegrationsListOK).Items {
 		assert.NotEqual(t, fixtures.IntegrationGlobexName, it.Name)
+	}
+}
+
+// The resource never carries the provider config or any credential: the serialized
+// response names no config field and holds nothing of the stored secrets.
+func TestExternalIntegrationsListOmitsConfigAndSecrets(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	res, err := env.ExternalScoped(t, "integrations:read").IntegrationsList(ctx, externalapi.IntegrationsListParams{})
+	require.NoError(t, err)
+	list, ok := res.(*externalapi.IntegrationsListOK)
+	require.Truef(t, ok, "got %T", res)
+	body, err := json.Marshal(list)
+	require.NoError(t, err)
+
+	var decoded struct {
+		Items []map[string]any `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(body, &decoded))
+	require.NotEmpty(t, decoded.Items)
+	for _, item := range decoded.Items {
+		for key := range item {
+			assert.NotContains(t, []string{"config", "configEncrypted", "secret", "password", "secretAccessKey"}, key)
+		}
+	}
+	for _, row := range env.DB.Integration.Query().AllX(ctx) {
+		assert.NotContains(t, string(body), row.ConfigEncrypted, "the sealed config is not echoed")
+	}
+	for _, needle := range []string{"AKIAEXAMPLE", "mailpit"} {
+		assert.NotContains(t, string(body), needle, "provider config values never appear")
 	}
 }

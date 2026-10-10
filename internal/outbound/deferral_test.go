@@ -24,10 +24,10 @@ func TestProviderTooFastIsADeferralThenSentExactlyOnce(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := newModule(env)
 
-	env.CustomerMail.SetErr(messaging.ErrThrottled)
+	env.CustomerMail.SetErr(messaging.ErrBusy)
 	res := send(t, m, env, "bc:fast")
 	assert.Equal(t, outbound.Deferral, res.Outcome)
-	assert.Equal(t, outbound.ThrottleBackoff, res.Wait)
+	assert.Equal(t, outbound.DeferralBackoff, res.Wait)
 	assert.Empty(t, res.Reason)
 
 	n, err := acme(env).OutboundMessage().Query().Where(outboundmessage.IdempotencyKey("bc:fast")).Count(context.Background())
@@ -53,25 +53,34 @@ func TestProviderDailyQuotaIsADeferralWithALongerBackoff(t *testing.T) {
 	res := send(t, m, env, "bc:quota")
 	assert.Equal(t, outbound.Deferral, res.Outcome)
 	assert.Equal(t, outbound.QuotaBackoff, res.Wait)
-	assert.Greater(t, outbound.QuotaBackoff, outbound.ThrottleBackoff)
+	assert.Greater(t, outbound.QuotaBackoff, outbound.DeferralBackoff)
 }
 
-func TestWrappedThrottleReplyIsStillADeferral(t *testing.T) {
+func TestWrappedBusyReplyIsStillADeferral(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := newModule(env)
 
-	env.CustomerMail.SetErr(errors.Join(errors.New("ses: send"), messaging.ErrThrottled))
+	env.CustomerMail.SetErr(errors.Join(errors.New("ses: send"), messaging.ErrBusy))
 	assert.Equal(t, outbound.Deferral, send(t, m, env, "bc:wrapped").Outcome)
 }
 
-func TestTransactionalThrottleReplyIsStillADeferral(t *testing.T) {
+// Transactional mail never returns a Deferral (ADR 0023): a provider "too fast" reply is
+// a retryable error and the claim is released, so the caller's retry starts clean.
+func TestTransactionalBusyReplyIsARetryableErrorNotADeferral(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := newModule(env)
+	ctx := context.Background()
 
-	env.CustomerMail.SetErr(messaging.ErrThrottled)
-	res, err := m.Send(context.Background(), acme(env), transactional("tx:fast", "a@example.com"))
+	env.CustomerMail.SetErr(messaging.ErrBusy)
+	res, err := m.Send(ctx, acme(env), transactional("tx:fast", "a@example.com"))
+	require.ErrorIs(t, err, messaging.ErrBusy)
+	assert.NotEqual(t, outbound.Deferral, res.Outcome)
+
+	env.CustomerMail.SetErr(nil)
+	retry, err := m.Send(ctx, acme(env), transactional("tx:fast", "a@example.com"))
 	require.NoError(t, err)
-	assert.Equal(t, outbound.Deferral, res.Outcome, "the provider is busy whatever the surface; the caller decides how to wait")
+	assert.Equal(t, outbound.Sent, retry.Outcome)
+	assert.Len(t, env.CustomerMail.Messages(), 1)
 }
 
 func TestGenuineProviderFailureStillFailsTheMessage(t *testing.T) {

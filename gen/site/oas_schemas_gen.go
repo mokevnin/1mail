@@ -2549,7 +2549,8 @@ type SiteBroadcastResource struct {
 	SentAt OptNilTimestamp `json:"sentAt"`
 	// Delivery counters.
 	Stats SiteBroadcastStats `json:"stats"`
-	// Progress and ETA while the broadcast is sending; null otherwise.
+	// Progress and ETA while the broadcast is sending; null otherwise. Returned by get and send only,
+	// never by the list.
 	Progress OptNilSiteBroadcastProgress `json:"progress"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
