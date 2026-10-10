@@ -15808,6 +15808,8 @@ func (s *SiteSendLimitWarning) Decode(d *jx.Decoder) error {
 	switch SiteSendLimitWarning(v) {
 	case SiteSendLimitWarningUnlimited:
 		*s = SiteSendLimitWarningUnlimited
+	case SiteSendLimitWarningProviderQuotaUnavailable:
+		*s = SiteSendLimitWarningProviderQuotaUnavailable
 	default:
 		*s = SiteSendLimitWarning(v)
 	}

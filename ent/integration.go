@@ -41,6 +41,14 @@ type Integration struct {
 	MaxPerSecond *int `json:"max_per_second,omitempty"`
 	// MaxPerDay holds the value of the "max_per_day" field.
 	MaxPerDay *int `json:"max_per_day,omitempty"`
+	// ProviderMaxPerSecond holds the value of the "provider_max_per_second" field.
+	ProviderMaxPerSecond *int `json:"provider_max_per_second,omitempty"`
+	// ProviderMaxPerDay holds the value of the "provider_max_per_day" field.
+	ProviderMaxPerDay *int `json:"provider_max_per_day,omitempty"`
+	// ProviderQuotaCheckedAt holds the value of the "provider_quota_checked_at" field.
+	ProviderQuotaCheckedAt *time.Time `json:"provider_quota_checked_at,omitempty"`
+	// ProviderQuotaUnavailable holds the value of the "provider_quota_unavailable" field.
+	ProviderQuotaUnavailable bool `json:"provider_quota_unavailable,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IntegrationQuery when eager-loading is set.
 	Edges        IntegrationEdges `json:"edges"`
@@ -85,13 +93,13 @@ func (*Integration) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case integration.FieldEnabled, integration.FieldIsDefault:
+		case integration.FieldEnabled, integration.FieldIsDefault, integration.FieldProviderQuotaUnavailable:
 			values[i] = new(sql.NullBool)
-		case integration.FieldID, integration.FieldWorkspaceID, integration.FieldMaxPerSecond, integration.FieldMaxPerDay:
+		case integration.FieldID, integration.FieldWorkspaceID, integration.FieldMaxPerSecond, integration.FieldMaxPerDay, integration.FieldProviderMaxPerSecond, integration.FieldProviderMaxPerDay:
 			values[i] = new(sql.NullInt64)
 		case integration.FieldName, integration.FieldChannel, integration.FieldProvider, integration.FieldConfigEncrypted:
 			values[i] = new(sql.NullString)
-		case integration.FieldCreatedAt, integration.FieldUpdatedAt:
+		case integration.FieldCreatedAt, integration.FieldUpdatedAt, integration.FieldProviderQuotaCheckedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -182,6 +190,33 @@ func (_m *Integration) assignValues(columns []string, values []any) error {
 				_m.MaxPerDay = new(int)
 				*_m.MaxPerDay = int(value.Int64)
 			}
+		case integration.FieldProviderMaxPerSecond:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_max_per_second", values[i])
+			} else if value.Valid {
+				_m.ProviderMaxPerSecond = new(int)
+				*_m.ProviderMaxPerSecond = int(value.Int64)
+			}
+		case integration.FieldProviderMaxPerDay:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_max_per_day", values[i])
+			} else if value.Valid {
+				_m.ProviderMaxPerDay = new(int)
+				*_m.ProviderMaxPerDay = int(value.Int64)
+			}
+		case integration.FieldProviderQuotaCheckedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_quota_checked_at", values[i])
+			} else if value.Valid {
+				_m.ProviderQuotaCheckedAt = new(time.Time)
+				*_m.ProviderQuotaCheckedAt = value.Time
+			}
+		case integration.FieldProviderQuotaUnavailable:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_quota_unavailable", values[i])
+			} else if value.Valid {
+				_m.ProviderQuotaUnavailable = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -263,6 +298,24 @@ func (_m *Integration) String() string {
 		builder.WriteString("max_per_day=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	if v := _m.ProviderMaxPerSecond; v != nil {
+		builder.WriteString("provider_max_per_second=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProviderMaxPerDay; v != nil {
+		builder.WriteString("provider_max_per_day=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProviderQuotaCheckedAt; v != nil {
+		builder.WriteString("provider_quota_checked_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("provider_quota_unavailable=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProviderQuotaUnavailable))
 	builder.WriteByte(')')
 	return builder.String()
 }

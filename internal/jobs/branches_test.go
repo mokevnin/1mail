@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -234,7 +235,7 @@ func TestInlineSendingDomainVerifyNotifiesOnFlip(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	gone := lookupReturning(nil, errNotFound())
-	inline := jobs.NewInline(env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), env.SystemMail, gone, "http://local")
+	inline := jobs.NewInline(env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), env.SystemMail, gone, envCipher(t), registry.Default(), "http://local")
 
 	require.NoError(t, inline.EnqueueSendingDomainVerify(ctx, fixtures.SendingDomainVerifiedID))
 	require.Len(t, env.SystemMail.Messages(), 1)

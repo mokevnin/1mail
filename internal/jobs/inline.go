@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
 )
 
@@ -22,6 +23,8 @@ type Inline struct {
 	mod          *outbound.Module
 	systemSender messaging.EmailSender
 	lookup       sending.TXTLookup
+	cipher       *secrets.Cipher
+	catalog      *messaging.Catalog
 	appURL       string
 }
 
@@ -29,8 +32,8 @@ type Inline struct {
 // Outbound send module every workspace email goes through. lookup resolves DKIM TXT for sending-
 // domain verification (a stub in tests avoids real DNS). appURL builds account-
 // email links.
-func NewInline(entClient *ent.Client, mod *outbound.Module, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) *Inline {
-	return &Inline{ent: entClient, mod: mod, systemSender: systemSender, lookup: lookup, appURL: appURL}
+func NewInline(entClient *ent.Client, mod *outbound.Module, systemSender messaging.EmailSender, lookup sending.TXTLookup, cipher *secrets.Cipher, catalog *messaging.Catalog, appURL string) *Inline {
+	return &Inline{ent: entClient, mod: mod, systemSender: systemSender, lookup: lookup, cipher: cipher, catalog: catalog, appURL: appURL}
 }
 
 // EnqueueBroadcast runs the broadcast send now. A future scheduledAt is skipped:
@@ -77,6 +80,11 @@ func (i *Inline) EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID
 		}
 	}
 	return nil
+}
+
+// EnqueueIntegrationQuotaRefresh reads the Integration's provider send quota now.
+func (i *Inline) EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error {
+	return RefreshIntegrationQuotaByID(ctx, i.ent, i.cipher, i.catalog, integrationID)
 }
 
 // EnqueueMemberInvite sends the workspace invite email now via the system sender.

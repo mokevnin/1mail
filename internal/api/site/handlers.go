@@ -58,6 +58,13 @@ type SendingDomainVerifyEnqueuer interface {
 	EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error
 }
 
+// IntegrationQuotaEnqueuer schedules a read of one Integration's provider send quota
+// (SES GetSendQuota) when it is saved. Same jobs enqueue seam (river prod, inline
+// tests); a failed read is recorded on the Integration, never returned to the save.
+type IntegrationQuotaEnqueuer interface {
+	EnqueueIntegrationQuotaRefresh(ctx context.Context, integrationID int64) error
+}
+
 type Handlers struct {
 	accounts     *accounts.Accounts
 	bus          *events.Bus
@@ -67,6 +74,7 @@ type Handlers struct {
 	welcome      WelcomeEnqueuer
 	sysmail      SystemMailEnqueuer
 	domainVerify SendingDomainVerifyEnqueuer
+	quotaRefresh IntegrationQuotaEnqueuer
 	tokens       *authtoken.Signer
 	tracker      *tracking.Tracker
 	appURL       string
@@ -98,6 +106,7 @@ type Deps struct {
 	Welcome      WelcomeEnqueuer
 	SysMail      SystemMailEnqueuer
 	DomainVerify SendingDomainVerifyEnqueuer
+	QuotaRefresh IntegrationQuotaEnqueuer
 	Tokens       *authtoken.Signer
 	Tracker      *tracking.Tracker
 	AppURL       string
@@ -108,7 +117,7 @@ func NewHandlers(d Deps) *Handlers {
 		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
-		sysmail: d.SysMail, domainVerify: d.DomainVerify, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
+		sysmail: d.SysMail, domainVerify: d.DomainVerify, quotaRefresh: d.QuotaRefresh, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth,
 	}
 }

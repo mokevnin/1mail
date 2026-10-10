@@ -59,6 +59,22 @@ func (Integration) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Positive(),
+		// Provider-reported quota (ADR 0023): what SES GetSendQuota last said, folded into
+		// the effective ceiling by the minimum rule. Nil means the provider reported none.
+		field.Int("provider_max_per_second").
+			Optional().
+			Nillable(),
+		field.Int("provider_max_per_day").
+			Optional().
+			Nillable(),
+		// When the quota was last looked up, successfully or not.
+		field.Time("provider_quota_checked_at").
+			Optional().
+			Nillable(),
+		// The last lookup failed (no ses:GetSendQuota permission, an SES-compatible
+		// service); the UI warns and a later success clears it.
+		field.Bool("provider_quota_unavailable").
+			Default(false),
 	}
 }
 

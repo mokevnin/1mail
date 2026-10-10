@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -61,7 +62,7 @@ func newRiverEnv(t *testing.T) *riverEnv {
 	require.NoError(t, err)
 	fs := &fakeSender{}
 	mod := newMod(env, fakeResolver{sender: fs})
-	client, err := jobs.NewClient(pool, env.DB, mod, cipher, env.SystemMail, nil, cfg.AppURL)
+	client, err := jobs.NewClient(pool, env.DB, mod, cipher, env.SystemMail, nil, registry.Default(), cfg.AppURL)
 	require.NoError(t, err)
 	e := &riverEnv{TestEnv: env, pool: pool, client: client, cipher: cipher, cfg: cfg, sender: fs}
 	e.clearQueue(t)

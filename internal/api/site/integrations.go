@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -107,6 +108,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
+	row = h.discoverQuota(ctx, s, row)
 	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
@@ -289,6 +291,10 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if err != nil {
 		return nil, err
 	}
+	if setEncrypted != nil {
+		// New credentials or endpoint: what the provider allows may have changed.
+		updated = h.discoverQuota(ctx, s, updated)
+	}
 	res, err := h.integrationResource(ctx, s, updated)
 	if err != nil {
 		return nil, err
@@ -337,6 +343,25 @@ type integrationDraft struct {
 	isDefault    bool
 	maxPerSecond *int
 	maxPerDay    *int
+}
+
+// discoverQuota reads a saved SES Integration's send quota (ADR 0023) and returns the
+// row as it now stands. The lookup is best-effort: a failure is recorded on the
+// Integration and shown as a warning, never returned, so it cannot fail the save.
+// Providers without a quota (SMTP) are returned untouched.
+func (h *Handlers) discoverQuota(ctx context.Context, s *ent.Scoped, row *ent.Integration) *ent.Integration {
+	if row.Provider != integration.ProviderSes {
+		return row
+	}
+	if err := h.quotaRefresh.EnqueueIntegrationQuotaRefresh(ctx, row.ID); err != nil {
+		slog.WarnContext(ctx, "enqueue integration quota refresh failed", "integration_id", row.ID, "err", err)
+		return row
+	}
+	fresh, err := s.Integration().Get(ctx, row.ID)
+	if err != nil {
+		return row
+	}
+	return fresh
 }
 
 // limitValue reads one Send rate limit from its request field: null (and, on create,
@@ -578,6 +603,9 @@ func sendLimitStatus(row *ent.Integration, usage map[int64]int) siteapi.SiteSend
 	}
 	if eff.Unlimited() {
 		out.Warnings = append(out.Warnings, siteapi.SiteSendLimitWarningUnlimited)
+	}
+	if eff.ProviderQuotaUnavailable {
+		out.Warnings = append(out.Warnings, siteapi.SiteSendLimitWarningProviderQuotaUnavailable)
 	}
 	return out
 }

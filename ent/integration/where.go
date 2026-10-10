@@ -100,6 +100,26 @@ func MaxPerDay(v int) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldMaxPerDay, v))
 }
 
+// ProviderMaxPerSecond applies equality check predicate on the "provider_max_per_second" field. It's identical to ProviderMaxPerSecondEQ.
+func ProviderMaxPerSecond(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerDay applies equality check predicate on the "provider_max_per_day" field. It's identical to ProviderMaxPerDayEQ.
+func ProviderMaxPerDay(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderMaxPerDay, v))
+}
+
+// ProviderQuotaCheckedAt applies equality check predicate on the "provider_quota_checked_at" field. It's identical to ProviderQuotaCheckedAtEQ.
+func ProviderQuotaCheckedAt(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaUnavailable applies equality check predicate on the "provider_quota_unavailable" field. It's identical to ProviderQuotaUnavailableEQ.
+func ProviderQuotaUnavailable(v bool) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderQuotaUnavailable, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldCreatedAt, v))
@@ -488,6 +508,166 @@ func MaxPerDayIsNil() predicate.Integration {
 // MaxPerDayNotNil applies the NotNil predicate on the "max_per_day" field.
 func MaxPerDayNotNil() predicate.Integration {
 	return predicate.Integration(sql.FieldNotNull(FieldMaxPerDay))
+}
+
+// ProviderMaxPerSecondEQ applies the EQ predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondNEQ applies the NEQ predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondNEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondIn applies the In predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldProviderMaxPerSecond, vs...))
+}
+
+// ProviderMaxPerSecondNotIn applies the NotIn predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondNotIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldProviderMaxPerSecond, vs...))
+}
+
+// ProviderMaxPerSecondGT applies the GT predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondGT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGT(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondGTE applies the GTE predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondGTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGTE(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondLT applies the LT predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondLT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLT(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondLTE applies the LTE predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondLTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLTE(FieldProviderMaxPerSecond, v))
+}
+
+// ProviderMaxPerSecondIsNil applies the IsNil predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondIsNil() predicate.Integration {
+	return predicate.Integration(sql.FieldIsNull(FieldProviderMaxPerSecond))
+}
+
+// ProviderMaxPerSecondNotNil applies the NotNil predicate on the "provider_max_per_second" field.
+func ProviderMaxPerSecondNotNil() predicate.Integration {
+	return predicate.Integration(sql.FieldNotNull(FieldProviderMaxPerSecond))
+}
+
+// ProviderMaxPerDayEQ applies the EQ predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayNEQ applies the NEQ predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayNEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayIn applies the In predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldProviderMaxPerDay, vs...))
+}
+
+// ProviderMaxPerDayNotIn applies the NotIn predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayNotIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldProviderMaxPerDay, vs...))
+}
+
+// ProviderMaxPerDayGT applies the GT predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayGT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGT(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayGTE applies the GTE predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayGTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGTE(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayLT applies the LT predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayLT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLT(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayLTE applies the LTE predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayLTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLTE(FieldProviderMaxPerDay, v))
+}
+
+// ProviderMaxPerDayIsNil applies the IsNil predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayIsNil() predicate.Integration {
+	return predicate.Integration(sql.FieldIsNull(FieldProviderMaxPerDay))
+}
+
+// ProviderMaxPerDayNotNil applies the NotNil predicate on the "provider_max_per_day" field.
+func ProviderMaxPerDayNotNil() predicate.Integration {
+	return predicate.Integration(sql.FieldNotNull(FieldProviderMaxPerDay))
+}
+
+// ProviderQuotaCheckedAtEQ applies the EQ predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtEQ(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtNEQ applies the NEQ predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtNEQ(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtIn applies the In predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtIn(vs ...time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldProviderQuotaCheckedAt, vs...))
+}
+
+// ProviderQuotaCheckedAtNotIn applies the NotIn predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtNotIn(vs ...time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldProviderQuotaCheckedAt, vs...))
+}
+
+// ProviderQuotaCheckedAtGT applies the GT predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtGT(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldGT(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtGTE applies the GTE predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtGTE(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldGTE(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtLT applies the LT predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtLT(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldLT(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtLTE applies the LTE predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtLTE(v time.Time) predicate.Integration {
+	return predicate.Integration(sql.FieldLTE(FieldProviderQuotaCheckedAt, v))
+}
+
+// ProviderQuotaCheckedAtIsNil applies the IsNil predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtIsNil() predicate.Integration {
+	return predicate.Integration(sql.FieldIsNull(FieldProviderQuotaCheckedAt))
+}
+
+// ProviderQuotaCheckedAtNotNil applies the NotNil predicate on the "provider_quota_checked_at" field.
+func ProviderQuotaCheckedAtNotNil() predicate.Integration {
+	return predicate.Integration(sql.FieldNotNull(FieldProviderQuotaCheckedAt))
+}
+
+// ProviderQuotaUnavailableEQ applies the EQ predicate on the "provider_quota_unavailable" field.
+func ProviderQuotaUnavailableEQ(v bool) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldProviderQuotaUnavailable, v))
+}
+
+// ProviderQuotaUnavailableNEQ applies the NEQ predicate on the "provider_quota_unavailable" field.
+func ProviderQuotaUnavailableNEQ(v bool) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldProviderQuotaUnavailable, v))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

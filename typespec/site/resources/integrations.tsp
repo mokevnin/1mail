@@ -39,6 +39,9 @@ enum SiteSendLimitSource {
 enum SiteSendLimitWarning {
   /** No ceiling applies: sends are not paced and the provider may throttle or block them */
   unlimited,
+
+  /** The provider's send quota could not be read (no permission, or a compatible service without the call), so only the manual limit applies */
+  providerQuotaUnavailable,
 }
 
 /** One effective ceiling: the lowest of the manual and provider values, manual on a tie */
@@ -163,7 +166,7 @@ model SiteIntegrationResource {
   /** Send rate limit: most messages per rolling 24 hours; null means no daily limit */
   maxPerDay: int32 | null;
 
-  /** The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage */
+  /** The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage */
   sendLimit: SiteSendLimitStatus;
 
   /** Provider config (secrets redacted) */

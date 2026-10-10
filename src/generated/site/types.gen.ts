@@ -985,7 +985,7 @@ export type SiteIntegrationResource = {
    */
   maxPerDay: number | null;
   /**
-   * The Send rate limit as enforced (manual values today; provider values later) and 24-hour usage
+   * The Send rate limit as enforced (manual and provider-reported values) and 24-hour usage
    */
   sendLimit: SiteSendLimitStatus;
   /**
@@ -1302,7 +1302,7 @@ export type SiteSendLimitValue = {
 /**
  * A reason to look at an Integration's Send rate limit
  */
-export const SiteSendLimitWarning = { UNLIMITED: 'unlimited' } as const;
+export const SiteSendLimitWarning = { UNLIMITED: 'unlimited', PROVIDER_QUOTA_UNAVAILABLE: 'providerQuotaUnavailable' } as const;
 
 /**
  * A reason to look at an Integration's Send rate limit
