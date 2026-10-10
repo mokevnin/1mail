@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/segment"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
@@ -24,41 +25,19 @@ func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegm
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := ws.Segment().Query()
-
-	total, err := q.Count(ctx)
+	page, err := h.segments.List(ctx, ws, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-
-	items, err := q.Order(ent.Asc(segment.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]siteapi.SiteSegmentResource, len(items))
-	for i, s := range items {
-		resources[i] = mapper.SegmentToResource(s)
 	}
 
 	return &siteapi.SiteSegmentsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(s *ent.Segment, _ int) siteapi.SiteSegmentResource {
+			return mapper.SegmentToResource(s)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

@@ -3,12 +3,13 @@ package site
 import (
 	"context"
 	"errors"
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/internal/accounts"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
@@ -27,41 +28,19 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	q := scoped.Contact().Query()
-
-	total, err := q.Count(ctx)
+	page, err := h.contacts.List(ctx, scoped, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-
-	items, err := q.Order(ent.Asc(contact.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]siteapi.SiteContactResource, len(items))
-	for i, c := range items {
-		resources[i] = mapper.ContactToResource(c)
 	}
 
 	return &siteapi.SiteContactsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(c *ent.Contact, _ int) siteapi.SiteContactResource {
+			return mapper.ContactToResource(c)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

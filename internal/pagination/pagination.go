@@ -10,6 +10,10 @@ import "context"
 const DefaultPage = 1
 const DefaultPageSize = 25
 
+// MaxPageSize caps a requested page size; the API contract states no maximum, so a
+// larger request is served as a page of this size rather than refused.
+const MaxPageSize = 100
+
 type Page[T any] struct {
 	Items      []T `json:"items"`
 	Page       int `json:"page"`
@@ -25,7 +29,7 @@ func Normalize(page, pageSize *int32) (int, int) {
 		p = int(*page)
 	}
 	if pageSize != nil && *pageSize > 0 {
-		ps = int(*pageSize)
+		ps = min(int(*pageSize), MaxPageSize)
 	}
 	return p, ps
 }

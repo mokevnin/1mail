@@ -21,9 +21,11 @@ import (
 	"golang.org/x/net/idna"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
 )
@@ -216,4 +218,13 @@ func normalize(raw string) (string, bool) {
 		return "", false
 	}
 	return ascii, true
+}
+
+// List returns one page of the Workspace's Sending domains, ascending by id.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.SendingDomain], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.SendingDomain().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.SendingDomain, error) {
+			return s.SendingDomain().Query().Order(ent.Asc(sendingdomain.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }
