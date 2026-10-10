@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
@@ -51,8 +53,13 @@ type Config struct {
 
 	// OtelServiceName is the service.name reported on OTel traces/metrics. The
 	// OTLP export target itself comes from the standard OTEL_EXPORTER_OTLP_* env
-	// vars (read by the SDK); the /metrics Prometheus endpoint is always on.
+	// vars (read by the SDK).
 	OtelServiceName string
+
+	// MetricsAddr (host:port) is where the opt-in Prometheus listener binds. Empty
+	// (the default) means no listener; the public port never serves /metrics
+	// (ADR 0018).
+	MetricsAddr string
 
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
 	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
@@ -130,6 +137,7 @@ func Load(envName string) (*Config, error) {
 		LogFormat: v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
+		MetricsAddr:     v.GetString("METRICS_ADDR"),
 
 		SystemEmailProvider: v.GetString("SYSTEM_EMAIL_PROVIDER"),
 		SystemEmailFrom:     v.GetString("SYSTEM_EMAIL_FROM"),
@@ -156,6 +164,26 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	return c.validateMetricsAddr()
+}
+
+// validateMetricsAddr rejects a malformed METRICS_ADDR and one sharing the public
+// PORT (the public server binds every interface, so any host collides).
+func (c *Config) validateMetricsAddr() error {
+	if c.MetricsAddr == "" {
+		return nil
+	}
+	_, portStr, err := net.SplitHostPort(c.MetricsAddr)
+	if err != nil {
+		return fmt.Errorf("METRICS_ADDR must be host:port: %w", err)
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port < 1 || port > 65535 {
+		return fmt.Errorf("METRICS_ADDR port %q is not a valid port", portStr)
+	}
+	if public, err := strconv.Atoi(c.Port); err == nil && public == port {
+		return fmt.Errorf("METRICS_ADDR must not use the public PORT (%d)", port)
 	}
 	return nil
 }
