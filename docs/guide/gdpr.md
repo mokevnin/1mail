@@ -19,8 +19,12 @@ download, so a contact with many events is fine.
 
 The file contains the contact (`contact`), its `tags`, `visitors`, all `events`, the `unsubscribes`,
 `suppressions` and `confirmations` for its addresses, and the delivery metadata of its
-`outbound_messages` and `broadcast_recipients`. Rendered message bodies are not included: the file
+`outboundMessages` and `broadcastRecipients`. Rendered message bodies are not included: the file
 holds the person's data, not your campaign content.
+
+The file follows a documented schema, `ContactExportDocument` in the OpenAPI document: keys are
+camelCase, ids are strings, timestamps are RFC 3339, and a value the contact has none of is left
+out. The Workspace id and internal references (idempotency keys, run ids) are not part of it.
 
 ## Erasure request: erase one contact
 

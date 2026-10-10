@@ -90,10 +90,21 @@ export function ContactDetailPage() {
 
   const exportMutation = useMutation({
     // The generated mutation helper drops the response; the filename is the server's
-    // (Content-Disposition), so call the generated SDK function and keep both.
+    // (Content-Disposition), so call the generated SDK function and keep both. The
+    // server streams the document as a download; it is read as the contract's typed
+    // ContactExportDocument and written out as the saved file.
     mutationFn: () =>
-      siteContactsExport({ path: { slug }, query: { id: contactId }, throwOnError: true }),
-    onSuccess: ({ data, response }) => saveBlob(data, dispositionFilename(response)),
+      siteContactsExport({
+        path: { slug },
+        query: { id: contactId },
+        parseAs: 'json',
+        throwOnError: true,
+      }),
+    onSuccess: ({ data, response }) =>
+      saveBlob(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+        dispositionFilename(response),
+      ),
     onError: (error) =>
       notifications.show({
         color: 'red',

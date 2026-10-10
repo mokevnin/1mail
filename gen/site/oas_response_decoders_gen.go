@@ -3212,6 +3212,75 @@ func decodeSiteContactsExportResponse(resp *http.Response) (res SiteContactsExpo
 			return res, errors.Wrap(err, "parse media type")
 		}
 		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ContactExportDocument
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ContactExportDocumentHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Content-Disposition" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Content-Disposition",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToString(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.ContentDisposition = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Content-Disposition header")
+				}
+			}
+			return &wrapper, nil
 		case ct == "application/octet-stream":
 			reader := resp.Body
 			b, err := io.ReadAll(reader)
@@ -3219,8 +3288,8 @@ func decodeSiteContactsExportResponse(resp *http.Response) (res SiteContactsExpo
 				return res, err
 			}
 
-			response := SiteContactsExportOK{Data: bytes.NewReader(b)}
-			var wrapper SiteContactsExportOKHeaders
+			response := SiteContactsExportOKApplicationOctetStream{Data: bytes.NewReader(b)}
+			var wrapper SiteContactsExportOKApplicationOctetStreamHeaders
 			wrapper.Response = response
 			h := uri.NewHeaderDecoder(resp.Header)
 			// Parse "Content-Disposition" header.

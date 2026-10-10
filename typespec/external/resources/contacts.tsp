@@ -92,11 +92,18 @@ model UpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
-/** Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20) */
+/** Attachment download of everything held about one contact (subject access, GDPR Art. 15/20): the ContactExportDocument JSON, streamed */
 model ContactExportDownload {
   @header contentType: "application/octet-stream";
   @header("Content-Disposition") contentDisposition: string;
   @body body: bytes;
+}
+
+/** The same download described by its document type, for typed clients */
+model ContactExportTypedDownload {
+  @header contentType: "application/json";
+  @header("Content-Disposition") contentDisposition: string;
+  @body body: ContactExportDocument;
 }
 
 @tag("Contacts")
@@ -125,6 +132,7 @@ interface Contacts
     @query email?: EmailAddress,
   ):
     | ContactExportDownload
+    | ContactExportTypedDownload
     | BadRequestProblem
     | UnauthorizedProblem
     | NotFoundProblem;

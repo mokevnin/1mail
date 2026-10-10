@@ -89,11 +89,18 @@ model SiteUpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
-/** Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20) */
+/** Attachment download of everything held about one contact (subject access, GDPR Art. 15/20): the ContactExportDocument JSON, streamed */
 model SiteContactExportDownload {
   @header contentType: "application/octet-stream";
   @header("Content-Disposition") contentDisposition: string;
   @body body: bytes;
+}
+
+/** The same download described by its document type, for typed clients */
+model SiteContactExportTypedDownload {
+  @header contentType: "application/json";
+  @header("Content-Disposition") contentDisposition: string;
+  @body body: ContactExportDocument;
 }
 
 @tag("Site Contacts")
@@ -119,7 +126,11 @@ interface SiteContacts
 
     /** The contact's email address */
     @query email?: EmailAddress,
-  ): SiteContactExportDownload | BadRequestProblem | NotFoundProblem;
+  ):
+    | SiteContactExportDownload
+    | SiteContactExportTypedDownload
+    | BadRequestProblem
+    | NotFoundProblem;
 }
 
 @@doc(

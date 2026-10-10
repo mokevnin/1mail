@@ -71,11 +71,11 @@ func TestExternalContactsEraseClearsOutboxAndJobArguments(t *testing.T) {
 	}))
 	require.Len(t, env.Outbox(t, events.NameEmailSent, events.NameContactCreated), 3)
 
-	env.EnqueueJob(t, jobs.EvaluateTriggerArgs{}.Kind(), jobs.EvaluateTriggerArgs{WorkspaceID: fixtures.InitechID, ContactID: erasedID, Action: "x"})
-	env.EnqueueJob(t, jobs.EvaluateTriggerArgs{}.Kind(), jobs.EvaluateTriggerArgs{WorkspaceID: fixtures.InitechID, ContactID: bystanderID, Action: "x"})
-	env.EnqueueJob(t, jobs.RunStepArgs{}.Kind(), jobs.RunStepArgs{RunID: fixtures.AutomationRunErasableID})
-	env.EnqueueJob(t, jobs.SendRecipientArgs{}.Kind(), jobs.SendRecipientArgs{RecipientID: fixtures.BroadcastRecipientErasablePendingID, BroadcastID: fixtures.BroadcastInitechSendingID})
-	env.EnqueueJob(t, jobs.SendRecipientArgs{}.Kind(), jobs.SendRecipientArgs{RecipientID: fixtures.BroadcastRecipientBystanderPendingID, BroadcastID: fixtures.BroadcastInitechSendingID})
+	env.EnqueueJob(t, jobs.EvaluateTriggerArgs{WorkspaceID: fixtures.InitechID, ContactID: erasedID, Action: "x"})
+	env.EnqueueJob(t, jobs.EvaluateTriggerArgs{WorkspaceID: fixtures.InitechID, ContactID: bystanderID, Action: "x"})
+	env.EnqueueJob(t, jobs.RunStepArgs{RunID: fixtures.AutomationRunErasableID})
+	env.EnqueueJob(t, jobs.SendRecipientArgs{RecipientID: fixtures.BroadcastRecipientErasablePendingID, BroadcastID: fixtures.BroadcastInitechSendingID})
+	env.EnqueueJob(t, jobs.SendRecipientArgs{RecipientID: fixtures.BroadcastRecipientBystanderPendingID, BroadcastID: fixtures.BroadcastInitechSendingID})
 
 	eraseErasable(t, env)
 
@@ -96,7 +96,7 @@ func TestExternalContactsEraseClearsQueuedWebhookDeliveries(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	delivery := func(endpoint int64, id, body string) {
-		env.EnqueueJob(t, jobkind.DeliverWebhook, jobs.DeliverWebhookArgs{
+		env.EnqueueJob(t, jobs.DeliverWebhookArgs{
 			EndpointID: endpoint, EventName: "email.sent", DeliveryID: id, Body: []byte(body),
 		})
 	}

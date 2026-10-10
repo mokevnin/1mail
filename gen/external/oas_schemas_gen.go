@@ -1517,6 +1517,998 @@ func (s *ContactBatchStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// The contact's delivery record in one broadcast.
+// Ref: #/components/schemas/ContactExportBroadcastRecipient
+type ContactExportBroadcastRecipient struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The broadcast.
+	BroadcastId EntityId `json:"broadcastId"`
+	// Delivery status.
+	Status string `json:"status"`
+	// Why delivery failed.
+	Error OptNilString `json:"error"`
+	// When the broadcast was sent to the contact.
+	SentAt OptNilTimestamp `json:"sentAt"`
+	// When the contact opened it.
+	OpenedAt OptNilTimestamp `json:"openedAt"`
+	// When the contact clicked it.
+	ClickedAt OptNilTimestamp `json:"clickedAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportBroadcastRecipient) GetID() EntityId {
+	return s.ID
+}
+
+// GetBroadcastId returns the value of BroadcastId.
+func (s *ContactExportBroadcastRecipient) GetBroadcastId() EntityId {
+	return s.BroadcastId
+}
+
+// GetStatus returns the value of Status.
+func (s *ContactExportBroadcastRecipient) GetStatus() string {
+	return s.Status
+}
+
+// GetError returns the value of Error.
+func (s *ContactExportBroadcastRecipient) GetError() OptNilString {
+	return s.Error
+}
+
+// GetSentAt returns the value of SentAt.
+func (s *ContactExportBroadcastRecipient) GetSentAt() OptNilTimestamp {
+	return s.SentAt
+}
+
+// GetOpenedAt returns the value of OpenedAt.
+func (s *ContactExportBroadcastRecipient) GetOpenedAt() OptNilTimestamp {
+	return s.OpenedAt
+}
+
+// GetClickedAt returns the value of ClickedAt.
+func (s *ContactExportBroadcastRecipient) GetClickedAt() OptNilTimestamp {
+	return s.ClickedAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportBroadcastRecipient) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportBroadcastRecipient) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetBroadcastId sets the value of BroadcastId.
+func (s *ContactExportBroadcastRecipient) SetBroadcastId(val EntityId) {
+	s.BroadcastId = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ContactExportBroadcastRecipient) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetError sets the value of Error.
+func (s *ContactExportBroadcastRecipient) SetError(val OptNilString) {
+	s.Error = val
+}
+
+// SetSentAt sets the value of SentAt.
+func (s *ContactExportBroadcastRecipient) SetSentAt(val OptNilTimestamp) {
+	s.SentAt = val
+}
+
+// SetOpenedAt sets the value of OpenedAt.
+func (s *ContactExportBroadcastRecipient) SetOpenedAt(val OptNilTimestamp) {
+	s.OpenedAt = val
+}
+
+// SetClickedAt sets the value of ClickedAt.
+func (s *ContactExportBroadcastRecipient) SetClickedAt(val OptNilTimestamp) {
+	s.ClickedAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportBroadcastRecipient) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// A recorded confirmation of a channel destination.
+// Ref: #/components/schemas/ContactExportConfirmation
+type ContactExportConfirmation struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Channel the confirmation applies to.
+	Channel string `json:"channel"`
+	// Address the confirmation applies to.
+	Destination string `json:"destination"`
+	// How the confirmation was obtained.
+	Provenance string `json:"provenance"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportConfirmation) GetID() EntityId {
+	return s.ID
+}
+
+// GetChannel returns the value of Channel.
+func (s *ContactExportConfirmation) GetChannel() string {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *ContactExportConfirmation) GetDestination() string {
+	return s.Destination
+}
+
+// GetProvenance returns the value of Provenance.
+func (s *ContactExportConfirmation) GetProvenance() string {
+	return s.Provenance
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportConfirmation) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportConfirmation) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *ContactExportConfirmation) SetChannel(val string) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *ContactExportConfirmation) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetProvenance sets the value of Provenance.
+func (s *ContactExportConfirmation) SetProvenance(val string) {
+	s.Provenance = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportConfirmation) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// The contact itself.
+// Ref: #/components/schemas/ContactExportContact
+type ContactExportContact struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Canonical subject identifier.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address.
+	Email OptNilString `json:"email"`
+	// Phone number.
+	Phone OptNilString `json:"phone"`
+	// Given name.
+	FirstName OptNilString `json:"firstName"`
+	// Family name.
+	LastName OptNilString `json:"lastName"`
+	// IANA time zone identifier.
+	TimeZone OptNilString `json:"timeZone"`
+	// Typed custom field values keyed by the field's machine key.
+	CustomFields OptNilContactExportJson `json:"customFields"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportContact) GetID() EntityId {
+	return s.ID
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *ContactExportContact) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *ContactExportContact) GetEmail() OptNilString {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *ContactExportContact) GetPhone() OptNilString {
+	return s.Phone
+}
+
+// GetFirstName returns the value of FirstName.
+func (s *ContactExportContact) GetFirstName() OptNilString {
+	return s.FirstName
+}
+
+// GetLastName returns the value of LastName.
+func (s *ContactExportContact) GetLastName() OptNilString {
+	return s.LastName
+}
+
+// GetTimeZone returns the value of TimeZone.
+func (s *ContactExportContact) GetTimeZone() OptNilString {
+	return s.TimeZone
+}
+
+// GetCustomFields returns the value of CustomFields.
+func (s *ContactExportContact) GetCustomFields() OptNilContactExportJson {
+	return s.CustomFields
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportContact) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ContactExportContact) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportContact) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetSubjectId sets the value of SubjectId.
+func (s *ContactExportContact) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *ContactExportContact) SetEmail(val OptNilString) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *ContactExportContact) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
+// SetFirstName sets the value of FirstName.
+func (s *ContactExportContact) SetFirstName(val OptNilString) {
+	s.FirstName = val
+}
+
+// SetLastName sets the value of LastName.
+func (s *ContactExportContact) SetLastName(val OptNilString) {
+	s.LastName = val
+}
+
+// SetTimeZone sets the value of TimeZone.
+func (s *ContactExportContact) SetTimeZone(val OptNilString) {
+	s.TimeZone = val
+}
+
+// SetCustomFields sets the value of CustomFields.
+func (s *ContactExportContact) SetCustomFields(val OptNilContactExportJson) {
+	s.CustomFields = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportContact) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ContactExportContact) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+// Everything held about one contact (subject access, GDPR Art. 15/20). The download is this document
+// streamed member by member; rendered message bodies are never part of it.
+// Ref: #/components/schemas/ContactExportDocument
+type ContactExportDocument struct {
+	// The contact.
+	Contact ContactExportContact `json:"contact"`
+	// Tags the contact carries.
+	Tags []ContactExportTag `json:"tags"`
+	// Visitors bound to the contact.
+	Visitors []ContactExportVisitor `json:"visitors"`
+	// Opt-outs for the contact's addresses.
+	Unsubscribes []ContactExportUnsubscribe `json:"unsubscribes"`
+	// Suppressions for the contact's addresses.
+	Suppressions []ContactExportSuppression `json:"suppressions"`
+	// Confirmations for the contact's addresses.
+	Confirmations []ContactExportConfirmation `json:"confirmations"`
+	// All events of the contact and its visitors.
+	Events []ContactExportEvent `json:"events"`
+	// Delivery metadata of messages sent to the contact's addresses.
+	OutboundMessages []ContactExportOutboundMessage `json:"outboundMessages"`
+	// The contact's recipient rows in broadcasts.
+	BroadcastRecipients []ContactExportBroadcastRecipient `json:"broadcastRecipients"`
+}
+
+// GetContact returns the value of Contact.
+func (s *ContactExportDocument) GetContact() ContactExportContact {
+	return s.Contact
+}
+
+// GetTags returns the value of Tags.
+func (s *ContactExportDocument) GetTags() []ContactExportTag {
+	return s.Tags
+}
+
+// GetVisitors returns the value of Visitors.
+func (s *ContactExportDocument) GetVisitors() []ContactExportVisitor {
+	return s.Visitors
+}
+
+// GetUnsubscribes returns the value of Unsubscribes.
+func (s *ContactExportDocument) GetUnsubscribes() []ContactExportUnsubscribe {
+	return s.Unsubscribes
+}
+
+// GetSuppressions returns the value of Suppressions.
+func (s *ContactExportDocument) GetSuppressions() []ContactExportSuppression {
+	return s.Suppressions
+}
+
+// GetConfirmations returns the value of Confirmations.
+func (s *ContactExportDocument) GetConfirmations() []ContactExportConfirmation {
+	return s.Confirmations
+}
+
+// GetEvents returns the value of Events.
+func (s *ContactExportDocument) GetEvents() []ContactExportEvent {
+	return s.Events
+}
+
+// GetOutboundMessages returns the value of OutboundMessages.
+func (s *ContactExportDocument) GetOutboundMessages() []ContactExportOutboundMessage {
+	return s.OutboundMessages
+}
+
+// GetBroadcastRecipients returns the value of BroadcastRecipients.
+func (s *ContactExportDocument) GetBroadcastRecipients() []ContactExportBroadcastRecipient {
+	return s.BroadcastRecipients
+}
+
+// SetContact sets the value of Contact.
+func (s *ContactExportDocument) SetContact(val ContactExportContact) {
+	s.Contact = val
+}
+
+// SetTags sets the value of Tags.
+func (s *ContactExportDocument) SetTags(val []ContactExportTag) {
+	s.Tags = val
+}
+
+// SetVisitors sets the value of Visitors.
+func (s *ContactExportDocument) SetVisitors(val []ContactExportVisitor) {
+	s.Visitors = val
+}
+
+// SetUnsubscribes sets the value of Unsubscribes.
+func (s *ContactExportDocument) SetUnsubscribes(val []ContactExportUnsubscribe) {
+	s.Unsubscribes = val
+}
+
+// SetSuppressions sets the value of Suppressions.
+func (s *ContactExportDocument) SetSuppressions(val []ContactExportSuppression) {
+	s.Suppressions = val
+}
+
+// SetConfirmations sets the value of Confirmations.
+func (s *ContactExportDocument) SetConfirmations(val []ContactExportConfirmation) {
+	s.Confirmations = val
+}
+
+// SetEvents sets the value of Events.
+func (s *ContactExportDocument) SetEvents(val []ContactExportEvent) {
+	s.Events = val
+}
+
+// SetOutboundMessages sets the value of OutboundMessages.
+func (s *ContactExportDocument) SetOutboundMessages(val []ContactExportOutboundMessage) {
+	s.OutboundMessages = val
+}
+
+// SetBroadcastRecipients sets the value of BroadcastRecipients.
+func (s *ContactExportDocument) SetBroadcastRecipients(val []ContactExportBroadcastRecipient) {
+	s.BroadcastRecipients = val
+}
+
+// ContactExportDocumentHeaders wraps ContactExportDocument with response headers.
+type ContactExportDocumentHeaders struct {
+	ContentDisposition string
+	Response           ContactExportDocument
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *ContactExportDocumentHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *ContactExportDocumentHeaders) GetResponse() ContactExportDocument {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *ContactExportDocumentHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ContactExportDocumentHeaders) SetResponse(val ContactExportDocument) {
+	s.Response = val
+}
+
+func (*ContactExportDocumentHeaders) contactsExportRes() {}
+
+// An event tracked for the contact or its visitors.
+// Ref: #/components/schemas/ContactExportEvent
+type ContactExportEvent struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Source identifier.
+	SourceId OptNilString `json:"sourceId"`
+	// Visitor id the event was tracked under.
+	VisitorId OptNilString `json:"visitorId"`
+	// Canonical subject identifier.
+	SubjectId string `json:"subjectId"`
+	// Email address associated with the event.
+	Email OptNilString `json:"email"`
+	// Phone number associated with the event.
+	Phone OptNilString `json:"phone"`
+	// Event action.
+	Action string `json:"action"`
+	// Event properties.
+	Properties OptNilContactExportJson `json:"properties"`
+	// Event occurrence timestamp.
+	OccurredAt OptNilTimestamp `json:"occurredAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportEvent) GetID() EntityId {
+	return s.ID
+}
+
+// GetSourceId returns the value of SourceId.
+func (s *ContactExportEvent) GetSourceId() OptNilString {
+	return s.SourceId
+}
+
+// GetVisitorId returns the value of VisitorId.
+func (s *ContactExportEvent) GetVisitorId() OptNilString {
+	return s.VisitorId
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *ContactExportEvent) GetSubjectId() string {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *ContactExportEvent) GetEmail() OptNilString {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *ContactExportEvent) GetPhone() OptNilString {
+	return s.Phone
+}
+
+// GetAction returns the value of Action.
+func (s *ContactExportEvent) GetAction() string {
+	return s.Action
+}
+
+// GetProperties returns the value of Properties.
+func (s *ContactExportEvent) GetProperties() OptNilContactExportJson {
+	return s.Properties
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *ContactExportEvent) GetOccurredAt() OptNilTimestamp {
+	return s.OccurredAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportEvent) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportEvent) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetSourceId sets the value of SourceId.
+func (s *ContactExportEvent) SetSourceId(val OptNilString) {
+	s.SourceId = val
+}
+
+// SetVisitorId sets the value of VisitorId.
+func (s *ContactExportEvent) SetVisitorId(val OptNilString) {
+	s.VisitorId = val
+}
+
+// SetSubjectId sets the value of SubjectId.
+func (s *ContactExportEvent) SetSubjectId(val string) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *ContactExportEvent) SetEmail(val OptNilString) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *ContactExportEvent) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
+// SetAction sets the value of Action.
+func (s *ContactExportEvent) SetAction(val string) {
+	s.Action = val
+}
+
+// SetProperties sets the value of Properties.
+func (s *ContactExportEvent) SetProperties(val OptNilContactExportJson) {
+	s.Properties = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *ContactExportEvent) SetOccurredAt(val OptNilTimestamp) {
+	s.OccurredAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportEvent) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// An arbitrary JSON object: typed custom field values or event properties.
+// Ref: #/components/schemas/ContactExportJson
+type ContactExportJson map[string]jx.Raw
+
+func (s *ContactExportJson) init() ContactExportJson {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Delivery metadata of one outbound message; the rendered message is not included.
+// Ref: #/components/schemas/ContactExportOutboundMessage
+type ContactExportOutboundMessage struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// What kind of send produced the message.
+	Kind string `json:"kind"`
+	// Channel the message was sent over.
+	Channel string `json:"channel"`
+	// Address the message was sent to.
+	Destination string `json:"destination"`
+	// Sending source.
+	SendingSource OptNilString `json:"sendingSource"`
+	// Sending domain.
+	SendingDomain OptNilString `json:"sendingDomain"`
+	// The provider's message id.
+	ProviderMessageId OptNilString `json:"providerMessageId"`
+	// Delivery status.
+	Status string `json:"status"`
+	// Why delivery failed or was skipped.
+	Reason OptNilString `json:"reason"`
+	// When the send was claimed.
+	ClaimedAt Timestamp `json:"claimedAt"`
+	// When the message was sent.
+	SentAt OptNilTimestamp `json:"sentAt"`
+	// Broadcast that produced the message.
+	BroadcastId OptNilEntityId `json:"broadcastId"`
+	// Automation that produced the message.
+	AutomationId OptNilEntityId `json:"automationId"`
+	// Step of the automation that produced the message.
+	AutomationStep OptNilInt32 `json:"automationStep"`
+	// Template the message was rendered from.
+	TemplateId OptNilEntityId `json:"templateId"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportOutboundMessage) GetID() EntityId {
+	return s.ID
+}
+
+// GetKind returns the value of Kind.
+func (s *ContactExportOutboundMessage) GetKind() string {
+	return s.Kind
+}
+
+// GetChannel returns the value of Channel.
+func (s *ContactExportOutboundMessage) GetChannel() string {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *ContactExportOutboundMessage) GetDestination() string {
+	return s.Destination
+}
+
+// GetSendingSource returns the value of SendingSource.
+func (s *ContactExportOutboundMessage) GetSendingSource() OptNilString {
+	return s.SendingSource
+}
+
+// GetSendingDomain returns the value of SendingDomain.
+func (s *ContactExportOutboundMessage) GetSendingDomain() OptNilString {
+	return s.SendingDomain
+}
+
+// GetProviderMessageId returns the value of ProviderMessageId.
+func (s *ContactExportOutboundMessage) GetProviderMessageId() OptNilString {
+	return s.ProviderMessageId
+}
+
+// GetStatus returns the value of Status.
+func (s *ContactExportOutboundMessage) GetStatus() string {
+	return s.Status
+}
+
+// GetReason returns the value of Reason.
+func (s *ContactExportOutboundMessage) GetReason() OptNilString {
+	return s.Reason
+}
+
+// GetClaimedAt returns the value of ClaimedAt.
+func (s *ContactExportOutboundMessage) GetClaimedAt() Timestamp {
+	return s.ClaimedAt
+}
+
+// GetSentAt returns the value of SentAt.
+func (s *ContactExportOutboundMessage) GetSentAt() OptNilTimestamp {
+	return s.SentAt
+}
+
+// GetBroadcastId returns the value of BroadcastId.
+func (s *ContactExportOutboundMessage) GetBroadcastId() OptNilEntityId {
+	return s.BroadcastId
+}
+
+// GetAutomationId returns the value of AutomationId.
+func (s *ContactExportOutboundMessage) GetAutomationId() OptNilEntityId {
+	return s.AutomationId
+}
+
+// GetAutomationStep returns the value of AutomationStep.
+func (s *ContactExportOutboundMessage) GetAutomationStep() OptNilInt32 {
+	return s.AutomationStep
+}
+
+// GetTemplateId returns the value of TemplateId.
+func (s *ContactExportOutboundMessage) GetTemplateId() OptNilEntityId {
+	return s.TemplateId
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportOutboundMessage) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportOutboundMessage) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetKind sets the value of Kind.
+func (s *ContactExportOutboundMessage) SetKind(val string) {
+	s.Kind = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *ContactExportOutboundMessage) SetChannel(val string) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *ContactExportOutboundMessage) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetSendingSource sets the value of SendingSource.
+func (s *ContactExportOutboundMessage) SetSendingSource(val OptNilString) {
+	s.SendingSource = val
+}
+
+// SetSendingDomain sets the value of SendingDomain.
+func (s *ContactExportOutboundMessage) SetSendingDomain(val OptNilString) {
+	s.SendingDomain = val
+}
+
+// SetProviderMessageId sets the value of ProviderMessageId.
+func (s *ContactExportOutboundMessage) SetProviderMessageId(val OptNilString) {
+	s.ProviderMessageId = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ContactExportOutboundMessage) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ContactExportOutboundMessage) SetReason(val OptNilString) {
+	s.Reason = val
+}
+
+// SetClaimedAt sets the value of ClaimedAt.
+func (s *ContactExportOutboundMessage) SetClaimedAt(val Timestamp) {
+	s.ClaimedAt = val
+}
+
+// SetSentAt sets the value of SentAt.
+func (s *ContactExportOutboundMessage) SetSentAt(val OptNilTimestamp) {
+	s.SentAt = val
+}
+
+// SetBroadcastId sets the value of BroadcastId.
+func (s *ContactExportOutboundMessage) SetBroadcastId(val OptNilEntityId) {
+	s.BroadcastId = val
+}
+
+// SetAutomationId sets the value of AutomationId.
+func (s *ContactExportOutboundMessage) SetAutomationId(val OptNilEntityId) {
+	s.AutomationId = val
+}
+
+// SetAutomationStep sets the value of AutomationStep.
+func (s *ContactExportOutboundMessage) SetAutomationStep(val OptNilInt32) {
+	s.AutomationStep = val
+}
+
+// SetTemplateId sets the value of TemplateId.
+func (s *ContactExportOutboundMessage) SetTemplateId(val OptNilEntityId) {
+	s.TemplateId = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportOutboundMessage) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// A suppression of a channel destination.
+// Ref: #/components/schemas/ContactExportSuppression
+type ContactExportSuppression struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Channel the suppression applies to.
+	Channel string `json:"channel"`
+	// Address the suppression applies to.
+	Destination string `json:"destination"`
+	// Why the destination is suppressed.
+	Reason string `json:"reason"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportSuppression) GetID() EntityId {
+	return s.ID
+}
+
+// GetChannel returns the value of Channel.
+func (s *ContactExportSuppression) GetChannel() string {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *ContactExportSuppression) GetDestination() string {
+	return s.Destination
+}
+
+// GetReason returns the value of Reason.
+func (s *ContactExportSuppression) GetReason() string {
+	return s.Reason
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportSuppression) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportSuppression) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *ContactExportSuppression) SetChannel(val string) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *ContactExportSuppression) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ContactExportSuppression) SetReason(val string) {
+	s.Reason = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportSuppression) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// A tag the contact carries.
+// Ref: #/components/schemas/ContactExportTag
+type ContactExportTag struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The label.
+	Name string `json:"name"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportTag) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *ContactExportTag) GetName() string {
+	return s.Name
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportTag) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportTag) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *ContactExportTag) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportTag) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// An opt-out of a channel destination.
+// Ref: #/components/schemas/ContactExportUnsubscribe
+type ContactExportUnsubscribe struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Channel the opt-out applies to.
+	Channel string `json:"channel"`
+	// Address the opt-out applies to.
+	Destination string `json:"destination"`
+	// The sending source (kind of mail) opted out of.
+	SendingSource string `json:"sendingSource"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportUnsubscribe) GetID() EntityId {
+	return s.ID
+}
+
+// GetChannel returns the value of Channel.
+func (s *ContactExportUnsubscribe) GetChannel() string {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *ContactExportUnsubscribe) GetDestination() string {
+	return s.Destination
+}
+
+// GetSendingSource returns the value of SendingSource.
+func (s *ContactExportUnsubscribe) GetSendingSource() string {
+	return s.SendingSource
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportUnsubscribe) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportUnsubscribe) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *ContactExportUnsubscribe) SetChannel(val string) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *ContactExportUnsubscribe) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetSendingSource sets the value of SendingSource.
+func (s *ContactExportUnsubscribe) SetSendingSource(val string) {
+	s.SendingSource = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportUnsubscribe) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// An anonymous device (visitor) bound to the contact.
+// Ref: #/components/schemas/ContactExportVisitor
+type ContactExportVisitor struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The visitor id the tracker assigned.
+	VisitorId string `json:"visitorId"`
+	// When the visitor was last seen.
+	LastSeenAt Timestamp `json:"lastSeenAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *ContactExportVisitor) GetID() EntityId {
+	return s.ID
+}
+
+// GetVisitorId returns the value of VisitorId.
+func (s *ContactExportVisitor) GetVisitorId() string {
+	return s.VisitorId
+}
+
+// GetLastSeenAt returns the value of LastSeenAt.
+func (s *ContactExportVisitor) GetLastSeenAt() Timestamp {
+	return s.LastSeenAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ContactExportVisitor) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ContactExportVisitor) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetVisitorId sets the value of VisitorId.
+func (s *ContactExportVisitor) SetVisitorId(val string) {
+	s.VisitorId = val
+}
+
+// SetLastSeenAt sets the value of LastSeenAt.
+func (s *ContactExportVisitor) SetLastSeenAt(val Timestamp) {
+	s.LastSeenAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ContactExportVisitor) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
 // Contact resource.
 // Ref: #/components/schemas/ContactResource
 type ContactResource struct {
@@ -1724,47 +2716,47 @@ type ContactsExportNotFound ProblemDetails
 
 func (*ContactsExportNotFound) contactsExportRes() {}
 
-type ContactsExportOK struct {
+type ContactsExportOKApplicationOctetStream struct {
 	Data io.Reader
 }
 
 // Read reads data from the Data reader.
 //
 // Kept to satisfy the io.Reader interface.
-func (s ContactsExportOK) Read(p []byte) (n int, err error) {
+func (s ContactsExportOKApplicationOctetStream) Read(p []byte) (n int, err error) {
 	if s.Data == nil {
 		return 0, io.EOF
 	}
 	return s.Data.Read(p)
 }
 
-// ContactsExportOKHeaders wraps ContactsExportOK with response headers.
-type ContactsExportOKHeaders struct {
+// ContactsExportOKApplicationOctetStreamHeaders wraps ContactsExportOKApplicationOctetStream with response headers.
+type ContactsExportOKApplicationOctetStreamHeaders struct {
 	ContentDisposition string
-	Response           ContactsExportOK
+	Response           ContactsExportOKApplicationOctetStream
 }
 
 // GetContentDisposition returns the value of ContentDisposition.
-func (s *ContactsExportOKHeaders) GetContentDisposition() string {
+func (s *ContactsExportOKApplicationOctetStreamHeaders) GetContentDisposition() string {
 	return s.ContentDisposition
 }
 
 // GetResponse returns the value of Response.
-func (s *ContactsExportOKHeaders) GetResponse() ContactsExportOK {
+func (s *ContactsExportOKApplicationOctetStreamHeaders) GetResponse() ContactsExportOKApplicationOctetStream {
 	return s.Response
 }
 
 // SetContentDisposition sets the value of ContentDisposition.
-func (s *ContactsExportOKHeaders) SetContentDisposition(val string) {
+func (s *ContactsExportOKApplicationOctetStreamHeaders) SetContentDisposition(val string) {
 	s.ContentDisposition = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ContactsExportOKHeaders) SetResponse(val ContactsExportOK) {
+func (s *ContactsExportOKApplicationOctetStreamHeaders) SetResponse(val ContactsExportOKApplicationOctetStream) {
 	s.Response = val
 }
 
-func (*ContactsExportOKHeaders) contactsExportRes() {}
+func (*ContactsExportOKApplicationOctetStreamHeaders) contactsExportRes() {}
 
 type ContactsExportUnauthorized ProblemDetails
 
@@ -3092,6 +4084,74 @@ func (o OptInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewOptNilContactExportJson returns new OptNilContactExportJson with value set to v.
+func NewOptNilContactExportJson(v ContactExportJson) OptNilContactExportJson {
+	return OptNilContactExportJson{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilContactExportJson is optional nullable ContactExportJson.
+type OptNilContactExportJson struct {
+	Value ContactExportJson
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilContactExportJson was set.
+func (o OptNilContactExportJson) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilContactExportJson) Reset() {
+	var v ContactExportJson
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilContactExportJson) SetTo(v ContactExportJson) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilContactExportJson) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilContactExportJson) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ContactExportJson
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilContactExportJson) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilContactExportJson) Get() (v ContactExportJson, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilContactExportJson) Or(d ContactExportJson) ContactExportJson {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilContactResourceCustomFields returns new OptNilContactResourceCustomFields with value set to v.
 func NewOptNilContactResourceCustomFields(v ContactResourceCustomFields) OptNilContactResourceCustomFields {
 	return OptNilContactResourceCustomFields{
@@ -3426,6 +4486,74 @@ func (o OptNilEventInputProperties) Get() (v EventInputProperties, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilEventInputProperties) Or(d EventInputProperties) EventInputProperties {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilInt32 returns new OptNilInt32 with value set to v.
+func NewOptNilInt32(v int32) OptNilInt32 {
+	return OptNilInt32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt32 is optional nullable int32.
+type OptNilInt32 struct {
+	Value int32
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt32 was set.
+func (o OptNilInt32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt32) Reset() {
+	var v int32
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt32) SetTo(v int32) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt32) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilInt32) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt32) Or(d int32) int32 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
