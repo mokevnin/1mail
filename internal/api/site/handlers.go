@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
@@ -124,6 +125,9 @@ type Deps struct {
 	Tracker        *tracking.Tracker
 	AppURL         string
 	Audit          AuditLog
+	// Clock is the time the site session's expiry is checked against (ADR 0020);
+	// nil means time.Now. Tests inject one to move past a session's lifetime.
+	Clock func() time.Time
 }
 
 func NewHandlers(d Deps) *Handlers {

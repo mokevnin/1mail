@@ -154,6 +154,9 @@ type TestEnv struct {
 
 	jwtSecret string // for tokens a test needs in a state the Tracker never mints
 
+	now        func() time.Time // the clock the server checks site session expiry against
+	sessionTTL time.Duration    // SESSION_TTL, the lifetime of the site tokens tests mint
+
 	// Captured sends from the inline jobs adapter, for assertions.
 	SystemMail   *CapturingSender // platform mail (welcome, …)
 	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
@@ -291,11 +294,12 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
 		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
+		Clock: st.now,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret, edition: edition,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret, edition: edition, now: st.now, sessionTTL: cfg.SessionTTL,
 		SystemMail: systemMail, CustomerMail: customerMail, SES: fakeSES,
 	}
 }

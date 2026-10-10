@@ -78,13 +78,16 @@ type Config struct {
 	BootstrapToken string
 	CORSOrigins    []string
 	JWTSecret      string
-	AppURL         string
-	SMTPHost       string
-	SMTPPort       int
-	SMTPUser       string
-	SMTPPass       string
-	SMTPFrom       string
-	EncryptionKey  string
+	// SessionTTL is the lifetime of a site session: both the token's exp and the
+	// cookie's Max-Age (SESSION_TTL, default 24h, no refresh; ADR 0020).
+	SessionTTL    time.Duration
+	AppURL        string
+	SMTPHost      string
+	SMTPPort      int
+	SMTPUser      string
+	SMTPPass      string
+	SMTPFrom      string
+	EncryptionKey string
 	// LicenseKey is the offline EE license key (ADR 0014). Empty runs the plain core.
 	LicenseKey  string
 	AutoMigrate bool
@@ -141,6 +144,7 @@ func Load(envName string) (*Config, error) {
 	v := viper.New()
 	v.SetDefault("PORT", "3000")
 	v.SetDefault("APP_URL", "http://localhost:3000")
+	v.SetDefault("SESSION_TTL", 24*time.Hour)
 	v.SetDefault("SMTP_PORT", 1025)
 	v.SetDefault("SYSTEM_EMAIL_PROVIDER", "smtp")
 	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
@@ -208,6 +212,7 @@ func Load(envName string) (*Config, error) {
 		BootstrapToken: v.GetString("BOOTSTRAP_TOKEN"),
 		CORSOrigins:    v.GetStringSlice("CORS_ORIGINS"),
 		JWTSecret:      v.GetString("JWT_SECRET"),
+		SessionTTL:     v.GetDuration("SESSION_TTL"),
 		AppURL:         v.GetString("APP_URL"),
 		SMTPHost:       v.GetString("SMTP_HOST"),
 		SMTPPort:       v.GetInt("SMTP_PORT"),
@@ -279,6 +284,9 @@ func (c *Config) validate(envName string) error {
 		if err := validateJWTSecret(c.JWTSecret); err != nil {
 			return err
 		}
+	}
+	if c.SessionTTL <= 0 {
+		return fmt.Errorf("SESSION_TTL must be positive")
 	}
 	if c.BodyLimits.Default <= 0 {
 		return fmt.Errorf("MAX_BODY_BYTES must be positive")

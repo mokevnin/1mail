@@ -105,6 +105,27 @@ func (_u *UserUpdate) ClearEmailVerifiedAt() *UserUpdate {
 	return _u
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (_u *UserUpdate) SetSessionEpoch(v int64) *UserUpdate {
+	_u.mutation.ResetSessionEpoch()
+	_u.mutation.SetSessionEpoch(v)
+	return _u
+}
+
+// SetNillableSessionEpoch sets the "session_epoch" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSessionEpoch(v *int64) *UserUpdate {
+	if v != nil {
+		_u.SetSessionEpoch(*v)
+	}
+	return _u
+}
+
+// AddSessionEpoch adds value to the "session_epoch" field.
+func (_u *UserUpdate) AddSessionEpoch(v int64) *UserUpdate {
+	_u.mutation.AddSessionEpoch(v)
+	return _u
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
 func (_u *UserUpdate) AddMembershipIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddMembershipIDs(ids...)
@@ -271,6 +292,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.EmailVerifiedAtCleared() {
 		_spec.ClearField(user.FieldEmailVerifiedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SessionEpoch(); ok {
+		_spec.SetField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSessionEpoch(); ok {
+		_spec.AddField(user.FieldSessionEpoch, field.TypeInt64, value)
 	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -455,6 +482,27 @@ func (_u *UserUpdateOne) SetNillableEmailVerifiedAt(v *time.Time) *UserUpdateOne
 // ClearEmailVerifiedAt clears the value of the "email_verified_at" field.
 func (_u *UserUpdateOne) ClearEmailVerifiedAt() *UserUpdateOne {
 	_u.mutation.ClearEmailVerifiedAt()
+	return _u
+}
+
+// SetSessionEpoch sets the "session_epoch" field.
+func (_u *UserUpdateOne) SetSessionEpoch(v int64) *UserUpdateOne {
+	_u.mutation.ResetSessionEpoch()
+	_u.mutation.SetSessionEpoch(v)
+	return _u
+}
+
+// SetNillableSessionEpoch sets the "session_epoch" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSessionEpoch(v *int64) *UserUpdateOne {
+	if v != nil {
+		_u.SetSessionEpoch(*v)
+	}
+	return _u
+}
+
+// AddSessionEpoch adds value to the "session_epoch" field.
+func (_u *UserUpdateOne) AddSessionEpoch(v int64) *UserUpdateOne {
+	_u.mutation.AddSessionEpoch(v)
 	return _u
 }
 
@@ -654,6 +702,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.EmailVerifiedAtCleared() {
 		_spec.ClearField(user.FieldEmailVerifiedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SessionEpoch(); ok {
+		_spec.SetField(user.FieldSessionEpoch, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSessionEpoch(); ok {
+		_spec.AddField(user.FieldSessionEpoch, field.TypeInt64, value)
 	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{

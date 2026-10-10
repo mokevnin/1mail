@@ -40,6 +40,11 @@ func (User) Fields() []ent.Field {
 		field.Time("email_verified_at").
 			Optional().
 			Nillable(),
+		// The generation of the User's sessions (ADR 0020): every session token
+		// carries the value current at issuance, and a token whose value differs is
+		// rejected. Bumping it ends every session of the User at once.
+		field.Int64("session_epoch").
+			Default(0),
 	}
 }
 

@@ -92,6 +92,20 @@ func (_c *UserCreate) SetNillableEmailVerifiedAt(v *time.Time) *UserCreate {
 	return _c
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (_c *UserCreate) SetSessionEpoch(v int64) *UserCreate {
+	_c.mutation.SetSessionEpoch(v)
+	return _c
+}
+
+// SetNillableSessionEpoch sets the "session_epoch" field if the given value is not nil.
+func (_c *UserCreate) SetNillableSessionEpoch(v *int64) *UserCreate {
+	if v != nil {
+		_c.SetSessionEpoch(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *UserCreate) SetID(v int64) *UserCreate {
 	_c.mutation.SetID(v)
@@ -171,6 +185,10 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.SessionEpoch(); !ok {
+		v := user.DefaultSessionEpoch
+		_c.mutation.SetSessionEpoch(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -196,6 +214,9 @@ func (_c *UserCreate) check() error {
 		if err := user.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.SessionEpoch(); !ok {
+		return &ValidationError{Name: "session_epoch", err: errors.New(`ent: missing required field "User.session_epoch"`)}
 	}
 	return nil
 }
@@ -253,6 +274,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.EmailVerifiedAt(); ok {
 		_spec.SetField(user.FieldEmailVerifiedAt, field.TypeTime, value)
 		_node.EmailVerifiedAt = &value
+	}
+	if value, ok := _c.mutation.SessionEpoch(); ok {
+		_spec.SetField(user.FieldSessionEpoch, field.TypeInt64, value)
+		_node.SessionEpoch = value
 	}
 	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -410,6 +435,24 @@ func (u *UserUpsert) ClearEmailVerifiedAt() *UserUpsert {
 	return u
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (u *UserUpsert) SetSessionEpoch(v int64) *UserUpsert {
+	u.Set(user.FieldSessionEpoch, v)
+	return u
+}
+
+// UpdateSessionEpoch sets the "session_epoch" field to the value that was provided on create.
+func (u *UserUpsert) UpdateSessionEpoch() *UserUpsert {
+	u.SetExcluded(user.FieldSessionEpoch)
+	return u
+}
+
+// AddSessionEpoch adds v to the "session_epoch" field.
+func (u *UserUpsert) AddSessionEpoch(v int64) *UserUpsert {
+	u.Add(user.FieldSessionEpoch, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -542,6 +585,27 @@ func (u *UserUpsertOne) UpdateEmailVerifiedAt() *UserUpsertOne {
 func (u *UserUpsertOne) ClearEmailVerifiedAt() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearEmailVerifiedAt()
+	})
+}
+
+// SetSessionEpoch sets the "session_epoch" field.
+func (u *UserUpsertOne) SetSessionEpoch(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSessionEpoch(v)
+	})
+}
+
+// AddSessionEpoch adds v to the "session_epoch" field.
+func (u *UserUpsertOne) AddSessionEpoch(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddSessionEpoch(v)
+	})
+}
+
+// UpdateSessionEpoch sets the "session_epoch" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateSessionEpoch() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSessionEpoch()
 	})
 }
 
@@ -843,6 +907,27 @@ func (u *UserUpsertBulk) UpdateEmailVerifiedAt() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearEmailVerifiedAt() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearEmailVerifiedAt()
+	})
+}
+
+// SetSessionEpoch sets the "session_epoch" field.
+func (u *UserUpsertBulk) SetSessionEpoch(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSessionEpoch(v)
+	})
+}
+
+// AddSessionEpoch adds v to the "session_epoch" field.
+func (u *UserUpsertBulk) AddSessionEpoch(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddSessionEpoch(v)
+	})
+}
+
+// UpdateSessionEpoch sets the "session_epoch" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateSessionEpoch() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSessionEpoch()
 	})
 }
 

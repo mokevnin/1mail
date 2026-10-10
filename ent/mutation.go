@@ -23741,6 +23741,8 @@ type UserMutation struct {
 	email                   *string
 	password_hash           *string
 	email_verified_at       *time.Time
+	session_epoch           *int64
+	addsession_epoch        *int64
 	clearedFields           map[string]struct{}
 	memberships             map[int64]struct{}
 	removedmemberships      map[int64]struct{}
@@ -24099,6 +24101,62 @@ func (m *UserMutation) ResetEmailVerifiedAt() {
 	delete(m.clearedFields, user.FieldEmailVerifiedAt)
 }
 
+// SetSessionEpoch sets the "session_epoch" field.
+func (m *UserMutation) SetSessionEpoch(i int64) {
+	m.session_epoch = &i
+	m.addsession_epoch = nil
+}
+
+// SessionEpoch returns the value of the "session_epoch" field in the mutation.
+func (m *UserMutation) SessionEpoch() (r int64, exists bool) {
+	v := m.session_epoch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSessionEpoch returns the old "session_epoch" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldSessionEpoch(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSessionEpoch is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSessionEpoch requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSessionEpoch: %w", err)
+	}
+	return oldValue.SessionEpoch, nil
+}
+
+// AddSessionEpoch adds i to the "session_epoch" field.
+func (m *UserMutation) AddSessionEpoch(i int64) {
+	if m.addsession_epoch != nil {
+		*m.addsession_epoch += i
+	} else {
+		m.addsession_epoch = &i
+	}
+}
+
+// AddedSessionEpoch returns the value that was added to the "session_epoch" field in this mutation.
+func (m *UserMutation) AddedSessionEpoch() (r int64, exists bool) {
+	v := m.addsession_epoch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSessionEpoch resets all changes to the "session_epoch" field.
+func (m *UserMutation) ResetSessionEpoch() {
+	m.session_epoch = nil
+	m.addsession_epoch = nil
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by ids.
 func (m *UserMutation) AddMembershipIDs(ids ...int64) {
 	if m.memberships == nil {
@@ -24241,7 +24299,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -24259,6 +24317,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.email_verified_at != nil {
 		fields = append(fields, user.FieldEmailVerifiedAt)
+	}
+	if m.session_epoch != nil {
+		fields = append(fields, user.FieldSessionEpoch)
 	}
 	return fields
 }
@@ -24280,6 +24341,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.PasswordHash()
 	case user.FieldEmailVerifiedAt:
 		return m.EmailVerifiedAt()
+	case user.FieldSessionEpoch:
+		return m.SessionEpoch()
 	}
 	return nil, false
 }
@@ -24301,6 +24364,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPasswordHash(ctx)
 	case user.FieldEmailVerifiedAt:
 		return m.OldEmailVerifiedAt(ctx)
+	case user.FieldSessionEpoch:
+		return m.OldSessionEpoch(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -24352,6 +24417,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetEmailVerifiedAt(v)
 		return nil
+	case user.FieldSessionEpoch:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSessionEpoch(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -24359,13 +24431,21 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addsession_epoch != nil {
+		fields = append(fields, user.FieldSessionEpoch)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldSessionEpoch:
+		return m.AddedSessionEpoch()
+	}
 	return nil, false
 }
 
@@ -24374,6 +24454,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldSessionEpoch:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSessionEpoch(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -24433,6 +24520,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldEmailVerifiedAt:
 		m.ResetEmailVerifiedAt()
+		return nil
+	case user.FieldSessionEpoch:
+		m.ResetSessionEpoch()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

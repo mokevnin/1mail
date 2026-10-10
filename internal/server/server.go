@@ -50,9 +50,12 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 
 	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.
 	authSvc := goauth.NewService(goauth.Opts{
-		SecretReader:   token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
-		TokenDuration:  time.Hour,
-		CookieDuration: 24 * time.Hour,
+		SecretReader: token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
+		// One lifetime for token and cookie, no refresh (ADR 0020).
+		TokenDuration:  cfg.SessionTTL,
+		CookieDuration: cfg.SessionTTL,
+		// Writes the User id and session epoch into every token issued.
+		ClaimsUpd: apiauth.NewSessionClaims(client),
 		// Cross-site writes are rejected by crossOriginGuard instead (see there).
 		DisableXSRF:    true,
 		SameSiteCookie: http.SameSiteLaxMode,
@@ -82,7 +85,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
 		apisite.NewHandlers(site),
-		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
+		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client, site.Clock),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
 	)

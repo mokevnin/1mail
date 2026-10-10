@@ -902,6 +902,7 @@ var (
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "email_verified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "session_epoch", Type: field.TypeInt64, Default: 0},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

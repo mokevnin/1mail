@@ -26,6 +26,8 @@ const (
 	FieldPasswordHash = "password_hash"
 	// FieldEmailVerifiedAt holds the string denoting the email_verified_at field in the database.
 	FieldEmailVerifiedAt = "email_verified_at"
+	// FieldSessionEpoch holds the string denoting the session_epoch field in the database.
+	FieldSessionEpoch = "session_epoch"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
 	EdgeMemberships = "memberships"
 	// EdgeSentInvitations holds the string denoting the sent_invitations edge name in mutations.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldEmail,
 	FieldPasswordHash,
 	FieldEmailVerifiedAt,
+	FieldSessionEpoch,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -80,6 +83,8 @@ var (
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultSessionEpoch holds the default value on creation for the "session_epoch" field.
+	DefaultSessionEpoch int64
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -118,6 +123,11 @@ func ByPasswordHash(opts ...sql.OrderTermOption) OrderOption {
 // ByEmailVerifiedAt orders the results by the email_verified_at field.
 func ByEmailVerifiedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmailVerifiedAt, opts...).ToFunc()
+}
+
+// BySessionEpoch orders the results by the session_epoch field.
+func BySessionEpoch(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSessionEpoch, opts...).ToFunc()
 }
 
 // ByMembershipsCount orders the results by memberships count.

@@ -667,6 +667,10 @@ func init() {
 	userDescEmail := userFields[2].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescSessionEpoch is the schema descriptor for session_epoch field.
+	userDescSessionEpoch := userFields[5].Descriptor()
+	// user.DefaultSessionEpoch holds the default value on creation for the session_epoch field.
+	user.DefaultSessionEpoch = userDescSessionEpoch.Default.(int64)
 	visitorMixin := schema.Visitor{}.Mixin()
 	visitorMixinFields0 := visitorMixin[0].Fields()
 	_ = visitorMixinFields0

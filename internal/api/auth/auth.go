@@ -250,39 +250,55 @@ func GetSiteAuth(ctx context.Context) *SiteAuth {
 
 // SiteSecurityHandler implements siteapi.SecurityHandler: validates the JWT
 // cookie issued by go-pkgz/auth and resolves the dashboard user from it.
+//
+// go-pkgz's Parse ignores an expired exp (its own middleware would refresh), so the
+// expiry is enforced here against the injected clock; there is no refresh (ADR
+// 0020). The User is looked up by the id the token carries, and the token's epoch
+// must equal the User's session_epoch: a bump ends every earlier session.
 type SiteSecurityHandler struct {
 	tokens *gptoken.Service
 	ent    *ent.Client
+	now    func() time.Time
 }
 
-func NewSiteSecurityHandler(jwtSecret string, client *ent.Client) *SiteSecurityHandler {
+// NewSiteSecurityHandler builds the cookie handler. now is the clock the token's
+// expiry is checked against; nil means time.Now.
+func NewSiteSecurityHandler(jwtSecret string, client *ent.Client, now func() time.Time) *SiteSecurityHandler {
 	svc := gptoken.NewService(gptoken.Opts{
 		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
 		Issuer:       "1mail",
 		DisableXSRF:  true,
 	})
-	return &SiteSecurityHandler{tokens: svc, ent: client}
+	if now == nil {
+		now = time.Now
+	}
+	return &SiteSecurityHandler{tokens: svc, ent: client, now: now}
 }
 
 var _ siteapi.SecurityHandler = (*SiteSecurityHandler)(nil)
 
 func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.OperationName, t siteapi.ApiKeyAuth) (context.Context, error) {
 	claims, err := h.tokens.Parse(t.APIKey)
-	if err != nil || claims.User == nil {
+	if err != nil {
+		return ctx, ErrUnauthorized
+	}
+	if claims.ExpiresAt == nil || !h.now().Before(claims.ExpiresAt.Time) {
+		return ctx, ErrUnauthorized
+	}
+	id, epoch, ok := sessionUser(claims)
+	if !ok {
 		return ctx, ErrUnauthorized
 	}
 
-	// The direct provider stores the login (email) in User.Name; resolve the ent user by it.
-	email := claims.User.Name
-	if email == "" {
-		email = claims.User.Email
-	}
-	u, err := h.ent.User.Query().Where(entuser.Email(email)).Only(ctx)
+	u, err := h.ent.User.Get(ctx, id)
 	if ent.IsNotFound(err) {
 		return ctx, ErrUnauthorized
 	}
 	if err != nil {
 		return ctx, err
+	}
+	if u.SessionEpoch != epoch {
+		return ctx, ErrUnauthorized
 	}
 
 	return WithSiteAuth(ctx, &SiteAuth{UserID: u.ID, Email: u.Email}), nil

@@ -3,14 +3,13 @@ package testhelper
 import (
 	"context"
 	"testing"
-	"time"
 
 	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/config"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/service"
 	ht "github.com/ogen-go/ogen/http"
@@ -21,10 +20,6 @@ import (
 // JWT signing, token generation and hashing, security sources and the in-memory
 // transport are internal to this file; tests only pick the identity.
 
-// now is the single place the actors read the wall clock (JWT expiry). A future
-// clock seam replaces it here without changing any actor signature.
-func now() time.Time { return time.Now() }
-
 const (
 	siteBase     = "http://local/site"
 	externalBase = "http://local/api"
@@ -32,17 +27,28 @@ const (
 )
 
 // SiteActor returns a /site client authenticated as the fixture user with the
-// given login email (use the fixtures.*Email constants).
+// given login email (use the fixtures.*Email constants). Each request carries a
+// session token minted for it (see SiteToken); hold a SiteToken for a session
+// that must outlive an epoch bump.
 func (env *TestEnv) SiteActor(t *testing.T, email string) *siteapi.Client {
 	t.Helper()
-	return env.siteClient(t, mintSiteJWT(t, email))
+	c, err := siteapi.NewClient(siteBase, sessionSource{env, email}, siteapi.WithClient(env.Transport(nil)))
+	require.NoError(t, err)
+	return c
+}
+
+// SiteWithToken returns a /site client carrying the given raw session token (for
+// tests of tokens in states a login never issues, minted with SiteToken).
+func (env *TestEnv) SiteWithToken(t *testing.T, token string) *siteapi.Client {
+	t.Helper()
+	return env.siteClient(t, token)
 }
 
 // SiteActorVia is SiteActor with the in-memory transport wrapped by wrap, for
 // tests that observe the wire (e.g. raw response bodies).
 func (env *TestEnv) SiteActorVia(t *testing.T, email string, wrap func(inner ht.Client) ht.Client) *siteapi.Client {
 	t.Helper()
-	c, err := siteapi.NewClient(siteBase, cookieSource{mintSiteJWT(t, email)}, siteapi.WithClient(wrap(env.Transport(nil))))
+	c, err := siteapi.NewClient(siteBase, sessionSource{env, email}, siteapi.WithClient(wrap(env.Transport(nil))))
 	require.NoError(t, err)
 	return c
 }
@@ -135,28 +141,49 @@ func (env *TestEnv) siteClient(t *testing.T, jwtValue string) *siteapi.Client {
 	return c
 }
 
-// mintSiteJWT signs a token the way go-pkgz/auth's direct provider does, with
-// the test config's secret.
-func mintSiteJWT(t *testing.T, email string) string {
+// SiteToken mints the session token a login issues for the fixture user with the
+// given email: the go-pkgz claims, run through the production claims updater
+// (User id and current session epoch), signed with the test config's secret and
+// valid for SESSION_TTL from the env's clock. edit, when not nil, changes the
+// claims before signing, for tests of tokens a login never issues (expired,
+// without an epoch). The token is fixed at minting: a later epoch bump ends it.
+func (env *TestEnv) SiteToken(t *testing.T, email string, edit func(*gptoken.Claims)) string {
 	t.Helper()
-	cfg, err := config.Load("test")
+	tk, err := env.mintSiteToken(t.Context(), email, edit)
 	require.NoError(t, err)
+	return tk
+}
 
+func (env *TestEnv) mintSiteToken(ctx context.Context, email string, edit func(*gptoken.Claims)) (string, error) {
 	svc := gptoken.NewService(gptoken.Opts{
-		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
+		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return env.jwtSecret, nil }),
 		Issuer:       "1mail",
 		DisableXSRF:  true,
 	})
-	tk, err := svc.Token(gptoken.Claims{
+	claims := apiauth.NewSessionClaims(env.DB).Stamp(ctx, gptoken.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "1mail",
 			Audience:  jwt.ClaimStrings{"1mail"},
-			ExpiresAt: jwt.NewNumericDate(now().Add(time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(env.now().Add(env.sessionTTL)),
 		},
 		User: &gptoken.User{Name: email, ID: "test"},
 	})
-	require.NoError(t, err)
-	return tk
+	if edit != nil {
+		edit(&claims)
+	}
+	return svc.Token(claims)
+}
+
+// sessionSource signs an actor in afresh on every request, under the request's
+// context, so the actor always holds a current session.
+type sessionSource struct {
+	env   *TestEnv
+	email string
+}
+
+func (s sessionSource) ApiKeyAuth(ctx context.Context, _ siteapi.OperationName) (siteapi.ApiKeyAuth, error) {
+	tk, err := s.env.mintSiteToken(ctx, s.email, nil)
+	return siteapi.ApiKeyAuth{APIKey: tk}, err
 }
 
 type cookieSource struct{ token string }
