@@ -27,7 +27,7 @@ RUN go build -tags embed_spa \
     -o /1mail ./cmd/server
 
 # --- Stage 3: runtime ---
-FROM alpine:3.23
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=gobuild /1mail /usr/local/bin/1mail
 EXPOSE 3000
