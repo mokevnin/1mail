@@ -21,7 +21,8 @@ adds the per-person path that ADR 0019's "evidentiary Events are never deleted" 
   (and its `contacts:write` scope); there is no second delete path.
 - **Events: the one exception to append-only, and to ADR 0019's "evidentiary Events are kept".**
   Customer-tracked Events of the Contact are deleted. Every reserved system Event is anonymized in
-  place (`contact_id`, `visitor_id`, `email`, `phone`, `subject_id` and `properties` cleared): the
+  place (`contact_id`, `visitor_id`, `email`, `phone`, `subject_id` and `properties` cleared, except the two non-personal keys the rates are computed
+  from, `sendingDomain` and `bounceKind`, which are kept): the
   `email.*` family (`sent`, `opened`, `clicked`, `bounced`, `complained`, `unsubscribed`) so
   complaint/bounce rates (ADR 0011) and metering (ADR 0009) are unchanged, and `contact.created`.
   `marketing.confirmed` is deleted, not anonymized: it is consent proof for a person who is gone and
