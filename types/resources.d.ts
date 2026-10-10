@@ -278,6 +278,18 @@ export default interface Resources {
           "operator": "Operator",
           "system": "Automated detector"
         },
+        "auditLog": {
+          "action": "Action",
+          "actor": "By",
+          "actorSystem": "System",
+          "actorToken": "API token #{{id}}",
+          "empty": "No recorded changes",
+          "loadError": "Could not load the audit log",
+          "loadMore": "Load more",
+          "target": "Target",
+          "time": "Time",
+          "title": "Audit log"
+        },
         "back": "All workspaces",
         "detailsTitle": "Details",
         "id": "ID",

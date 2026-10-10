@@ -288,6 +288,18 @@
         "operator": "Operador",
         "system": "Detector automático"
       },
+      "auditLog": {
+        "action": "Acción",
+        "actor": "Por",
+        "actorSystem": "Sistema",
+        "actorToken": "Token de API n.º {{id}}",
+        "empty": "No hay cambios registrados",
+        "loadError": "No se pudo cargar el registro de auditoría",
+        "loadMore": "Cargar más",
+        "target": "Objetivo",
+        "time": "Hora",
+        "title": "Registro de auditoría"
+      },
       "back": "Todos los espacios de trabajo",
       "detailsTitle": "Detalles",
       "id": "ID",

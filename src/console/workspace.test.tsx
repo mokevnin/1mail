@@ -1,7 +1,8 @@
 import { HttpResponse } from 'msw'
-import { expect, test } from 'vitest'
+import { beforeEach, expect, test } from 'vitest'
 
 import {
+  handleOperatorWorkspaceAuditList,
   handleOperatorWorkspacesGet,
   handleOperatorWorkspacesSuspend,
   handleOperatorWorkspacesUnsuspend,
@@ -46,6 +47,57 @@ const BELOW_FLOOR = {
   complaintRate: { numerator: 1, denominator: 7, rate: null },
   bounceRate: { numerator: 1, denominator: 8, rate: null },
 }
+
+// The page always reads the Audit log; tests that care override it.
+beforeEach(() => {
+  worker.use(handleOperatorWorkspaceAuditList({ body: { items: [] } }))
+})
+
+test('lists the audit log with an Operator shown as sphericon staff, and loads more', async () => {
+  worker.use(
+    handleOperatorWorkspacesGet({ body: HOOLI }),
+    handleOperatorWorkspaceAuditList(({ request }) =>
+      new URL(request.url).searchParams.get('cursor')
+        ? HttpResponse.json({
+            items: [
+              {
+                id: '1',
+                occurredAt: '2026-01-01T00:00:00Z',
+                actor: { kind: 'user', id: '9', name: 'Peter' },
+                action: 'tag.create',
+                target: { type: 'tag', id: '12', name: 'vip' },
+              },
+            ],
+          })
+        : HttpResponse.json({
+            items: [
+              {
+                id: '2',
+                occurredAt: '2026-02-01T00:00:00Z',
+                actor: { kind: 'operator', name: 'sphericon staff' },
+                action: 'workspace.suspend',
+                target: { type: 'workspace', id: '5', name: 'Hooli' },
+              },
+            ],
+            nextCursor: '2',
+          }),
+    ),
+  )
+  const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
+
+  await expect.element(screen.getByText('sphericon staff')).toBeInTheDocument()
+  await expect.element(screen.getByText('workspace.suspend')).toBeInTheDocument()
+  await screen.getByRole('button', { name: 'Load more' }).click()
+  await expect.element(screen.getByText('tag.create')).toBeInTheDocument()
+  await expect.element(screen.getByText('Peter')).toBeInTheDocument()
+})
+
+test('an empty audit log says so', async () => {
+  worker.use(handleOperatorWorkspacesGet({ body: HOOLI }))
+  const { screen } = await renderWithRouter(<ConsoleWorkspacePage />, MOUNT)
+
+  await expect.element(screen.getByText('No recorded changes')).toBeInTheDocument()
+})
 
 test('shows the metadata and who suspended the workspace, and why', async () => {
   worker.use(handleOperatorWorkspacesGet({ body: HOOLI }))

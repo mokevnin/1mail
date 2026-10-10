@@ -17,7 +17,7 @@ var (
 	rn5AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn11AllowedHeaders = map[string]string{
+	rn13AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 )
@@ -272,6 +272,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							break
 						}
 						switch elem[0] {
+						case 'a': // Prefix: "audit-entries"
+
+							if l := len("audit-entries"); len(elem) >= l && elem[0:l] == "audit-entries" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleOperatorWorkspaceAuditListRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET",
+										allowedHeaders: nil,
+										acceptPost:     "",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+
 						case 's': // Prefix: "suspend"
 
 							if l := len("suspend"); len(elem) >= l && elem[0:l] == "suspend" {
@@ -290,7 +317,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn11AllowedHeaders,
+										allowedHeaders: rn13AllowedHeaders,
 										acceptPost:     "application/json",
 										acceptPatch:    "",
 									})
@@ -629,6 +656,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							break
 						}
 						switch elem[0] {
+						case 'a': // Prefix: "audit-entries"
+
+							if l := len("audit-entries"); len(elem) >= l && elem[0:l] == "audit-entries" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = OperatorWorkspaceAuditListOperation
+									r.summary = ""
+									r.operationID = "OperatorWorkspaceAudit_list"
+									r.operationGroup = ""
+									r.pathPattern = "/workspaces/{workspaceId}/audit-entries"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
 						case 's': // Prefix: "suspend"
 
 							if l := len("suspend"); len(elem) >= l && elem[0:l] == "suspend" {

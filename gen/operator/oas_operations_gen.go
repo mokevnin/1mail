@@ -10,6 +10,7 @@ const (
 	OperatorAuthLogoutOperation          OperationName = "OperatorAuthLogout"
 	OperatorAuthSecondFactorOperation    OperationName = "OperatorAuthSecondFactor"
 	OperatorMeGetOperation               OperationName = "OperatorMeGet"
+	OperatorWorkspaceAuditListOperation  OperationName = "OperatorWorkspaceAuditList"
 	OperatorWorkspacesGetOperation       OperationName = "OperatorWorkspacesGet"
 	OperatorWorkspacesListOperation      OperationName = "OperatorWorkspacesList"
 	OperatorWorkspacesSuspendOperation   OperationName = "OperatorWorkspacesSuspend"

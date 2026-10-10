@@ -6,13 +6,6 @@ export type ClientOptions = {
 };
 
 /**
- * RFC 7807 bad request response
- */
-export type BadRequestProblem = {
-  body: ProblemDetails;
-};
-
-/**
  * RFC 7807 conflict response
  */
 export type ConflictProblem = {
@@ -35,6 +28,112 @@ export type ForbiddenProblem = {
  */
 export type GoneProblem = {
   body: ProblemDetails;
+};
+
+/**
+ * The actor of an Audit entry
+ */
+export type OperatorAuditActor = {
+  /**
+   * The kind of actor; an operator carries no id and the name "sphericon staff"
+   */
+  kind: OperatorAuditActorKind;
+  /**
+   * The actor's id (a User id or an API token id); absent for the system and an operator
+   */
+  id?: string | null;
+  /**
+   * Display name snapshot taken when the entry was written
+   */
+  name?: string | null;
+};
+
+/**
+ * Who performed an audited change, as the Workspace's own team sees it
+ */
+export const OperatorAuditActorKind = {
+  USER: 'user',
+  API_TOKEN: 'api_token',
+  OPERATOR: 'operator',
+  SYSTEM: 'system'
+} as const;
+
+/**
+ * Who performed an audited change, as the Workspace's own team sees it
+ */
+export type OperatorAuditActorKind = typeof OperatorAuditActorKind[keyof typeof OperatorAuditActorKind];
+
+/**
+ * A page of a Workspace's Audit log, newest first
+ */
+export type OperatorAuditEntryList = {
+  items: Array<OperatorAuditEntryResource>;
+  /**
+   * Pass as `cursor` for the next page; absent on the last page
+   */
+  nextCursor?: string | null;
+};
+
+/**
+ * One immutable Audit entry of a Workspace. Secrets are never recorded; they appear as changed only.
+ */
+export type OperatorAuditEntryResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  /**
+   * When the change happened
+   */
+  occurredAt: Timestamp;
+  /**
+   * Who did it
+   */
+  actor: OperatorAuditActor;
+  /**
+   * What was done, as `<entity>.<verb>`
+   */
+  action: string;
+  /**
+   * What it was done to
+   */
+  target: OperatorAuditTarget;
+  /**
+   * Before/after of the changed fields
+   */
+  diff?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Request id of the change
+   */
+  requestId?: string | null;
+  /**
+   * Client address of the change
+   */
+  ip?: string | null;
+  /**
+   * Client user agent of the change
+   */
+  userAgent?: string | null;
+};
+
+/**
+ * What an audited change was done to
+ */
+export type OperatorAuditTarget = {
+  /**
+   * Entity type, e.g. membership
+   */
+  type: string;
+  /**
+   * The target's id
+   */
+  id?: string | null;
+  /**
+   * Name snapshot taken when the entry was written
+   */
+  name?: string | null;
 };
 
 /**
@@ -561,6 +660,50 @@ export type OperatorWorkspacesGetResponses = {
 };
 
 export type OperatorWorkspacesGetResponse = OperatorWorkspacesGetResponses[keyof OperatorWorkspacesGetResponses];
+
+export type OperatorWorkspaceAuditListData = {
+  body?: never;
+  path: {
+    workspaceId: EntityId;
+  };
+  query?: {
+    /**
+     * Cursor from a previous page
+     */
+    cursor?: string;
+    /**
+     * Page size
+     */
+    limit?: number;
+  };
+  url: '/workspaces/{workspaceId}/audit-entries';
+};
+
+export type OperatorWorkspaceAuditListErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 unauthorized response
+   */
+  401: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type OperatorWorkspaceAuditListError = OperatorWorkspaceAuditListErrors[keyof OperatorWorkspaceAuditListErrors];
+
+export type OperatorWorkspaceAuditListResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: OperatorAuditEntryList;
+};
+
+export type OperatorWorkspaceAuditListResponse = OperatorWorkspaceAuditListResponses[keyof OperatorWorkspaceAuditListResponses];
 
 export type OperatorWorkspacesSuspendData = {
   body: OperatorSuspendInput;

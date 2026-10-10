@@ -45,12 +45,13 @@ type Edition struct {
 // instance stores nothing. The Operator configuration is validated only when the
 // `operator` feature is licensed: an unlicensed instance needs none of it.
 func New(client *ent.Client, lic *licensekey.License, cipher *secrets.Cipher, siteSecret string, operatorCfg operator.Config) (*Edition, error) {
+	auditLog := audit.NewLog(lic)
 	e := &Edition{
 		lic:       lic,
 		client:    client,
-		Audit:     audit.NewLog(lic),
+		Audit:     auditLog,
 		Consumers: []events.Consumer{audit.Consumer(client, lic)},
-		Operators: operator.NewModule(client, lic, cipher, operatorCfg),
+		Operators: operator.NewModule(client, lic, auditLog, cipher, operatorCfg),
 	}
 	if lic.Has(licensekey.FeatureOperator) {
 		if err := operatorCfg.Validate(siteSecret); err != nil {

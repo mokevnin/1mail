@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 )
 
 type ApiKeyAuth struct {
@@ -80,6 +81,300 @@ func (o NilFloat64) Or(d float64) float64 {
 		return v
 	}
 	return d
+}
+
+// The actor of an Audit entry.
+// Ref: #/components/schemas/OperatorAuditActor
+type OperatorAuditActor struct {
+	// The kind of actor; an operator carries no id and the name "sphericon staff".
+	Kind OperatorAuditActorKind `json:"kind"`
+	// The actor's id (a User id or an API token id); absent for the system and an operator.
+	ID OptNilString `json:"id"`
+	// Display name snapshot taken when the entry was written.
+	Name OptNilString `json:"name"`
+}
+
+// GetKind returns the value of Kind.
+func (s *OperatorAuditActor) GetKind() OperatorAuditActorKind {
+	return s.Kind
+}
+
+// GetID returns the value of ID.
+func (s *OperatorAuditActor) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OperatorAuditActor) GetName() OptNilString {
+	return s.Name
+}
+
+// SetKind sets the value of Kind.
+func (s *OperatorAuditActor) SetKind(val OperatorAuditActorKind) {
+	s.Kind = val
+}
+
+// SetID sets the value of ID.
+func (s *OperatorAuditActor) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OperatorAuditActor) SetName(val OptNilString) {
+	s.Name = val
+}
+
+// Who performed an audited change, as the Workspace's own team sees it.
+// Ref: #/components/schemas/OperatorAuditActorKind
+type OperatorAuditActorKind string
+
+const (
+	OperatorAuditActorKindUser     OperatorAuditActorKind = "user"
+	OperatorAuditActorKindAPIToken OperatorAuditActorKind = "api_token"
+	OperatorAuditActorKindOperator OperatorAuditActorKind = "operator"
+	OperatorAuditActorKindSystem   OperatorAuditActorKind = "system"
+)
+
+// AllValues returns all OperatorAuditActorKind values.
+func (OperatorAuditActorKind) AllValues() []OperatorAuditActorKind {
+	return []OperatorAuditActorKind{
+		OperatorAuditActorKindUser,
+		OperatorAuditActorKindAPIToken,
+		OperatorAuditActorKindOperator,
+		OperatorAuditActorKindSystem,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s OperatorAuditActorKind) MarshalText() ([]byte, error) {
+	switch s {
+	case OperatorAuditActorKindUser:
+		return []byte(s), nil
+	case OperatorAuditActorKindAPIToken:
+		return []byte(s), nil
+	case OperatorAuditActorKindOperator:
+		return []byte(s), nil
+	case OperatorAuditActorKindSystem:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *OperatorAuditActorKind) UnmarshalText(data []byte) error {
+	switch OperatorAuditActorKind(data) {
+	case OperatorAuditActorKindUser:
+		*s = OperatorAuditActorKindUser
+		return nil
+	case OperatorAuditActorKindAPIToken:
+		*s = OperatorAuditActorKindAPIToken
+		return nil
+	case OperatorAuditActorKindOperator:
+		*s = OperatorAuditActorKindOperator
+		return nil
+	case OperatorAuditActorKindSystem:
+		*s = OperatorAuditActorKindSystem
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A page of a Workspace's Audit log, newest first.
+// Ref: #/components/schemas/OperatorAuditEntryList
+type OperatorAuditEntryList struct {
+	Items []OperatorAuditEntryResource `json:"items"`
+	// Pass as `cursor` for the next page; absent on the last page.
+	NextCursor OptNilString `json:"nextCursor"`
+}
+
+// GetItems returns the value of Items.
+func (s *OperatorAuditEntryList) GetItems() []OperatorAuditEntryResource {
+	return s.Items
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *OperatorAuditEntryList) GetNextCursor() OptNilString {
+	return s.NextCursor
+}
+
+// SetItems sets the value of Items.
+func (s *OperatorAuditEntryList) SetItems(val []OperatorAuditEntryResource) {
+	s.Items = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *OperatorAuditEntryList) SetNextCursor(val OptNilString) {
+	s.NextCursor = val
+}
+
+func (*OperatorAuditEntryList) operatorWorkspaceAuditListRes() {}
+
+// One immutable Audit entry of a Workspace. Secrets are never recorded; they appear as changed only.
+// Ref: #/components/schemas/OperatorAuditEntryResource
+type OperatorAuditEntryResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// When the change happened.
+	OccurredAt Timestamp `json:"occurredAt"`
+	// Who did it.
+	Actor OperatorAuditActor `json:"actor"`
+	// What was done, as `<entity>.<verb>`.
+	Action string `json:"action"`
+	// What it was done to.
+	Target OperatorAuditTarget `json:"target"`
+	// Before/after of the changed fields.
+	Diff OptNilOperatorAuditEntryResourceDiff `json:"diff"`
+	// Request id of the change.
+	RequestId OptNilString `json:"requestId"`
+	// Client address of the change.
+	IP OptNilString `json:"ip"`
+	// Client user agent of the change.
+	UserAgent OptNilString `json:"userAgent"`
+}
+
+// GetID returns the value of ID.
+func (s *OperatorAuditEntryResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *OperatorAuditEntryResource) GetOccurredAt() Timestamp {
+	return s.OccurredAt
+}
+
+// GetActor returns the value of Actor.
+func (s *OperatorAuditEntryResource) GetActor() OperatorAuditActor {
+	return s.Actor
+}
+
+// GetAction returns the value of Action.
+func (s *OperatorAuditEntryResource) GetAction() string {
+	return s.Action
+}
+
+// GetTarget returns the value of Target.
+func (s *OperatorAuditEntryResource) GetTarget() OperatorAuditTarget {
+	return s.Target
+}
+
+// GetDiff returns the value of Diff.
+func (s *OperatorAuditEntryResource) GetDiff() OptNilOperatorAuditEntryResourceDiff {
+	return s.Diff
+}
+
+// GetRequestId returns the value of RequestId.
+func (s *OperatorAuditEntryResource) GetRequestId() OptNilString {
+	return s.RequestId
+}
+
+// GetIP returns the value of IP.
+func (s *OperatorAuditEntryResource) GetIP() OptNilString {
+	return s.IP
+}
+
+// GetUserAgent returns the value of UserAgent.
+func (s *OperatorAuditEntryResource) GetUserAgent() OptNilString {
+	return s.UserAgent
+}
+
+// SetID sets the value of ID.
+func (s *OperatorAuditEntryResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *OperatorAuditEntryResource) SetOccurredAt(val Timestamp) {
+	s.OccurredAt = val
+}
+
+// SetActor sets the value of Actor.
+func (s *OperatorAuditEntryResource) SetActor(val OperatorAuditActor) {
+	s.Actor = val
+}
+
+// SetAction sets the value of Action.
+func (s *OperatorAuditEntryResource) SetAction(val string) {
+	s.Action = val
+}
+
+// SetTarget sets the value of Target.
+func (s *OperatorAuditEntryResource) SetTarget(val OperatorAuditTarget) {
+	s.Target = val
+}
+
+// SetDiff sets the value of Diff.
+func (s *OperatorAuditEntryResource) SetDiff(val OptNilOperatorAuditEntryResourceDiff) {
+	s.Diff = val
+}
+
+// SetRequestId sets the value of RequestId.
+func (s *OperatorAuditEntryResource) SetRequestId(val OptNilString) {
+	s.RequestId = val
+}
+
+// SetIP sets the value of IP.
+func (s *OperatorAuditEntryResource) SetIP(val OptNilString) {
+	s.IP = val
+}
+
+// SetUserAgent sets the value of UserAgent.
+func (s *OperatorAuditEntryResource) SetUserAgent(val OptNilString) {
+	s.UserAgent = val
+}
+
+// Before/after of the changed fields.
+type OperatorAuditEntryResourceDiff map[string]jx.Raw
+
+func (s *OperatorAuditEntryResourceDiff) init() OperatorAuditEntryResourceDiff {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// What an audited change was done to.
+// Ref: #/components/schemas/OperatorAuditTarget
+type OperatorAuditTarget struct {
+	// Entity type, e.g. membership.
+	Type string `json:"type"`
+	// The target's id.
+	ID OptNilString `json:"id"`
+	// Name snapshot taken when the entry was written.
+	Name OptNilString `json:"name"`
+}
+
+// GetType returns the value of Type.
+func (s *OperatorAuditTarget) GetType() string {
+	return s.Type
+}
+
+// GetID returns the value of ID.
+func (s *OperatorAuditTarget) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OperatorAuditTarget) GetName() OptNilString {
+	return s.Name
+}
+
+// SetType sets the value of Type.
+func (s *OperatorAuditTarget) SetType(val string) {
+	s.Type = val
+}
+
+// SetID sets the value of ID.
+func (s *OperatorAuditTarget) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OperatorAuditTarget) SetName(val OptNilString) {
+	s.Name = val
 }
 
 // OperatorAuthLogoutNoContent is response for OperatorAuthLogout operation.
@@ -657,6 +952,18 @@ func (s *OperatorSuspensionChange) SetWorkspace(val OperatorWorkspaceResource) {
 func (*OperatorSuspensionChange) operatorWorkspacesSuspendRes()   {}
 func (*OperatorSuspensionChange) operatorWorkspacesUnsuspendRes() {}
 
+type OperatorWorkspaceAuditListBadRequest ProblemDetails
+
+func (*OperatorWorkspaceAuditListBadRequest) operatorWorkspaceAuditListRes() {}
+
+type OperatorWorkspaceAuditListNotFound ProblemDetails
+
+func (*OperatorWorkspaceAuditListNotFound) operatorWorkspaceAuditListRes() {}
+
+type OperatorWorkspaceAuditListUnauthorized ProblemDetails
+
+func (*OperatorWorkspaceAuditListUnauthorized) operatorWorkspaceAuditListRes() {}
+
 // A Workspace with its deliverability, as the detail page shows it.
 // Ref: #/components/schemas/OperatorWorkspaceDetailResource
 type OperatorWorkspaceDetailResource struct {
@@ -931,6 +1238,74 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilOperatorAuditEntryResourceDiff returns new OptNilOperatorAuditEntryResourceDiff with value set to v.
+func NewOptNilOperatorAuditEntryResourceDiff(v OperatorAuditEntryResourceDiff) OptNilOperatorAuditEntryResourceDiff {
+	return OptNilOperatorAuditEntryResourceDiff{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilOperatorAuditEntryResourceDiff is optional nullable OperatorAuditEntryResourceDiff.
+type OptNilOperatorAuditEntryResourceDiff struct {
+	Value OperatorAuditEntryResourceDiff
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilOperatorAuditEntryResourceDiff was set.
+func (o OptNilOperatorAuditEntryResourceDiff) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilOperatorAuditEntryResourceDiff) Reset() {
+	var v OperatorAuditEntryResourceDiff
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilOperatorAuditEntryResourceDiff) SetTo(v OperatorAuditEntryResourceDiff) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilOperatorAuditEntryResourceDiff) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilOperatorAuditEntryResourceDiff) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v OperatorAuditEntryResourceDiff
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilOperatorAuditEntryResourceDiff) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilOperatorAuditEntryResourceDiff) Get() (v OperatorAuditEntryResourceDiff, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilOperatorAuditEntryResourceDiff) Or(d OperatorAuditEntryResourceDiff) OperatorAuditEntryResourceDiff {
 	if v, ok := o.Get(); ok {
 		return v
 	}
