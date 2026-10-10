@@ -2,14 +2,15 @@ package external
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/apitoken"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/apitokens"
+	"github.com/samber/lo"
 	"github.com/samber/oops"
 )
 
@@ -57,11 +58,20 @@ func (h *Handlers) AuthTokensCreate(ctx context.Context, req *externalapi.Create
 		return &res, nil
 	}
 
-	resp, err := createToken(ctx, auth.TokenScoped(ctx).ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
-	if err != nil {
-		return nil, err
+	// A token can only mint scopes it holds itself (tokens:write is not a way to
+	// gain send or any other power).
+	minted, err := apitokens.MintWithin(ctx, auth.TokenScoped(ctx), auth.GetTokenAuth(ctx).Scopes, mintInput(req))
+	switch {
+	case errors.Is(err, apitokens.ErrScopeEscalation):
+		res := externalapi.AuthTokensCreateForbidden(problem(http.StatusForbidden, "cannot grant a scope this token does not have"))
+		return &res, nil
+	case errors.Is(err, apitokens.ErrNameEmpty), errors.Is(err, apitokens.ErrUnknownScope):
+		res := externalapi.AuthTokensCreateBadRequest(problem(http.StatusBadRequest, err.Error()))
+		return &res, nil
+	case err != nil:
+		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
 	}
-	return resp, nil
+	return mintedResponse(minted), nil
 }
 
 func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.CreateApiTokenInput, params externalapi.AuthTokensBootstrapParams) (externalapi.AuthTokensBootstrapRes, error) {
@@ -75,11 +85,15 @@ func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.Cre
 	if err != nil {
 		return nil, oops.In("external-auth").Public("no workspace to bootstrap").Wrap(err)
 	}
-	resp, err := createToken(ctx, s.ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
-	if err != nil {
-		return nil, err
+	minted, err := apitokens.Mint(ctx, s, mintInput(req))
+	switch {
+	case errors.Is(err, apitokens.ErrNameEmpty), errors.Is(err, apitokens.ErrUnknownScope):
+		res := externalapi.AuthTokensBootstrapBadRequest(problem(http.StatusBadRequest, err.Error()))
+		return &res, nil
+	case err != nil:
+		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
 	}
-	return resp, nil
+	return mintedResponse(minted), nil
 }
 
 func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.AuthTokensDeleteParams) (externalapi.AuthTokensDeleteRes, error) {
@@ -94,56 +108,31 @@ func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.Auth
 		return &res, nil
 	}
 
-	n, err := auth.TokenScoped(ctx).ApiToken().Update().
-		Where(apitoken.ID(id)).
-		SetRevokedAt(time.Now()).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
+	err = apitokens.Revoke(ctx, auth.TokenScoped(ctx), id)
+	if errors.Is(err, apitokens.ErrNotFound) {
 		res := externalapi.AuthTokensDeleteNotFound(problem(http.StatusNotFound, "token not found"))
 		return &res, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	return &externalapi.AuthTokensDeleteNoContent{}, nil
 }
 
-func createToken(ctx context.Context, create *ent.ApiTokenScopedCreate, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
-	prefix, err := service.GenerateTokenPrefix()
-	if err != nil {
-		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
+func mintInput(req *externalapi.CreateApiTokenInput) apitokens.Input {
+	in := apitokens.Input{
+		Name:   req.Name,
+		Scopes: lo.Map(req.Scopes, func(sc externalapi.ApiTokenScope, _ int) string { return string(sc) }),
 	}
-	secret, err := service.GenerateTokenSecret()
-	if err != nil {
-		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
+	if v, ok := req.ExpiresAt.Get(); ok {
+		in.ExpiresAt = lo.ToPtr(time.Time(v))
 	}
-	hash, err := service.HashTokenSecret(secret)
-	if err != nil {
-		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
-	}
+	return in
+}
 
-	scopeStrings := make([]string, len(scopes))
-	for i, s := range scopes {
-		scopeStrings[i] = string(s)
-	}
-
-	q := create.
-		SetName(name).
-		SetPrefix(prefix).
-		SetSecretHash(hash).
-		SetScopes(scopeStrings)
-
-	if v, ok := expiresAt.Get(); ok {
-		q = q.SetExpiresAt(time.Time(v))
-	}
-
-	token, err := q.Save(ctx)
-	if err != nil {
-		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
-	}
-
+func mintedResponse(m apitokens.Minted) *externalapi.CreateApiTokenResponse {
 	return &externalapi.CreateApiTokenResponse{
-		Token:     service.TokenValue(prefix, secret),
-		TokenInfo: mapper.ApiTokenToInfo(token),
-	}, nil
+		Token:     m.Value,
+		TokenInfo: mapper.ApiTokenToInfo(m.Token),
+	}
 }
