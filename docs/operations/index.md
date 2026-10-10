@@ -4,11 +4,13 @@ This section is for the person who keeps a self-hosted 1mail instance running. S
 [Self-hosting](../self-hosting) to install and configure it; the pages here cover what comes
 after: sizing, backups and upgrades.
 
-| Page                            | Read it when                                                       |
-| ------------------------------- | ------------------------------------------------------------------ |
-| [Backup and restore](./backup)  | You are setting up backups or rehearsing a disaster recovery.      |
-| [Upgrading](./upgrading)        | You are moving to a new release or a new PostgreSQL major version. |
-| [Self-hosting](../self-hosting) | You are installing, configuring or wiring health checks.           |
+| Page                             | Read it when                                                       |
+| -------------------------------- | ------------------------------------------------------------------ |
+| [Backup and restore](./backup)   | You are setting up backups or rehearsing a disaster recovery.      |
+| [Upgrading](./upgrading)         | You are moving to a new release or a new PostgreSQL major version. |
+| [Scaling and tuning](./scaling)  | You are sizing replicas and connections or tuning retention.       |
+| [Security hardening](./security) | You are preparing for production or rotating secrets.              |
+| [Self-hosting](../self-hosting)  | You are installing, configuring or wiring health checks.           |
 
 ## What you operate
 
@@ -32,8 +34,9 @@ Treat these as a way of reasoning, not as benchmarks. Measure on your own traffi
 - **The database is the capacity limit.** Every replica opens its own connection pools: a
   `database/sql` pool for requests and event consumers, and a separate pool for the job queue.
   Add up the connections of all replicas and keep the total below the server's
-  `max_connections`, leaving room for backups, `psql` sessions and monitoring. If you need
-  many replicas, put a connection pooler in front of PostgreSQL.
+  `max_connections`, leaving room for backups, `psql` sessions and monitoring. The formula and
+  the defaults are in [Scaling and tuning](./scaling#connection-budget); a transaction-mode
+  pooler in front of PostgreSQL is not recommended.
 - **One replica is a sound starting point.** Add a second replica for availability, not for
   speed, until you see saturation. With more than one replica, run migrations as a separate
   step and leave `AUTO_MIGRATE` off (see [Upgrading](./upgrading#migrate)).
