@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/sphericon/ent"
 	operatorapi "github.com/mokevnin/sphericon/gen/operator"
 	"github.com/mokevnin/sphericon/internal/i18n"
+	"github.com/mokevnin/sphericon/internal/ratelimit"
 )
 
 // Surface is the /operator API: the handlers and the security handler over one
@@ -43,6 +44,9 @@ var _ operatorapi.Handler = (*Handlers)(nil)
 // same 401.
 func (h *Handlers) OperatorAuthLogin(ctx context.Context, req *operatorapi.OperatorLoginInput) (operatorapi.OperatorAuthLoginRes, error) {
 	op, err := h.module.CheckPassword(ctx, req.Email, req.Password)
+	if limited := throttled(ctx, err); limited != nil {
+		return nil, limited
+	}
 	if errors.Is(err, ErrInvalidCredentials) {
 		return unauthorized(i18n.T("errors.invalid_credentials", nil)), nil
 	}
@@ -67,6 +71,9 @@ func (h *Handlers) OperatorAuthLogin(ctx context.Context, req *operatorapi.Opera
 // code start the session. A bad challenge and a wrong code answer the same 401.
 func (h *Handlers) OperatorAuthSecondFactor(ctx context.Context, req *operatorapi.OperatorSecondFactorInput) (operatorapi.OperatorAuthSecondFactorRes, error) {
 	op, err := h.module.Complete(ctx, req.Challenge, req.Code)
+	if limited := throttled(ctx, err); limited != nil {
+		return nil, limited
+	}
 	if errors.Is(err, ErrInvalidChallenge) {
 		return unauthorized(i18n.T("errors.login_challenge_invalid", nil)), nil
 	}
@@ -93,6 +100,17 @@ func (h *Handlers) OperatorAuthLogout(context.Context) (*operatorapi.OperatorAut
 func (h *Handlers) OperatorMeGet(ctx context.Context) (operatorapi.OperatorMeGetRes, error) {
 	res := resource(Current(ctx))
 	return &res, nil
+}
+
+// throttled turns the login throttle's refusal into the standard 429 (ADR 0025): the
+// Retry-After and X-RateLimit headers are set on the response and the error handler
+// renders the problem. It is nil for any other error and for nil.
+func throttled(ctx context.Context, err error) error {
+	var t *ThrottledError
+	if !errors.As(err, &t) {
+		return nil
+	}
+	return ratelimit.FromContext(ctx).Delay(ctx, ratelimit.PolicyLoginAccount, t.Limit, t.Wait, t.Now)
 }
 
 func resource(op *ent.Operator) operatorapi.OperatorResource {
