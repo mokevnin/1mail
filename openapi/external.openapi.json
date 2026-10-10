@@ -1619,6 +1619,86 @@
         }
       }
     },
+    "/contacts/export": {
+      "post": {
+        "operationId": "Contacts_export",
+        "description": "Export everything held about one contact as a streamed JSON download: the\ncontact, its custom fields, tags, visitors, all events, its opt-outs\n(unsubscribes, suppressions, confirmations) and delivery metadata. Rendered\nmessage bodies are not included. Identify the contact by exactly one of\n`id` or `email`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "The contact's id",
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            },
+            "explode": false
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "The contact's email address",
+            "schema": {
+              "$ref": "#/components/schemas/EmailAddress"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)",
+            "headers": {
+              "Content-Disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"]
+      }
+    },
     "/contacts/{contactId}/tags": {
       "get": {
         "operationId": "Tags_listForContact",

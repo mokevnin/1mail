@@ -93,7 +93,7 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 		// (List-Unsubscribe=One-Click body) and the confirm page's button. No page is
 		// returned; the SPA transitions its UI client-side on 204.
 		if err := consent.RecordUnsubscribe(r.Context(), bus, target); err != nil {
-			logging.FromContext(r.Context()).Error("tracking: unsubscribe failed", "destination", target.Destination, "source", target.Source, "err", err)
+			logging.FromContext(r.Context()).Error("tracking: unsubscribe failed", "workspace_id", target.WorkspaceID, "contact_id", target.ContactID, "source", target.Source, "err", err)
 			// Not a 204: a mailbox provider must see the failure and retry, and a
 			// person must not be told they are unsubscribed when nothing was recorded.
 			http.Error(w, "unsubscribe failed", http.StatusInternalServerError)

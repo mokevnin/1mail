@@ -228,6 +228,16 @@ func (UnimplementedHandler) SiteContactsDelete(ctx context.Context, params SiteC
 	return r, ht.ErrNotImplemented
 }
 
+// SiteContactsExport implements SiteContacts_export operation.
+//
+// Export everything held about one contact as a streamed JSON download. Identify the contact by
+// exactly one of `id` or `email`. Available to any Workspace member (contact read access).
+//
+// POST /workspaces/{slug}/contacts/export
+func (UnimplementedHandler) SiteContactsExport(ctx context.Context, params SiteContactsExportParams) (r SiteContactsExportRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteContactsGet implements SiteContacts_get operation.
 //
 // Get a resource by ID for the site UI.

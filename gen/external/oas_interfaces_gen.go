@@ -101,6 +101,10 @@ type ContactsDeleteRes interface {
 	contactsDeleteRes()
 }
 
+type ContactsExportRes interface {
+	contactsExportRes()
+}
+
 type ContactsGetRes interface {
 	contactsGetRes()
 }

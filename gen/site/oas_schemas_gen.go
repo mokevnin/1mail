@@ -3,6 +3,7 @@
 package siteapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -78,6 +79,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEmailAddress returns new OptEmailAddress with value set to v.
+func NewOptEmailAddress(v EmailAddress) OptEmailAddress {
+	return OptEmailAddress{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEmailAddress is optional EmailAddress.
+type OptEmailAddress struct {
+	Value EmailAddress
+	Set   bool
+}
+
+// IsSet returns true if OptEmailAddress was set.
+func (o OptEmailAddress) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEmailAddress) Reset() {
+	var v EmailAddress
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEmailAddress) SetTo(v EmailAddress) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEmailAddress) Get() (v EmailAddress, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEmailAddress) Or(d EmailAddress) EmailAddress {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2941,6 +2988,56 @@ func (*SiteContactsDeleteNoContent) siteContactsDeleteRes() {}
 type SiteContactsDeleteNotFound ProblemDetails
 
 func (*SiteContactsDeleteNotFound) siteContactsDeleteRes() {}
+
+type SiteContactsExportBadRequest ProblemDetails
+
+func (*SiteContactsExportBadRequest) siteContactsExportRes() {}
+
+type SiteContactsExportNotFound ProblemDetails
+
+func (*SiteContactsExportNotFound) siteContactsExportRes() {}
+
+type SiteContactsExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s SiteContactsExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// SiteContactsExportOKHeaders wraps SiteContactsExportOK with response headers.
+type SiteContactsExportOKHeaders struct {
+	ContentDisposition string
+	Response           SiteContactsExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *SiteContactsExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteContactsExportOKHeaders) GetResponse() SiteContactsExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *SiteContactsExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteContactsExportOKHeaders) SetResponse(val SiteContactsExportOK) {
+	s.Response = val
+}
+
+func (*SiteContactsExportOKHeaders) siteContactsExportRes() {}
 
 type SiteContactsGetBadRequest ProblemDetails
 

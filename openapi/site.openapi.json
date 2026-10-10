@@ -1896,6 +1896,79 @@
         }
       }
     },
+    "/workspaces/{slug}/contacts/export": {
+      "post": {
+        "operationId": "SiteContacts_export",
+        "description": "Export everything held about one contact as a streamed JSON download.\nIdentify the contact by exactly one of `id` or `email`. Available to any\nWorkspace member (contact read access).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteContactResourceParentKey"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "The contact's id",
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            },
+            "explode": false
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "The contact's email address",
+            "schema": {
+              "$ref": "#/components/schemas/EmailAddress"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)",
+            "headers": {
+              "Content-Disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Contacts"]
+      }
+    },
     "/workspaces/{slug}/contacts/{contactId}/tags": {
       "get": {
         "operationId": "SiteTags_listForContact",

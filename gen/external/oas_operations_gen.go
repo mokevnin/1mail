@@ -31,6 +31,7 @@ const (
 	ContactsBatchUpsertOperation    OperationName = "ContactsBatchUpsert"
 	ContactsCreateOperation         OperationName = "ContactsCreate"
 	ContactsDeleteOperation         OperationName = "ContactsDelete"
+	ContactsExportOperation         OperationName = "ContactsExport"
 	ContactsGetOperation            OperationName = "ContactsGet"
 	ContactsListOperation           OperationName = "ContactsList"
 	ContactsUpdateOperation         OperationName = "ContactsUpdate"

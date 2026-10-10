@@ -10,3 +10,8 @@
   tag_id: 300
 - contact_id: 301
   tag_id: 300
+# Export subject (contact 800): vip + newsletter.
+- contact_id: 800
+  tag_id: 1
+- contact_id: 800
+  tag_id: 2

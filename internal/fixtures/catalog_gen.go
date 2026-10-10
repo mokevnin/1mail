@@ -125,6 +125,10 @@ const (
 	ContactErasableEmail = "erin@initech.test"
 	// ContactErasableID is from fixtures/contacts.
 	ContactErasableID = 300
+	// ContactExportSubjectEmail is from fixtures/contacts.
+	ContactExportSubjectEmail = "export.subject@example.com"
+	// ContactExportSubjectID is from fixtures/contacts.
+	ContactExportSubjectID = 800
 	// ContactGlobexEmail is from fixtures/contacts.
 	ContactGlobexEmail = "pat@globex.test"
 	// ContactGlobexID is from fixtures/contacts.
@@ -217,6 +221,12 @@ const (
 	EventErasableUnsubscribedEmail = "erin@initech.test"
 	// EventErasableUnsubscribedID is from fixtures/events.
 	EventErasableUnsubscribedID = 307
+	// EventExportCustomAction is from fixtures/events.
+	EventExportCustomAction = "export_subject_custom"
+	// EventExportCustomEmail is from fixtures/events.
+	EventExportCustomEmail = "export.subject@example.com"
+	// EventExportCustomID is from fixtures/events.
+	EventExportCustomID = 800
 	// EventGlobexAction is from fixtures/events.
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.
