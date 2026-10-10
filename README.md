@@ -178,17 +178,18 @@ Two options:
 
 Configuration is read from the environment (and, if present, `.env` files).
 
-| Variable                                                            | Default                  | Description                                                                                      |
-| ------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                                                      | — (**required**)         | PostgreSQL connection string                                                                     |
-| `PORT`                                                              | `3000`                   | HTTP listen port                                                                                 |
-| `APP_URL`                                                           | `http://localhost:3000`  | Public base URL (auth token issuance)                                                            |
-| `AUTO_MIGRATE`                                                      | `false`                  | Apply embedded migrations on startup                                                             |
-| `JWT_SECRET`                                                        | — (**required in prod**) | JWT signing secret; required outside development                                                 |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025`         | Outbound email                                                                                   |
-| `CORS_ORIGINS`                                                      | —                        | Origins allowed credentialed CORS on the cookie API (`/site`, `/auth`); empty = same-origin only |
-| `MAX_BODY_BYTES` / `COLLECT_MAX_BODY_BYTES`                         | `1048576` / `65536`      | Largest accepted request body in bytes (`/collect` has its own cap); larger bodies get `413`     |
-| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | `7`                      | Minimum age in days before a consumed domain-event outbox row is pruned (ADR 0019)               |
+| Variable                                                            | Default                  | Description                                                                                                                    |
+| ------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                      | — (**required**)         | PostgreSQL connection string                                                                                                   |
+| `PORT`                                                              | `3000`                   | HTTP listen port                                                                                                               |
+| `APP_URL`                                                           | `http://localhost:3000`  | Public base URL (auth token issuance)                                                                                          |
+| `AUTO_MIGRATE`                                                      | `false`                  | Apply embedded migrations on startup                                                                                           |
+| `JWT_SECRET`                                                        | — (**required in prod**) | JWT signing secret; required outside development                                                                               |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025`         | Outbound email                                                                                                                 |
+| `CORS_ORIGINS`                                                      | —                        | Origins allowed credentialed CORS on the cookie API (`/site`, `/auth`); empty = same-origin only                               |
+| `MAX_BODY_BYTES` / `COLLECT_MAX_BODY_BYTES`                         | `1048576` / `65536`      | Largest accepted request body in bytes (`/collect` has its own cap); larger bodies get `413`                                   |
+| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | `7`                      | Minimum age in days before a consumed domain-event outbox row is pruned (ADR 0019)                                             |
+| `EVENTS_RETENTION_DAYS`                                             | `400`                    | Age in days after which analytical Events are deleted daily at 03:00 UTC; `0` disables. Evidentiary Events are kept (ADR 0019) |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).

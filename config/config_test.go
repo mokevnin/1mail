@@ -138,6 +138,31 @@ func TestConfigLoadOutboxFloor(t *testing.T) {
 	}
 }
 
+func TestConfigLoadEventsRetention(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.EventsRetention != 400*24*time.Hour {
+		t.Fatalf("default EventsRetention = %v, want 400 days", cfg.EventsRetention)
+	}
+
+	t.Setenv("EVENTS_RETENTION_DAYS", "0")
+	cfg, err = Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.EventsRetention != 0 {
+		t.Fatalf("EventsRetention = %v, want 0 (disabled)", cfg.EventsRetention)
+	}
+
+	t.Setenv("EVENTS_RETENTION_DAYS", "-1")
+	if _, err := Load("test"); err == nil {
+		t.Fatal("a negative retention must be rejected")
+	}
+}
+
 func TestConfigLoadMetricsAddr(t *testing.T) {
 	cases := []struct {
 		name    string

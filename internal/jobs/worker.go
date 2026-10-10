@@ -50,8 +50,9 @@ type Client struct {
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change). db is the raw handle the instance-wide
-// outbox prune runs on; outboxFloor is the minimum age of a pruned outbox row.
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, outboxFloor time.Duration) (*Client, error) {
+// outbox prune runs on; outboxFloor is the minimum age of a pruned outbox row;
+// eventsRetention is the age past which analytical Events are deleted (0 disables).
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, outboxFloor, eventsRetention time.Duration) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -70,6 +71,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbo
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: outboxFloor})
+	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: eventsRetention})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))
@@ -120,6 +122,14 @@ func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
 					return PruneOutboxArgs{}, nil
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Delete expired analytical Events daily at 03:00 UTC (ADR 0019).
+			river.NewPeriodicJob(
+				dailyAtUTC{hour: eventsRetentionHourUTC},
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneEventsArgs{}, nil
+				},
+				nil,
 			),
 		},
 	}

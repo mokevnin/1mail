@@ -52,7 +52,10 @@ type Config struct {
 	// OutboxFloor is the minimum age of a domain-event outbox row before the
 	// prune job may delete it (OUTBOX_RETENTION_FLOOR_DAYS, default 7; ADR 0019).
 	OutboxFloor time.Duration
-	DBPool      DBPool
+	// EventsRetention is the age past which analytical Events are deleted
+	// (EVENTS_RETENTION_DAYS, default 400, 0 disables; ADR 0019).
+	EventsRetention time.Duration
+	DBPool          DBPool
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -106,6 +109,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	v.SetDefault("OUTBOX_RETENTION_FLOOR_DAYS", 7)
+	v.SetDefault("EVENTS_RETENTION_DAYS", 400)
 	v.SetDefault("DB_MAX_OPEN_CONNS", 15)
 	v.SetDefault("DB_CONN_MAX_LIFETIME", 30*time.Minute)
 	v.SetDefault("PGX_MAX_CONNS", 25)
@@ -166,11 +170,12 @@ func Load(envName string) (*Config, error) {
 			ConnMaxLifetime: v.GetDuration("DB_CONN_MAX_LIFETIME"),
 			PGXMaxConns:     v.GetInt32("PGX_MAX_CONNS"),
 		},
-		OutboxFloor: time.Duration(v.GetInt("OUTBOX_RETENTION_FLOOR_DAYS")) * 24 * time.Hour,
-		IsDev:       isDevEnv(envName),
-		Locale:      i18n.Normalize(v.GetString("APP_LOCALE")),
-		LogLevel:    v.GetString("LOG_LEVEL"),
-		LogFormat:   v.GetString("LOG_FORMAT"),
+		OutboxFloor:     time.Duration(v.GetInt("OUTBOX_RETENTION_FLOOR_DAYS")) * 24 * time.Hour,
+		EventsRetention: time.Duration(v.GetInt("EVENTS_RETENTION_DAYS")) * 24 * time.Hour,
+		IsDev:           isDevEnv(envName),
+		Locale:          i18n.Normalize(v.GetString("APP_LOCALE")),
+		LogLevel:        v.GetString("LOG_LEVEL"),
+		LogFormat:       v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 		MetricsAddr:     v.GetString("METRICS_ADDR"),
@@ -205,6 +210,9 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.OutboxFloor < 0 {
 		return fmt.Errorf("OUTBOX_RETENTION_FLOOR_DAYS must not be negative")
+	}
+	if c.EventsRetention < 0 {
+		return fmt.Errorf("EVENTS_RETENTION_DAYS must not be negative")
 	}
 	if c.DBPool.MaxOpenConns <= 0 {
 		return fmt.Errorf("DB_MAX_OPEN_CONNS must be positive")

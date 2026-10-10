@@ -76,5 +76,12 @@ func (Event) Indexes() []ent.Index {
 		index.Fields("workspace_id", "contact_id", "action"),
 		// Backs stitching anonymous events onto a Contact at Identify time.
 		index.Fields("workspace_id", "visitor_id"),
+		// Backs the Event retention delete (ADR 0019): created_at is the age
+		// column (never null, unlike occurred_at). Partial: evidentiary Events are
+		// never deleted by age, so they stay out of the index. The predicate must
+		// match events.analyticalPredicate (internal/events/retention.go).
+		index.Fields("created_at").
+			StorageKey("events_created_at_analytical_idx").
+			Annotations(entsql.IndexWhere(`action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')`)),
 	}
 }
