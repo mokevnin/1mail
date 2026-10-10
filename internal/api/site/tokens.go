@@ -3,6 +3,7 @@ package site
 import (
 	"context"
 	"errors"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,18 +12,10 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
-	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/apitokens"
 	"github.com/mokevnin/1mail/internal/i18n"
 )
-
-// canManageTokens reports whether role may mint or revoke API tokens. A token is
-// a standing credential for the whole workspace, so it is an owner/admin action;
-// OAuth consent mints one too and takes the same role.
-func canManageTokens(role membership.Role) bool {
-	return role == membership.RoleOwner || role == membership.RoleAdmin
-}
 
 // SiteTokensList returns the workspace's active (non-revoked) API tokens.
 func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokensListParams) (siteapi.SiteTokensListRes, error) {
@@ -61,7 +54,7 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 	if err != nil {
 		return nil, err
 	}
-	if !canManageTokens(role) {
+	if !accounts.CanManageTokens(role) {
 		v := siteapi.SiteTokensCreateForbidden(problem(http.StatusForbidden, "only owners and admins can manage API tokens"))
 		return &v, nil
 	}
@@ -107,7 +100,7 @@ func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteToke
 	if err != nil {
 		return nil, err
 	}
-	if !canManageTokens(role) {
+	if !accounts.CanManageTokens(role) {
 		v := siteapi.SiteTokensDeleteForbidden(problem(http.StatusForbidden, "only owners and admins can manage API tokens"))
 		return &v, nil
 	}

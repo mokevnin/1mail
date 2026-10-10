@@ -23,6 +23,9 @@ func main() {
 			// Modifier exposes .Modify() on query builders, used by the analytics
 			// dashboard for date_trunc day-bucketed engagement aggregates.
 			gen.FeatureModifier,
+			// Lock exposes .ForUpdate() on query builders: accounts locks the Workspace's
+			// owner rows so the Owner invariant holds under concurrent role changes.
+			gen.FeatureLock,
 			// VersionedMigration generates migrate.NamedDiff, which cmd/db uses to write
 			// the next Atlas migration straight from the ent schema (the community Atlas
 			// binary cannot read ent:// itself).

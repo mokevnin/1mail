@@ -78,7 +78,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(callerRole) {
+	if !accounts.CanManageMembers(callerRole) {
 		v := siteapi.SiteInvitationsCreateForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -154,7 +154,7 @@ func (h *Handlers) SiteInvitationsDelete(ctx context.Context, params siteapi.Sit
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(callerRole) {
+	if !accounts.CanManageMembers(callerRole) {
 		v := siteapi.SiteInvitationsDeleteForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}

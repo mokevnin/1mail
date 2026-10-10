@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"io"
 	"net/http"
 	"time"
@@ -24,7 +25,7 @@ func (h *Handlers) SiteAuditList(ctx context.Context, params siteapi.SiteAuditLi
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(role) {
+	if !accounts.CanManageMembers(role) {
 		v := siteapi.SiteAuditListForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -76,7 +77,7 @@ func (h *Handlers) SiteAuditExport(ctx context.Context, params siteapi.SiteAudit
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(role) {
+	if !accounts.CanManageMembers(role) {
 		v := siteapi.SiteAuditExportForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -184,7 +185,7 @@ func (h *Handlers) SiteAuditGetRetention(ctx context.Context, params siteapi.Sit
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(role) {
+	if !accounts.CanManageMembers(role) {
 		v := siteapi.SiteAuditGetRetentionForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}
@@ -210,7 +211,7 @@ func (h *Handlers) SiteAuditSetRetention(ctx context.Context, req *siteapi.SiteA
 	if err != nil {
 		return nil, err
 	}
-	if !canManageMembers(role) {
+	if !accounts.CanManageMembers(role) {
 		v := siteapi.SiteAuditSetRetentionForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}

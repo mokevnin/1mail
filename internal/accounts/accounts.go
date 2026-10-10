@@ -155,31 +155,6 @@ func ptrEqual(a, b *int) bool {
 	return *a == *b
 }
 
-// ChangeMembershipRole sets a Membership's Role and records `membership.update` with
-// the role change as an Audit entry in the same transaction (ADR 0022): a rolled-back
-// change leaves no entry, a committed one cannot lose it. name is the member's display
-// name, snapshotted into the entry.
-func (a *Accounts) ChangeMembershipRole(ctx context.Context, s *ent.Scoped, actor events.Actor, target *ent.Membership, name string, desired membership.Role) (*ent.Membership, error) {
-	var updated *ent.Membership
-	err := a.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
-		m, err := ts.Membership().UpdateOneID(target.ID).SetRole(desired).Save(ctx)
-		if err != nil {
-			return err
-		}
-		updated = m
-		return events.RecordAudit(ctx, pub, &events.AuditEntry{
-			WorkspaceID: s.WorkspaceID(),
-			Actor:       actor,
-			Action:      events.ActionMembershipUpdate,
-			TargetType:  "membership",
-			TargetID:    strconv.FormatInt(target.ID, 10),
-			TargetName:  name,
-			Diff:        map[string]any{"role": map[string]any{"from": string(target.Role), "to": string(desired)}},
-		})
-	})
-	return updated, err
-}
-
 // CreateWorkspace creates a User's initial Workspace with a unique slug derived from
 // name (falling back to "workspace"). Slugs are globally unique, so on collision a
 // numeric suffix is appended. The Workspace and the creator's owner Membership are
