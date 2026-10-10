@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
@@ -15,6 +16,18 @@ import (
 type BodyLimits struct {
 	Default int64
 	Collect int64
+}
+
+// DBPool bounds the Postgres connections one replica may open: the
+// database/sql pool (ent, pubsub) and the pgx pool river runs on. Defaults
+// assume at most two replicas against max_connections=100:
+// (15+25) x 2 x 1.15 = 92 <= 97.
+type DBPool struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	// PGXMaxConns must cover river's MaxWorkers sum plus LISTEN and runtime services.
+	PGXMaxConns int32
 }
 
 type Config struct {
@@ -33,6 +46,7 @@ type Config struct {
 	EncryptionKey  string
 	AutoMigrate    bool
 	BodyLimits     BodyLimits
+	DBPool         DBPool
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -80,6 +94,9 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
+	v.SetDefault("DB_MAX_OPEN_CONNS", 15)
+	v.SetDefault("DB_CONN_MAX_LIFETIME", 30*time.Minute)
+	v.SetDefault("PGX_MAX_CONNS", 25)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -104,6 +121,13 @@ func Load(envName string) (*Config, error) {
 		return nil, fmt.Errorf("DATABASE_URL is required")
 	}
 
+	// Idle defaults to the open cap so connections are reused, not churned.
+	maxOpen := v.GetInt("DB_MAX_OPEN_CONNS")
+	maxIdle := maxOpen
+	if v.IsSet("DB_MAX_IDLE_CONNS") {
+		maxIdle = v.GetInt("DB_MAX_IDLE_CONNS")
+	}
+
 	cfg := &Config{
 		DatabaseURL:    v.GetString("DATABASE_URL"),
 		Port:           v.GetString("PORT"),
@@ -123,6 +147,12 @@ func Load(envName string) (*Config, error) {
 		BodyLimits: BodyLimits{
 			Default: v.GetInt64("MAX_BODY_BYTES"),
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+		},
+		DBPool: DBPool{
+			MaxOpenConns:    maxOpen,
+			MaxIdleConns:    maxIdle,
+			ConnMaxLifetime: v.GetDuration("DB_CONN_MAX_LIFETIME"),
+			PGXMaxConns:     v.GetInt32("PGX_MAX_CONNS"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
@@ -156,6 +186,18 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	if c.DBPool.MaxOpenConns <= 0 {
+		return fmt.Errorf("DB_MAX_OPEN_CONNS must be positive")
+	}
+	if c.DBPool.MaxIdleConns < 0 || c.DBPool.MaxIdleConns > c.DBPool.MaxOpenConns {
+		return fmt.Errorf("DB_MAX_IDLE_CONNS must be between 0 and DB_MAX_OPEN_CONNS")
+	}
+	if c.DBPool.ConnMaxLifetime <= 0 {
+		return fmt.Errorf("DB_CONN_MAX_LIFETIME must be positive")
+	}
+	if c.DBPool.PGXMaxConns <= 0 {
+		return fmt.Errorf("PGX_MAX_CONNS must be positive")
 	}
 	return nil
 }
