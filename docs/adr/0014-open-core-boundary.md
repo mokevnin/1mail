@@ -119,3 +119,7 @@ where new EE features are _created_, not a migration target for core code.
   tested against one question: **does a single company need this to send to its own audience?**
   If yes → core. If it only matters at org-scale, for embedding, or for regulated/high-volume
   operation → EE.
+- **Login security is core.** A TOTP Second factor with Recovery codes, the Workspace-level
+  Two-factor requirement, and the Login throttle (ADR 0018, rate limiting; ADR 0020) pass the test above: a single company
+  needs them to protect its own sign-in. Only org-scale governance (SSO/SAML, an audit-log UI)
+  stays EE; core records second-factor changes as domain events.
