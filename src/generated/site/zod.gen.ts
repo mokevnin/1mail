@@ -1243,6 +1243,7 @@ export const zSiteWorkspaceResource = z.object({
   collectKey: z.string(),
   ingestKey: z.string(),
   postalAddress: z.string(),
+  role: zSiteMembershipRole,
   suspendedAt: z.exactOptional(zTimestamp.nullable()),
   suspensionReason: z.exactOptional(z.string().nullable()),
   secondFactorRequiredAt: z.exactOptional(zTimestamp.nullable()),

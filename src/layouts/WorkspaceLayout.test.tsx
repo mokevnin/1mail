@@ -6,6 +6,7 @@ import type {
   SiteTagsListData,
   SiteWorkspaceResource,
   SiteWorkspacesListData,
+  SiteWorkspacesSetSecondFactorRequirementData,
 } from '../generated/site/types.gen.ts'
 import { overviewRoute, securityRoute, workspaceRoute } from '../router.tsx'
 import { jsonResponse, mockClientRoutes, route } from '../test/mockFetch.ts'
@@ -23,6 +24,7 @@ const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource 
   collectKey: 'ck',
   ingestKey: 'ik',
   postalAddress: '',
+  role: 'member',
   createdAt: '2026-01-01T00:00:00Z',
   ...over,
 })
@@ -120,4 +122,67 @@ test('a 403 second_factor_required from the workspace shows the blocked screen',
   )
 
   await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+})
+
+// Story 35: an Owner or Admin withheld by the requirement can still lift it.
+test('a withheld owner can turn the requirement off from the blocked screen', async () => {
+  const bodies: string[] = []
+  let current = workspace({
+    role: 'owner',
+    secondFactorRequiredAt: '2026-03-01T00:00:00Z',
+    secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
+  })
+  mockClientRoutes([
+    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse([current])),
+    route<SiteWorkspacesSetSecondFactorRequirementData>(
+      'PUT',
+      '/workspaces/{slug}/second-factor-requirement',
+      { slug: 'acme' },
+      async (req) => {
+        bodies.push(await req.text())
+        current = workspace({ role: 'owner' })
+        return jsonResponse(current)
+      },
+    ),
+    route<SiteTagsListData>('GET', '/workspaces/{slug}/tags', { slug: 'acme' }, () =>
+      bodies.length > 0
+        ? jsonResponse([])
+        : jsonResponse(
+            { status: 403, title: 'Forbidden', code: 'second_factor_required' },
+            { status: 403 },
+          ),
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <>
+      <WorkspaceLayout />
+      <TagsProbe />
+    </>,
+    MOUNT,
+  )
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  await screen.getByRole('button', { name: 'Turn off the requirement' }).click()
+
+  await expect.poll(() => bodies).toEqual(['{"required":false}'])
+  await expect
+    .element(screen.getByText('Two-factor authentication required'))
+    .not.toBeInTheDocument()
+})
+
+test('a withheld member is not offered to turn the requirement off', async () => {
+  mockClientRoutes([
+    list([
+      workspace({
+        secondFactorRequiredAt: '2026-03-01T00:00:00Z',
+        secondFactorGraceEndsAt: new Date(Date.now() - DAY).toISOString(),
+      }),
+    ]),
+  ])
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Turn off the requirement' }).elements()).toHaveLength(
+    0,
+  )
 })

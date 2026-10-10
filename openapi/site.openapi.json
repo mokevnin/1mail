@@ -10130,7 +10130,16 @@
       },
       "SiteWorkspaceResource": {
         "type": "object",
-        "required": ["id", "name", "slug", "collectKey", "ingestKey", "postalAddress", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "collectKey",
+          "ingestKey",
+          "postalAddress",
+          "role",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -10159,6 +10168,14 @@
           "postalAddress": {
             "type": "string",
             "description": "Physical postal address printed in the marketing email footer (CAN-SPAM\n15 U.S.C. §7704(a)(5)). Empty until the workspace sets one."
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMembershipRole"
+              }
+            ],
+            "description": "The authenticated User's role in this Workspace (from their Membership). It\nrides the Workspace list so role-gated UI is known even while the Workspace's\nown endpoints are withheld under a Two-factor requirement."
           },
           "suspendedAt": {
             "type": "string",

@@ -1,13 +1,11 @@
 import { Card, Stack, Switch, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 
-import {
-  siteWorkspacesListQueryKey,
-  siteWorkspacesSetSecondFactorRequirementMutation,
-} from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
-import { useCurrentRole } from '../../hooks/useCurrentRole.ts'
-import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import {
+  canManageSecondFactorRequirement,
+  useSetSecondFactorRequirement,
+} from '../../hooks/useSetSecondFactorRequirement.ts'
 import { formatDate } from '../../utils/datetime.ts'
 
 // The grace a member without a Second factor gets (ADR 0020), counted from the later
@@ -23,17 +21,9 @@ export function SecondFactorRequirementSection({
   workspace: SiteWorkspaceResource
 }) {
   const { t } = useTranslation()
-  const role = useCurrentRole(workspace.slug)
-  const canChange = role === 'owner' || role === 'admin'
+  const canChange = canManageSecondFactorRequirement(workspace.role)
   const requiredAt = workspace.secondFactorRequiredAt
-
-  const mutation = useResourceMutation({
-    mutation: siteWorkspacesSetSecondFactorRequirementMutation(),
-    invalidate: [siteWorkspacesListQueryKey()],
-    successMessage: t(($) => $.secondFactorRequirement.saved),
-    errorTitle: t(($) => $.secondFactorRequirement.errorTitle),
-    forbiddenMessage: t(($) => $.secondFactorRequirement.forbidden),
-  })
+  const mutation = useSetSecondFactorRequirement()
 
   return (
     <Card withBorder>

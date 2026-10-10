@@ -28501,6 +28501,10 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.PostalAddress)
 	}
 	{
+		e.FieldStart("role")
+		s.Role.Encode(e)
+	}
+	{
 		if s.SuspendedAt.Set {
 			e.FieldStart("suspendedAt")
 			s.SuspendedAt.Encode(e)
@@ -28530,18 +28534,19 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteWorkspaceResource = [11]string{
+var jsonFieldsNameOfSiteWorkspaceResource = [12]string{
 	0:  "id",
 	1:  "name",
 	2:  "slug",
 	3:  "collectKey",
 	4:  "ingestKey",
 	5:  "postalAddress",
-	6:  "suspendedAt",
-	7:  "suspensionReason",
-	8:  "secondFactorRequiredAt",
-	9:  "secondFactorGraceEndsAt",
-	10: "createdAt",
+	6:  "role",
+	7:  "suspendedAt",
+	8:  "suspensionReason",
+	9:  "secondFactorRequiredAt",
+	10: "secondFactorGraceEndsAt",
+	11: "createdAt",
 }
 
 // Decode decodes SiteWorkspaceResource from json.
@@ -28623,6 +28628,16 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"postalAddress\"")
 			}
+		case "role":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				if err := s.Role.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"role\"")
+			}
 		case "suspendedAt":
 			if err := func() error {
 				s.SuspendedAt.Reset()
@@ -28664,7 +28679,7 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"secondFactorGraceEndsAt\"")
 			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -28683,8 +28698,8 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b00111111,
-		0b00000100,
+		0b01111111,
+		0b00001000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

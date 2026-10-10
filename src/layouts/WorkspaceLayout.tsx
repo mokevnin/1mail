@@ -57,21 +57,23 @@ function SuspensionBanner({ reason }: { reason: string | null | undefined }) {
 }
 
 // useSecondFactorRefused reports whether any query of the Workspace was refused
-// with 403 second_factor_required: the server's word that the grace is over, even
-// when this browser's clock says otherwise.
-function useSecondFactorRefused(slug: string) {
+// with 403 second_factor_required since the Workspace list last loaded (listedAt):
+// the server's word that the grace is over, even when this browser's clock says
+// otherwise. A reload of the list after the refusal (the requirement was turned off,
+// or the User enrolled) lifts it; a page still refused refuses again.
+function useSecondFactorRefused(slug: string, listedAt: number) {
   const queryCache = useQueryClient().getQueryCache()
-  const [refusedSlug, setRefusedSlug] = useState<string>()
+  const [refused, setRefused] = useState<{ slug: string; at: number }>()
   useEffect(
     () =>
       queryCache.subscribe((event) => {
         if (event.type === 'updated' && isSecondFactorRequiredError(event.query.state.error)) {
-          setRefusedSlug(slug)
+          setRefused({ slug, at: event.query.state.errorUpdatedAt })
         }
       }),
     [queryCache, slug],
   )
-  return refusedSlug === slug
+  return refused?.slug === slug && refused.at >= listedAt
 }
 
 // WorkspaceLayout is the shell for workspace-scoped pages (overview, contacts,
@@ -84,7 +86,7 @@ export function WorkspaceLayout() {
   const workspaces = workspacesQuery.data ?? []
   const current = workspaces.find((w) => w.slug === slug)
   const [now] = useState(() => Date.now())
-  const refused = useSecondFactorRefused(slug)
+  const refused = useSecondFactorRefused(slug, workspacesQuery.dataUpdatedAt)
   const standing = refused ? { kind: 'blocked' as const } : secondFactorStanding(current, now)
 
   return (
@@ -96,7 +98,9 @@ export function WorkspaceLayout() {
           {standing.kind === 'grace' ? <SecondFactorGraceBanner endsAt={standing.endsAt} /> : null}
         </>
       }
-      content={standing.kind === 'blocked' ? <SecondFactorBlocked /> : undefined}
+      content={
+        standing.kind === 'blocked' ? <SecondFactorBlocked workspace={current} /> : undefined
+      }
       headerRight={
         <Group gap="sm">
           <WorkspaceSwitcher slug={slug} workspaces={workspaces} />

@@ -11125,6 +11125,10 @@ type SiteWorkspaceResource struct {
 	// Physical postal address printed in the marketing email footer (CAN-SPAM 15 U.S.C. §7704(a)(5)).
 	// Empty until the workspace sets one.
 	PostalAddress string `json:"postalAddress"`
+	// The authenticated User's role in this Workspace (from their Membership). It rides the Workspace list
+	// so role-gated UI is known even while the Workspace's own endpoints are withheld under a Two-factor
+	// requirement.
+	Role SiteMembershipRole `json:"role"`
 	// When outbound sending was suspended (ADR 0007); absent while the workspace can send. A suspension
 	// freezes every send surface but not login, reads or tracking.
 	SuspendedAt OptNilTimestamp `json:"suspendedAt"`
@@ -11170,6 +11174,11 @@ func (s *SiteWorkspaceResource) GetIngestKey() string {
 // GetPostalAddress returns the value of PostalAddress.
 func (s *SiteWorkspaceResource) GetPostalAddress() string {
 	return s.PostalAddress
+}
+
+// GetRole returns the value of Role.
+func (s *SiteWorkspaceResource) GetRole() SiteMembershipRole {
+	return s.Role
 }
 
 // GetSuspendedAt returns the value of SuspendedAt.
@@ -11225,6 +11234,11 @@ func (s *SiteWorkspaceResource) SetIngestKey(val string) {
 // SetPostalAddress sets the value of PostalAddress.
 func (s *SiteWorkspaceResource) SetPostalAddress(val string) {
 	s.PostalAddress = val
+}
+
+// SetRole sets the value of Role.
+func (s *SiteWorkspaceResource) SetRole(val SiteMembershipRole) {
+	s.Role = val
 }
 
 // SetSuspendedAt sets the value of SuspendedAt.

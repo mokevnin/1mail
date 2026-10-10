@@ -417,6 +417,7 @@
   },
   "secondFactorRequirement": {
     "blockedDescription": "Este espacio de trabajo requiere la autenticación en dos pasos y tu periodo de gracia ha terminado. Configúrala para recuperar el acceso; tus otros espacios de trabajo no se ven afectados.",
+    "blockedManagerHint": "Como propietario o administrador, puedes en su lugar desactivar el requisito para todos en este espacio de trabajo.",
     "blockedTitle": "Se requiere la autenticación en dos pasos",
     "errorTitle": "No se pudo actualizar el requisito de autenticación en dos pasos",
     "forbidden": "Solo los propietarios y administradores pueden cambiar el requisito de autenticación en dos pasos.",
@@ -427,7 +428,8 @@
     "settingDescription": "Exige la autenticación en dos pasos a todos en este espacio de trabajo. Quienes no la tengan disponen de 7 días para configurarla, contados desde que se activa el requisito o desde que se unen, lo que ocurra después.",
     "settingTitle": "Autenticación en dos pasos obligatoria",
     "setUp": "Configurar la autenticación en dos pasos",
-    "switchLabel": "Exigir la autenticación en dos pasos"
+    "switchLabel": "Exigir la autenticación en dos pasos",
+    "turnOff": "Desactivar el requisito"
   },
   "security": {
     "codeLabel": "Código de la aplicación",

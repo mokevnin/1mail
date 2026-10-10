@@ -1,7 +1,11 @@
-import { Alert, Card, Group, Stack, Text, Title } from '@mantine/core'
+import { Alert, Button, Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 
 import type { SiteWorkspaceResource } from '../generated/site/types.gen.ts'
+import {
+  canManageSecondFactorRequirement,
+  useSetSecondFactorRequirement,
+} from '../hooks/useSetSecondFactorRequirement.ts'
 import { securityRoute } from '../router.tsx'
 import { formatDate } from '../utils/datetime.ts'
 import { ButtonLink } from './RouterLink.tsx'
@@ -43,8 +47,14 @@ export function SecondFactorGraceBanner({ endsAt }: { endsAt: string }) {
 }
 
 // SecondFactorBlocked replaces the Workspace's pages once the grace is over: every
-// request to the Workspace is refused until the User enrolls a Second factor.
-export function SecondFactorBlocked() {
+// request to the Workspace is refused until the User enrolls a Second factor. An
+// Owner or Admin may instead turn the requirement off (the one operation the server
+// still accepts from them), so a Workspace is never left without anyone able to lift it.
+export function SecondFactorBlocked({
+  workspace,
+}: {
+  workspace: Pick<SiteWorkspaceResource, 'slug' | 'role' | 'secondFactorRequiredAt'> | undefined
+}) {
   const { t } = useTranslation()
   return (
     <Card withBorder maw={560} mx="auto" mt="xl" p="xl">
@@ -54,7 +64,31 @@ export function SecondFactorBlocked() {
         <Group>
           <ButtonLink to={securityRoute.to}>{t(($) => $.secondFactorRequirement.setUp)}</ButtonLink>
         </Group>
+        {workspace?.secondFactorRequiredAt && canManageSecondFactorRequirement(workspace.role) ? (
+          <TurnRequirementOff slug={workspace.slug} />
+        ) : null}
       </Stack>
     </Card>
+  )
+}
+
+function TurnRequirementOff({ slug }: { slug: string }) {
+  const { t } = useTranslation()
+  const mutation = useSetSecondFactorRequirement()
+  return (
+    <>
+      <Divider />
+      <Text size="sm">{t(($) => $.secondFactorRequirement.blockedManagerHint)}</Text>
+      <Group>
+        <Button
+          variant="light"
+          color="red"
+          loading={mutation.isPending}
+          onClick={() => mutation.mutate({ path: { slug }, body: { required: false } })}
+        >
+          {t(($) => $.secondFactorRequirement.turnOff)}
+        </Button>
+      </Group>
+    </>
   )
 }

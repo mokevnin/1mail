@@ -2469,6 +2469,12 @@ export type SiteWorkspaceResource = {
    */
   postalAddress: string;
   /**
+   * The authenticated User's role in this Workspace (from their Membership). It
+   * rides the Workspace list so role-gated UI is known even while the Workspace's
+   * own endpoints are withheld under a Two-factor requirement.
+   */
+  role: SiteMembershipRole;
+  /**
    * When outbound sending was suspended (ADR 0007); absent while the workspace can
    * send. A suspension freezes every send surface but not login, reads or tracking.
    */

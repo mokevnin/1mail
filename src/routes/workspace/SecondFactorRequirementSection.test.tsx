@@ -1,10 +1,6 @@
 import { expect, test } from 'vitest'
 
 import type {
-  SiteMembershipResource,
-  SiteMembershipRole,
-  SiteMembershipsListData,
-  SiteUserGetMeData,
   SiteWorkspaceResource,
   SiteWorkspacesListData,
   SiteWorkspacesSetSecondFactorRequirementData,
@@ -24,34 +20,19 @@ const workspace = (over: Partial<SiteWorkspaceResource> = {}): SiteWorkspaceReso
   collectKey: 'ck',
   ingestKey: 'ik',
   postalAddress: '',
+  role: 'member',
   createdAt: NOW,
   ...over,
 })
 
-function roleRoutes(role: SiteMembershipRole) {
-  const me = { id: '5', name: 'Me', email: 'me@example.com', emailVerified: true, createdAt: NOW }
-  const mine: SiteMembershipResource = {
-    id: 'm5',
-    userId: '5',
-    email: 'me@example.com',
-    name: 'Me',
-    role,
-    secondFactorEnabled: false,
-    createdAt: NOW,
-  }
-  return [
-    route<SiteUserGetMeData>('GET', '/me', {}, () => jsonResponse(me)),
-    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', SLUG, () =>
-      jsonResponse([mine]),
-    ),
-    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse([workspace()])),
-  ]
-}
+const listRoute = route<SiteWorkspacesListData>('GET', '/workspaces', {}, () =>
+  jsonResponse([workspace()]),
+)
 
 test('an owner switches the requirement on', async () => {
   const bodies: string[] = []
   mockClientRoutes([
-    ...roleRoutes('owner'),
+    listRoute,
     route<SiteWorkspacesSetSecondFactorRequirementData>(
       'PUT',
       '/workspaces/{slug}/second-factor-requirement',
@@ -63,7 +44,7 @@ test('an owner switches the requirement on', async () => {
     ),
   ])
   const { screen } = await renderWithRouter(
-    <SecondFactorRequirementSection workspace={workspace()} />,
+    <SecondFactorRequirementSection workspace={workspace({ role: 'owner' })} />,
   )
 
   const toggle = screen.getByRole('switch', { name: 'Require two-factor authentication' })
@@ -74,7 +55,7 @@ test('an owner switches the requirement on', async () => {
 })
 
 test('a member sees the requirement and its grace but cannot change it', async () => {
-  mockClientRoutes(roleRoutes('member'))
+  mockClientRoutes([listRoute])
   const required = workspace({ secondFactorRequiredAt: '2026-03-01T00:00:00Z' })
   const { screen } = await renderWithRouter(<SecondFactorRequirementSection workspace={required} />)
 

@@ -37,6 +37,7 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 // User and Workspace edges must be loaded.
 func workspaceResource(m *ent.Membership) siteapi.SiteWorkspaceResource {
 	r := mapper.WorkspaceToResource(m.Edges.Workspace)
+	r.Role = siteapi.SiteMembershipRole(m.Role)
 	if end, ok := secondfactor.Deadline(m); ok {
 		r.SecondFactorGraceEndsAt = siteapi.NewOptNilTimestamp(siteapi.Timestamp(end))
 	}

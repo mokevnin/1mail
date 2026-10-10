@@ -401,6 +401,7 @@ export default interface Resources {
     },
     "secondFactorRequirement": {
       "blockedDescription": "This workspace requires two-factor authentication and your grace period is over. Set it up to regain access; your other workspaces are not affected.",
+      "blockedManagerHint": "As an owner or admin, you can instead turn the requirement off for everyone in this workspace.",
       "blockedTitle": "Two-factor authentication required",
       "errorTitle": "Could not update the two-factor requirement",
       "forbidden": "Only owners and admins can change the two-factor requirement.",
@@ -411,7 +412,8 @@ export default interface Resources {
       "setUp": "Set up two-factor authentication",
       "settingDescription": "Require everyone in this workspace to use two-factor authentication. Members without it get 7 days to set it up, counted from when the requirement is turned on or from when they join, whichever is later.",
       "settingTitle": "Two-factor requirement",
-      "switchLabel": "Require two-factor authentication"
+      "switchLabel": "Require two-factor authentication",
+      "turnOff": "Turn off the requirement"
     },
     "security": {
       "codeLabel": "Code from the app",

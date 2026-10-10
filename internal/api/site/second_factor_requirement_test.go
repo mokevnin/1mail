@@ -118,6 +118,10 @@ func TestGraceEndsSevenDaysAfterTheLaterOfTheRequirementAndTheMembership(t *test
 	assert.True(t, sam.SecondFactorRequiredAt.Set)
 	assert.False(t, sam.SecondFactorGraceEndsAt.Set, "a User with a Second factor has no deadline")
 
+	assert.Equal(t, siteapi.SiteMembershipRoleOwner, rita.Role, "the list carries the User's role")
+	assert.Equal(t, siteapi.SiteMembershipRoleMember, nina.Role)
+	assert.Equal(t, siteapi.SiteMembershipRoleAdmin, sam.Role)
+
 	initech := workspaceOf(t, env.SiteActor(t, fixtures.UmbrellaOwnerRitaEmail), fixtures.InitechSlug)
 	assert.False(t, initech.SecondFactorGraceEndsAt.Set, "a Workspace without the requirement")
 
