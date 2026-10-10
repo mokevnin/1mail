@@ -49,18 +49,36 @@ func SendAuthMail(ctx context.Context, sender messaging.EmailSender, appURL stri
 	if sender == nil {
 		return fmt.Errorf("send auth mail: no system email sender configured")
 	}
+	msg, err := buildAuthMail(appURL, args)
+	if err != nil {
+		return err
+	}
+	_, err = sender.Send(ctx, msg)
+	return err
+}
+
+// buildAuthMail renders an account email without sending it.
+func buildAuthMail(appURL string, args SendAuthMailArgs) (messaging.EmailMessage, error) {
 	subjectID, path, introID := authMailCopy(args.Flow)
 	if path == "" {
-		return fmt.Errorf("send auth mail: unknown flow %q", args.Flow)
+		return messaging.EmailMessage{}, fmt.Errorf("send auth mail: unknown flow %q", args.Flow)
 	}
 	link := strings.TrimRight(appURL, "/") + path + "?token=" + url.QueryEscape(args.Token)
 	body := fmt.Sprintf("%s\n\n%s\n\n%s\n", i18n.T(introID, nil), link, i18n.T("email.auth.footer", nil))
-	_, err := sender.Send(ctx, messaging.EmailMessage{
-		To:      args.Email,
-		Subject: i18n.T(subjectID, nil),
-		Text:    body,
-	})
+	return messaging.EmailMessage{To: args.Email, Subject: i18n.T(subjectID, nil), Text: body}, nil
+}
+
+// rehearsePasswordReset does the rendering work of a reset mail and drops the
+// result: forgot-password runs it where it sends nothing (unknown address, over the
+// per-address limit), so those requests cost what a real one does.
+func rehearsePasswordReset(appURL, email, token string) error {
+	_, err := buildAuthMail(appURL, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token})
 	return err
+}
+
+// RehearsePasswordReset renders a reset mail without sending it (river adapter).
+func (c *Client) RehearsePasswordReset(_ context.Context, email, token string) error {
+	return rehearsePasswordReset(c.appURL, email, token)
 }
 
 // authMailCopy returns the subject message id, SPA path, and intro message id

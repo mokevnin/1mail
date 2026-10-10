@@ -33,10 +33,15 @@ type RateLimits struct {
 	LoginFailures int
 	// LoginIP caps login requests per client IP per minute.
 	LoginIP int
+	// ForgotAddress is how many password-reset mails one address may be sent per
+	// hour. Over it the request is still answered 202 and nothing is sent.
+	ForgotAddress int
+	// ForgotIP caps forgot-password requests per client IP per hour (429 over it).
+	ForgotIP int
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60, Tracking: 600, LoginFailures: 5, LoginIP: 20}
+var DefaultRateLimits = RateLimits{Human: 60, Tracking: 600, LoginFailures: 5, LoginIP: 20, ForgotAddress: 3, ForgotIP: 10}
 
 type Config struct {
 	DatabaseURL    string
@@ -111,6 +116,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
 	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
 	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", DefaultRateLimits.ForgotAddress)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", DefaultRateLimits.ForgotIP)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -160,6 +167,8 @@ func Load(envName string) (*Config, error) {
 			Tracking:      v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
 			LoginFailures: v.GetInt("RATE_LIMIT_LOGIN_FAILURES"),
 			LoginIP:       v.GetInt("RATE_LIMIT_LOGIN_IP_PER_MINUTE"),
+			ForgotAddress: v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR"),
+			ForgotIP:      v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR"),
 		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
@@ -206,6 +215,12 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.RateLimits.LoginIP < 0 {
 		return fmt.Errorf("RATE_LIMIT_LOGIN_IP_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.ForgotAddress < 0 {
+		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR must not be negative (0 disables)")
+	}
+	if c.RateLimits.ForgotIP < 0 {
+		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR must not be negative (0 disables)")
 	}
 	return c.validateMetricsAddr()
 }

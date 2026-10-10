@@ -8,6 +8,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
@@ -20,30 +21,52 @@ const (
 	emailChangeTokenTTL = time.Hour
 )
 
-// SiteAuthForgotPassword mints a reset token and emails a link. It always
-// returns 202, whether or not the address matches an account, so the endpoint
-// cannot be used to enumerate registered emails. (Rate limiting is deferred.)
-func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.SiteForgotPasswordInput) error {
+// SiteAuthForgotPassword mints a reset token and emails a link. It answers 202
+// whether or not the address matches an account and whether or not the per-address
+// budget is spent, so the endpoint cannot be used to enumerate registered emails
+// (the per-IP cap answers 429 in the rate limit middleware, before this runs). Every
+// request does the same work: look the address up, mint a token, count the request,
+// and then either enqueue the mail or rehearse it. Only a known address under its
+// budget gets a mail, so response time does not leak existence either.
+func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.SiteForgotPasswordInput) (siteapi.SiteAuthForgotPasswordRes, error) {
 	email := strings.TrimSpace(string(req.Email))
 	if email == "" {
-		return nil
+		return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
+	}
+	spent, err := h.attempts.Reached(ctx, accounts.KindPasswordReset, email)
+	if err != nil {
+		return nil, err
 	}
 	u, err := h.accounts.UserByEmail(ctx, email)
-	if ent.IsNotFound(err) {
-		return nil
-	}
-	if err != nil {
-		return err
+	if err != nil && !ent.IsNotFound(err) {
+		return nil, err
 	}
 	// Bind the token to the current password hash: once the password is reset the
-	// hash changes and the token stops verifying (single use, no extra column).
-	token, err := h.tokens.Mint(authtoken.PurposePasswordReset, u.ID, u.PasswordHash, resetTokenTTL, nil)
+	// hash changes and the token stops verifying (single use, no extra column). An
+	// unknown address gets a throwaway token over the same code path.
+	var uid int64
+	var binding string
+	if u != nil {
+		uid, binding = u.ID, u.PasswordHash
+	}
+	token, err := h.tokens.Mint(authtoken.PurposePasswordReset, uid, binding, resetTokenTTL, nil)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	// Count the request for known and unknown addresses alike. Over the budget
+	// nothing more is counted, so the window ends an hour after the last mail.
+	if !spent {
+		if err := h.attempts.RecordFailure(ctx, accounts.KindPasswordReset, email); err != nil {
+			return nil, err
+		}
 	}
 	// Best-effort send (mirrors the welcome email): never fail the request.
-	_ = h.sysmail.EnqueuePasswordReset(ctx, u.Email, token)
-	return nil
+	if u != nil && !spent {
+		_ = h.sysmail.EnqueuePasswordReset(ctx, u.Email, token)
+		return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
+	}
+	_ = h.sysmail.RehearsePasswordReset(ctx, email, token)
+	return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
 }
 
 // SiteAuthResetPassword sets a new password from a reset token.

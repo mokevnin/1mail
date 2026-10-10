@@ -41,12 +41,13 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 
 // SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 //
-// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-// account, to avoid leaking which addresses exist.
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+// and even when the address has had its 3 mails this hour, to avoid leaking which addresses exist.
+// Answers 429 over the per-IP limit.
 //
 // POST /auth/forgot-password
-func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) error {
-	return ht.ErrNotImplemented
+func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (r SiteAuthForgotPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // SiteAuthRegister implements SiteAuth_register operation.

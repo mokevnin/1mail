@@ -48,11 +48,12 @@ type Invoker interface {
 	SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
 	// SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
 	//
-	// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-	// account, to avoid leaking which addresses exist.
+	// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+	// and even when the address has had its 3 mails this hour, to avoid leaking which addresses exist.
+	// Answers 429 over the per-IP limit.
 	//
 	// POST /auth/forgot-password
-	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) error
+	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error)
 	// SiteAuthRegister invokes SiteAuth_register operation.
 	//
 	// POST /auth/register
@@ -905,16 +906,17 @@ func (c *Client) sendSiteAuthDirectLogin(ctx context.Context, request *SiteDirec
 
 // SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
 //
-// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-// account, to avoid leaking which addresses exist.
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+// and even when the address has had its 3 mails this hour, to avoid leaking which addresses exist.
+// Answers 429 over the per-IP limit.
 //
 // POST /auth/forgot-password
-func (c *Client) SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) error {
-	_, err := c.sendSiteAuthForgotPassword(ctx, request)
-	return err
+func (c *Client) SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (SiteAuthForgotPasswordRes, error) {
+	res, err := c.sendSiteAuthForgotPassword(ctx, request)
+	return res, err
 }
 
-func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (res *SiteAuthForgotPasswordAccepted, err error) {
+func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (res SiteAuthForgotPasswordRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAuth_forgotPassword"),
 		semconv.HTTPRequestMethodKey.String("POST"),

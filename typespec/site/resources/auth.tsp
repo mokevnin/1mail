@@ -90,11 +90,15 @@ namespace SiteAuth {
     | TooManyRequestsProblem;
 
   /** Request a password-reset link. Always returns 202 regardless of whether
-   * the email matches an account, to avoid leaking which addresses exist. */
+   * the email matches an account and even when the address has had its 3 mails
+   * this hour, to avoid leaking which addresses exist. Answers 429 over the
+   * per-IP limit. */
   @useAuth(NoAuth)
   @post
   @route("/forgot-password")
-  op forgotPassword(@body body: SiteForgotPasswordInput): AcceptedResponse;
+  op forgotPassword(@body body: SiteForgotPasswordInput):
+    | AcceptedResponse
+    | TooManyRequestsProblem;
 
   /** Set a new password from a reset token */
   @useAuth(NoAuth)

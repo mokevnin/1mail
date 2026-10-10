@@ -37,6 +37,8 @@ const (
 	// on login requests.
 	PolicyLoginAccount = "login-account"
 	PolicyLoginIP      = "login-ip"
+	// PolicyForgotIP is the per-IP cap on forgot-password requests.
+	PolicyForgotIP = "forgot-password-ip"
 )
 
 const window = time.Minute
@@ -137,6 +139,7 @@ type Limiter struct {
 	human    *Policy
 	tracking *Policy
 	loginIP  *Policy
+	forgotIP *Policy
 }
 
 // New builds the policies from limits.
@@ -145,6 +148,7 @@ func New(limits config.RateLimits) *Limiter {
 		human:    NewPolicy(PolicyHuman, limits.Human, window),
 		tracking: NewPolicy(PolicyTracking, limits.Tracking, window),
 		loginIP:  NewPolicy(PolicyLoginIP, limits.LoginIP, window),
+		forgotIP: NewPolicy(PolicyForgotIP, limits.ForgotIP, time.Hour),
 	}
 }
 
@@ -164,6 +168,10 @@ func (l *Limiter) LoginIP() *Policy { return l.loginIP }
 // Operational endpoints are never limited, whatever policies exist.
 func (l *Limiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && r.URL.Path == "/site/auth/forgot-password" &&
+			!l.forgotIP.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(r.Context()))) {
+			return
+		}
 		if !exempt(r.URL.Path) {
 			if route := humanRoute(r); route != "" &&
 				!l.human.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(r.Context()))+"|"+route) {
