@@ -5,6 +5,22 @@ type SiteAnalyticsOverviewRes interface {
 	siteAnalyticsOverviewRes()
 }
 
+type SiteAuditExportRes interface {
+	siteAuditExportRes()
+}
+
+type SiteAuditGetRetentionRes interface {
+	siteAuditGetRetentionRes()
+}
+
+type SiteAuditListRes interface {
+	siteAuditListRes()
+}
+
+type SiteAuditSetRetentionRes interface {
+	siteAuditSetRetentionRes()
+}
+
 type SiteAuthConfirmEmailChangeRes interface {
 	siteAuthConfirmEmailChangeRes()
 }

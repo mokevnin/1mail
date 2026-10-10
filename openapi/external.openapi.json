@@ -30,6 +30,9 @@
       "name": "Auth"
     },
     {
+      "name": "Audit"
+    },
+    {
       "name": "Segments"
     },
     {
@@ -49,6 +52,109 @@
     }
   ],
   "paths": {
+    "/audit-entries": {
+      "get": {
+        "operationId": "AuditEntries_list",
+        "description": "List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuditFilter.from"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.to"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.actorKind"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.actorId"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.action"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.targetType"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.targetId"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.ip"
+          },
+          {
+            "$ref": "#/components/parameters/AuditFilter.requestId"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Cursor from a previous page",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEntryList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Audit"],
+        "x-mcp": {
+          "hidden": true
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "operationId": "Auth_meGet",
@@ -7518,6 +7624,96 @@
   ],
   "components": {
     "parameters": {
+      "AuditFilter.action": {
+        "name": "action",
+        "in": "query",
+        "required": false,
+        "description": "Only entries with exactly this action, e.g. membership.update",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.actorId": {
+        "name": "actorId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by the actor with this id (a User id or an API token id); ignored for the operator kind",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.actorKind": {
+        "name": "actorKind",
+        "in": "query",
+        "required": false,
+        "description": "Only entries by this kind of actor",
+        "schema": {
+          "$ref": "#/components/schemas/AuditActorKind"
+        },
+        "explode": false
+      },
+      "AuditFilter.from": {
+        "name": "from",
+        "in": "query",
+        "required": false,
+        "description": "Only entries at or after this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
+      "AuditFilter.ip": {
+        "name": "ip",
+        "in": "query",
+        "required": false,
+        "description": "Only entries from this client address",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.requestId": {
+        "name": "requestId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries made under this request id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.targetId": {
+        "name": "targetId",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about the target with this id",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.targetType": {
+        "name": "targetType",
+        "in": "query",
+        "required": false,
+        "description": "Only entries about this target type, e.g. integration",
+        "schema": {
+          "type": "string"
+        },
+        "explode": false
+      },
+      "AuditFilter.to": {
+        "name": "to",
+        "in": "query",
+        "required": false,
+        "description": "Only entries strictly before this time",
+        "schema": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
+        "explode": false
+      },
       "AutomationResourceKey": {
         "name": "id",
         "in": "path",
@@ -7707,7 +7903,8 @@
           "automations:activate",
           "mcp:send",
           "tokens:read",
-          "tokens:write"
+          "tokens:write",
+          "audit:read"
         ]
       },
       "ApplyTagInput": {
@@ -7720,6 +7917,139 @@
           }
         },
         "description": "Request body for applying a tag to a contact"
+      },
+      "AuditActor": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorKind"
+              }
+            ],
+            "description": "The kind of actor; an operator is shown as \"1mail staff\""
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The actor's id (a User id or an API token id); absent for the system"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name snapshot taken when the entry was written"
+          }
+        },
+        "description": "The actor of an Audit entry"
+      },
+      "AuditActorKind": {
+        "type": "string",
+        "enum": ["user", "api_token", "operator", "system"],
+        "description": "Who performed an audited change"
+      },
+      "AuditEntryList": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryResource"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as `cursor` for the next page; absent on the last page"
+          }
+        },
+        "description": "A page of Audit entries, newest first"
+      },
+      "AuditEntryResource": {
+        "type": "object",
+        "required": ["id", "occurredAt", "actor", "action", "target"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "occurredAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the change happened"
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              }
+            ],
+            "description": "Who did it"
+          },
+          "action": {
+            "type": "string",
+            "description": "What was done, as `<entity>.<verb>`"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditTarget"
+              }
+            ],
+            "description": "What it was done to"
+          },
+          "diff": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Before/after of the changed fields; secrets appear as changed only"
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Request id of the change"
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client address of the change"
+          },
+          "userAgent": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client user agent of the change"
+          }
+        },
+        "description": "One immutable Audit entry (Enterprise)"
+      },
+      "AuditTarget": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Entity type, e.g. membership"
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The target's id"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name snapshot taken when the entry was written; absent for a Contact"
+          }
+        },
+        "description": "What an audited change was done to"
       },
       "AutomationResource": {
         "type": "object",

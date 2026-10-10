@@ -14,6 +14,7 @@ type Segment struct {
 func (Segment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "segments"},
+		Audited{Action: "segment", NameField: "name"},
 	}
 }
 

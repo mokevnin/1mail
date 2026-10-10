@@ -72,6 +72,13 @@ export type NotFoundProblem = {
 };
 
 /**
+ * RFC 7807 payment required response: the feature needs an Enterprise license
+ */
+export type PaymentRequiredProblem = {
+  body: ProblemDetails;
+};
+
+/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {

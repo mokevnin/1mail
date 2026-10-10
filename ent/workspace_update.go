@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/auditentry"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -144,6 +145,33 @@ func (_u *WorkspaceUpdate) SetNillablePostalAddress(v *string) *WorkspaceUpdate 
 // ClearPostalAddress clears the value of the "postal_address" field.
 func (_u *WorkspaceUpdate) ClearPostalAddress() *WorkspaceUpdate {
 	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
+// SetRetentionDays sets the "retention_days" field.
+func (_u *WorkspaceUpdate) SetRetentionDays(v int) *WorkspaceUpdate {
+	_u.mutation.ResetRetentionDays()
+	_u.mutation.SetRetentionDays(v)
+	return _u
+}
+
+// SetNillableRetentionDays sets the "retention_days" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableRetentionDays(v *int) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetRetentionDays(*v)
+	}
+	return _u
+}
+
+// AddRetentionDays adds value to the "retention_days" field.
+func (_u *WorkspaceUpdate) AddRetentionDays(v int) *WorkspaceUpdate {
+	_u.mutation.AddRetentionDays(v)
+	return _u
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (_u *WorkspaceUpdate) ClearRetentionDays() *WorkspaceUpdate {
+	_u.mutation.ClearRetentionDays()
 	return _u
 }
 
@@ -535,6 +563,21 @@ func (_u *WorkspaceUpdate) AddInvitations(v ...*Invitation) *WorkspaceUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddInvitationIDs(ids...)
+}
+
+// AddAuditEntryIDs adds the "audit_entries" edge to the AuditEntry entity by IDs.
+func (_u *WorkspaceUpdate) AddAuditEntryIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddAuditEntryIDs(ids...)
+	return _u
+}
+
+// AddAuditEntries adds the "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdate) AddAuditEntries(v ...*AuditEntry) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuditEntryIDs(ids...)
 }
 
 // Mutation returns the WorkspaceMutation object of the builder.
@@ -1004,6 +1047,27 @@ func (_u *WorkspaceUpdate) RemoveInvitations(v ...*Invitation) *WorkspaceUpdate 
 	return _u.RemoveInvitationIDs(ids...)
 }
 
+// ClearAuditEntries clears all "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdate) ClearAuditEntries() *WorkspaceUpdate {
+	_u.mutation.ClearAuditEntries()
+	return _u
+}
+
+// RemoveAuditEntryIDs removes the "audit_entries" edge to AuditEntry entities by IDs.
+func (_u *WorkspaceUpdate) RemoveAuditEntryIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveAuditEntryIDs(ids...)
+	return _u
+}
+
+// RemoveAuditEntries removes "audit_entries" edges to AuditEntry entities.
+func (_u *WorkspaceUpdate) RemoveAuditEntries(v ...*AuditEntry) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuditEntryIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *WorkspaceUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
@@ -1062,6 +1126,11 @@ func (_u *WorkspaceUpdate) check() error {
 			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RetentionDays(); ok {
+		if err := workspace.RetentionDaysValidator(v); err != nil {
+			return &ValidationError{Name: "retention_days", err: fmt.Errorf(`ent: validator failed for field "Workspace.retention_days": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -1106,6 +1175,15 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.RetentionDays(); ok {
+		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRetentionDays(); ok {
+		_spec.AddField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if _u.mutation.RetentionDaysCleared() {
+		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
@@ -2115,6 +2193,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuditEntriesIDs(); len(nodes) > 0 && !_u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuditEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -2230,6 +2353,33 @@ func (_u *WorkspaceUpdateOne) SetNillablePostalAddress(v *string) *WorkspaceUpda
 // ClearPostalAddress clears the value of the "postal_address" field.
 func (_u *WorkspaceUpdateOne) ClearPostalAddress() *WorkspaceUpdateOne {
 	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
+// SetRetentionDays sets the "retention_days" field.
+func (_u *WorkspaceUpdateOne) SetRetentionDays(v int) *WorkspaceUpdateOne {
+	_u.mutation.ResetRetentionDays()
+	_u.mutation.SetRetentionDays(v)
+	return _u
+}
+
+// SetNillableRetentionDays sets the "retention_days" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableRetentionDays(v *int) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetRetentionDays(*v)
+	}
+	return _u
+}
+
+// AddRetentionDays adds value to the "retention_days" field.
+func (_u *WorkspaceUpdateOne) AddRetentionDays(v int) *WorkspaceUpdateOne {
+	_u.mutation.AddRetentionDays(v)
+	return _u
+}
+
+// ClearRetentionDays clears the value of the "retention_days" field.
+func (_u *WorkspaceUpdateOne) ClearRetentionDays() *WorkspaceUpdateOne {
+	_u.mutation.ClearRetentionDays()
 	return _u
 }
 
@@ -2621,6 +2771,21 @@ func (_u *WorkspaceUpdateOne) AddInvitations(v ...*Invitation) *WorkspaceUpdateO
 		ids[i] = v[i].ID
 	}
 	return _u.AddInvitationIDs(ids...)
+}
+
+// AddAuditEntryIDs adds the "audit_entries" edge to the AuditEntry entity by IDs.
+func (_u *WorkspaceUpdateOne) AddAuditEntryIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddAuditEntryIDs(ids...)
+	return _u
+}
+
+// AddAuditEntries adds the "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdateOne) AddAuditEntries(v ...*AuditEntry) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuditEntryIDs(ids...)
 }
 
 // Mutation returns the WorkspaceMutation object of the builder.
@@ -3090,6 +3255,27 @@ func (_u *WorkspaceUpdateOne) RemoveInvitations(v ...*Invitation) *WorkspaceUpda
 	return _u.RemoveInvitationIDs(ids...)
 }
 
+// ClearAuditEntries clears all "audit_entries" edges to the AuditEntry entity.
+func (_u *WorkspaceUpdateOne) ClearAuditEntries() *WorkspaceUpdateOne {
+	_u.mutation.ClearAuditEntries()
+	return _u
+}
+
+// RemoveAuditEntryIDs removes the "audit_entries" edge to AuditEntry entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveAuditEntryIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveAuditEntryIDs(ids...)
+	return _u
+}
+
+// RemoveAuditEntries removes "audit_entries" edges to AuditEntry entities.
+func (_u *WorkspaceUpdateOne) RemoveAuditEntries(v ...*AuditEntry) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuditEntryIDs(ids...)
+}
+
 // Where appends a list predicates to the WorkspaceUpdate builder.
 func (_u *WorkspaceUpdateOne) Where(ps ...predicate.Workspace) *WorkspaceUpdateOne {
 	_u.mutation.Where(ps...)
@@ -3161,6 +3347,11 @@ func (_u *WorkspaceUpdateOne) check() error {
 			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RetentionDays(); ok {
+		if err := workspace.RetentionDaysValidator(v); err != nil {
+			return &ValidationError{Name: "retention_days", err: fmt.Errorf(`ent: validator failed for field "Workspace.retention_days": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -3222,6 +3413,15 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.RetentionDays(); ok {
+		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRetentionDays(); ok {
+		_spec.AddField(workspace.FieldRetentionDays, field.TypeInt, value)
+	}
+	if _u.mutation.RetentionDaysCleared() {
+		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
@@ -4224,6 +4424,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuditEntriesIDs(); len(nodes) > 0 && !_u.mutation.AuditEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuditEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AuditEntriesTable,
+			Columns: []string{workspace.AuditEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(auditentry.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

@@ -29,6 +29,7 @@ enum ApiTokenScope {
   mcpSend: "mcp:send",
   tokensRead: "tokens:read",
   tokensWrite: "tokens:write",
+  auditRead: "audit:read",
 }
 
 model ApiTokenInfo {

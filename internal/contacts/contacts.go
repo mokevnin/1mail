@@ -19,6 +19,7 @@ package contacts
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -209,12 +210,56 @@ type BatchOutcome struct {
 // UpsertBatch upserts each item in its own transaction, in order, so a failing item
 // neither rolls back nor blocks the others; each new Contact publishes contact.created
 // with its own commit. The outcomes are parallel to items.
+//
+// A batch is an import (ADR 0022): its rows are written through an unaudited scope and
+// the whole batch is recorded as ONE contact.import entry (counts only), not one entry
+// per row. The rows commit one by one (a failing row must not poison the others), so
+// the entry cannot share their transaction: if recording it fails the failure is
+// logged and the committed outcomes are still returned, never a 500 for an import
+// that happened.
 func (m *Module) UpsertBatch(ctx context.Context, s *ent.Scoped, items []Attributes) []BatchOutcome {
+	rows := events.Unaudited(s)
 	out := make([]BatchOutcome, len(items))
+	var sum ImportSummary
 	for i, attrs := range items {
-		out[i].Result, out[i].Err = m.Upsert(ctx, s, attrs)
+		out[i].Result, out[i].Err = m.Upsert(ctx, rows, attrs)
+		switch {
+		case out[i].Err != nil:
+			sum.Failed++
+		case out[i].Result.Created:
+			sum.Created++
+		default:
+			sum.Updated++
+		}
+	}
+	if err := m.RecordImport(ctx, s, sum); err != nil {
+		slog.ErrorContext(ctx, "record contact.import audit entry", "workspace_id", s.WorkspaceID(), "error", err)
 	}
 	return out
+}
+
+// ImportSummary counts the rows of one import.
+type ImportSummary struct {
+	Created, Updated, Failed int
+}
+
+// RecordImport records one contact.import Audit entry for a whole import: the actor of
+// s and the row counts, never a Contact or a value. Importers write their rows through
+// an unaudited scope (events.Ingest) so only this entry reaches the log.
+func (m *Module) RecordImport(ctx context.Context, s *ent.Scoped, sum ImportSummary) error {
+	return m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: ts.WorkspaceID(),
+			Actor:       s.Actor(),
+			Action:      events.ActionContactImport,
+			TargetType:  "contact",
+			Diff: map[string]any{
+				"created": sum.Created,
+				"updated": sum.Updated,
+				"failed":  sum.Failed,
+			},
+		})
+	})
 }
 
 // UpsertIn is Upsert inside a transaction the caller already owns (tx and pub come

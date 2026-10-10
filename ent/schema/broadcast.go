@@ -22,6 +22,7 @@ type Broadcast struct {
 func (Broadcast) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "broadcasts"},
+		Audited{Action: "broadcast", NameField: "name"},
 	}
 }
 

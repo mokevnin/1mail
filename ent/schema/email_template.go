@@ -18,6 +18,7 @@ type EmailTemplate struct {
 func (EmailTemplate) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "email_templates"},
+		Audited{Action: "template", NameField: "name"},
 	}
 }
 

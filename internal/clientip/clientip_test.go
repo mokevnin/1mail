@@ -19,13 +19,17 @@ func TestFromRequest(t *testing.T) {
 }
 
 func TestMiddlewareExposesAddressToContext(t *testing.T) {
-	var got string
+	var got, gotUA string
 	h := clientip.Middleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		got = clientip.FromContext(r.Context())
+		gotUA = clientip.UserAgentFromContext(r.Context())
 	}))
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 	r.RemoteAddr = "10.0.0.9:5555"
+	r.Header.Set("User-Agent", "test-agent/1.0")
 	h.ServeHTTP(httptest.NewRecorder(), r)
 	assert.Equal(t, "10.0.0.9", got)
+	assert.Equal(t, "test-agent/1.0", gotUA)
 	assert.Empty(t, clientip.FromContext(t.Context()))
+	assert.Empty(t, clientip.UserAgentFromContext(t.Context()))
 }

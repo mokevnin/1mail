@@ -56,12 +56,21 @@ const (
 	GroupAutomations = "automations"
 	GroupWebhooks    = "webhooks"
 	GroupSuppression = "suppression"
+	// GroupAudit is the Enterprise audit subscriber's group (ee/audit). Core lists it
+	// so the outbox prune never deletes an Audit entry the subscriber has not consumed
+	// (ADR 0022); the subscriber is always registered, licensed or not.
+	GroupAudit = "audit"
 )
 
-// ConsumerGroups lists every consumer group registered in code, in registration
-// order. RegisterSubscribers wires exactly these groups.
-func ConsumerGroups() []string {
+// coreGroups are the groups core wires itself, in registration order.
+func coreGroups() []string {
 	return []string{GroupPersist, GroupAutomations, GroupWebhooks, GroupSuppression}
+}
+
+// ConsumerGroups lists every consumer group registered in code, in registration
+// order: the core groups, then the extra consumers' (RegisterSubscribers).
+func ConsumerGroups() []string {
+	return append(coreGroups(), GroupAudit)
 }
 
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
@@ -69,7 +78,11 @@ func ConsumerGroups() []string {
 // (see ConsumerGroups), so every subscriber receives every event (fan-out) rather
 // than competing for messages. Add new subscribers to the table below and to
 // ConsumerGroups without touching producers.
-func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
+//
+// extra are consumers owned outside core (the Enterprise audit subscriber, ee/): each
+// gets its own consumer group like the built-in ones, and its group is listed in
+// ConsumerGroups so the outbox prune waits for it.
+func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher, extra ...Consumer) error {
 	handlers := map[string]struct {
 		name    string
 		handler message.NoPublishHandlerFunc
@@ -79,7 +92,7 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 		GroupWebhooks:    {"dispatch_webhooks", webhooksConsumer(client, dispatcher)},
 		GroupSuppression: {"update_suppression", suppressionConsumer(client)},
 	}
-	for _, group := range ConsumerGroups() {
+	for _, group := range coreGroups() {
 		h := handlers[group]
 		sub, err := NewSubscriber(db, group)
 		if err != nil {
@@ -87,7 +100,32 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 		}
 		router.AddConsumerHandler(h.name, TopicDomainEvents, sub, h.handler)
 	}
+	for _, c := range extra {
+		sub, err := NewSubscriber(db, c.Name)
+		if err != nil {
+			return fmt.Errorf("%s subscriber: %w", c.Name, err)
+		}
+		router.AddConsumerHandler(c.Name, TopicDomainEvents, sub, c.Handler())
+	}
 	return nil
+}
+
+// Consumer is a bus subscriber registered from outside the events package. Name is
+// both its router handler name and its consumer group.
+type Consumer struct {
+	Name   string
+	Handle func(ctx context.Context, env Envelope) error
+}
+
+// Handler adapts the consumer to a watermill handler that decodes the envelope.
+func (c Consumer) Handler() message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		var env Envelope
+		if err := json.Unmarshal(msg.Payload, &env); err != nil {
+			return fmt.Errorf("unmarshal envelope: %w", err)
+		}
+		return c.Handle(msg.Context(), env)
+	}
 }
 
 // suppressionReason maps a projected event to the suppression reason it implies,
@@ -183,20 +221,35 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 			return err
 		}
 		p := ev.Project()
+		// Filter/route on the semantic action (e.g. "page_view"), not the bus type. An
+		// unprojected event (an Audit entry) has no Event action: it is forwarded under
+		// its bus type, only to endpoints that select it, and the edition's dispatcher
+		// gates it by license (ADR 0022).
+		name := p.Action
+		if _, unprojected := ev.(Unprojected); unprojected {
+			name = env.Name
+		}
+		data := env.Data
+		if entry, ok := ev.(*AuditEntry); ok {
+			// The staff identity never reaches a customer's endpoint (ADR 0022).
+			entry.MaskOperator()
+			if data, err = json.Marshal(entry); err != nil {
+				return fmt.Errorf("marshal audit entry: %w", err)
+			}
+		}
 		body, err := json.Marshal(webhookPayload{
 			ID:          env.ID,
-			Type:        p.Action,
+			Type:        name,
 			OccurredAt:  env.OccurredAt,
 			WorkspaceID: env.WorkspaceID,
 			Subject:     p.Subject,
 			ContactID:   p.ContactID,
-			Data:        env.Data,
+			Data:        data,
 		})
 		if err != nil {
 			return fmt.Errorf("marshal webhook payload: %w", err)
 		}
-		// Filter/route on the semantic action (e.g. "page_view"), not the bus type.
-		return dispatcher.Dispatch(msg.Context(), client.Scoped(env.WorkspaceID), p.Action, env.ID, body)
+		return dispatcher.Dispatch(msg.Context(), client.Scoped(env.WorkspaceID), name, env.ID, body)
 	}
 }
 
@@ -211,6 +264,9 @@ func automationsConsumer(enroller Enroller) message.NoPublishHandlerFunc {
 		ev, err := Decode(env)
 		if err != nil {
 			return err
+		}
+		if _, skip := ev.(Unprojected); skip {
+			return nil // an administrative action is never an automation trigger
 		}
 		p := ev.Project()
 		if p.ContactID == 0 {
@@ -255,6 +311,9 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 	ev, err := Decode(env)
 	if err != nil {
 		return err
+	}
+	if _, skip := ev.(Unprojected); skip {
+		return nil // not an Event: no row, so no segment or trigger can see it
 	}
 	p := ev.Project()
 

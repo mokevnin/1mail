@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"crypto/ed25519"
 	"database/sql"
 	"fmt"
 	"net"
@@ -20,6 +21,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ee"
+	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
@@ -147,6 +150,8 @@ type TestEnv struct {
 	// unsubscribe and confirmation tokens with it, never with a second one.
 	Tracker *tracking.Tracker
 
+	edition *ee.Edition // the EE parts, built like the composition root builds them
+
 	jwtSecret string // for tokens a test needs in a state the Tracker never mints
 
 	// Captured sends from the inline jobs adapter, for assertions.
@@ -160,12 +165,17 @@ type TestEnv struct {
 // Option tunes the server a test builds with Setup.
 type Option func(*setup)
 
-// setup is what the options edit: a private copy of the test config and the clock
-// the account attempt module reads.
+// setup is what the options edit: a private copy of the test config, the clock the
+// account attempt module reads, and whether the instance has no EE license.
 type setup struct {
-	cfg *config.Config
-	now func() time.Time
+	cfg        *config.Config
+	now        func() time.Time
+	unlicensed bool
 }
+
+// WithoutLicense builds the instance with no EE license key, like a plain core
+// self-host. Setup's default is an instance licensed for every EE feature.
+func WithoutLicense() Option { return func(s *setup) { s.unlicensed = true } }
 
 // WithConfig edits a private copy of the test config before the server is built.
 func WithConfig(edit func(*config.Config)) Option { return func(s *setup) { edit(s.cfg) } }
@@ -180,6 +190,20 @@ func WithClock(now func() time.Time) Option { return func(s *setup) { s.now = no
 func WithRateLimits(limits config.RateLimits) Option {
 	return func(s *setup) { s.cfg.RateLimits = limits }
 }
+
+// testLicense mints, once per process, an EE license key signed by a throwaway key
+// pair and verified through the same Parse the production composition root uses.
+var testLicense = sync.OnceValues(func() (*licensekey.License, error) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		return nil, err
+	}
+	key, err := licensekey.Issue(priv, nil, licensekey.FeatureAudit, licensekey.FeatureRetention)
+	if err != nil {
+		return nil, err
+	}
+	return licensekey.Parse(key, pub, time.Now())
+})
 
 func Setup(t *testing.T, opts ...Option) *TestEnv {
 	t.Helper()
@@ -242,6 +266,13 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
+	lic, err := licensekey.Parse("", licensekey.ProductionKey, time.Now())
+	require.NoError(t, err, "parse empty license")
+	if !st.unlicensed {
+		lic, err = testLicense()
+		require.NoError(t, err, "mint test license")
+	}
+	edition := ee.New(client, lic)
 	attempts := accounts.NewAttempts(client,
 		accounts.WithClock(st.now),
 		accounts.WithRateLimits(cfg.RateLimits))
@@ -249,22 +280,22 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule, SendingDomains: sendingDomainsModule,
-		BootstrapToken: cfg.BootstrapToken,
+		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
 	require.NoError(t, err, "build external API")
-	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
+	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
-		Tokens: authtoken.New(cfg.JWTSecret), Tracker: tracker, AppURL: cfg.AppURL,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: cfg.JWTSecret,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret, edition: edition,
 		SystemMail: systemMail, CustomerMail: customerMail, SES: fakeSES,
 	}
 }

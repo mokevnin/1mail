@@ -33,6 +33,8 @@ type Workspace struct {
 	RequireConfirmedOptIn bool `json:"require_confirmed_opt_in,omitempty"`
 	// PostalAddress holds the value of the "postal_address" field.
 	PostalAddress string `json:"postal_address,omitempty"`
+	// RetentionDays holds the value of the "retention_days" field.
+	RetentionDays *int `json:"retention_days,omitempty"`
 	// SuspendedAt holds the value of the "suspended_at" field.
 	SuspendedAt *time.Time `json:"suspended_at,omitempty"`
 	// SuspendedBy holds the value of the "suspended_by" field.
@@ -91,9 +93,11 @@ type WorkspaceEdges struct {
 	Memberships []*Membership `json:"memberships,omitempty"`
 	// Invitations holds the value of the invitations edge.
 	Invitations []*Invitation `json:"invitations,omitempty"`
+	// AuditEntries holds the value of the audit_entries edge.
+	AuditEntries []*AuditEntry `json:"audit_entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [22]bool
+	loadedTypes [23]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -294,6 +298,15 @@ func (e WorkspaceEdges) InvitationsOrErr() ([]*Invitation, error) {
 	return nil, &NotLoadedError{edge: "invitations"}
 }
 
+// AuditEntriesOrErr returns the AuditEntries value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) AuditEntriesOrErr() ([]*AuditEntry, error) {
+	if e.loadedTypes[22] {
+		return e.AuditEntries, nil
+	}
+	return nil, &NotLoadedError{edge: "audit_entries"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Workspace) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -301,7 +314,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workspace.FieldRequireConfirmedOptIn:
 			values[i] = new(sql.NullBool)
-		case workspace.FieldID:
+		case workspace.FieldID, workspace.FieldRetentionDays:
 			values[i] = new(sql.NullInt64)
 		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey, workspace.FieldPostalAddress, workspace.FieldSuspendedBy, workspace.FieldSuspensionReason:
 			values[i] = new(sql.NullString)
@@ -375,6 +388,13 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field postal_address", values[i])
 			} else if value.Valid {
 				_m.PostalAddress = value.String
+			}
+		case workspace.FieldRetentionDays:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field retention_days", values[i])
+			} else if value.Valid {
+				_m.RetentionDays = new(int)
+				*_m.RetentionDays = int(value.Int64)
 			}
 		case workspace.FieldSuspendedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -520,6 +540,11 @@ func (_m *Workspace) QueryInvitations() *InvitationQuery {
 	return NewWorkspaceClient(_m.config).QueryInvitations(_m)
 }
 
+// QueryAuditEntries queries the "audit_entries" edge of the Workspace entity.
+func (_m *Workspace) QueryAuditEntries() *AuditEntryQuery {
+	return NewWorkspaceClient(_m.config).QueryAuditEntries(_m)
+}
+
 // Update returns a builder for updating this Workspace.
 // Note that you need to call Workspace.Unwrap() before calling this method if this Workspace
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -564,6 +589,11 @@ func (_m *Workspace) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("postal_address=")
 	builder.WriteString(_m.PostalAddress)
+	builder.WriteString(", ")
+	if v := _m.RetentionDays; v != nil {
+		builder.WriteString("retention_days=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := _m.SuspendedAt; v != nil {
 		builder.WriteString("suspended_at=")

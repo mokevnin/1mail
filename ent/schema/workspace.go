@@ -66,6 +66,13 @@ func (Workspace) Fields() []ent.Field {
 		// reads and /collect keep working. Attribution records who set it (the
 		// automated abuse detector, actor "system", or a platform Operator's id) and
 		// why, so the owner sees the notice and can appeal.
+		// EE advanced retention (ADR 0014, ADR 0022): audit entries older than this many
+		// days are pruned by ee/retention, and only under a license that includes the
+		// retention feature. NULL keeps them forever. Core never reads it.
+		field.Int("retention_days").
+			Optional().
+			Nillable().
+			Positive(),
 		field.Time("suspended_at").
 			Optional().
 			Nillable(),
@@ -102,5 +109,6 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("outbound_messages", OutboundMessage.Type),
 		edge.To("memberships", Membership.Type),
 		edge.To("invitations", Invitation.Type),
+		edge.To("audit_entries", AuditEntry.Type),
 	}
 }

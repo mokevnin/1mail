@@ -16,6 +16,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ee"
+	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
@@ -334,7 +336,11 @@ func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bo
 	if err != nil {
 		return false, err
 	}
-	changed, err := service.SuspendWorkspace(ctx, client.Client, id, by, reason)
+	bus, err := do.Invoke[*eventsBus](a.injector)
+	if err != nil {
+		return false, err
+	}
+	changed, err := service.SuspendWorkspace(ctx, bus.Bus, id, by, reason)
 	if err != nil || !changed {
 		return changed, err
 	}
@@ -358,7 +364,11 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	return service.UnsuspendWorkspace(ctx, client.Client, id)
+	bus, err := do.Invoke[*eventsBus](a.injector)
+	if err != nil {
+		return false, err
+	}
+	return service.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
 }
 
 // Accounts is the product's Accounts module from the DI container, for harnesses that
@@ -473,12 +483,34 @@ func register(injector do.Injector, env string, o options) {
 		return &dkimLookup{TXTLookup: net.DefaultResolver.LookupTXT}, nil
 	})
 
+	// The Enterprise Edition (ADR 0014): what the runtime license key switches on. An
+	// empty key is the plain core; a malformed, forged or expired one fails boot.
+	do.Provide(injector, func(i do.Injector) (*ee.Edition, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		lic, err := licensekey.Parse(cfg.LicenseKey, licensekey.ProductionKey, time.Now())
+		if err != nil {
+			return nil, err
+		}
+		return ee.New(client.Client, lic), nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (*eventsRuntime, error) {
 		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
 		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		edition, err := do.Invoke[*ee.Edition](i)
 		if err != nil {
 			return nil, err
 		}
@@ -498,7 +530,7 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		if err := events.RegisterSubscribers(router, database.DB, client.Client, jc.Client, jc.Client); err != nil {
+		if err := events.RegisterSubscribers(router, database.DB, client.Client, jc.Client, edition.Webhooks(jc.Client), edition.Consumers...); err != nil {
 			return nil, err
 		}
 		return &eventsRuntime{router: router}, nil
@@ -563,6 +595,10 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
+		edition, err := do.Invoke[*ee.Edition](i)
+		if err != nil {
+			return nil, err
+		}
 		catalog, err := do.Invoke[*messaging.Catalog](i)
 		if err != nil {
 			return nil, err
@@ -571,7 +607,8 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL, jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention})
+		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL,
+			jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention}, edition.Jobs())
 		if err != nil {
 			return nil, err
 		}
@@ -755,7 +792,11 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client, bus.Bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 		if err != nil {
 			return nil, err
 		}
@@ -854,10 +895,14 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	edition, err := do.Invoke[*ee.Edition](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
-		Broadcasts: bc, Reputation: rep, Integrations: integ, SendingDomains: sd, BootstrapToken: cfg.BootstrapToken,
+		Broadcasts: bc, Reputation: rep, Integrations: integ, SendingDomains: sd, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
 	}, nil
 }
 
@@ -930,6 +975,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	edition, err := do.Invoke[*ee.Edition](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	attempts, err := do.Invoke[*accounts.Attempts](i)
 	if err != nil {
 		return apisite.Deps{}, err
@@ -946,7 +995,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
-		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,
+		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit,
 	}, nil
 }
 

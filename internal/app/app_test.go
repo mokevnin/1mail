@@ -265,7 +265,12 @@ func ownedWorkspace(t *testing.T, a *App, slug, ownerEmail string) {
 		SetCollectKey("ck_" + slug).SetIngestKey("ik_" + slug).SaveX(ctx)
 	u := client.User.Create().SetName("Owner").SetEmail(ownerEmail).SaveX(ctx)
 	client.Membership.Create().SetUserID(u.ID).SetWorkspaceID(ws.ID).SetRole(membership.RoleOwner).ExecX(ctx)
+	database, err := invokeSQL(a)
+	require.NoError(t, err)
 	t.Cleanup(func() {
+		// The app commits for real: its audit.entry outbox rows name a Workspace that
+		// is deleted below, and would break every later package that drains the outbox.
+		require.NoError(t, testhelper.PurgeOutbox(context.WithoutCancel(ctx), database))
 		client.Membership.Delete().Where(membership.WorkspaceID(ws.ID)).ExecX(ctx)
 		client.User.DeleteOneID(u.ID).ExecX(ctx)
 		client.Workspace.DeleteOneID(ws.ID).ExecX(ctx)

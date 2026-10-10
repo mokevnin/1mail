@@ -1577,6 +1577,74 @@ func (o OptNilInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewOptNilSiteAuditEntryResourceDiff returns new OptNilSiteAuditEntryResourceDiff with value set to v.
+func NewOptNilSiteAuditEntryResourceDiff(v SiteAuditEntryResourceDiff) OptNilSiteAuditEntryResourceDiff {
+	return OptNilSiteAuditEntryResourceDiff{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilSiteAuditEntryResourceDiff is optional nullable SiteAuditEntryResourceDiff.
+type OptNilSiteAuditEntryResourceDiff struct {
+	Value SiteAuditEntryResourceDiff
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilSiteAuditEntryResourceDiff was set.
+func (o OptNilSiteAuditEntryResourceDiff) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilSiteAuditEntryResourceDiff) Reset() {
+	var v SiteAuditEntryResourceDiff
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilSiteAuditEntryResourceDiff) SetTo(v SiteAuditEntryResourceDiff) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilSiteAuditEntryResourceDiff) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilSiteAuditEntryResourceDiff) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v SiteAuditEntryResourceDiff
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilSiteAuditEntryResourceDiff) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilSiteAuditEntryResourceDiff) Get() (v SiteAuditEntryResourceDiff, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilSiteAuditEntryResourceDiff) Or(d SiteAuditEntryResourceDiff) SiteAuditEntryResourceDiff {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilSiteBroadcastProgress returns new OptNilSiteBroadcastProgress with value set to v.
 func NewOptNilSiteBroadcastProgress(v SiteBroadcastProgress) OptNilSiteBroadcastProgress {
 	return OptNilSiteBroadcastProgress{
@@ -2463,6 +2531,52 @@ func (o OptSiteAnalyticsRange) Or(d SiteAnalyticsRange) SiteAnalyticsRange {
 	return d
 }
 
+// NewOptSiteAuditActorKind returns new OptSiteAuditActorKind with value set to v.
+func NewOptSiteAuditActorKind(v SiteAuditActorKind) OptSiteAuditActorKind {
+	return OptSiteAuditActorKind{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteAuditActorKind is optional SiteAuditActorKind.
+type OptSiteAuditActorKind struct {
+	Value SiteAuditActorKind
+	Set   bool
+}
+
+// IsSet returns true if OptSiteAuditActorKind was set.
+func (o OptSiteAuditActorKind) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteAuditActorKind) Reset() {
+	var v SiteAuditActorKind
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteAuditActorKind) SetTo(v SiteAuditActorKind) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteAuditActorKind) Get() (v SiteAuditActorKind, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteAuditActorKind) Or(d SiteAuditActorKind) SiteAuditActorKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSiteDirectLoginResultAttrs returns new OptSiteDirectLoginResultAttrs with value set to v.
 func NewOptSiteDirectLoginResultAttrs(v SiteDirectLoginResultAttrs) OptSiteDirectLoginResultAttrs {
 	return OptSiteDirectLoginResultAttrs{
@@ -2595,6 +2709,52 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTimestamp returns new OptTimestamp with value set to v.
+func NewOptTimestamp(v Timestamp) OptTimestamp {
+	return OptTimestamp{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTimestamp is optional Timestamp.
+type OptTimestamp struct {
+	Value Timestamp
+	Set   bool
+}
+
+// IsSet returns true if OptTimestamp was set.
+func (o OptTimestamp) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTimestamp) Reset() {
+	var v Timestamp
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTimestamp) SetTo(v Timestamp) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTimestamp) Get() (v Timestamp, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTimestamp) Or(d Timestamp) Timestamp {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3287,6 +3447,418 @@ func (s *SiteApplyTagInput) GetName() string {
 
 // SetName sets the value of Name.
 func (s *SiteApplyTagInput) SetName(val string) {
+	s.Name = val
+}
+
+// The actor of an Audit entry.
+// Ref: #/components/schemas/SiteAuditActor
+type SiteAuditActor struct {
+	// The kind of actor; an operator is shown to the customer as "1mail staff".
+	Kind SiteAuditActorKind `json:"kind"`
+	// The actor's id (a User id or an API token id); absent for the system.
+	ID OptNilString `json:"id"`
+	// Display name snapshot taken when the entry was written.
+	Name OptNilString `json:"name"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SiteAuditActor) GetKind() SiteAuditActorKind {
+	return s.Kind
+}
+
+// GetID returns the value of ID.
+func (s *SiteAuditActor) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteAuditActor) GetName() OptNilString {
+	return s.Name
+}
+
+// SetKind sets the value of Kind.
+func (s *SiteAuditActor) SetKind(val SiteAuditActorKind) {
+	s.Kind = val
+}
+
+// SetID sets the value of ID.
+func (s *SiteAuditActor) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteAuditActor) SetName(val OptNilString) {
+	s.Name = val
+}
+
+// Who performed an audited change.
+// Ref: #/components/schemas/SiteAuditActorKind
+type SiteAuditActorKind string
+
+const (
+	SiteAuditActorKindUser     SiteAuditActorKind = "user"
+	SiteAuditActorKindAPIToken SiteAuditActorKind = "api_token"
+	SiteAuditActorKindOperator SiteAuditActorKind = "operator"
+	SiteAuditActorKindSystem   SiteAuditActorKind = "system"
+)
+
+// AllValues returns all SiteAuditActorKind values.
+func (SiteAuditActorKind) AllValues() []SiteAuditActorKind {
+	return []SiteAuditActorKind{
+		SiteAuditActorKindUser,
+		SiteAuditActorKindAPIToken,
+		SiteAuditActorKindOperator,
+		SiteAuditActorKindSystem,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteAuditActorKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteAuditActorKindUser:
+		return []byte(s), nil
+	case SiteAuditActorKindAPIToken:
+		return []byte(s), nil
+	case SiteAuditActorKindOperator:
+		return []byte(s), nil
+	case SiteAuditActorKindSystem:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteAuditActorKind) UnmarshalText(data []byte) error {
+	switch SiteAuditActorKind(data) {
+	case SiteAuditActorKindUser:
+		*s = SiteAuditActorKindUser
+		return nil
+	case SiteAuditActorKindAPIToken:
+		*s = SiteAuditActorKindAPIToken
+		return nil
+	case SiteAuditActorKindOperator:
+		*s = SiteAuditActorKindOperator
+		return nil
+	case SiteAuditActorKindSystem:
+		*s = SiteAuditActorKindSystem
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A page of Audit entries, newest first.
+// Ref: #/components/schemas/SiteAuditEntryList
+type SiteAuditEntryList struct {
+	Items []SiteAuditEntryResource `json:"items"`
+	// Pass as `cursor` for the next page; absent on the last page.
+	NextCursor OptNilString `json:"nextCursor"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteAuditEntryList) GetItems() []SiteAuditEntryResource {
+	return s.Items
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *SiteAuditEntryList) GetNextCursor() OptNilString {
+	return s.NextCursor
+}
+
+// SetItems sets the value of Items.
+func (s *SiteAuditEntryList) SetItems(val []SiteAuditEntryResource) {
+	s.Items = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *SiteAuditEntryList) SetNextCursor(val OptNilString) {
+	s.NextCursor = val
+}
+
+func (*SiteAuditEntryList) siteAuditListRes() {}
+
+// One immutable Audit entry (Enterprise).
+// Ref: #/components/schemas/SiteAuditEntryResource
+type SiteAuditEntryResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// When the change happened.
+	OccurredAt Timestamp `json:"occurredAt"`
+	// Who did it.
+	Actor SiteAuditActor `json:"actor"`
+	// What was done, as `<entity>.<verb>`.
+	Action string `json:"action"`
+	// What it was done to.
+	Target SiteAuditTarget `json:"target"`
+	// Before/after of the changed fields; secrets appear as changed only.
+	Diff OptNilSiteAuditEntryResourceDiff `json:"diff"`
+	// Request id of the change.
+	RequestId OptNilString `json:"requestId"`
+	// Client address of the change.
+	IP OptNilString `json:"ip"`
+	// Client user agent of the change.
+	UserAgent OptNilString `json:"userAgent"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteAuditEntryResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *SiteAuditEntryResource) GetOccurredAt() Timestamp {
+	return s.OccurredAt
+}
+
+// GetActor returns the value of Actor.
+func (s *SiteAuditEntryResource) GetActor() SiteAuditActor {
+	return s.Actor
+}
+
+// GetAction returns the value of Action.
+func (s *SiteAuditEntryResource) GetAction() string {
+	return s.Action
+}
+
+// GetTarget returns the value of Target.
+func (s *SiteAuditEntryResource) GetTarget() SiteAuditTarget {
+	return s.Target
+}
+
+// GetDiff returns the value of Diff.
+func (s *SiteAuditEntryResource) GetDiff() OptNilSiteAuditEntryResourceDiff {
+	return s.Diff
+}
+
+// GetRequestId returns the value of RequestId.
+func (s *SiteAuditEntryResource) GetRequestId() OptNilString {
+	return s.RequestId
+}
+
+// GetIP returns the value of IP.
+func (s *SiteAuditEntryResource) GetIP() OptNilString {
+	return s.IP
+}
+
+// GetUserAgent returns the value of UserAgent.
+func (s *SiteAuditEntryResource) GetUserAgent() OptNilString {
+	return s.UserAgent
+}
+
+// SetID sets the value of ID.
+func (s *SiteAuditEntryResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *SiteAuditEntryResource) SetOccurredAt(val Timestamp) {
+	s.OccurredAt = val
+}
+
+// SetActor sets the value of Actor.
+func (s *SiteAuditEntryResource) SetActor(val SiteAuditActor) {
+	s.Actor = val
+}
+
+// SetAction sets the value of Action.
+func (s *SiteAuditEntryResource) SetAction(val string) {
+	s.Action = val
+}
+
+// SetTarget sets the value of Target.
+func (s *SiteAuditEntryResource) SetTarget(val SiteAuditTarget) {
+	s.Target = val
+}
+
+// SetDiff sets the value of Diff.
+func (s *SiteAuditEntryResource) SetDiff(val OptNilSiteAuditEntryResourceDiff) {
+	s.Diff = val
+}
+
+// SetRequestId sets the value of RequestId.
+func (s *SiteAuditEntryResource) SetRequestId(val OptNilString) {
+	s.RequestId = val
+}
+
+// SetIP sets the value of IP.
+func (s *SiteAuditEntryResource) SetIP(val OptNilString) {
+	s.IP = val
+}
+
+// SetUserAgent sets the value of UserAgent.
+func (s *SiteAuditEntryResource) SetUserAgent(val OptNilString) {
+	s.UserAgent = val
+}
+
+// Before/after of the changed fields; secrets appear as changed only.
+type SiteAuditEntryResourceDiff map[string]jx.Raw
+
+func (s *SiteAuditEntryResourceDiff) init() SiteAuditEntryResourceDiff {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+type SiteAuditExportForbidden ProblemDetails
+
+func (*SiteAuditExportForbidden) siteAuditExportRes() {}
+
+type SiteAuditExportNotFound ProblemDetails
+
+func (*SiteAuditExportNotFound) siteAuditExportRes() {}
+
+type SiteAuditExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s SiteAuditExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// SiteAuditExportOKHeaders wraps SiteAuditExportOK with response headers.
+type SiteAuditExportOKHeaders struct {
+	ContentDisposition string
+	Response           SiteAuditExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *SiteAuditExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteAuditExportOKHeaders) GetResponse() SiteAuditExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *SiteAuditExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteAuditExportOKHeaders) SetResponse(val SiteAuditExportOK) {
+	s.Response = val
+}
+
+func (*SiteAuditExportOKHeaders) siteAuditExportRes() {}
+
+type SiteAuditExportPaymentRequired ProblemDetails
+
+func (*SiteAuditExportPaymentRequired) siteAuditExportRes() {}
+
+type SiteAuditGetRetentionForbidden ProblemDetails
+
+func (*SiteAuditGetRetentionForbidden) siteAuditGetRetentionRes() {}
+
+type SiteAuditGetRetentionNotFound ProblemDetails
+
+func (*SiteAuditGetRetentionNotFound) siteAuditGetRetentionRes() {}
+
+type SiteAuditGetRetentionPaymentRequired ProblemDetails
+
+func (*SiteAuditGetRetentionPaymentRequired) siteAuditGetRetentionRes() {}
+
+type SiteAuditListBadRequest ProblemDetails
+
+func (*SiteAuditListBadRequest) siteAuditListRes() {}
+
+type SiteAuditListForbidden ProblemDetails
+
+func (*SiteAuditListForbidden) siteAuditListRes() {}
+
+type SiteAuditListNotFound ProblemDetails
+
+func (*SiteAuditListNotFound) siteAuditListRes() {}
+
+type SiteAuditListPaymentRequired ProblemDetails
+
+func (*SiteAuditListPaymentRequired) siteAuditListRes() {}
+
+// How long the Audit log is kept; the Enterprise advanced-retention control.
+// Ref: #/components/schemas/SiteAuditRetention
+type SiteAuditRetention struct {
+	// Entries older than this many days are pruned; null keeps them forever.
+	RetentionDays NilInt32 `json:"retentionDays"`
+}
+
+// GetRetentionDays returns the value of RetentionDays.
+func (s *SiteAuditRetention) GetRetentionDays() NilInt32 {
+	return s.RetentionDays
+}
+
+// SetRetentionDays sets the value of RetentionDays.
+func (s *SiteAuditRetention) SetRetentionDays(val NilInt32) {
+	s.RetentionDays = val
+}
+
+func (*SiteAuditRetention) siteAuditGetRetentionRes() {}
+func (*SiteAuditRetention) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionForbidden ProblemDetails
+
+func (*SiteAuditSetRetentionForbidden) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionNotFound ProblemDetails
+
+func (*SiteAuditSetRetentionNotFound) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionPaymentRequired ProblemDetails
+
+func (*SiteAuditSetRetentionPaymentRequired) siteAuditSetRetentionRes() {}
+
+type SiteAuditSetRetentionUnprocessableEntity ProblemDetails
+
+func (*SiteAuditSetRetentionUnprocessableEntity) siteAuditSetRetentionRes() {}
+
+// What an audited change was done to.
+// Ref: #/components/schemas/SiteAuditTarget
+type SiteAuditTarget struct {
+	// Entity type, e.g. membership.
+	Type string `json:"type"`
+	// The target's id.
+	ID OptNilString `json:"id"`
+	// Name snapshot taken when the entry was written; absent for a Contact.
+	Name OptNilString `json:"name"`
+}
+
+// GetType returns the value of Type.
+func (s *SiteAuditTarget) GetType() string {
+	return s.Type
+}
+
+// GetID returns the value of ID.
+func (s *SiteAuditTarget) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteAuditTarget) GetName() OptNilString {
+	return s.Name
+}
+
+// SetType sets the value of Type.
+func (s *SiteAuditTarget) SetType(val string) {
+	s.Type = val
+}
+
+// SetID sets the value of ID.
+func (s *SiteAuditTarget) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteAuditTarget) SetName(val OptNilString) {
 	s.Name = val
 }
 

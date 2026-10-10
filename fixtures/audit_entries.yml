@@ -1,0 +1,87 @@
+# Audit log (Enterprise). Each tenant has one older entry, so tenant-isolation tests can
+# show that Acme's owner never sees Globex's. Tests create further entries through real
+# mutations; their ids come after the fixture ids, so they list first (newest first).
+- id: 2 # fixture: AcmeAuditEntry
+  workspace_id: 1
+  entry_key: fixture-acme-entry
+  occurred_at: '2026-01-01 00:00:00'
+  actor_kind: user
+  actor_id: '1'
+  actor_name: John
+  action: membership.update
+  target_type: membership
+  target_id: '3'
+  target_name: Mary
+  diff: '{"role":{"from":"admin","to":"member"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 1 # fixture: GlobexAuditEntry
+  workspace_id: 2
+  entry_key: fixture-globex-entry
+  occurred_at: '2026-01-02 00:00:00'
+  actor_kind: user
+  actor_id: '2'
+  actor_name: Jane
+  action: membership.update
+  target_type: membership
+  target_id: '2'
+  target_name: Jane
+  diff: '{"role":{"from":"admin","to":"owner"}}'
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'
+
+# Further Globex entries, differing in every filterable column, for the filter, cursor and
+# export tests. They sit in Globex so Acme's log (the one most tests mutate and count)
+# stays at its single fixture entry. The last one carries spreadsheet-formula text.
+- id: 3 # fixture: GlobexAuditIntegrationUpdate
+  workspace_id: 2
+  entry_key: fixture-globexauditintegrationupdate
+  occurred_at: '2026-02-01 00:00:00'
+  actor_kind: api_token
+  actor_id: '77'
+  action: integration.update
+  target_type: integration
+  target_id: '5'
+  ip: 10.0.0.1
+  request_id: req-a
+  created_at: '2026-02-01 00:00:00'
+  updated_at: '2026-02-01 00:00:00'
+- id: 4 # fixture: GlobexAuditWebhookCreate
+  workspace_id: 2
+  entry_key: fixture-globexauditwebhookcreate
+  occurred_at: '2026-03-01 00:00:00'
+  actor_kind: system
+  action: webhook_endpoint.create
+  target_type: webhook_endpoint
+  target_id: '9'
+  ip: 10.0.0.2
+  request_id: req-b
+  created_at: '2026-03-01 00:00:00'
+  updated_at: '2026-03-01 00:00:00'
+- id: 5 # fixture: GlobexAuditIntegrationDelete
+  workspace_id: 2
+  entry_key: fixture-globexauditintegrationdelete
+  occurred_at: '2026-04-01 00:00:00'
+  actor_kind: user
+  actor_id: '2'
+  actor_name: 'Jane'
+  action: integration.delete
+  target_type: integration
+  target_id: '6'
+  ip: 10.0.0.1
+  request_id: req-c
+  created_at: '2026-04-01 00:00:00'
+  updated_at: '2026-04-01 00:00:00'
+- id: 6 # fixture: GlobexAuditFormulaEntry
+  workspace_id: 2
+  entry_key: fixture-globexauditformulaentry
+  occurred_at: '2026-05-01 00:00:00'
+  actor_kind: user
+  actor_id: '2'
+  actor_name: '=HYPERLINK("http://evil")'
+  action: tag.create
+  target_type: tag
+  target_id: '7'
+  target_name: '+cmd'
+  created_at: '2026-05-01 00:00:00'
+  updated_at: '2026-05-01 00:00:00'

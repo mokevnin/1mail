@@ -59,7 +59,7 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 		v := strings.TrimSpace(req.PostalAddress.Value)
 		postal = &v
 	}
-	w, err := h.accounts.UpdateWorkspace(ctx, s, name, postal)
+	w, err := h.accounts.UpdateWorkspace(ctx, s, h.actor(ctx), name, postal)
 	if err != nil {
 		return nil, err
 	}

@@ -18,6 +18,7 @@ type WebhookEndpoint struct {
 func (WebhookEndpoint) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "webhook_endpoints"},
+		Audited{Action: "webhook_endpoint", NameField: "url", NameIsURL: true},
 	}
 }
 
@@ -30,11 +31,15 @@ func (WebhookEndpoint) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
+		// The URL may carry a secret (a token in the path or query), so a diff records
+		// only that it changed, and the name snapshot drops the query and userinfo.
 		field.String("url").
-			NotEmpty(),
+			NotEmpty().
+			Annotations(Sensitive{}),
 		// HMAC signing secret, encrypted at rest via internal/secrets.Cipher.
 		field.String("secret_encrypted").
-			Sensitive(),
+			Sensitive().
+			Annotations(Sensitive{}),
 		// Event names this endpoint subscribes to; empty/nil means all events.
 		field.Strings("event_types").
 			Optional(),

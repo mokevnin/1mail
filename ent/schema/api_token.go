@@ -14,6 +14,7 @@ type ApiToken struct {
 func (ApiToken) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "api_tokens"},
+		Audited{Action: "api_token", NameField: "name"},
 	}
 }
 
@@ -34,7 +35,8 @@ func (ApiToken) Fields() []ent.Field {
 			Immutable(),
 		field.String("secret_hash").
 			NotEmpty().
-			Sensitive(),
+			Sensitive().
+			Annotations(Sensitive{}),
 		field.JSON("scopes", []string{}).
 			Default([]string{}),
 		field.Time("expires_at").

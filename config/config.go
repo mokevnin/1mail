@@ -85,9 +85,11 @@ type Config struct {
 	SMTPPass       string
 	SMTPFrom       string
 	EncryptionKey  string
-	AutoMigrate    bool
-	BodyLimits     BodyLimits
-	RateLimits     RateLimits
+	// LicenseKey is the offline EE license key (ADR 0014). Empty runs the plain core.
+	LicenseKey  string
+	AutoMigrate bool
+	BodyLimits  BodyLimits
+	RateLimits  RateLimits
 	// OutboxFloor is the minimum age of a domain-event outbox row before the
 	// prune job may delete it (OUTBOX_RETENTION_FLOOR_DAYS, default 7; ADR 0019).
 	OutboxFloor time.Duration
@@ -213,6 +215,7 @@ func Load(envName string) (*Config, error) {
 		SMTPPass:       v.GetString("SMTP_PASS"),
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
+		LicenseKey:     v.GetString("LICENSE_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 
 		BodyLimits: BodyLimits{

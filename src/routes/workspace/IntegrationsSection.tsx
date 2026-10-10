@@ -30,6 +30,8 @@ import type {
 } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { AUDIT_TARGET_INTEGRATION } from './auditFilter.ts'
+import { ChangeHistoryLink } from './AuditLogSection.tsx'
 import {
   NO_LIMITS,
   SendLimitFields,
@@ -328,6 +330,11 @@ export function IntegrationsSection({ slug }: { slug: string }) {
                 <Button size="compact-sm" variant="light" onClick={() => setEditing(record)}>
                   {t(($) => $.settings.integrations.limits.edit)}
                 </Button>
+                <ChangeHistoryLink
+                  slug={slug}
+                  targetType={AUDIT_TARGET_INTEGRATION}
+                  targetId={record.id}
+                />
                 <Button
                   size="compact-sm"
                   color="red"

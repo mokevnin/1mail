@@ -75,7 +75,8 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
 	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	mux.Handle("/site/auth/direct/login", throttledLogin)
+	// Audit the login inside the throttle: a throttled attempt never reaches it.
+	mux.Handle("/site/auth/direct/login", loginThrottle(auditLogin(authHandler, site.Accounts), site.Attempts, limiter.LoginIP()))
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
@@ -148,7 +149,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, error) {
 	return externalapi.NewServer(
 		apiexternal.NewHandlers(deps),
-		apiauth.NewExternalSecurityHandler(client),
+		apiauth.NewExternalSecurityHandler(client, deps.Bus),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),
 	)

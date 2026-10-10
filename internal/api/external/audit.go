@@ -1,0 +1,88 @@
+package external
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"github.com/mokevnin/1mail/ent"
+	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/auditapi"
+	"github.com/mokevnin/1mail/internal/events"
+)
+
+const (
+	// auditReadScope gates the Audit log read. It is deliberately absent from the
+	// OAuth grantable scopes, and the operation is hidden from MCP (ADR 0016, 0022).
+	auditReadScope = "audit:read"
+)
+
+// AuditEntriesList reads the Workspace's Audit log, newest first, for a token with
+// the audit:read scope (a SIEM feed). An instance without an Enterprise license
+// answers 402 (ADR 0014, ADR 0022).
+func (h *Handlers) AuditEntriesList(ctx context.Context, params externalapi.AuditEntriesListParams) (externalapi.AuditEntriesListRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), auditReadScope) {
+		res := externalapi.AuditEntriesListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	if h.audit == nil || !h.audit.Licensed() {
+		res := externalapi.AuditEntriesListPaymentRequired(problem(http.StatusPaymentRequired, "the audit log needs an Enterprise license"))
+		return &res, nil
+	}
+
+	cursor, limit, err := auditapi.Page(params.Cursor.Or(""), params.Limit.Or(0), params.Limit.IsSet())
+	if err != nil {
+		res := externalapi.AuditEntriesListBadRequest(problem(http.StatusBadRequest, "invalid cursor"))
+		return &res, nil
+	}
+	filter := events.AuditFilter{
+		From:       time.Time(params.From.Or(externalapi.Timestamp{})),
+		To:         time.Time(params.To.Or(externalapi.Timestamp{})),
+		ActorKind:  string(params.ActorKind.Or("")),
+		ActorID:    params.ActorId.Or(""),
+		Action:     params.Action.Or(""),
+		TargetType: params.TargetType.Or(""),
+		TargetID:   params.TargetId.Or(""),
+		IP:         params.IP.Or(""),
+		RequestID:  params.RequestId.Or(""),
+	}
+
+	rows, next, err := h.audit.Entries(ctx, auth.TokenScoped(ctx), filter, cursor, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := &externalapi.AuditEntryList{Items: make([]externalapi.AuditEntryResource, len(rows))}
+	for i, e := range rows {
+		out.Items[i] = auditEntryResource(e)
+	}
+	if next > 0 {
+		out.NextCursor = externalapi.NewOptNilString(auditapi.NextCursor(next))
+	}
+	return out, nil
+}
+
+func auditEntryResource(e *ent.AuditEntry) externalapi.AuditEntryResource {
+	v := auditapi.ViewOf(e)
+	res := externalapi.AuditEntryResource{
+		ID:         externalapi.EntityId(v.ID),
+		OccurredAt: externalapi.Timestamp(v.OccurredAt),
+		Actor:      externalapi.AuditActor{Kind: externalapi.AuditActorKind(v.ActorKind), ID: nilableString(v.ActorID), Name: nilableString(v.ActorName)},
+		Action:     v.Action,
+		Target:     externalapi.AuditTarget{Type: v.TargetType, ID: nilableString(v.TargetID), Name: nilableString(v.TargetName)},
+		RequestId:  nilableString(v.RequestID),
+		IP:         nilableString(v.IP),
+		UserAgent:  nilableString(v.UserAgent),
+	}
+	if v.Diff != nil {
+		res.Diff = externalapi.NewOptNilAuditEntryResourceDiff(v.Diff)
+	}
+	return res
+}
+
+func nilableString(v *string) externalapi.OptNilString {
+	if v == nil {
+		return externalapi.OptNilString{}
+	}
+	return externalapi.NewOptNilString(*v)
+}

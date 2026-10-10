@@ -22,6 +22,44 @@ func (UnimplementedHandler) SiteAnalyticsOverview(ctx context.Context, params Si
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuditExport implements SiteAudit_export operation.
+//
+// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+// owner and admin only).
+//
+// GET /workspaces/{slug}/audit-entries/export
+func (UnimplementedHandler) SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (r SiteAuditExportRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuditGetRetention implements SiteAudit_getRetention operation.
+//
+// Read the Audit log retention window (Enterprise; owner and admin only).
+//
+// GET /workspaces/{slug}/audit-entries/retention
+func (UnimplementedHandler) SiteAuditGetRetention(ctx context.Context, params SiteAuditGetRetentionParams) (r SiteAuditGetRetentionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuditList implements SiteAudit_list operation.
+//
+// List the workspace's Audit log, newest first (Enterprise; owner and admin only).
+//
+// GET /workspaces/{slug}/audit-entries
+func (UnimplementedHandler) SiteAuditList(ctx context.Context, params SiteAuditListParams) (r SiteAuditListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuditSetRetention implements SiteAudit_setRetention operation.
+//
+// Set or clear the Audit log retention window; recorded as an Audit entry (Enterprise; owner and admin
+// only).
+//
+// PUT /workspaces/{slug}/audit-entries/retention
+func (UnimplementedHandler) SiteAuditSetRetention(ctx context.Context, req *SiteAuditRetention, params SiteAuditSetRetentionParams) (r SiteAuditSetRetentionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 //
 // Confirm an email change from the token sent to the new address. Public: the link is opened from the

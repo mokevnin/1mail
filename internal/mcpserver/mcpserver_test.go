@@ -175,6 +175,17 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	assert.NotEmpty(t, got["contacts_list"].Description)
 }
 
+// The Audit log is not an agent capability (ADR 0016, ADR 0022): even a token that
+// carries audit:read gets no tool for it.
+func TestMCPDoesNotExposeTheAuditLog(t *testing.T) {
+	env := testhelper.Setup(t)
+	got := listedTools(t, env.MCPClient(t, env.ScopedBearer(t, "audit:read")))
+	for name := range got {
+		assert.NotContains(t, name, "audit")
+	}
+	assert.ElementsMatch(t, authoringTools, toolNames(got))
+}
+
 func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write", "contacts:erase"))
