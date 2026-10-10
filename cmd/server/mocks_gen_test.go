@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/mokevnin/sphericon/internal/suspension"
 	"sync"
 )
 
@@ -18,10 +19,10 @@ var _ workspaceOps = &workspaceOpsMock{}
 //
 //		// make and configure a mocked workspaceOps
 //		mockedworkspaceOps := &workspaceOpsMock{
-//			SuspendWorkspaceFunc: func(ctx context.Context, slug string, by string, reason string) (bool, error) {
+//			SuspendWorkspaceFunc: func(ctx context.Context, slug string, by suspension.Actor, reason string) (bool, error) {
 //				panic("mock out the SuspendWorkspace method")
 //			},
-//			UnsuspendWorkspaceFunc: func(ctx context.Context, slug string) (bool, error) {
+//			UnsuspendWorkspaceFunc: func(ctx context.Context, slug string, by suspension.Actor) (bool, error) {
 //				panic("mock out the UnsuspendWorkspace method")
 //			},
 //		}
@@ -32,10 +33,10 @@ var _ workspaceOps = &workspaceOpsMock{}
 //	}
 type workspaceOpsMock struct {
 	// SuspendWorkspaceFunc mocks the SuspendWorkspace method.
-	SuspendWorkspaceFunc func(ctx context.Context, slug string, by string, reason string) (bool, error)
+	SuspendWorkspaceFunc func(ctx context.Context, slug string, by suspension.Actor, reason string) (bool, error)
 
 	// UnsuspendWorkspaceFunc mocks the UnsuspendWorkspace method.
-	UnsuspendWorkspaceFunc func(ctx context.Context, slug string) (bool, error)
+	UnsuspendWorkspaceFunc func(ctx context.Context, slug string, by suspension.Actor) (bool, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -46,7 +47,7 @@ type workspaceOpsMock struct {
 			// Slug is the slug argument value.
 			Slug string
 			// By is the by argument value.
-			By string
+			By suspension.Actor
 			// Reason is the reason argument value.
 			Reason string
 		}
@@ -56,6 +57,8 @@ type workspaceOpsMock struct {
 			Ctx context.Context
 			// Slug is the slug argument value.
 			Slug string
+			// By is the by argument value.
+			By suspension.Actor
 		}
 	}
 	lockSuspendWorkspace   sync.RWMutex
@@ -63,14 +66,14 @@ type workspaceOpsMock struct {
 }
 
 // SuspendWorkspace calls SuspendWorkspaceFunc.
-func (mock *workspaceOpsMock) SuspendWorkspace(ctx context.Context, slug string, by string, reason string) (bool, error) {
+func (mock *workspaceOpsMock) SuspendWorkspace(ctx context.Context, slug string, by suspension.Actor, reason string) (bool, error) {
 	if mock.SuspendWorkspaceFunc == nil {
 		panic("workspaceOpsMock.SuspendWorkspaceFunc: method is nil but workspaceOps.SuspendWorkspace was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
 		Slug   string
-		By     string
+		By     suspension.Actor
 		Reason string
 	}{
 		Ctx:    ctx,
@@ -91,13 +94,13 @@ func (mock *workspaceOpsMock) SuspendWorkspace(ctx context.Context, slug string,
 func (mock *workspaceOpsMock) SuspendWorkspaceCalls() []struct {
 	Ctx    context.Context
 	Slug   string
-	By     string
+	By     suspension.Actor
 	Reason string
 } {
 	var calls []struct {
 		Ctx    context.Context
 		Slug   string
-		By     string
+		By     suspension.Actor
 		Reason string
 	}
 	mock.lockSuspendWorkspace.RLock()
@@ -107,21 +110,23 @@ func (mock *workspaceOpsMock) SuspendWorkspaceCalls() []struct {
 }
 
 // UnsuspendWorkspace calls UnsuspendWorkspaceFunc.
-func (mock *workspaceOpsMock) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error) {
+func (mock *workspaceOpsMock) UnsuspendWorkspace(ctx context.Context, slug string, by suspension.Actor) (bool, error) {
 	if mock.UnsuspendWorkspaceFunc == nil {
 		panic("workspaceOpsMock.UnsuspendWorkspaceFunc: method is nil but workspaceOps.UnsuspendWorkspace was just called")
 	}
 	callInfo := struct {
 		Ctx  context.Context
 		Slug string
+		By   suspension.Actor
 	}{
 		Ctx:  ctx,
 		Slug: slug,
+		By:   by,
 	}
 	mock.lockUnsuspendWorkspace.Lock()
 	mock.calls.UnsuspendWorkspace = append(mock.calls.UnsuspendWorkspace, callInfo)
 	mock.lockUnsuspendWorkspace.Unlock()
-	return mock.UnsuspendWorkspaceFunc(ctx, slug)
+	return mock.UnsuspendWorkspaceFunc(ctx, slug, by)
 }
 
 // UnsuspendWorkspaceCalls gets all the calls that were made to UnsuspendWorkspace.
@@ -131,10 +136,12 @@ func (mock *workspaceOpsMock) UnsuspendWorkspace(ctx context.Context, slug strin
 func (mock *workspaceOpsMock) UnsuspendWorkspaceCalls() []struct {
 	Ctx  context.Context
 	Slug string
+	By   suspension.Actor
 } {
 	var calls []struct {
 		Ctx  context.Context
 		Slug string
+		By   suspension.Actor
 	}
 	mock.lockUnsuspendWorkspace.RLock()
 	calls = mock.calls.UnsuspendWorkspace

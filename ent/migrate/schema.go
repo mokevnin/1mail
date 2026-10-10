@@ -1032,7 +1032,8 @@ var (
 		{Name: "retention_days", Type: field.TypeInt, Nullable: true},
 		{Name: "second_factor_required_at", Type: field.TypeTime, Nullable: true},
 		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
-		{Name: "suspended_by", Type: field.TypeString, Nullable: true},
+		{Name: "suspended_by_kind", Type: field.TypeEnum, Nullable: true, Enums: []string{"system", "cli", "operator"}},
+		{Name: "suspended_by_id", Type: field.TypeString, Nullable: true},
 		{Name: "suspension_reason", Type: field.TypeString, Nullable: true},
 	}
 	// WorkspacesTable holds the schema information for the "workspaces" table.

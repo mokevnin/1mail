@@ -27156,7 +27156,8 @@ type WorkspaceMutation struct {
 	addretention_days           *int
 	second_factor_required_at   *time.Time
 	suspended_at                *time.Time
-	suspended_by                *string
+	suspended_by_kind           *workspace.SuspendedByKind
+	suspended_by_id             *string
 	suspension_reason           *string
 	clearedFields               map[string]struct{}
 	contacts                    map[int64]struct{}
@@ -27806,53 +27807,102 @@ func (m *WorkspaceMutation) ResetSuspendedAt() {
 	delete(m.clearedFields, workspace.FieldSuspendedAt)
 }
 
-// SetSuspendedBy sets the "suspended_by" field.
-func (m *WorkspaceMutation) SetSuspendedBy(s string) {
-	m.suspended_by = &s
+// SetSuspendedByKind sets the "suspended_by_kind" field.
+func (m *WorkspaceMutation) SetSuspendedByKind(wbk workspace.SuspendedByKind) {
+	m.suspended_by_kind = &wbk
 }
 
-// SuspendedBy returns the value of the "suspended_by" field in the mutation.
-func (m *WorkspaceMutation) SuspendedBy() (r string, exists bool) {
-	v := m.suspended_by
+// SuspendedByKind returns the value of the "suspended_by_kind" field in the mutation.
+func (m *WorkspaceMutation) SuspendedByKind() (r workspace.SuspendedByKind, exists bool) {
+	v := m.suspended_by_kind
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSuspendedBy returns the old "suspended_by" field's value of the Workspace entity.
+// OldSuspendedByKind returns the old "suspended_by_kind" field's value of the Workspace entity.
 // If the Workspace object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorkspaceMutation) OldSuspendedBy(ctx context.Context) (v *string, err error) {
+func (m *WorkspaceMutation) OldSuspendedByKind(ctx context.Context) (v *workspace.SuspendedByKind, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSuspendedBy is only allowed on UpdateOne operations")
+		return v, errors.New("OldSuspendedByKind is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSuspendedBy requires an ID field in the mutation")
+		return v, errors.New("OldSuspendedByKind requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSuspendedBy: %w", err)
+		return v, fmt.Errorf("querying old value for OldSuspendedByKind: %w", err)
 	}
-	return oldValue.SuspendedBy, nil
+	return oldValue.SuspendedByKind, nil
 }
 
-// ClearSuspendedBy clears the value of the "suspended_by" field.
-func (m *WorkspaceMutation) ClearSuspendedBy() {
-	m.suspended_by = nil
-	m.clearedFields[workspace.FieldSuspendedBy] = struct{}{}
+// ClearSuspendedByKind clears the value of the "suspended_by_kind" field.
+func (m *WorkspaceMutation) ClearSuspendedByKind() {
+	m.suspended_by_kind = nil
+	m.clearedFields[workspace.FieldSuspendedByKind] = struct{}{}
 }
 
-// SuspendedByCleared returns if the "suspended_by" field was cleared in this mutation.
-func (m *WorkspaceMutation) SuspendedByCleared() bool {
-	_, ok := m.clearedFields[workspace.FieldSuspendedBy]
+// SuspendedByKindCleared returns if the "suspended_by_kind" field was cleared in this mutation.
+func (m *WorkspaceMutation) SuspendedByKindCleared() bool {
+	_, ok := m.clearedFields[workspace.FieldSuspendedByKind]
 	return ok
 }
 
-// ResetSuspendedBy resets all changes to the "suspended_by" field.
-func (m *WorkspaceMutation) ResetSuspendedBy() {
-	m.suspended_by = nil
-	delete(m.clearedFields, workspace.FieldSuspendedBy)
+// ResetSuspendedByKind resets all changes to the "suspended_by_kind" field.
+func (m *WorkspaceMutation) ResetSuspendedByKind() {
+	m.suspended_by_kind = nil
+	delete(m.clearedFields, workspace.FieldSuspendedByKind)
+}
+
+// SetSuspendedByID sets the "suspended_by_id" field.
+func (m *WorkspaceMutation) SetSuspendedByID(s string) {
+	m.suspended_by_id = &s
+}
+
+// SuspendedByID returns the value of the "suspended_by_id" field in the mutation.
+func (m *WorkspaceMutation) SuspendedByID() (r string, exists bool) {
+	v := m.suspended_by_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSuspendedByID returns the old "suspended_by_id" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldSuspendedByID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSuspendedByID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSuspendedByID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSuspendedByID: %w", err)
+	}
+	return oldValue.SuspendedByID, nil
+}
+
+// ClearSuspendedByID clears the value of the "suspended_by_id" field.
+func (m *WorkspaceMutation) ClearSuspendedByID() {
+	m.suspended_by_id = nil
+	m.clearedFields[workspace.FieldSuspendedByID] = struct{}{}
+}
+
+// SuspendedByIDCleared returns if the "suspended_by_id" field was cleared in this mutation.
+func (m *WorkspaceMutation) SuspendedByIDCleared() bool {
+	_, ok := m.clearedFields[workspace.FieldSuspendedByID]
+	return ok
+}
+
+// ResetSuspendedByID resets all changes to the "suspended_by_id" field.
+func (m *WorkspaceMutation) ResetSuspendedByID() {
+	m.suspended_by_id = nil
+	delete(m.clearedFields, workspace.FieldSuspendedByID)
 }
 
 // SetSuspensionReason sets the "suspension_reason" field.
@@ -29180,7 +29230,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, workspace.FieldCreatedAt)
 	}
@@ -29214,8 +29264,11 @@ func (m *WorkspaceMutation) Fields() []string {
 	if m.suspended_at != nil {
 		fields = append(fields, workspace.FieldSuspendedAt)
 	}
-	if m.suspended_by != nil {
-		fields = append(fields, workspace.FieldSuspendedBy)
+	if m.suspended_by_kind != nil {
+		fields = append(fields, workspace.FieldSuspendedByKind)
+	}
+	if m.suspended_by_id != nil {
+		fields = append(fields, workspace.FieldSuspendedByID)
 	}
 	if m.suspension_reason != nil {
 		fields = append(fields, workspace.FieldSuspensionReason)
@@ -29250,8 +29303,10 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.SecondFactorRequiredAt()
 	case workspace.FieldSuspendedAt:
 		return m.SuspendedAt()
-	case workspace.FieldSuspendedBy:
-		return m.SuspendedBy()
+	case workspace.FieldSuspendedByKind:
+		return m.SuspendedByKind()
+	case workspace.FieldSuspendedByID:
+		return m.SuspendedByID()
 	case workspace.FieldSuspensionReason:
 		return m.SuspensionReason()
 	}
@@ -29285,8 +29340,10 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldSecondFactorRequiredAt(ctx)
 	case workspace.FieldSuspendedAt:
 		return m.OldSuspendedAt(ctx)
-	case workspace.FieldSuspendedBy:
-		return m.OldSuspendedBy(ctx)
+	case workspace.FieldSuspendedByKind:
+		return m.OldSuspendedByKind(ctx)
+	case workspace.FieldSuspendedByID:
+		return m.OldSuspendedByID(ctx)
 	case workspace.FieldSuspensionReason:
 		return m.OldSuspensionReason(ctx)
 	}
@@ -29375,12 +29432,19 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSuspendedAt(v)
 		return nil
-	case workspace.FieldSuspendedBy:
+	case workspace.FieldSuspendedByKind:
+		v, ok := value.(workspace.SuspendedByKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSuspendedByKind(v)
+		return nil
+	case workspace.FieldSuspendedByID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetSuspendedBy(v)
+		m.SetSuspendedByID(v)
 		return nil
 	case workspace.FieldSuspensionReason:
 		v, ok := value.(string)
@@ -29446,8 +29510,11 @@ func (m *WorkspaceMutation) ClearedFields() []string {
 	if m.FieldCleared(workspace.FieldSuspendedAt) {
 		fields = append(fields, workspace.FieldSuspendedAt)
 	}
-	if m.FieldCleared(workspace.FieldSuspendedBy) {
-		fields = append(fields, workspace.FieldSuspendedBy)
+	if m.FieldCleared(workspace.FieldSuspendedByKind) {
+		fields = append(fields, workspace.FieldSuspendedByKind)
+	}
+	if m.FieldCleared(workspace.FieldSuspendedByID) {
+		fields = append(fields, workspace.FieldSuspendedByID)
 	}
 	if m.FieldCleared(workspace.FieldSuspensionReason) {
 		fields = append(fields, workspace.FieldSuspensionReason)
@@ -29478,8 +29545,11 @@ func (m *WorkspaceMutation) ClearField(name string) error {
 	case workspace.FieldSuspendedAt:
 		m.ClearSuspendedAt()
 		return nil
-	case workspace.FieldSuspendedBy:
-		m.ClearSuspendedBy()
+	case workspace.FieldSuspendedByKind:
+		m.ClearSuspendedByKind()
+		return nil
+	case workspace.FieldSuspendedByID:
+		m.ClearSuspendedByID()
 		return nil
 	case workspace.FieldSuspensionReason:
 		m.ClearSuspensionReason()
@@ -29525,8 +29595,11 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 	case workspace.FieldSuspendedAt:
 		m.ResetSuspendedAt()
 		return nil
-	case workspace.FieldSuspendedBy:
-		m.ResetSuspendedBy()
+	case workspace.FieldSuspendedByKind:
+		m.ResetSuspendedByKind()
+		return nil
+	case workspace.FieldSuspendedByID:
+		m.ResetSuspendedByID()
 		return nil
 	case workspace.FieldSuspensionReason:
 		m.ResetSuspensionReason()

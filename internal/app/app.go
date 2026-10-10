@@ -457,7 +457,7 @@ func (a *App) runJobs(ctx context.Context) error {
 // owner(s) through the system sender. It reports whether anything changed; an
 // already-suspended Workspace is left as it was and the owner is not told twice. If
 // the notice cannot be sent the suspension still stands and the error says so.
-func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bool, error) {
+func (a *App) SuspendWorkspace(ctx context.Context, slug string, by suspension.Actor, reason string) (bool, error) {
 	client, err := do.Invoke[*entClient](a.injector)
 	if err != nil {
 		return false, err
@@ -485,7 +485,7 @@ func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bo
 }
 
 // UnsuspendWorkspace lifts a Workspace's suspension; held sends resume on their own.
-func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error) {
+func (a *App) UnsuspendWorkspace(ctx context.Context, slug string, by suspension.Actor) (bool, error) {
 	client, err := do.Invoke[*entClient](a.injector)
 	if err != nil {
 		return false, err
@@ -498,7 +498,7 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	return suspension.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
+	return suspension.UnsuspendWorkspace(ctx, bus.Bus, id, by)
 }
 
 // ResetSecondFactor clears the Second factor and Recovery codes of the User with
