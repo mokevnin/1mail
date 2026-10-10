@@ -615,7 +615,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client, bus.Bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 		if err != nil {
 			return nil, err
 		}

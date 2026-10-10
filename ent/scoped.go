@@ -46,9 +46,15 @@ var ErrNotInWorkspace = errors.New("ent: referenced entity is not in the workspa
 
 // Scoped is the entry point to every Workspace-owned entity, confined to one Workspace.
 // Build it from a client or from a transaction's client: `tx.Client().Scoped(ws)`.
+//
+// A scope may carry the Actor of its writes (Scoped.As, scoped_audit.tmpl): writes of
+// entities that opted into the Audit log are then recorded in their own transaction.
 type Scoped struct {
-	c  *Client
-	ws int64
+	c      *Client
+	ws     int64
+	actor  Actor
+	opener AuditOpener
+	pub    AuditPublisher
 }
 
 // Scoped returns the client confined to the given Workspace.
@@ -439,14 +445,48 @@ func (t *ApiTokenScoped) Get(ctx context.Context, id int64) (*ApiToken, error) {
 	return t.Query().Where(apitoken.ID(id)).Only(ctx)
 }
 
+// ApiTokenScopedDeleteOne wraps ApiTokenDeleteOne.
+type ApiTokenScopedDeleteOne struct {
+	s *Scoped
+	b *ApiTokenDeleteOne
+}
+
 // DeleteOneID deletes the ApiToken with the id; a row of another Workspace is not found.
-func (t *ApiTokenScoped) DeleteOneID(id int64) *ApiTokenDeleteOne {
-	return t.s.c.ApiToken.DeleteOneID(id).Where(apitoken.WorkspaceID(t.s.ws))
+func (t *ApiTokenScoped) DeleteOneID(id int64) *ApiTokenScopedDeleteOne {
+	return &ApiTokenScopedDeleteOne{s: t.s, b: t.s.c.ApiToken.DeleteOneID(id).Where(apitoken.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *ApiTokenScopedDeleteOne) Where(ps ...predicate.ApiToken) *ApiTokenScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *ApiTokenScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// ApiTokenScopedDelete wraps ApiTokenDelete.
+type ApiTokenScopedDelete struct {
+	s *Scoped
+	b *ApiTokenDelete
 }
 
 // Delete deletes the ApiToken entities of the Workspace that match the predicates.
-func (t *ApiTokenScoped) Delete() *ApiTokenDelete {
-	return t.s.c.ApiToken.Delete().Where(apitoken.WorkspaceID(t.s.ws))
+func (t *ApiTokenScoped) Delete() *ApiTokenScopedDelete {
+	return &ApiTokenScopedDelete{s: t.s, b: t.s.c.ApiToken.Delete().Where(apitoken.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *ApiTokenScopedDelete) Where(ps ...predicate.ApiToken) *ApiTokenScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *ApiTokenScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -728,6 +768,8 @@ func (t *ApiTokenScoped) conflictOptions(columns []string) []sql.ConflictOption 
 type ApiTokenScopedUpsertOne struct {
 	x *ApiTokenScopedCreate
 	u *ApiTokenUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -751,6 +793,7 @@ func (u *ApiTokenScopedUpsertOne) Ignore() *ApiTokenScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *ApiTokenScopedUpsertOne) DoNothing() *ApiTokenScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -1114,14 +1157,48 @@ func (t *AuditEntryScoped) Get(ctx context.Context, id int64) (*AuditEntry, erro
 	return t.Query().Where(auditentry.ID(id)).Only(ctx)
 }
 
+// AuditEntryScopedDeleteOne wraps AuditEntryDeleteOne.
+type AuditEntryScopedDeleteOne struct {
+	s *Scoped
+	b *AuditEntryDeleteOne
+}
+
 // DeleteOneID deletes the AuditEntry with the id; a row of another Workspace is not found.
-func (t *AuditEntryScoped) DeleteOneID(id int64) *AuditEntryDeleteOne {
-	return t.s.c.AuditEntry.DeleteOneID(id).Where(auditentry.WorkspaceID(t.s.ws))
+func (t *AuditEntryScoped) DeleteOneID(id int64) *AuditEntryScopedDeleteOne {
+	return &AuditEntryScopedDeleteOne{s: t.s, b: t.s.c.AuditEntry.DeleteOneID(id).Where(auditentry.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *AuditEntryScopedDeleteOne) Where(ps ...predicate.AuditEntry) *AuditEntryScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *AuditEntryScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// AuditEntryScopedDelete wraps AuditEntryDelete.
+type AuditEntryScopedDelete struct {
+	s *Scoped
+	b *AuditEntryDelete
 }
 
 // Delete deletes the AuditEntry entities of the Workspace that match the predicates.
-func (t *AuditEntryScoped) Delete() *AuditEntryDelete {
-	return t.s.c.AuditEntry.Delete().Where(auditentry.WorkspaceID(t.s.ws))
+func (t *AuditEntryScoped) Delete() *AuditEntryScopedDelete {
+	return &AuditEntryScopedDelete{s: t.s, b: t.s.c.AuditEntry.Delete().Where(auditentry.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *AuditEntryScopedDelete) Where(ps ...predicate.AuditEntry) *AuditEntryScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *AuditEntryScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -1373,6 +1450,8 @@ func (t *AuditEntryScoped) conflictOptions(columns []string) []sql.ConflictOptio
 type AuditEntryScopedUpsertOne struct {
 	x *AuditEntryScopedCreate
 	u *AuditEntryUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -1396,6 +1475,7 @@ func (u *AuditEntryScopedUpsertOne) Ignore() *AuditEntryScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *AuditEntryScopedUpsertOne) DoNothing() *AuditEntryScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -1579,14 +1659,48 @@ func (t *AutomationScoped) Get(ctx context.Context, id int64) (*Automation, erro
 	return t.Query().Where(automation.ID(id)).Only(ctx)
 }
 
+// AutomationScopedDeleteOne wraps AutomationDeleteOne.
+type AutomationScopedDeleteOne struct {
+	s *Scoped
+	b *AutomationDeleteOne
+}
+
 // DeleteOneID deletes the Automation with the id; a row of another Workspace is not found.
-func (t *AutomationScoped) DeleteOneID(id int64) *AutomationDeleteOne {
-	return t.s.c.Automation.DeleteOneID(id).Where(automation.WorkspaceID(t.s.ws))
+func (t *AutomationScoped) DeleteOneID(id int64) *AutomationScopedDeleteOne {
+	return &AutomationScopedDeleteOne{s: t.s, b: t.s.c.Automation.DeleteOneID(id).Where(automation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *AutomationScopedDeleteOne) Where(ps ...predicate.Automation) *AutomationScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *AutomationScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// AutomationScopedDelete wraps AutomationDelete.
+type AutomationScopedDelete struct {
+	s *Scoped
+	b *AutomationDelete
 }
 
 // Delete deletes the Automation entities of the Workspace that match the predicates.
-func (t *AutomationScoped) Delete() *AutomationDelete {
-	return t.s.c.Automation.Delete().Where(automation.WorkspaceID(t.s.ws))
+func (t *AutomationScoped) Delete() *AutomationScopedDelete {
+	return &AutomationScopedDelete{s: t.s, b: t.s.c.Automation.Delete().Where(automation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *AutomationScopedDelete) Where(ps ...predicate.Automation) *AutomationScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *AutomationScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -1817,6 +1931,8 @@ func (t *AutomationScoped) conflictOptions(columns []string) []sql.ConflictOptio
 type AutomationScopedUpsertOne struct {
 	x *AutomationScopedCreate
 	u *AutomationUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -1840,6 +1956,7 @@ func (u *AutomationScopedUpsertOne) Ignore() *AutomationScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *AutomationScopedUpsertOne) DoNothing() *AutomationScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -2185,14 +2302,48 @@ func (t *AutomationRunScoped) Get(ctx context.Context, id int64) (*AutomationRun
 	return t.Query().Where(automationrun.ID(id)).Only(ctx)
 }
 
+// AutomationRunScopedDeleteOne wraps AutomationRunDeleteOne.
+type AutomationRunScopedDeleteOne struct {
+	s *Scoped
+	b *AutomationRunDeleteOne
+}
+
 // DeleteOneID deletes the AutomationRun with the id; a row of another Workspace is not found.
-func (t *AutomationRunScoped) DeleteOneID(id int64) *AutomationRunDeleteOne {
-	return t.s.c.AutomationRun.DeleteOneID(id).Where(automationrun.WorkspaceID(t.s.ws))
+func (t *AutomationRunScoped) DeleteOneID(id int64) *AutomationRunScopedDeleteOne {
+	return &AutomationRunScopedDeleteOne{s: t.s, b: t.s.c.AutomationRun.DeleteOneID(id).Where(automationrun.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *AutomationRunScopedDeleteOne) Where(ps ...predicate.AutomationRun) *AutomationRunScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *AutomationRunScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// AutomationRunScopedDelete wraps AutomationRunDelete.
+type AutomationRunScopedDelete struct {
+	s *Scoped
+	b *AutomationRunDelete
 }
 
 // Delete deletes the AutomationRun entities of the Workspace that match the predicates.
-func (t *AutomationRunScoped) Delete() *AutomationRunDelete {
-	return t.s.c.AutomationRun.Delete().Where(automationrun.WorkspaceID(t.s.ws))
+func (t *AutomationRunScoped) Delete() *AutomationRunScopedDelete {
+	return &AutomationRunScopedDelete{s: t.s, b: t.s.c.AutomationRun.Delete().Where(automationrun.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *AutomationRunScopedDelete) Where(ps ...predicate.AutomationRun) *AutomationRunScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *AutomationRunScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -2446,6 +2597,8 @@ func (t *AutomationRunScoped) conflictOptions(columns []string) []sql.ConflictOp
 type AutomationRunScopedUpsertOne struct {
 	x *AutomationRunScopedCreate
 	u *AutomationRunUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -2469,6 +2622,7 @@ func (u *AutomationRunScopedUpsertOne) Ignore() *AutomationRunScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *AutomationRunScopedUpsertOne) DoNothing() *AutomationRunScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -2848,14 +3002,48 @@ func (t *BroadcastScoped) Get(ctx context.Context, id int64) (*Broadcast, error)
 	return t.Query().Where(broadcast.ID(id)).Only(ctx)
 }
 
+// BroadcastScopedDeleteOne wraps BroadcastDeleteOne.
+type BroadcastScopedDeleteOne struct {
+	s *Scoped
+	b *BroadcastDeleteOne
+}
+
 // DeleteOneID deletes the Broadcast with the id; a row of another Workspace is not found.
-func (t *BroadcastScoped) DeleteOneID(id int64) *BroadcastDeleteOne {
-	return t.s.c.Broadcast.DeleteOneID(id).Where(broadcast.WorkspaceID(t.s.ws))
+func (t *BroadcastScoped) DeleteOneID(id int64) *BroadcastScopedDeleteOne {
+	return &BroadcastScopedDeleteOne{s: t.s, b: t.s.c.Broadcast.DeleteOneID(id).Where(broadcast.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *BroadcastScopedDeleteOne) Where(ps ...predicate.Broadcast) *BroadcastScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *BroadcastScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// BroadcastScopedDelete wraps BroadcastDelete.
+type BroadcastScopedDelete struct {
+	s *Scoped
+	b *BroadcastDelete
 }
 
 // Delete deletes the Broadcast entities of the Workspace that match the predicates.
-func (t *BroadcastScoped) Delete() *BroadcastDelete {
-	return t.s.c.Broadcast.Delete().Where(broadcast.WorkspaceID(t.s.ws))
+func (t *BroadcastScoped) Delete() *BroadcastScopedDelete {
+	return &BroadcastScopedDelete{s: t.s, b: t.s.c.Broadcast.Delete().Where(broadcast.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *BroadcastScopedDelete) Where(ps ...predicate.Broadcast) *BroadcastScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *BroadcastScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -3534,6 +3722,8 @@ func (t *BroadcastScoped) conflictOptions(columns []string) []sql.ConflictOption
 type BroadcastScopedUpsertOne struct {
 	x *BroadcastScopedCreate
 	u *BroadcastUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -3557,6 +3747,7 @@ func (u *BroadcastScopedUpsertOne) Ignore() *BroadcastScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *BroadcastScopedUpsertOne) DoNothing() *BroadcastScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -4476,14 +4667,48 @@ func (t *BroadcastRecipientScoped) Get(ctx context.Context, id int64) (*Broadcas
 	return t.Query().Where(broadcastrecipient.ID(id)).Only(ctx)
 }
 
+// BroadcastRecipientScopedDeleteOne wraps BroadcastRecipientDeleteOne.
+type BroadcastRecipientScopedDeleteOne struct {
+	s *Scoped
+	b *BroadcastRecipientDeleteOne
+}
+
 // DeleteOneID deletes the BroadcastRecipient with the id; a row of another Workspace is not found.
-func (t *BroadcastRecipientScoped) DeleteOneID(id int64) *BroadcastRecipientDeleteOne {
-	return t.s.c.BroadcastRecipient.DeleteOneID(id).Where(broadcastrecipient.WorkspaceID(t.s.ws))
+func (t *BroadcastRecipientScoped) DeleteOneID(id int64) *BroadcastRecipientScopedDeleteOne {
+	return &BroadcastRecipientScopedDeleteOne{s: t.s, b: t.s.c.BroadcastRecipient.DeleteOneID(id).Where(broadcastrecipient.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *BroadcastRecipientScopedDeleteOne) Where(ps ...predicate.BroadcastRecipient) *BroadcastRecipientScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *BroadcastRecipientScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// BroadcastRecipientScopedDelete wraps BroadcastRecipientDelete.
+type BroadcastRecipientScopedDelete struct {
+	s *Scoped
+	b *BroadcastRecipientDelete
 }
 
 // Delete deletes the BroadcastRecipient entities of the Workspace that match the predicates.
-func (t *BroadcastRecipientScoped) Delete() *BroadcastRecipientDelete {
-	return t.s.c.BroadcastRecipient.Delete().Where(broadcastrecipient.WorkspaceID(t.s.ws))
+func (t *BroadcastRecipientScoped) Delete() *BroadcastRecipientScopedDelete {
+	return &BroadcastRecipientScopedDelete{s: t.s, b: t.s.c.BroadcastRecipient.Delete().Where(broadcastrecipient.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *BroadcastRecipientScopedDelete) Where(ps ...predicate.BroadcastRecipient) *BroadcastRecipientScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *BroadcastRecipientScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -4826,6 +5051,8 @@ func (t *BroadcastRecipientScoped) conflictOptions(columns []string) []sql.Confl
 type BroadcastRecipientScopedUpsertOne struct {
 	x *BroadcastRecipientScopedCreate
 	u *BroadcastRecipientUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -4849,6 +5076,7 @@ func (u *BroadcastRecipientScopedUpsertOne) Ignore() *BroadcastRecipientScopedUp
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *BroadcastRecipientScopedUpsertOne) DoNothing() *BroadcastRecipientScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -5358,14 +5586,48 @@ func (t *ConfirmationScoped) Get(ctx context.Context, id int64) (*Confirmation, 
 	return t.Query().Where(confirmation.ID(id)).Only(ctx)
 }
 
+// ConfirmationScopedDeleteOne wraps ConfirmationDeleteOne.
+type ConfirmationScopedDeleteOne struct {
+	s *Scoped
+	b *ConfirmationDeleteOne
+}
+
 // DeleteOneID deletes the Confirmation with the id; a row of another Workspace is not found.
-func (t *ConfirmationScoped) DeleteOneID(id int64) *ConfirmationDeleteOne {
-	return t.s.c.Confirmation.DeleteOneID(id).Where(confirmation.WorkspaceID(t.s.ws))
+func (t *ConfirmationScoped) DeleteOneID(id int64) *ConfirmationScopedDeleteOne {
+	return &ConfirmationScopedDeleteOne{s: t.s, b: t.s.c.Confirmation.DeleteOneID(id).Where(confirmation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *ConfirmationScopedDeleteOne) Where(ps ...predicate.Confirmation) *ConfirmationScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *ConfirmationScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// ConfirmationScopedDelete wraps ConfirmationDelete.
+type ConfirmationScopedDelete struct {
+	s *Scoped
+	b *ConfirmationDelete
 }
 
 // Delete deletes the Confirmation entities of the Workspace that match the predicates.
-func (t *ConfirmationScoped) Delete() *ConfirmationDelete {
-	return t.s.c.Confirmation.Delete().Where(confirmation.WorkspaceID(t.s.ws))
+func (t *ConfirmationScoped) Delete() *ConfirmationScopedDelete {
+	return &ConfirmationScopedDelete{s: t.s, b: t.s.c.Confirmation.Delete().Where(confirmation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *ConfirmationScopedDelete) Where(ps ...predicate.Confirmation) *ConfirmationScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *ConfirmationScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -5593,6 +5855,8 @@ func (t *ConfirmationScoped) conflictOptions(columns []string) []sql.ConflictOpt
 type ConfirmationScopedUpsertOne struct {
 	x *ConfirmationScopedCreate
 	u *ConfirmationUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -5616,6 +5880,7 @@ func (u *ConfirmationScopedUpsertOne) Ignore() *ConfirmationScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *ConfirmationScopedUpsertOne) DoNothing() *ConfirmationScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -5919,14 +6184,48 @@ func (t *ContactScoped) Get(ctx context.Context, id int64) (*Contact, error) {
 	return t.Query().Where(contact.ID(id)).Only(ctx)
 }
 
+// ContactScopedDeleteOne wraps ContactDeleteOne.
+type ContactScopedDeleteOne struct {
+	s *Scoped
+	b *ContactDeleteOne
+}
+
 // DeleteOneID deletes the Contact with the id; a row of another Workspace is not found.
-func (t *ContactScoped) DeleteOneID(id int64) *ContactDeleteOne {
-	return t.s.c.Contact.DeleteOneID(id).Where(contact.WorkspaceID(t.s.ws))
+func (t *ContactScoped) DeleteOneID(id int64) *ContactScopedDeleteOne {
+	return &ContactScopedDeleteOne{s: t.s, b: t.s.c.Contact.DeleteOneID(id).Where(contact.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *ContactScopedDeleteOne) Where(ps ...predicate.Contact) *ContactScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *ContactScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// ContactScopedDelete wraps ContactDelete.
+type ContactScopedDelete struct {
+	s *Scoped
+	b *ContactDelete
 }
 
 // Delete deletes the Contact entities of the Workspace that match the predicates.
-func (t *ContactScoped) Delete() *ContactDelete {
-	return t.s.c.Contact.Delete().Where(contact.WorkspaceID(t.s.ws))
+func (t *ContactScoped) Delete() *ContactScopedDelete {
+	return &ContactScopedDelete{s: t.s, b: t.s.c.Contact.Delete().Where(contact.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *ContactScopedDelete) Where(ps ...predicate.Contact) *ContactScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *ContactScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -6292,6 +6591,8 @@ func (t *ContactScoped) conflictOptions(columns []string) []sql.ConflictOption {
 type ContactScopedUpsertOne struct {
 	x *ContactScopedCreate
 	u *ContactUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -6315,6 +6616,7 @@ func (u *ContactScopedUpsertOne) Ignore() *ContactScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *ContactScopedUpsertOne) DoNothing() *ContactScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -6870,14 +7172,48 @@ func (t *CustomFieldScoped) Get(ctx context.Context, id int64) (*CustomField, er
 	return t.Query().Where(customfield.ID(id)).Only(ctx)
 }
 
+// CustomFieldScopedDeleteOne wraps CustomFieldDeleteOne.
+type CustomFieldScopedDeleteOne struct {
+	s *Scoped
+	b *CustomFieldDeleteOne
+}
+
 // DeleteOneID deletes the CustomField with the id; a row of another Workspace is not found.
-func (t *CustomFieldScoped) DeleteOneID(id int64) *CustomFieldDeleteOne {
-	return t.s.c.CustomField.DeleteOneID(id).Where(customfield.WorkspaceID(t.s.ws))
+func (t *CustomFieldScoped) DeleteOneID(id int64) *CustomFieldScopedDeleteOne {
+	return &CustomFieldScopedDeleteOne{s: t.s, b: t.s.c.CustomField.DeleteOneID(id).Where(customfield.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *CustomFieldScopedDeleteOne) Where(ps ...predicate.CustomField) *CustomFieldScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *CustomFieldScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// CustomFieldScopedDelete wraps CustomFieldDelete.
+type CustomFieldScopedDelete struct {
+	s *Scoped
+	b *CustomFieldDelete
 }
 
 // Delete deletes the CustomField entities of the Workspace that match the predicates.
-func (t *CustomFieldScoped) Delete() *CustomFieldDelete {
-	return t.s.c.CustomField.Delete().Where(customfield.WorkspaceID(t.s.ws))
+func (t *CustomFieldScoped) Delete() *CustomFieldScopedDelete {
+	return &CustomFieldScopedDelete{s: t.s, b: t.s.c.CustomField.Delete().Where(customfield.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *CustomFieldScopedDelete) Where(ps ...predicate.CustomField) *CustomFieldScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *CustomFieldScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -7069,6 +7405,8 @@ func (t *CustomFieldScoped) conflictOptions(columns []string) []sql.ConflictOpti
 type CustomFieldScopedUpsertOne struct {
 	x *CustomFieldScopedCreate
 	u *CustomFieldUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -7092,6 +7430,7 @@ func (u *CustomFieldScopedUpsertOne) Ignore() *CustomFieldScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *CustomFieldScopedUpsertOne) DoNothing() *CustomFieldScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -7347,14 +7686,48 @@ func (t *EmailTemplateScoped) Get(ctx context.Context, id int64) (*EmailTemplate
 	return t.Query().Where(emailtemplate.ID(id)).Only(ctx)
 }
 
+// EmailTemplateScopedDeleteOne wraps EmailTemplateDeleteOne.
+type EmailTemplateScopedDeleteOne struct {
+	s *Scoped
+	b *EmailTemplateDeleteOne
+}
+
 // DeleteOneID deletes the EmailTemplate with the id; a row of another Workspace is not found.
-func (t *EmailTemplateScoped) DeleteOneID(id int64) *EmailTemplateDeleteOne {
-	return t.s.c.EmailTemplate.DeleteOneID(id).Where(emailtemplate.WorkspaceID(t.s.ws))
+func (t *EmailTemplateScoped) DeleteOneID(id int64) *EmailTemplateScopedDeleteOne {
+	return &EmailTemplateScopedDeleteOne{s: t.s, b: t.s.c.EmailTemplate.DeleteOneID(id).Where(emailtemplate.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *EmailTemplateScopedDeleteOne) Where(ps ...predicate.EmailTemplate) *EmailTemplateScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *EmailTemplateScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// EmailTemplateScopedDelete wraps EmailTemplateDelete.
+type EmailTemplateScopedDelete struct {
+	s *Scoped
+	b *EmailTemplateDelete
 }
 
 // Delete deletes the EmailTemplate entities of the Workspace that match the predicates.
-func (t *EmailTemplateScoped) Delete() *EmailTemplateDelete {
-	return t.s.c.EmailTemplate.Delete().Where(emailtemplate.WorkspaceID(t.s.ws))
+func (t *EmailTemplateScoped) Delete() *EmailTemplateScopedDelete {
+	return &EmailTemplateScopedDelete{s: t.s, b: t.s.c.EmailTemplate.Delete().Where(emailtemplate.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *EmailTemplateScopedDelete) Where(ps ...predicate.EmailTemplate) *EmailTemplateScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *EmailTemplateScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -7552,6 +7925,8 @@ func (t *EmailTemplateScoped) conflictOptions(columns []string) []sql.ConflictOp
 type EmailTemplateScopedUpsertOne struct {
 	x *EmailTemplateScopedCreate
 	u *EmailTemplateUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -7575,6 +7950,7 @@ func (u *EmailTemplateScopedUpsertOne) Ignore() *EmailTemplateScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *EmailTemplateScopedUpsertOne) DoNothing() *EmailTemplateScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -7830,14 +8206,48 @@ func (t *EventScoped) Get(ctx context.Context, id int64) (*Event, error) {
 	return t.Query().Where(event.ID(id)).Only(ctx)
 }
 
+// EventScopedDeleteOne wraps EventDeleteOne.
+type EventScopedDeleteOne struct {
+	s *Scoped
+	b *EventDeleteOne
+}
+
 // DeleteOneID deletes the Event with the id; a row of another Workspace is not found.
-func (t *EventScoped) DeleteOneID(id int64) *EventDeleteOne {
-	return t.s.c.Event.DeleteOneID(id).Where(event.WorkspaceID(t.s.ws))
+func (t *EventScoped) DeleteOneID(id int64) *EventScopedDeleteOne {
+	return &EventScopedDeleteOne{s: t.s, b: t.s.c.Event.DeleteOneID(id).Where(event.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *EventScopedDeleteOne) Where(ps ...predicate.Event) *EventScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *EventScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// EventScopedDelete wraps EventDelete.
+type EventScopedDelete struct {
+	s *Scoped
+	b *EventDelete
 }
 
 // Delete deletes the Event entities of the Workspace that match the predicates.
-func (t *EventScoped) Delete() *EventDelete {
-	return t.s.c.Event.Delete().Where(event.WorkspaceID(t.s.ws))
+func (t *EventScoped) Delete() *EventScopedDelete {
+	return &EventScopedDelete{s: t.s, b: t.s.c.Event.Delete().Where(event.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *EventScopedDelete) Where(ps ...predicate.Event) *EventScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *EventScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -8227,6 +8637,8 @@ func (t *EventScoped) conflictOptions(columns []string) []sql.ConflictOption {
 type EventScopedUpsertOne struct {
 	x *EventScopedCreate
 	u *EventUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -8250,6 +8662,7 @@ func (u *EventScopedUpsertOne) Ignore() *EventScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *EventScopedUpsertOne) DoNothing() *EventScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -8745,14 +9158,48 @@ func (t *IntegrationScoped) Get(ctx context.Context, id int64) (*Integration, er
 	return t.Query().Where(integration.ID(id)).Only(ctx)
 }
 
+// IntegrationScopedDeleteOne wraps IntegrationDeleteOne.
+type IntegrationScopedDeleteOne struct {
+	s *Scoped
+	b *IntegrationDeleteOne
+}
+
 // DeleteOneID deletes the Integration with the id; a row of another Workspace is not found.
-func (t *IntegrationScoped) DeleteOneID(id int64) *IntegrationDeleteOne {
-	return t.s.c.Integration.DeleteOneID(id).Where(integration.WorkspaceID(t.s.ws))
+func (t *IntegrationScoped) DeleteOneID(id int64) *IntegrationScopedDeleteOne {
+	return &IntegrationScopedDeleteOne{s: t.s, b: t.s.c.Integration.DeleteOneID(id).Where(integration.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *IntegrationScopedDeleteOne) Where(ps ...predicate.Integration) *IntegrationScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *IntegrationScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// IntegrationScopedDelete wraps IntegrationDelete.
+type IntegrationScopedDelete struct {
+	s *Scoped
+	b *IntegrationDelete
 }
 
 // Delete deletes the Integration entities of the Workspace that match the predicates.
-func (t *IntegrationScoped) Delete() *IntegrationDelete {
-	return t.s.c.Integration.Delete().Where(integration.WorkspaceID(t.s.ws))
+func (t *IntegrationScoped) Delete() *IntegrationScopedDelete {
+	return &IntegrationScopedDelete{s: t.s, b: t.s.c.Integration.Delete().Where(integration.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *IntegrationScopedDelete) Where(ps ...predicate.Integration) *IntegrationScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *IntegrationScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -9010,6 +9457,8 @@ func (t *IntegrationScoped) conflictOptions(columns []string) []sql.ConflictOpti
 type IntegrationScopedUpsertOne struct {
 	x *IntegrationScopedCreate
 	u *IntegrationUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -9033,6 +9482,7 @@ func (u *IntegrationScopedUpsertOne) Ignore() *IntegrationScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *IntegrationScopedUpsertOne) DoNothing() *IntegrationScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -9360,14 +9810,48 @@ func (t *InvitationScoped) Get(ctx context.Context, id int64) (*Invitation, erro
 	return t.Query().Where(invitation.ID(id)).Only(ctx)
 }
 
+// InvitationScopedDeleteOne wraps InvitationDeleteOne.
+type InvitationScopedDeleteOne struct {
+	s *Scoped
+	b *InvitationDeleteOne
+}
+
 // DeleteOneID deletes the Invitation with the id; a row of another Workspace is not found.
-func (t *InvitationScoped) DeleteOneID(id int64) *InvitationDeleteOne {
-	return t.s.c.Invitation.DeleteOneID(id).Where(invitation.WorkspaceID(t.s.ws))
+func (t *InvitationScoped) DeleteOneID(id int64) *InvitationScopedDeleteOne {
+	return &InvitationScopedDeleteOne{s: t.s, b: t.s.c.Invitation.DeleteOneID(id).Where(invitation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *InvitationScopedDeleteOne) Where(ps ...predicate.Invitation) *InvitationScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *InvitationScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// InvitationScopedDelete wraps InvitationDelete.
+type InvitationScopedDelete struct {
+	s *Scoped
+	b *InvitationDelete
 }
 
 // Delete deletes the Invitation entities of the Workspace that match the predicates.
-func (t *InvitationScoped) Delete() *InvitationDelete {
-	return t.s.c.Invitation.Delete().Where(invitation.WorkspaceID(t.s.ws))
+func (t *InvitationScoped) Delete() *InvitationScopedDelete {
+	return &InvitationScopedDelete{s: t.s, b: t.s.c.Invitation.Delete().Where(invitation.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *InvitationScopedDelete) Where(ps ...predicate.Invitation) *InvitationScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *InvitationScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -9649,6 +10133,8 @@ func (t *InvitationScoped) conflictOptions(columns []string) []sql.ConflictOptio
 type InvitationScopedUpsertOne struct {
 	x *InvitationScopedCreate
 	u *InvitationUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -9672,6 +10158,7 @@ func (u *InvitationScopedUpsertOne) Ignore() *InvitationScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *InvitationScopedUpsertOne) DoNothing() *InvitationScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -10071,14 +10558,48 @@ func (t *MembershipScoped) Get(ctx context.Context, id int64) (*Membership, erro
 	return t.Query().Where(membership.ID(id)).Only(ctx)
 }
 
+// MembershipScopedDeleteOne wraps MembershipDeleteOne.
+type MembershipScopedDeleteOne struct {
+	s *Scoped
+	b *MembershipDeleteOne
+}
+
 // DeleteOneID deletes the Membership with the id; a row of another Workspace is not found.
-func (t *MembershipScoped) DeleteOneID(id int64) *MembershipDeleteOne {
-	return t.s.c.Membership.DeleteOneID(id).Where(membership.WorkspaceID(t.s.ws))
+func (t *MembershipScoped) DeleteOneID(id int64) *MembershipScopedDeleteOne {
+	return &MembershipScopedDeleteOne{s: t.s, b: t.s.c.Membership.DeleteOneID(id).Where(membership.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *MembershipScopedDeleteOne) Where(ps ...predicate.Membership) *MembershipScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *MembershipScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// MembershipScopedDelete wraps MembershipDelete.
+type MembershipScopedDelete struct {
+	s *Scoped
+	b *MembershipDelete
 }
 
 // Delete deletes the Membership entities of the Workspace that match the predicates.
-func (t *MembershipScoped) Delete() *MembershipDelete {
-	return t.s.c.Membership.Delete().Where(membership.WorkspaceID(t.s.ws))
+func (t *MembershipScoped) Delete() *MembershipScopedDelete {
+	return &MembershipScopedDelete{s: t.s, b: t.s.c.Membership.Delete().Where(membership.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *MembershipScopedDelete) Where(ps ...predicate.Membership) *MembershipScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *MembershipScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -10252,6 +10773,8 @@ func (t *MembershipScoped) conflictOptions(columns []string) []sql.ConflictOptio
 type MembershipScopedUpsertOne struct {
 	x *MembershipScopedCreate
 	u *MembershipUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -10275,6 +10798,7 @@ func (u *MembershipScopedUpsertOne) Ignore() *MembershipScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *MembershipScopedUpsertOne) DoNothing() *MembershipScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -10530,14 +11054,48 @@ func (t *OutboundMessageScoped) Get(ctx context.Context, id int64) (*OutboundMes
 	return t.Query().Where(outboundmessage.ID(id)).Only(ctx)
 }
 
+// OutboundMessageScopedDeleteOne wraps OutboundMessageDeleteOne.
+type OutboundMessageScopedDeleteOne struct {
+	s *Scoped
+	b *OutboundMessageDeleteOne
+}
+
 // DeleteOneID deletes the OutboundMessage with the id; a row of another Workspace is not found.
-func (t *OutboundMessageScoped) DeleteOneID(id int64) *OutboundMessageDeleteOne {
-	return t.s.c.OutboundMessage.DeleteOneID(id).Where(outboundmessage.WorkspaceID(t.s.ws))
+func (t *OutboundMessageScoped) DeleteOneID(id int64) *OutboundMessageScopedDeleteOne {
+	return &OutboundMessageScopedDeleteOne{s: t.s, b: t.s.c.OutboundMessage.DeleteOneID(id).Where(outboundmessage.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *OutboundMessageScopedDeleteOne) Where(ps ...predicate.OutboundMessage) *OutboundMessageScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *OutboundMessageScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// OutboundMessageScopedDelete wraps OutboundMessageDelete.
+type OutboundMessageScopedDelete struct {
+	s *Scoped
+	b *OutboundMessageDelete
 }
 
 // Delete deletes the OutboundMessage entities of the Workspace that match the predicates.
-func (t *OutboundMessageScoped) Delete() *OutboundMessageDelete {
-	return t.s.c.OutboundMessage.Delete().Where(outboundmessage.WorkspaceID(t.s.ws))
+func (t *OutboundMessageScoped) Delete() *OutboundMessageScopedDelete {
+	return &OutboundMessageScopedDelete{s: t.s, b: t.s.c.OutboundMessage.Delete().Where(outboundmessage.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *OutboundMessageScopedDelete) Where(ps ...predicate.OutboundMessage) *OutboundMessageScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *OutboundMessageScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -11131,6 +11689,8 @@ func (t *OutboundMessageScoped) conflictOptions(columns []string) []sql.Conflict
 type OutboundMessageScopedUpsertOne struct {
 	x *OutboundMessageScopedCreate
 	u *OutboundMessageUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -11154,6 +11714,7 @@ func (u *OutboundMessageScopedUpsertOne) Ignore() *OutboundMessageScopedUpsertOn
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *OutboundMessageScopedUpsertOne) DoNothing() *OutboundMessageScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -12009,14 +12570,48 @@ func (t *SegmentScoped) Get(ctx context.Context, id int64) (*Segment, error) {
 	return t.Query().Where(segment.ID(id)).Only(ctx)
 }
 
+// SegmentScopedDeleteOne wraps SegmentDeleteOne.
+type SegmentScopedDeleteOne struct {
+	s *Scoped
+	b *SegmentDeleteOne
+}
+
 // DeleteOneID deletes the Segment with the id; a row of another Workspace is not found.
-func (t *SegmentScoped) DeleteOneID(id int64) *SegmentDeleteOne {
-	return t.s.c.Segment.DeleteOneID(id).Where(segment.WorkspaceID(t.s.ws))
+func (t *SegmentScoped) DeleteOneID(id int64) *SegmentScopedDeleteOne {
+	return &SegmentScopedDeleteOne{s: t.s, b: t.s.c.Segment.DeleteOneID(id).Where(segment.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *SegmentScopedDeleteOne) Where(ps ...predicate.Segment) *SegmentScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *SegmentScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// SegmentScopedDelete wraps SegmentDelete.
+type SegmentScopedDelete struct {
+	s *Scoped
+	b *SegmentDelete
 }
 
 // Delete deletes the Segment entities of the Workspace that match the predicates.
-func (t *SegmentScoped) Delete() *SegmentDelete {
-	return t.s.c.Segment.Delete().Where(segment.WorkspaceID(t.s.ws))
+func (t *SegmentScoped) Delete() *SegmentScopedDelete {
+	return &SegmentScopedDelete{s: t.s, b: t.s.c.Segment.Delete().Where(segment.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *SegmentScopedDelete) Where(ps ...predicate.Segment) *SegmentScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *SegmentScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -12196,6 +12791,8 @@ func (t *SegmentScoped) conflictOptions(columns []string) []sql.ConflictOption {
 type SegmentScopedUpsertOne struct {
 	x *SegmentScopedCreate
 	u *SegmentUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -12219,6 +12816,7 @@ func (u *SegmentScopedUpsertOne) Ignore() *SegmentScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *SegmentScopedUpsertOne) DoNothing() *SegmentScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -12462,14 +13060,48 @@ func (t *SendingDomainScoped) Get(ctx context.Context, id int64) (*SendingDomain
 	return t.Query().Where(sendingdomain.ID(id)).Only(ctx)
 }
 
+// SendingDomainScopedDeleteOne wraps SendingDomainDeleteOne.
+type SendingDomainScopedDeleteOne struct {
+	s *Scoped
+	b *SendingDomainDeleteOne
+}
+
 // DeleteOneID deletes the SendingDomain with the id; a row of another Workspace is not found.
-func (t *SendingDomainScoped) DeleteOneID(id int64) *SendingDomainDeleteOne {
-	return t.s.c.SendingDomain.DeleteOneID(id).Where(sendingdomain.WorkspaceID(t.s.ws))
+func (t *SendingDomainScoped) DeleteOneID(id int64) *SendingDomainScopedDeleteOne {
+	return &SendingDomainScopedDeleteOne{s: t.s, b: t.s.c.SendingDomain.DeleteOneID(id).Where(sendingdomain.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *SendingDomainScopedDeleteOne) Where(ps ...predicate.SendingDomain) *SendingDomainScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *SendingDomainScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// SendingDomainScopedDelete wraps SendingDomainDelete.
+type SendingDomainScopedDelete struct {
+	s *Scoped
+	b *SendingDomainDelete
 }
 
 // Delete deletes the SendingDomain entities of the Workspace that match the predicates.
-func (t *SendingDomainScoped) Delete() *SendingDomainDelete {
-	return t.s.c.SendingDomain.Delete().Where(sendingdomain.WorkspaceID(t.s.ws))
+func (t *SendingDomainScoped) Delete() *SendingDomainScopedDelete {
+	return &SendingDomainScopedDelete{s: t.s, b: t.s.c.SendingDomain.Delete().Where(sendingdomain.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *SendingDomainScopedDelete) Where(ps ...predicate.SendingDomain) *SendingDomainScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *SendingDomainScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -12757,6 +13389,8 @@ func (t *SendingDomainScoped) conflictOptions(columns []string) []sql.ConflictOp
 type SendingDomainScopedUpsertOne struct {
 	x *SendingDomainScopedCreate
 	u *SendingDomainUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -12780,6 +13414,7 @@ func (u *SendingDomainScopedUpsertOne) Ignore() *SendingDomainScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *SendingDomainScopedUpsertOne) DoNothing() *SendingDomainScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -13155,14 +13790,48 @@ func (t *SuppressionScoped) Get(ctx context.Context, id int64) (*Suppression, er
 	return t.Query().Where(suppression.ID(id)).Only(ctx)
 }
 
+// SuppressionScopedDeleteOne wraps SuppressionDeleteOne.
+type SuppressionScopedDeleteOne struct {
+	s *Scoped
+	b *SuppressionDeleteOne
+}
+
 // DeleteOneID deletes the Suppression with the id; a row of another Workspace is not found.
-func (t *SuppressionScoped) DeleteOneID(id int64) *SuppressionDeleteOne {
-	return t.s.c.Suppression.DeleteOneID(id).Where(suppression.WorkspaceID(t.s.ws))
+func (t *SuppressionScoped) DeleteOneID(id int64) *SuppressionScopedDeleteOne {
+	return &SuppressionScopedDeleteOne{s: t.s, b: t.s.c.Suppression.DeleteOneID(id).Where(suppression.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *SuppressionScopedDeleteOne) Where(ps ...predicate.Suppression) *SuppressionScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *SuppressionScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// SuppressionScopedDelete wraps SuppressionDelete.
+type SuppressionScopedDelete struct {
+	s *Scoped
+	b *SuppressionDelete
 }
 
 // Delete deletes the Suppression entities of the Workspace that match the predicates.
-func (t *SuppressionScoped) Delete() *SuppressionDelete {
-	return t.s.c.Suppression.Delete().Where(suppression.WorkspaceID(t.s.ws))
+func (t *SuppressionScoped) Delete() *SuppressionScopedDelete {
+	return &SuppressionScopedDelete{s: t.s, b: t.s.c.Suppression.Delete().Where(suppression.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *SuppressionScopedDelete) Where(ps ...predicate.Suppression) *SuppressionScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *SuppressionScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -13396,6 +14065,8 @@ func (t *SuppressionScoped) conflictOptions(columns []string) []sql.ConflictOpti
 type SuppressionScopedUpsertOne struct {
 	x *SuppressionScopedCreate
 	u *SuppressionUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -13419,6 +14090,7 @@ func (u *SuppressionScopedUpsertOne) Ignore() *SuppressionScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *SuppressionScopedUpsertOne) DoNothing() *SuppressionScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -13722,14 +14394,81 @@ func (t *TagScoped) Get(ctx context.Context, id int64) (*Tag, error) {
 	return t.Query().Where(tag.ID(id)).Only(ctx)
 }
 
+// TagScopedDeleteOne wraps TagDeleteOne.
+type TagScopedDeleteOne struct {
+	s *Scoped
+	b *TagDeleteOne
+}
+
 // DeleteOneID deletes the Tag with the id; a row of another Workspace is not found.
-func (t *TagScoped) DeleteOneID(id int64) *TagDeleteOne {
-	return t.s.c.Tag.DeleteOneID(id).Where(tag.WorkspaceID(t.s.ws))
+func (t *TagScoped) DeleteOneID(id int64) *TagScopedDeleteOne {
+	return &TagScopedDeleteOne{s: t.s, b: t.s.c.Tag.DeleteOneID(id).Where(tag.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *TagScopedDeleteOne) Where(ps ...predicate.Tag) *TagScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *TagScopedDeleteOne) Exec(ctx context.Context) error {
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.Tag.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeTag("delete", before, nil))
+		})
+	}
+	return x.b.Exec(ctx)
+}
+
+// TagScopedDelete wraps TagDelete.
+type TagScopedDelete struct {
+	s *Scoped
+	b *TagDelete
 }
 
 // Delete deletes the Tag entities of the Workspace that match the predicates.
-func (t *TagScoped) Delete() *TagDelete {
-	return t.s.c.Tag.Delete().Where(tag.WorkspaceID(t.s.ws))
+func (t *TagScoped) Delete() *TagScopedDelete {
+	return &TagScopedDelete{s: t.s, b: t.s.c.Tag.Delete().Where(tag.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *TagScopedDelete) Where(ps ...predicate.Tag) *TagScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *TagScopedDelete) Exec(ctx context.Context) (int, error) {
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.Tag.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChangeTag("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -13801,6 +14540,18 @@ func (x *TagScopedCreate) Save(ctx context.Context) (*Tag, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var created *Tag
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeTag("create", nil, created))
+		})
+		return created, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -13842,6 +14593,23 @@ func (b *TagScopedCreateBulk) Save(ctx context.Context) ([]*Tag, error) {
 	raw, err := b.raw(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if b.s.auditing() {
+		var created []*Tag
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChangeTag("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
 	}
 	return raw.Save(ctx)
 }
@@ -13894,6 +14662,8 @@ func (t *TagScoped) conflictOptions(columns []string) []sql.ConflictOption {
 type TagScopedUpsertOne struct {
 	x *TagScopedCreate
 	u *TagUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -13917,6 +14687,7 @@ func (u *TagScopedUpsertOne) Ignore() *TagScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *TagScopedUpsertOne) DoNothing() *TagScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -13931,6 +14702,10 @@ func (u *TagScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
 	return u.u.Exec(ctx)
 }
 
@@ -13939,7 +14714,32 @@ func (u *TagScopedUpsertOne) ID(ctx context.Context) (int64, error) {
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
 	return u.u.ID(ctx)
+}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *TagScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.Tag.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChangeTag("create", nil, row))
+	})
+	return id, err
 }
 
 // TagScopedUpsertBulk is the "upsert" of several Tag entities.
@@ -13984,6 +14784,9 @@ func (u *TagScopedUpsertBulk) Update(set func(*TagScopedUpsert)) *TagScopedUpser
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *TagScopedUpsertBulk) Exec(ctx context.Context) error {
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -14076,6 +14879,22 @@ func (x *TagScopedUpdateOne) Save(ctx context.Context) (*Tag, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var updated *Tag
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.Tag.Query().Where(x.b.mutation.predicates...).Where(tag.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeTag("update", before, updated))
+		})
+		return updated, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -14165,6 +14984,40 @@ func (x *TagScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
 	}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.Tag.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.Tag.Query().Where(tag.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*Tag, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChangeTag("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -14190,14 +15043,48 @@ func (t *UnsubscribeScoped) Get(ctx context.Context, id int64) (*Unsubscribe, er
 	return t.Query().Where(unsubscribe.ID(id)).Only(ctx)
 }
 
+// UnsubscribeScopedDeleteOne wraps UnsubscribeDeleteOne.
+type UnsubscribeScopedDeleteOne struct {
+	s *Scoped
+	b *UnsubscribeDeleteOne
+}
+
 // DeleteOneID deletes the Unsubscribe with the id; a row of another Workspace is not found.
-func (t *UnsubscribeScoped) DeleteOneID(id int64) *UnsubscribeDeleteOne {
-	return t.s.c.Unsubscribe.DeleteOneID(id).Where(unsubscribe.WorkspaceID(t.s.ws))
+func (t *UnsubscribeScoped) DeleteOneID(id int64) *UnsubscribeScopedDeleteOne {
+	return &UnsubscribeScopedDeleteOne{s: t.s, b: t.s.c.Unsubscribe.DeleteOneID(id).Where(unsubscribe.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *UnsubscribeScopedDeleteOne) Where(ps ...predicate.Unsubscribe) *UnsubscribeScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *UnsubscribeScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// UnsubscribeScopedDelete wraps UnsubscribeDelete.
+type UnsubscribeScopedDelete struct {
+	s *Scoped
+	b *UnsubscribeDelete
 }
 
 // Delete deletes the Unsubscribe entities of the Workspace that match the predicates.
-func (t *UnsubscribeScoped) Delete() *UnsubscribeDelete {
-	return t.s.c.Unsubscribe.Delete().Where(unsubscribe.WorkspaceID(t.s.ws))
+func (t *UnsubscribeScoped) Delete() *UnsubscribeScopedDelete {
+	return &UnsubscribeScopedDelete{s: t.s, b: t.s.c.Unsubscribe.Delete().Where(unsubscribe.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *UnsubscribeScopedDelete) Where(ps ...predicate.Unsubscribe) *UnsubscribeScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *UnsubscribeScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -14418,6 +15305,8 @@ func (t *UnsubscribeScoped) conflictOptions(columns []string) []sql.ConflictOpti
 type UnsubscribeScopedUpsertOne struct {
 	x *UnsubscribeScopedCreate
 	u *UnsubscribeUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -14441,6 +15330,7 @@ func (u *UnsubscribeScopedUpsertOne) Ignore() *UnsubscribeScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *UnsubscribeScopedUpsertOne) DoNothing() *UnsubscribeScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -14754,14 +15644,48 @@ func (t *VisitorScoped) Get(ctx context.Context, id int64) (*Visitor, error) {
 	return t.Query().Where(visitor.ID(id)).Only(ctx)
 }
 
+// VisitorScopedDeleteOne wraps VisitorDeleteOne.
+type VisitorScopedDeleteOne struct {
+	s *Scoped
+	b *VisitorDeleteOne
+}
+
 // DeleteOneID deletes the Visitor with the id; a row of another Workspace is not found.
-func (t *VisitorScoped) DeleteOneID(id int64) *VisitorDeleteOne {
-	return t.s.c.Visitor.DeleteOneID(id).Where(visitor.WorkspaceID(t.s.ws))
+func (t *VisitorScoped) DeleteOneID(id int64) *VisitorScopedDeleteOne {
+	return &VisitorScopedDeleteOne{s: t.s, b: t.s.c.Visitor.DeleteOneID(id).Where(visitor.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *VisitorScopedDeleteOne) Where(ps ...predicate.Visitor) *VisitorScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *VisitorScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// VisitorScopedDelete wraps VisitorDelete.
+type VisitorScopedDelete struct {
+	s *Scoped
+	b *VisitorDelete
 }
 
 // Delete deletes the Visitor entities of the Workspace that match the predicates.
-func (t *VisitorScoped) Delete() *VisitorDelete {
-	return t.s.c.Visitor.Delete().Where(visitor.WorkspaceID(t.s.ws))
+func (t *VisitorScoped) Delete() *VisitorScopedDelete {
+	return &VisitorScopedDelete{s: t.s, b: t.s.c.Visitor.Delete().Where(visitor.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *VisitorScopedDelete) Where(ps ...predicate.Visitor) *VisitorScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *VisitorScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -14968,6 +15892,8 @@ func (t *VisitorScoped) conflictOptions(columns []string) []sql.ConflictOption {
 type VisitorScopedUpsertOne struct {
 	x *VisitorScopedCreate
 	u *VisitorUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -14991,6 +15917,7 @@ func (u *VisitorScopedUpsertOne) Ignore() *VisitorScopedUpsertOne {
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *VisitorScopedUpsertOne) DoNothing() *VisitorScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 
@@ -15288,14 +16215,48 @@ func (t *WebhookEndpointScoped) Get(ctx context.Context, id int64) (*WebhookEndp
 	return t.Query().Where(webhookendpoint.ID(id)).Only(ctx)
 }
 
+// WebhookEndpointScopedDeleteOne wraps WebhookEndpointDeleteOne.
+type WebhookEndpointScopedDeleteOne struct {
+	s *Scoped
+	b *WebhookEndpointDeleteOne
+}
+
 // DeleteOneID deletes the WebhookEndpoint with the id; a row of another Workspace is not found.
-func (t *WebhookEndpointScoped) DeleteOneID(id int64) *WebhookEndpointDeleteOne {
-	return t.s.c.WebhookEndpoint.DeleteOneID(id).Where(webhookendpoint.WorkspaceID(t.s.ws))
+func (t *WebhookEndpointScoped) DeleteOneID(id int64) *WebhookEndpointScopedDeleteOne {
+	return &WebhookEndpointScopedDeleteOne{s: t.s, b: t.s.c.WebhookEndpoint.DeleteOneID(id).Where(webhookendpoint.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *WebhookEndpointScopedDeleteOne) Where(ps ...predicate.WebhookEndpoint) *WebhookEndpointScopedDeleteOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the row; a missing row is a NotFoundError.
+func (x *WebhookEndpointScopedDeleteOne) Exec(ctx context.Context) error {
+	return x.b.Exec(ctx)
+}
+
+// WebhookEndpointScopedDelete wraps WebhookEndpointDelete.
+type WebhookEndpointScopedDelete struct {
+	s *Scoped
+	b *WebhookEndpointDelete
 }
 
 // Delete deletes the WebhookEndpoint entities of the Workspace that match the predicates.
-func (t *WebhookEndpointScoped) Delete() *WebhookEndpointDelete {
-	return t.s.c.WebhookEndpoint.Delete().Where(webhookendpoint.WorkspaceID(t.s.ws))
+func (t *WebhookEndpointScoped) Delete() *WebhookEndpointScopedDelete {
+	return &WebhookEndpointScopedDelete{s: t.s, b: t.s.c.WebhookEndpoint.Delete().Where(webhookendpoint.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *WebhookEndpointScopedDelete) Where(ps ...predicate.WebhookEndpoint) *WebhookEndpointScopedDelete {
+	x.b.Where(ps...)
+	return x
+}
+
+// Exec deletes the rows and returns how many were deleted.
+func (x *WebhookEndpointScopedDelete) Exec(ctx context.Context) (int, error) {
+	return x.b.Exec(ctx)
 }
 
 // ---------------------------------------------------------------- create
@@ -15511,6 +16472,8 @@ func (t *WebhookEndpointScoped) conflictOptions(columns []string) []sql.Conflict
 type WebhookEndpointScopedUpsertOne struct {
 	x *WebhookEndpointScopedCreate
 	u *WebhookEndpointUpsertOne
+	// doNothing: the conflict action is DO NOTHING (the only upsert an audited entity allows).
+	doNothing bool
 }
 
 // OnConflictColumns configures the columns as conflict target. A conflicting row of
@@ -15534,6 +16497,7 @@ func (u *WebhookEndpointScopedUpsertOne) Ignore() *WebhookEndpointScopedUpsertOn
 // DoNothing configures the conflict_action to `DO NOTHING`.
 func (u *WebhookEndpointScopedUpsertOne) DoNothing() *WebhookEndpointScopedUpsertOne {
 	u.u.DoNothing()
+	u.doNothing = true
 	return u
 }
 

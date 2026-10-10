@@ -42,11 +42,16 @@ func New(client *ent.Client, bus *events.Bus) *Accounts {
 func (a *Accounts) Scope(ctx context.Context, userID int64, slug string) (*ent.Scoped, membership.Role, error) {
 	m, err := a.ent.Membership.Query().
 		Where(membership.UserID(userID), membership.HasWorkspaceWith(workspace.Slug(slug))).
+		WithUser().
 		Only(ctx)
 	if err != nil {
 		return nil, "", err
 	}
-	return a.ent.Scoped(m.WorkspaceID), m.Role, nil
+	actor := events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(userID, 10)}
+	if u := m.Edges.User; u != nil {
+		actor.Name = u.Name
+	}
+	return a.bus.Act(a.ent.Scoped(m.WorkspaceID), actor), m.Role, nil
 }
 
 // BootstrapScope is the scoped client of the oldest Workspace, for the bootstrap
@@ -56,7 +61,7 @@ func (a *Accounts) BootstrapScope(ctx context.Context) (*ent.Scoped, error) {
 	if err != nil {
 		return nil, err
 	}
-	return a.ent.Scoped(id), nil
+	return events.Ingest(a.ent.Scoped(id)), nil
 }
 
 // WorkspacesOf lists the Workspaces a User is a member of, oldest first.

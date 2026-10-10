@@ -71,7 +71,7 @@ func TestAuthContextsRoundTrip(t *testing.T) {
 
 func TestBearerAuthResolvesAValidTokenToItsWorkspaceAndScopes(t *testing.T) {
 	env := testhelper.Setup(t)
-	h := auth.NewExternalSecurityHandler(env.DB)
+	h := auth.NewExternalSecurityHandler(env.DB, env.Bus)
 
 	ctx, err := h.HandleBearerAuth(context.Background(), "", externalapi.BearerAuth{
 		Token: service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
@@ -93,7 +93,7 @@ func TestBearerAuthResolvesAValidTokenToItsWorkspaceAndScopes(t *testing.T) {
 
 func TestBearerAuthRejectsEveryUnusableToken(t *testing.T) {
 	env := testhelper.Setup(t)
-	h := auth.NewExternalSecurityHandler(env.DB)
+	h := auth.NewExternalSecurityHandler(env.DB, env.Bus)
 	ctx := context.Background()
 	valid := service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret)
 
@@ -127,7 +127,7 @@ func TestBearerAuthRejectsEveryUnusableToken(t *testing.T) {
 }
 
 func TestBearerAuthStorageFailureIsNotAnUnauthorizedAnswer(t *testing.T) {
-	h := auth.NewExternalSecurityHandler(closedClient(t))
+	h := auth.NewExternalSecurityHandler(closedClient(t), nil)
 	_, err := h.HandleBearerAuth(context.Background(), "", externalapi.BearerAuth{
 		Token: service.TokenValue(fixtures.AnchorTokenPrefix, fixtures.AnchorTokenSecret),
 	})

@@ -161,6 +161,14 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   an unprojected event (`events.Unprojected`): persist, automations and webhooks skip it.
   Publish through `events.RecordAudit` inside the mutation's transaction. In tests the router
   does not run, so call `env.DeliverToEE(t)` to hand the outbox to the EE subscribers.
+  **Audit capture in the scoped client (ADR 0022):** an `*ent.Scoped` carries its actor
+  (`s.As(actor, opener)`, set at the construction points: `Accounts.Scope` user,
+  `HandleBearerAuth` api_token, collect/SES/consent/bootstrap `events.Ingest`; `bus.Act` for
+  system). An entity opts in with `schema.Audited{Action, NameField}` (fields: `schema.Sensitive{}`);
+  its generated wrappers then run in their own transaction, or join the one the scope is bound
+  to (`WithinScopedTx` keeps the actor), and publish the entry. Ingest and actor-less scopes take
+  the plain path. Upserts of an audited entity must be `DoNothing`. Add the annotation, nothing
+  per handler.
   Note `ee/licensekey`, not `ee/license`: the path is case-insensitive on macOS and would
   collide with `ee/LICENSE`.
 - **Async**: `internal/pubsub` (watermill over Postgres) — handlers registered in

@@ -142,7 +142,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, error) {
 	return externalapi.NewServer(
 		apiexternal.NewHandlers(deps),
-		apiauth.NewExternalSecurityHandler(client),
+		apiauth.NewExternalSecurityHandler(client, deps.Bus),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),
 	)

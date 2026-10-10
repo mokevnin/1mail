@@ -112,7 +112,7 @@ func (h *sesHook) handle(w http.ResponseWriter, r *http.Request) {
 		// The ingest key resolved the Workspace above: this is where its scope is built.
 		// On failure return 5xx so SNS redelivers rather than dropping the bounce;
 		// downstream persist/suppression dedupe on redelivery (DedupKey).
-		if err := h.handleNotification(r.Context(), h.ent.Scoped(ws.ID), payload); err != nil {
+		if err := h.handleNotification(r.Context(), events.Ingest(h.ent.Scoped(ws.ID)), payload); err != nil {
 			logging.FromContext(r.Context()).Error("hooks/ses: notification processing failed", "workspace_id", ws.ID, "err", err)
 			writeProblem(w, http.StatusInternalServerError, "notification processing failed")
 			return

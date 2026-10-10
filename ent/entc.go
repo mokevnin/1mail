@@ -78,6 +78,25 @@ func scopedFuncs() template.FuncMap {
 			f := e.Field()
 			return f == nil || !f.Immutable
 		},
+		// auditOf returns the Audited annotation of n (ADR 0022), or nil when the
+		// entity has not opted into the Audit log.
+		"auditOf": auditOf,
+		// auditFields lists the fields of an audited entity that appear in a diff.
+		"auditFields": func(n *gen.Type) []*gen.Field {
+			var out []*gen.Field
+			for _, f := range n.Fields {
+				switch f.Name {
+				case "workspace_id", "created_at", "updated_at":
+					continue
+				}
+				out = append(out, f)
+			}
+			return out
+		},
+		"auditSensitive": func(f *gen.Field) bool {
+			_, ok := f.Annotations["Sensitive"]
+			return ok
+		},
 		// scopedFieldRefs lists the annotated plain fields of n that hold a reference.
 		"scopedFieldRefs": func(g *gen.Graph, n *gen.Type) []scopedRef {
 			var out []scopedRef
@@ -121,6 +140,35 @@ func checkScopedRefs(g *gen.Graph) {
 			}
 		}
 	}
+}
+
+// audit is the decoded schema.Audited annotation of an entity.
+type audit struct {
+	Action    string
+	NameField *gen.Field
+}
+
+func auditOf(n *gen.Type) *audit {
+	ann, ok := n.Annotations["Audited"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	a := &audit{}
+	a.Action, _ = ann["Action"].(string)
+	if a.Action == "" {
+		log.Fatalf("%s: schema.Audited needs an Action", n.Name)
+	}
+	if name, _ := ann["NameField"].(string); name != "" {
+		for _, f := range n.Fields {
+			if f.Name == name {
+				a.NameField = f
+			}
+		}
+		if a.NameField == nil {
+			log.Fatalf("%s: schema.Audited names an unknown field %q", n.Name, name)
+		}
+	}
+	return a
 }
 
 func isScoped(t *gen.Type) bool {

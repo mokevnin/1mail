@@ -7,6 +7,7 @@ package tags
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 
@@ -58,11 +59,13 @@ func (m *Module) Apply(ctx context.Context, s *ent.Scoped, contactID int64, name
 	if err := requireContact(ctx, s, contactID); err != nil {
 		return nil, err
 	}
+	// DO NOTHING, not Ignore: an insert is the audited create of the Tag (ADR 0022),
+	// a conflict writes nothing and reports sql.ErrNoRows.
 	if err := s.Tag().Create().
 		SetName(name).
 		OnConflictColumns(tag.FieldName, tag.FieldWorkspaceID).
-		Ignore().
-		Exec(ctx); err != nil {
+		DoNothing().
+		Exec(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 	t, err := s.Tag().Query().Where(tag.Name(name)).Only(ctx)

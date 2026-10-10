@@ -1,0 +1,29 @@
+package schema
+
+import "entgo.io/ent/schema"
+
+// Audited opts a Workspace-owned entity into the Audit log (ADR 0022): the generated
+// scoped client wraps its create, update and delete in a transaction and publishes an
+// `audit.entry` with a before/after diff for every write made under a User, API token,
+// Operator or system actor. Scopes built from a secret (ingest) are never audited.
+type Audited struct {
+	// Action is the entity's part of the action name `<Action>.<verb>`, e.g. "tag".
+	Action string
+	// NameField is the field whose value is snapshotted as the target's name, so an
+	// entry stays readable after the target is deleted. Leave empty to snapshot none
+	// (a Contact is identified by id only: an email or name is personal data).
+	NameField string
+}
+
+func (Audited) Name() string { return "Audited" }
+
+var _ schema.Annotation = Audited{}
+
+// Sensitive marks a field of an Audited entity whose value must never reach the log
+// (token hashes, passwords, Integration credentials, webhook signing secrets): an
+// entry records only that it changed.
+type Sensitive struct{}
+
+func (Sensitive) Name() string { return "Sensitive" }
+
+var _ schema.Annotation = Sensitive{}

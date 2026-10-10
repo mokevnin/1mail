@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/logging"
 )
@@ -14,22 +15,19 @@ import (
 const NameAuditEntry = "audit.entry"
 
 // Actor kinds of an Audit entry. Scopes built from a secret rather than a login carry
-// ActorIngest, which the seam never records.
+// ActorIngest, which the seam never records. The kinds and the Actor type live in the
+// generated scoped client (package ent), which carries the actor of a scope.
 const (
-	ActorUser     = "user"
-	ActorAPIToken = "api_token"
-	ActorOperator = "operator"
-	ActorSystem   = "system"
-	ActorIngest   = "ingest"
+	ActorUser     = ent.ActorUser
+	ActorAPIToken = ent.ActorAPIToken
+	ActorOperator = ent.ActorOperator
+	ActorSystem   = ent.ActorSystem
+	ActorIngest   = ent.ActorIngest
 )
 
 // Actor is who performed a change. Name is a display snapshot (a User's name) so the
 // entry stays readable after the actor is gone.
-type Actor struct {
-	Kind string `json:"kind"`
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
-}
+type Actor = ent.Actor
 
 // Unprojected is an optional DomainEvent capability: an event that is not a
 // data-plane fact. The persist consumer (no Event row), the automation trigger
