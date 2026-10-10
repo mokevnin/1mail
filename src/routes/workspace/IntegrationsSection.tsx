@@ -15,6 +15,7 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -23,15 +24,27 @@ import {
   siteIntegrationsListOptions,
   siteIntegrationsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteIntegrationConfigInput } from '../../generated/site/types.gen.ts'
+import type {
+  SiteIntegrationConfigInput,
+  SiteIntegrationResource,
+} from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import {
+  NO_LIMITS,
+  SendLimitFields,
+  type SendLimitValues,
+  toLimit,
+  useSendLimitValidators,
+} from './SendLimitFields.tsx'
+import { SendLimitModal } from './SendLimitModal.tsx'
+import { SendLimitStatus } from './SendLimitStatus.tsx'
 
 type ProviderKind = 'smtp' | 'ses'
 
 // Flat form state; the provider-specific config object is assembled on submit
 // from whichever fields the selected provider uses.
-interface IntegrationFormValues {
+interface IntegrationFormValues extends SendLimitValues {
   name: string
   provider: ProviderKind
   isDefault: boolean
@@ -61,6 +74,7 @@ const INITIAL_VALUES: IntegrationFormValues = {
   endpoint: '',
   from: '',
   fromName: '',
+  ...NO_LIMITS,
 }
 
 function buildConfig(values: IntegrationFormValues): SiteIntegrationConfigInput {
@@ -93,7 +107,12 @@ export function IntegrationsSection({ slug }: { slug: string }) {
   const queryKey = siteIntegrationsListQueryKey({ path: { slug: slug } })
   const integrationsQuery = useQuery(siteIntegrationsListOptions({ path: { slug: slug } }))
 
-  const form = useForm<IntegrationFormValues>({ initialValues: INITIAL_VALUES })
+  const validateLimits = useSendLimitValidators()
+  const form = useForm<IntegrationFormValues>({
+    initialValues: INITIAL_VALUES,
+    validate: validateLimits,
+  })
+  const [editing, setEditing] = useState<SiteIntegrationResource | null>(null)
 
   const createMutation = useResourceMutation({
     mutation: siteIntegrationsCreateMutation(),
@@ -119,6 +138,7 @@ export function IntegrationsSection({ slug }: { slug: string }) {
 
   const isSes = form.values.provider === 'ses'
   const records = integrationsQuery.data ?? []
+  const unlimited = records.filter((record) => record.sendLimit.warnings.includes('unlimited'))
 
   return (
     <Card withBorder>
@@ -142,6 +162,8 @@ export function IntegrationsSection({ slug }: { slug: string }) {
             body: {
               name: values.name.trim(),
               isDefault: values.isDefault,
+              maxPerSecond: toLimit(values.maxPerSecond),
+              maxPerDay: toLimit(values.maxPerDay),
               config: buildConfig(values),
             },
           }),
@@ -232,6 +254,11 @@ export function IntegrationsSection({ slug }: { slug: string }) {
             />
           </Group>
 
+          <SendLimitFields
+            perSecondProps={form.getInputProps('maxPerSecond')}
+            perDayProps={form.getInputProps('maxPerDay')}
+          />
+
           <Checkbox
             label={t(($) => $.settings.integrations.makeDefault)}
             {...form.getInputProps('isDefault', { type: 'checkbox' })}
@@ -247,6 +274,18 @@ export function IntegrationsSection({ slug }: { slug: string }) {
 
       {integrationsQuery.isLoading ? <Loader /> : null}
 
+      {unlimited.map((record) => (
+        <Alert
+          key={record.id}
+          color="yellow"
+          variant="light"
+          title={t(($) => $.settings.integrations.limits.unlimitedTitle, { name: record.name })}
+          mb="sm"
+        >
+          {t(($) => $.settings.integrations.limits.unlimitedWarning)}
+        </Alert>
+      ))}
+
       <DataTable
         withTableBorder
         records={records}
@@ -260,22 +299,33 @@ export function IntegrationsSection({ slug }: { slug: string }) {
             render: (record) => (record.isDefault ? t(($) => $.settings.integrations.default) : ''),
           },
           {
+            accessor: 'sendLimit',
+            title: t(($) => $.settings.integrations.limits.title),
+            render: (record) => <SendLimitStatus status={record.sendLimit} />,
+          },
+          {
             accessor: 'actions',
             title: '',
             render: (record) => (
-              <Button
-                size="compact-sm"
-                color="red"
-                variant="light"
-                onClick={() => onDelete(record.id)}
-              >
-                {t(($) => $.settings.integrations.delete)}
-              </Button>
+              <Group gap="xs" wrap="nowrap">
+                <Button size="compact-sm" variant="light" onClick={() => setEditing(record)}>
+                  {t(($) => $.settings.integrations.limits.edit)}
+                </Button>
+                <Button
+                  size="compact-sm"
+                  color="red"
+                  variant="light"
+                  onClick={() => onDelete(record.id)}
+                >
+                  {t(($) => $.settings.integrations.delete)}
+                </Button>
+              </Group>
             ),
           },
         ]}
         noRecordsText={t(($) => $.settings.integrations.empty)}
       />
+      <SendLimitModal slug={slug} integration={editing} onClose={() => setEditing(null)} />
     </Card>
   )
 }
