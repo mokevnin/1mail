@@ -76,7 +76,7 @@ func Reserve(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, 
 	if !l.Any() {
 		return 0, nil
 	}
-	n, err := take(ctx, s, integrationID, l, now)
+	n, err := take(ctx, s, integrationID, l, now, true)
 	if err != nil {
 		return 0, err
 	}
@@ -86,7 +86,7 @@ func Reserve(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, 
 		if err := ensure(ctx, s, integrationID, now); err != nil {
 			return 0, err
 		}
-		if n, err = take(ctx, s, integrationID, l, now); err != nil {
+		if n, err = take(ctx, s, integrationID, l, now, true); err != nil {
 			return 0, err
 		}
 	}
@@ -96,11 +96,35 @@ func Reserve(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, 
 	return waitFor(ctx, s, integrationID, l, now)
 }
 
-// take is the one atomic statement: refill both buckets, check each holds a token,
-// and spend one, all in a single conditional UPDATE. It returns the rows changed.
-func take(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, now time.Time) (int, error) {
+// Spend takes one token from both buckets at now without waiting and without the
+// capacity check, so a bucket may go negative (Transactional, ADR 0023: never delayed,
+// yet it makes later marketing sends wait longer). A call with no limit set does nothing.
+func Spend(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, now time.Time) error {
+	if !l.Any() {
+		return nil
+	}
+	n, err := take(ctx, s, integrationID, l, now, false)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	if err := ensure(ctx, s, integrationID, now); err != nil {
+		return err
+	}
+	_, err = take(ctx, s, integrationID, l, now, false)
+	return err
+}
+
+// take is the one atomic statement: refill both buckets, (when guarded) check each
+// holds a token, and spend one, all in a single UPDATE. It returns the rows changed.
+func take(ctx context.Context, s *ent.Scoped, integrationID int64, l Limits, now time.Time, guarded bool) (int, error) {
 	bs := buckets(l)
 	enough := predicate.SendLimiter(func(sel *entsql.Selector) {
+		if !guarded {
+			return
+		}
 		for _, b := range bs {
 			if b.capacity == nil {
 				continue
