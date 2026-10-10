@@ -24,9 +24,12 @@ import {
   siteMembershipsDeleteMutation,
   siteMembershipsListOptions,
   siteMembershipsListQueryKey,
+  siteMembershipsResetSecondFactorMutation,
   siteMembershipsUpdateMutation,
+  siteUserGetMeOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteInvitableRole, SiteMembershipRole } from '../../generated/site/types.gen.ts'
+import { useCurrentRole } from '../../hooks/useCurrentRole.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { formatDate } from '../../utils/datetime.ts'
@@ -38,6 +41,9 @@ export function MembersSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
   const confirmRemove = useDeleteConfirmation()
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
+  const role = useCurrentRole(slug)
+  const me = useQuery(siteUserGetMeOptions())
+  const canManage = role === 'owner' || role === 'admin'
 
   const membersKey = siteMembershipsListQueryKey({ path: { slug } })
   const invitesKey = siteInvitationsListQueryKey({ path: { slug } })
@@ -75,6 +81,20 @@ export function MembersSection({ slug }: { slug: string }) {
     invalidate: [membersKey],
     errorTitle: t(($) => $.settings.members.removeError),
   })
+
+  const resetMutation = useResourceMutation({
+    mutation: siteMembershipsResetSecondFactorMutation(),
+    invalidate: [membersKey],
+    errorTitle: t(($) => $.settings.members.resetSecondFactorError),
+  })
+
+  const onResetSecondFactor = (id: string) =>
+    confirmRemove({
+      title: t(($) => $.settings.members.resetSecondFactorConfirmTitle),
+      description: t(($) => $.settings.members.resetSecondFactorConfirmDescription),
+      confirmLabel: t(($) => $.settings.members.resetSecondFactorConfirm),
+      onConfirm: () => resetMutation.mutate({ path: { slug, id } }),
+    })
 
   const onRemove = (id: string) =>
     confirmRemove({
@@ -140,14 +160,26 @@ export function MembersSection({ slug }: { slug: string }) {
             accessor: 'actions',
             title: '',
             render: (record) => (
-              <Button
-                size="compact-sm"
-                color="red"
-                variant="light"
-                onClick={() => onRemove(record.id)}
-              >
-                {t(($) => $.settings.members.remove)}
-              </Button>
+              <Group gap="xs" wrap="nowrap" justify="flex-end">
+                {canManage && record.secondFactorEnabled && record.userId !== me.data?.id ? (
+                  <Button
+                    size="compact-sm"
+                    color="orange"
+                    variant="light"
+                    onClick={() => onResetSecondFactor(record.id)}
+                  >
+                    {t(($) => $.settings.members.resetSecondFactor)}
+                  </Button>
+                ) : null}
+                <Button
+                  size="compact-sm"
+                  color="red"
+                  variant="light"
+                  onClick={() => onRemove(record.id)}
+                >
+                  {t(($) => $.settings.members.remove)}
+                </Button>
+              </Group>
             ),
           },
         ]}

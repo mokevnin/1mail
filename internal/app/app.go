@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/ee"
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
@@ -495,6 +496,30 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 		return false, err
 	}
 	return service.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
+}
+
+// ResetSecondFactor clears the Second factor and Recovery codes of the User with
+// this email and ends every session of theirs (ADR 0020), recorded as
+// `user.second_factor_reset` by the Operator "cli" in each of their Workspaces. It
+// reports whether anything changed: a User without a Second factor is left as is.
+func (a *App) ResetSecondFactor(ctx context.Context, email string) (bool, error) {
+	client, err := do.Invoke[*entClient](a.injector)
+	if err != nil {
+		return false, err
+	}
+	id, err := client.User.Query().Where(user.Email(email)).OnlyID(ctx)
+	if err != nil {
+		return false, fmt.Errorf("user %q: %w", email, err)
+	}
+	sf, err := do.Invoke[*secondfactor.Module](a.injector)
+	if err != nil {
+		return false, err
+	}
+	err = sf.ResetByOperator(ctx, id, "cli")
+	if errors.Is(err, secondfactor.ErrNotActive) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 // Accounts is the product's Accounts module from the DI container, for harnesses that

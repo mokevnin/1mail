@@ -181,6 +181,10 @@ type SiteMembershipsListRes interface {
 	siteMembershipsListRes()
 }
 
+type SiteMembershipsResetSecondFactorRes interface {
+	siteMembershipsResetSecondFactorRes()
+}
+
 type SiteMembershipsUpdateRes interface {
 	siteMembershipsUpdateRes()
 }

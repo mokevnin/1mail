@@ -285,12 +285,38 @@ func (m *Module) Verify(ctx context.Context, userID int64, code string) (Method,
 }
 
 // Reset clears the User's Second factor and Recovery codes and bumps the session
-// epoch, ending every session (an Owner or Admin reset, or the operator command).
-// It records nothing: the caller knows the acting User and records the reset.
-func (m *Module) Reset(ctx context.Context, userID int64) error {
-	return m.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
-		_, err := remove(ctx, tx, userID)
-		return err
+// epoch, ending every session of theirs: an Owner or Admin resetting a member of
+// workspaceID. It records `user.second_factor_reset` by actor in that Workspace
+// only. ErrNotActive without a Second factor (nothing changes).
+func (m *Module) Reset(ctx context.Context, userID int64, actor events.Actor, workspaceID int64) error {
+	return m.reset(ctx, userID, func(pub events.Publisher, _ *ent.Client, u *ent.User) error {
+		return accounts.RecordActionOnUserIn(ctx, pub, actor, u, events.ActionUserSecondFactorReset, nil, workspaceID)
+	})
+}
+
+// ResetByOperator is Reset from the operator command: the platform Operator `by`
+// (shown to customers as "1mail staff") is recorded in every Workspace the User
+// holds a Membership in.
+func (m *Module) ResetByOperator(ctx context.Context, userID int64, by string) error {
+	actor := events.Actor{Kind: events.ActorOperator, ID: by}
+	return m.reset(ctx, userID, func(pub events.Publisher, tx *ent.Client, u *ent.User) error {
+		return accounts.RecordActionOnUser(ctx, tx, pub, actor, u, events.ActionUserSecondFactorReset, nil)
+	})
+}
+
+func (m *Module) reset(ctx context.Context, userID int64, record func(events.Publisher, *ent.Client, *ent.User) error) error {
+	return m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		u, err := tx.User.Get(ctx, userID)
+		if err != nil {
+			return err
+		}
+		if !Active(u) {
+			return ErrNotActive
+		}
+		if u, err = remove(ctx, tx, userID); err != nil {
+			return err
+		}
+		return record(pub, tx, u)
 	})
 }
 

@@ -32,6 +32,9 @@ model SiteMembershipResource {
   /** The member's role in this workspace */
   role: SiteMembershipRole;
 
+  /** Whether the member has an active Second factor (ADR 0020) */
+  secondFactorEnabled: boolean;
+
   /** When the member joined */
   createdAt: Timestamp;
 }
@@ -74,6 +77,18 @@ namespace SiteMemberships {
   @delete
   @autoRoute
   op delete(...ResourceParameters<SiteMembershipResource>):
+    | NoContentResponse
+    | NotFoundProblem
+    | ForbiddenProblem
+    | UnprocessableEntityProblem;
+
+  /** Reset the member's Second factor (owner/admin only; owner-only for an owner):
+   * clears the factor and its Recovery codes and ends every session of theirs. The
+   * acting session is untouched. 422 when the member has no Second factor or is the
+   * caller (who disables their own with a password and a code). */
+  @action("reset-second-factor")
+  @autoRoute
+  op resetSecondFactor(...ResourceParameters<SiteMembershipResource>):
     | NoContentResponse
     | NotFoundProblem
     | ForbiddenProblem
