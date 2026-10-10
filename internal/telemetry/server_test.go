@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -43,17 +42,7 @@ func TestMetricsServerServesExpositionOnItsOwnListener(t *testing.T) {
 	assert.Equal(t, http.StatusOK, code)
 	assert.Contains(t, body, "go_goroutine_count")
 
-	// Metric labels are bounded technical dimensions: no tenant or personal identifiers.
-	for _, forbidden := range []string{"workspace", "slug", "contact", "email", "recipient"} {
-		for line := range strings.SplitSeq(body, "\n") {
-			if strings.HasPrefix(line, "#") {
-				continue
-			}
-			assert.NotContains(t, strings.ToLower(line), forbidden+"=", "forbidden label in %q", line)
-			assert.NotContains(t, strings.ToLower(line), forbidden+"_id=", "forbidden label in %q", line)
-		}
-	}
-
+	// Tenant-label policy: see TestMetricsExpositionCarriesNoTenantLabels.
 	code, _ = get(t, base+"/healthz")
 	assert.Equal(t, http.StatusNotFound, code, "only /metrics is served")
 }
