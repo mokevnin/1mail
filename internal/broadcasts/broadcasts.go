@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 var (
@@ -188,15 +189,13 @@ func (m *Module) Get(ctx context.Context, s *ent.Scoped, id int64) (*ent.Broadca
 	return b, err
 }
 
-// List returns one page of the Workspace's Broadcasts, newest first, and the total.
-func (m *Module) List(ctx context.Context, s *ent.Scoped, limit, offset int) ([]*ent.Broadcast, int, error) {
-	q := s.Broadcast().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	items, err := q.Order(ent.Desc(broadcast.FieldID)).Limit(limit).Offset(offset).All(ctx)
-	return items, total, err
+// List returns one page of the Workspace's Broadcasts, newest first.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Broadcast], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.Broadcast().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Broadcast, error) {
+			return s.Broadcast().Query().Order(ent.Desc(broadcast.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }
 
 // Update edits a draft. The UPDATE only matches a draft row, so a Broadcast that was

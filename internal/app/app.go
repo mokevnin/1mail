@@ -20,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/analytics"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -48,7 +49,9 @@ import (
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/telemetry"
+	"github.com/mokevnin/1mail/internal/templates"
 	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/1mail/internal/webhooks"
 	"github.com/samber/do/v2"
 	"go.opentelemetry.io/otel/metric"
 
@@ -851,8 +854,24 @@ func register(injector do.Injector, env string, o options) {
 		return sendingdomains.New(bus.Bus, cipher, jc.Client), nil
 	})
 
+	do.Provide(injector, func(do.Injector) (*templates.Module, error) {
+		return templates.New(), nil
+	})
 	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
 		return tags.New(), nil
+	})
+
+	// Webhooks: the audit.entry rule asks the Edition whether the license is active.
+	do.Provide(injector, func(i do.Injector) (*webhooks.Module, error) {
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		edition, err := do.Invoke[*ee.Edition](i)
+		if err != nil {
+			return nil, err
+		}
+		return webhooks.New(cipher, edition.Audit), nil
 	})
 
 	do.Provide(injector, func(do.Injector) (*automations.Module, error) {
@@ -865,6 +884,10 @@ func register(injector do.Injector, env string, o options) {
 			return nil, err
 		}
 		return eventlog.New(bus.Bus), nil
+	})
+
+	do.Provide(injector, func(do.Injector) (*analytics.Module, error) {
+		return analytics.New(), nil
 	})
 
 	do.Provide(injector, func(do.Injector) (*reputation.Module, error) {
@@ -972,7 +995,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
-	cipher, err := do.Invoke[*secrets.Cipher](i)
+	wh, err := do.Invoke[*webhooks.Module](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
@@ -993,6 +1016,10 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 		return apiexternal.Deps{}, err
 	}
 	er, err := do.Invoke[*erasure.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	tpl, err := do.Invoke[*templates.Module](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
@@ -1025,8 +1052,8 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 		return apiexternal.Deps{}, err
 	}
 	return apiexternal.Deps{
-		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
+		Accounts: acc, Bus: bus.Bus, Webhooks: wh, Outbound: sender.Module,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Templates: tpl, Automations: auto,
 		Broadcasts: bc, Reputation: rep, Integrations: integ, SendingDomains: sd, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
 	}, nil
 }
@@ -1049,7 +1076,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
-	cipher, err := do.Invoke[*secrets.Cipher](i)
+	wh, err := do.Invoke[*webhooks.Module](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -1070,6 +1097,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	er, err := do.Invoke[*erasure.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	tpl, err := do.Invoke[*templates.Module](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -1116,11 +1147,15 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	an, err := do.Invoke[*analytics.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
-		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Webhooks: wh, Outbound: sender.Module,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Templates: tpl, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
-		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit,
+		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit, Analytics: an,
 	}, nil
 }
 

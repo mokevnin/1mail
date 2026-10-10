@@ -3,12 +3,12 @@ package site
 import (
 	"context"
 	"errors"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
@@ -147,13 +147,6 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	return &res, nil
 }
 
-// canErase is the core gate of Erasure: owner and admin, the accountable roles (RBAC
-// detail beyond that is EE). It is its own check, not canManageMembers, so the two
-// can diverge.
-func canErase(role membership.Role) bool {
-	return role == membership.RoleOwner || role == membership.RoleAdmin
-}
-
 // SiteContactsDelete is Erasure (ADR 0021): irreversible, so owner or admin only.
 func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteContactsDeleteParams) (siteapi.SiteContactsDeleteRes, error) {
 	scoped, role, err := h.scopedWithRoleFor(ctx, params.Slug)
@@ -164,7 +157,7 @@ func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteCo
 	if err != nil {
 		return nil, err
 	}
-	if !canErase(role) {
+	if !accounts.CanErase(role) {
 		v := siteapi.SiteContactsDeleteForbidden(problem(http.StatusForbidden, "insufficient role"))
 		return &v, nil
 	}

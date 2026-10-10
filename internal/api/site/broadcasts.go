@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/samber/lo"
 )
 
 // optEntityID converts an OptNil EntityId option (a numeric string) into the
@@ -62,32 +63,18 @@ func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBr
 		return nil, err
 	}
 
-	var pagePtr, pageSizePtr *int32
-	if v, ok := params.Page.Get(); ok {
-		pagePtr = &v
-	}
-	if v, ok := params.PageSize.Get(); ok {
-		pageSizePtr = &v
-	}
-	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
-
-	items, total, err := h.broadcasts.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
+	page, err := h.broadcasts.List(ctx, ws, pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
 	}
 
-	resources := make([]siteapi.SiteBroadcastResource, len(items))
-	for i, b := range items {
-		// No progress here: it costs a query per sending row and the list does not show it.
-		resources[i] = mapper.BroadcastToResource(b)
-	}
-
 	return &siteapi.SiteBroadcastsListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		// No progress here: it costs a query per sending row and the list does not show it.
+		Items:      lo.Map(page.Items, func(b *ent.Broadcast, _ int) siteapi.SiteBroadcastResource { return mapper.BroadcastToResource(b) }),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 

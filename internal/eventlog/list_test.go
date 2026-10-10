@@ -1,0 +1,87 @@
+package eventlog_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/internal/eventlog"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+var firstPage = pagination.Params{Page: 1, PageSize: 100}
+
+func TestListFiltersByActionAndOrdersNewestFirst(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.Bus)
+
+	p, err := m.List(context.Background(), env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{Action: "purchase"}, firstPage)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(p.Items), 2)
+	assert.Equal(t, len(p.Items), p.TotalItems)
+	for i, e := range p.Items {
+		assert.Equal(t, "purchase", e.Action)
+		if i > 0 {
+			assert.False(t, e.CreatedAt.After(p.Items[i-1].CreatedAt), "newest first")
+		}
+	}
+}
+
+func TestListBreaksCreatedAtTiesByIDDescending(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.Bus)
+
+	p, err := m.List(context.Background(), env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{Action: "tie_probe"}, firstPage)
+	require.NoError(t, err)
+	require.Len(t, p.Items, 2)
+	assert.Equal(t, int64(fixtures.EventTieSecondID), p.Items[0].ID)
+	assert.Equal(t, int64(fixtures.EventTieFirstID), p.Items[1].ID)
+}
+
+func TestListFiltersByContactID(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.Bus)
+	cid := int64(fixtures.ContactAliceID)
+
+	p, err := m.List(context.Background(), env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{ContactID: &cid}, firstPage)
+	require.NoError(t, err)
+	require.NotEmpty(t, p.Items)
+	for _, e := range p.Items {
+		assert.Equal(t, &cid, e.ContactID)
+	}
+}
+
+func TestListFiltersByEmailCaseInsensitively(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.Bus)
+
+	p, err := m.List(context.Background(), env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{Email: "ALICE@Example.com"}, firstPage)
+	require.NoError(t, err)
+	require.NotEmpty(t, p.Items)
+	for _, e := range p.Items {
+		require.NotNil(t, e.Email)
+		assert.Equal(t, fixtures.ContactAliceEmail, *e.Email)
+	}
+}
+
+func TestListPagesAndStaysInTheWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.Bus)
+	ctx := context.Background()
+
+	all, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{}, firstPage)
+	require.NoError(t, err)
+	for _, e := range all.Items {
+		assert.Equal(t, int64(fixtures.AcmeID), e.WorkspaceID)
+	}
+
+	p, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), eventlog.Filter{}, pagination.Params{Page: 2, PageSize: 2})
+	require.NoError(t, err)
+	assert.Len(t, p.Items, 2)
+	assert.Equal(t, all.TotalItems, p.TotalItems)
+	assert.Equal(t, all.Items[2].ID, p.Items[0].ID)
+}

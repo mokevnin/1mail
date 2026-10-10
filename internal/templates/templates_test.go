@@ -1,0 +1,104 @@
+package templates_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/templates"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+func ptr[T any](v T) *T { return &v }
+
+func TestListIsAscendingByIDAndPaged(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+	s := env.DB.Scoped(fixtures.AcmeID)
+
+	p, err := m.List(ctx, s, pagination.Params{Page: 1, PageSize: 2})
+	require.NoError(t, err)
+	require.Len(t, p.Items, 2)
+	assert.EqualValues(t, fixtures.TemplateWelcomeID, p.Items[0].ID)
+	assert.Less(t, p.Items[0].ID, p.Items[1].ID)
+	assert.GreaterOrEqual(t, p.TotalItems, 3)
+	for _, it := range p.Items {
+		assert.EqualValues(t, fixtures.AcmeID, it.WorkspaceID, "another Workspace's Templates are never listed")
+	}
+}
+
+func TestGetIsWorkspaceScoped(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	got, err := m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateWelcomeID)
+	require.NoError(t, err)
+	assert.Equal(t, fixtures.TemplateWelcomeName, got.Name)
+
+	_, err = m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateGlobexID)
+	assert.ErrorIs(t, err, templates.ErrNotFound)
+}
+
+func TestCreateStoresTheTemplate(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	tpl, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), templates.CreateInput{Name: "New", Subject: ptr("Hi")})
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.AcmeID, tpl.WorkspaceID)
+	assert.Equal(t, "Hi", tpl.Subject)
+}
+
+// Isolated per statement: a failed insert aborts the test transaction, so each
+// blank-name case gets its own environment.
+func TestCreateRefusesABlankName(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	before := env.DB.EmailTemplate.Query().CountX(ctx)
+	_, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), templates.CreateInput{Name: ""})
+	require.ErrorIs(t, err, templates.ErrBlankName)
+	assert.Equal(t, before, env.DB.EmailTemplate.Query().CountX(ctx), "nothing persisted")
+}
+
+func TestUpdateRefusesABlankNameAndLeavesTheRow(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	_, err := m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateWelcomeID, templates.UpdateInput{Name: ptr("")})
+	require.ErrorIs(t, err, templates.ErrBlankName)
+	assert.Equal(t, fixtures.TemplateWelcomeName, env.DB.EmailTemplate.GetX(ctx, fixtures.TemplateWelcomeID).Name)
+}
+
+func TestUpdateChangesGivenFieldsOnly(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	got, err := m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateWelcomeID, templates.UpdateInput{Subject: ptr("Changed")})
+	require.NoError(t, err)
+	assert.Equal(t, "Changed", got.Subject)
+	assert.Equal(t, fixtures.TemplateWelcomeName, got.Name)
+
+	_, err = m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateGlobexID, templates.UpdateInput{Subject: ptr("x")})
+	assert.ErrorIs(t, err, templates.ErrNotFound)
+}
+
+func TestDelete(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := templates.New()
+	ctx := context.Background()
+
+	require.NoError(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateWelcomeID))
+	assert.ErrorIs(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateWelcomeID), templates.ErrNotFound)
+	assert.ErrorIs(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.TemplateGlobexID), templates.ErrNotFound)
+}

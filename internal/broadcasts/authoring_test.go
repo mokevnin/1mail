@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -30,54 +31,20 @@ func failBroadcastReads(env *testhelper.TestEnv) {
 	}))
 }
 
-func TestListIsNewestFirstPagedAndWorkspaceScoped(t *testing.T) {
+func TestListIsNewestFirstAndWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(&recorder{})
-	ctx := context.Background()
 
-	all, total, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 100, 0)
+	page, err := m.List(context.Background(), env.DB.Scoped(fixtures.AcmeID), pagination.Params{Page: 1, PageSize: 100})
 	require.NoError(t, err)
-	require.Equal(t, total, len(all))
-	require.Greater(t, total, 2)
-	for i := 1; i < len(all); i++ {
-		assert.Greater(t, all[i-1].ID, all[i].ID, "newest first")
+	require.Equal(t, page.TotalItems, len(page.Items))
+	require.Greater(t, page.TotalItems, 2)
+	for i, b := range page.Items {
+		assert.EqualValues(t, fixtures.AcmeID, b.WorkspaceID)
+		if i > 0 {
+			assert.Greater(t, page.Items[i-1].ID, b.ID, "newest first")
+		}
 	}
-
-	page, pageTotal, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 2, 1)
-	require.NoError(t, err)
-	assert.Equal(t, total, pageTotal, "total ignores the page window")
-	require.Len(t, page, 2)
-	assert.Equal(t, all[1].ID, page[0].ID)
-	assert.Equal(t, all[2].ID, page[1].ID)
-
-	other, otherTotal, err := m.List(ctx, env.DB.Scoped(fixtures.GlobexID), 100, 0)
-	require.NoError(t, err)
-	assert.Equal(t, len(other), otherTotal)
-	for _, b := range other {
-		assert.Equal(t, int64(fixtures.GlobexID), b.WorkspaceID)
-	}
-}
-
-func TestListReportsErrors(t *testing.T) {
-	env := testhelper.Setup(t)
-	_, _, err := broadcasts.New(&recorder{}).List(canceled(), env.DB.Scoped(fixtures.AcmeID), 10, 0)
-	assert.Error(t, err)
-}
-
-func TestListReportsPageQueryError(t *testing.T) {
-	env := testhelper.Setup(t)
-	n := 0
-	env.DB.Broadcast.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
-		return ent.QuerierFunc(func(ctx context.Context, q ent.Query) (ent.Value, error) {
-			n++
-			if n == 2 { // the count passes, the page read fails
-				return nil, errors.New("read refused")
-			}
-			return next.Query(ctx, q)
-		})
-	}))
-	_, _, err := broadcasts.New(&recorder{}).List(context.Background(), env.DB.Scoped(fixtures.AcmeID), 10, 0)
-	assert.ErrorContains(t, err, "read refused")
 }
 
 func TestCreateReportsErrors(t *testing.T) {

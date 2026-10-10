@@ -28,3 +28,28 @@
   role: member
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Initech's roster (users 5-8): two owners, an admin and a member, for the Role invariant tests.
+- id: 5 # fixture: InitechOwnerMembership
+  user_id: 5
+  workspace_id: 3
+  role: owner
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 6 # fixture: InitechCoOwnerMembership
+  user_id: 6
+  workspace_id: 3
+  role: owner
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 7 # fixture: InitechAdminMembership
+  user_id: 7
+  workspace_id: 3
+  role: admin
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 8 # fixture: InitechMemberMembership
+  user_id: 8
+  workspace_id: 3
+  role: member
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

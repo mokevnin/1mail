@@ -12,6 +12,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 // Step kinds.
@@ -113,15 +114,13 @@ type UpdateInput struct {
 	Steps        *[]Step
 }
 
-// List returns one page of the Workspace's Automations (newest first) and the total.
-func (m *Module) List(ctx context.Context, s *ent.Scoped, limit, offset int) ([]*ent.Automation, int, error) {
-	q := s.Automation().Query()
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	items, err := q.Order(ent.Desc(automation.FieldID)).Limit(limit).Offset(offset).All(ctx)
-	return items, total, err
+// List returns one page of the Workspace's Automations, newest first.
+func (m *Module) List(ctx context.Context, s *ent.Scoped, p pagination.Params) (pagination.Page[*ent.Automation], error) {
+	return pagination.List(ctx, p,
+		func(ctx context.Context) (int, error) { return s.Automation().Query().Count(ctx) },
+		func(ctx context.Context, limit, offset int) ([]*ent.Automation, error) {
+			return s.Automation().Query().Order(ent.Desc(automation.FieldID)).Limit(limit).Offset(offset).All(ctx)
+		})
 }
 
 // Get returns one Automation of the Workspace.

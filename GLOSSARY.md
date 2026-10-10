@@ -362,6 +362,14 @@ coherent ways: it suppresses (Suppression), it subtracts from the Complaint-rate
 and it is the Bounce-rate numerator.
 _Avoid_: Delivery-failure rate (that would fold in transient bounces)
 
+**Engagement rates**:
+The dashboard's open, click and click-to-open ratios over a chosen window (7, 30 or 90 UTC days).
+A **send cohort**: the denominator is the Broadcast recipients sent in the window, and opens and
+clicks are counted among that same cohort, so opened never exceeds sent and the rates stay within
+[0, 1]. Not the **Complaint rate** or **Bounce rate**: those are deliverability flow rates per
+Sending domain, counted from Events by their own time and never tied to a send.
+_Avoid_: Reputation, deliverability (those name the Sending-domain rates)
+
 **API token**:
 A workspace-scoped, **scoped** bearer credential for the external `/api` surface — a public
 `prefix` plus a hashed secret, carrying scopes, optional expiry, and revocation. Distinct from
@@ -466,7 +474,9 @@ _Avoid_: Team, seat, collaborator, ownership
 
 **Role**:
 A Membership's permission level in a Workspace (e.g. owner / admin / member). The exact set is a
-follow-up; the structural decision is that access is role-scoped per Membership.
+follow-up; the structural decision is that access is role-scoped per Membership. A Workspace
+always keeps at least one owner, and only an owner grants the owner Role or changes or removes
+another owner's Membership.
 _Avoid_: Permission, scope (scope is the API-token term)
 
 **Audit entry** (the Audit log is the Workspace's append-only sequence of them):

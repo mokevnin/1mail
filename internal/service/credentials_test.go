@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -58,30 +57,6 @@ func TestWorkspaceKeysAreTypedAndUnique(t *testing.T) {
 	assert.NotEqual(t, collect, again)
 }
 
-func TestWebhookSecretIsStandardWebhooksFormat(t *testing.T) {
-	secret, err := service.GenerateWebhookSecret()
-	require.NoError(t, err)
-	require.True(t, strings.HasPrefix(secret, "whsec_"))
-	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(secret, "whsec_"))
-	require.NoError(t, err)
-	assert.Len(t, raw, 24)
-}
-
-func TestValidWebhookURLAcceptsOnlyAbsoluteHTTP(t *testing.T) {
-	for url, want := range map[string]bool{
-		"https://example.com/hook":  true,
-		"http://example.com:8080/x": true,
-		"ftp://example.com/hook":    false,
-		"example.com/hook":          false,
-		"https://":                  false,
-		"/relative":                 false,
-		"":                          false,
-		"http://%zz":                false,
-	} {
-		assert.Equal(t, want, service.ValidWebhookURL(url), url)
-	}
-}
-
 func TestPasswordHashVerifiesOnlyTheOriginal(t *testing.T) {
 	hash, err := service.HashPassword("correct horse")
 	require.NoError(t, err)
@@ -90,20 +65,6 @@ func TestPasswordHashVerifiesOnlyTheOriginal(t *testing.T) {
 	assert.False(t, service.VerifyPassword(hash, "wrong"))
 	assert.False(t, service.VerifyPassword("not-a-phc-hash", "correct horse"), "an undecodable hash never matches")
 	assert.False(t, service.VerifyPassword("", ""))
-}
-
-func TestInviteTokenIsRandomAndHashedDeterministically(t *testing.T) {
-	a, err := service.GenerateInviteToken()
-	require.NoError(t, err)
-	b, err := service.GenerateInviteToken()
-	require.NoError(t, err)
-	assert.Len(t, a, 48)
-	assert.NotEqual(t, a, b)
-
-	assert.Equal(t, service.HashInviteToken(a), service.HashInviteToken(a))
-	assert.NotEqual(t, service.HashInviteToken(a), service.HashInviteToken(b))
-	assert.Len(t, service.HashInviteToken(a), 64, "sha-256 hex")
-	assert.NotContains(t, service.HashInviteToken(a), a)
 }
 
 func TestSlugifyTransliteratesAndCollapses(t *testing.T) {

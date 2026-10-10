@@ -2,14 +2,16 @@ package external
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/templates"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) TemplatesList(ctx context.Context, params externalapi.TemplatesListParams) (externalapi.TemplatesListRes, error) {
@@ -18,32 +20,18 @@ func (h *Handlers) TemplatesList(ctx context.Context, params externalapi.Templat
 		return &res, nil
 	}
 
-	scoped := auth.TokenScoped(ctx)
-	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-
-	q := scoped.EmailTemplate().Query()
-	total, err := q.Count(ctx)
+	page, err := h.templates.List(ctx, auth.TokenScoped(ctx), pagination.ParamsOf(params.Page, params.PageSize))
 	if err != nil {
 		return nil, err
-	}
-	items, err := q.Order(ent.Asc(emailtemplate.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := make([]externalapi.TemplateResource, len(items))
-	for i, tpl := range items {
-		resources[i] = mapper.EmailTemplateToResource(tpl)
 	}
 	return &externalapi.TemplatesListOK{
-		Items:      resources,
-		Page:       int32(page),
-		PageSize:   int32(pageSize),
-		TotalItems: int32(total),
-		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+		Items: lo.Map(page.Items, func(t *ent.EmailTemplate, _ int) externalapi.TemplateResource {
+			return mapper.EmailTemplateToResource(t)
+		}),
+		Page:       int32(page.Page),
+		PageSize:   int32(page.PageSize),
+		TotalItems: int32(page.TotalItems),
+		TotalPages: int32(page.TotalPages),
 	}, nil
 }
 
@@ -54,12 +42,12 @@ func (h *Handlers) TemplatesCreate(ctx context.Context, req *externalapi.CreateT
 	}
 
 	scoped := auth.TokenScoped(ctx)
-	tpl, err := scoped.EmailTemplate().Create().
-		SetName(req.Name).
-		SetNillableSubject(convert.StringPtr(req.Subject)).
-		SetNillableBody(convert.StringPtr(req.Body)).
-		Save(ctx)
-	if ent.IsValidationError(err) {
+	tpl, err := h.templates.Create(ctx, scoped, templates.CreateInput{
+		Name:    req.Name,
+		Subject: convert.StringPtr(req.Subject),
+		Body:    convert.StringPtr(req.Body),
+	})
+	if errors.Is(err, templates.ErrBlankName) {
 		res := externalapi.TemplatesCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
 		return &res, nil
 	}
@@ -83,8 +71,8 @@ func (h *Handlers) TemplatesGet(ctx context.Context, params externalapi.Template
 	}
 
 	scoped := auth.TokenScoped(ctx)
-	tpl, err := scoped.EmailTemplate().Get(ctx, id)
-	if ent.IsNotFound(err) {
+	tpl, err := h.templates.Get(ctx, scoped, id)
+	if errors.Is(err, templates.ErrNotFound) {
 		res := externalapi.TemplatesGetNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
 	}
@@ -108,16 +96,16 @@ func (h *Handlers) TemplatesUpdate(ctx context.Context, req *externalapi.UpdateT
 	}
 
 	scoped := auth.TokenScoped(ctx)
-	tpl, err := scoped.EmailTemplate().UpdateOneID(id).
-		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableSubject(convert.StringPtr(req.Subject)).
-		SetNillableBody(convert.StringPtr(req.Body)).
-		Save(ctx)
-	if ent.IsNotFound(err) {
+	tpl, err := h.templates.Update(ctx, scoped, id, templates.UpdateInput{
+		Name:    convert.StringPtr(req.Name),
+		Subject: convert.StringPtr(req.Subject),
+		Body:    convert.StringPtr(req.Body),
+	})
+	if errors.Is(err, templates.ErrNotFound) {
 		res := externalapi.TemplatesUpdateNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
 	}
-	if ent.IsValidationError(err) {
+	if errors.Is(err, templates.ErrBlankName) {
 		res := externalapi.TemplatesUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
 		return &res, nil
 	}
@@ -141,8 +129,8 @@ func (h *Handlers) TemplatesDelete(ctx context.Context, params externalapi.Templ
 	}
 
 	scoped := auth.TokenScoped(ctx)
-	err = scoped.EmailTemplate().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.templates.Delete(ctx, scoped, id)
+	if errors.Is(err, templates.ErrNotFound) {
 		res := externalapi.TemplatesDeleteNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
 	}
