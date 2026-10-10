@@ -51,6 +51,8 @@ export default defineConfig({
           { text: 'Overview', link: '/operations/' },
           { text: 'Backup and restore', link: '/operations/backup' },
           { text: 'Upgrading', link: '/operations/upgrading' },
+          { text: 'Monitoring', link: '/operations/monitoring' },
+          { text: 'Runbook', link: '/operations/runbook' },
         ],
       },
       {

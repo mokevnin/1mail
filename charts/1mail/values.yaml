@@ -37,6 +37,14 @@ metrics:
     enabled: false
     interval: 30s
     labels: {}
+  # Example alerting rules (docs/operations/monitoring.md). Requires the Prometheus Operator
+  # CRDs and metrics.enabled. Off by default.
+  prometheusRule:
+    enabled: false
+    # Extra labels, e.g. the release label your Prometheus ruleSelector matches.
+    labels: {}
+    # Base URL of the runbook; each alert links to <runbookUrl>#<alertname>.
+    runbookUrl: https://mokevnin.github.io/1mail/operations/runbook
 
 migrate:
   backoffLimit: 1
