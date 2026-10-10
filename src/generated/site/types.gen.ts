@@ -2011,6 +2011,15 @@ export type SiteAuthForgotPasswordData = {
   url: '/auth/forgot-password';
 };
 
+export type SiteAuthForgotPasswordErrors = {
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   */
+  429: ProblemDetails;
+};
+
+export type SiteAuthForgotPasswordError = SiteAuthForgotPasswordErrors[keyof SiteAuthForgotPasswordErrors];
+
 export type SiteAuthForgotPasswordResponses = {
   /**
    * The request has been accepted for processing, but processing has not yet completed.

@@ -53,6 +53,11 @@ func (i *Inline) EnqueuePasswordReset(ctx context.Context, email, token string) 
 	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token})
 }
 
+// RehearsePasswordReset renders a reset mail without sending it.
+func (i *Inline) RehearsePasswordReset(_ context.Context, email, token string) error {
+	return rehearsePasswordReset(i.appURL, email, token)
+}
+
 // EnqueueEmailVerification sends the signup email-verification email now.
 func (i *Inline) EnqueueEmailVerification(ctx context.Context, email, token string) error {
 	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailVerify, Email: email, Token: token})

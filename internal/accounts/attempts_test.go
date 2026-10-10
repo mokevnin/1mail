@@ -135,3 +135,35 @@ func TestPurgeRemovesStaleRowsOnly(t *testing.T) {
 	_, err = env.DB.AuthAttempt.Get(t.Context(), fixtures.FreshLoginAttemptID)
 	assert.NoError(t, err, "the current row stays")
 }
+
+func TestResetBudgetIsReachedAtTheThresholdAndReopensAfterTheWindow(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := &clock{t: time.Now()}
+	a := accounts.NewAttempts(env.DB,
+		accounts.WithClock(c.now),
+		accounts.WithRule(accounts.KindPasswordReset, accounts.ResetRule(3)))
+	const email = "Reset@Attempts.test"
+	reached := func() bool {
+		r, err := a.Reached(t.Context(), accounts.KindPasswordReset, email)
+		require.NoError(t, err)
+		return r
+	}
+
+	for range 2 {
+		require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, email))
+	}
+	assert.False(t, reached(), "below the threshold")
+	require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, email))
+	assert.True(t, reached(), "threshold reached")
+	c.advance(time.Hour + time.Second)
+	assert.False(t, reached(), "the budget reopens once the window has passed")
+}
+
+func TestResetBudgetIsNeverReachedWhenDisabled(t *testing.T) {
+	env := testhelper.Setup(t)
+	a := accounts.NewAttempts(env.DB)
+	require.NoError(t, a.RecordFailure(t.Context(), accounts.KindPasswordReset, "x@attempts.test"))
+	r, err := a.Reached(t.Context(), accounts.KindPasswordReset, "x@attempts.test")
+	require.NoError(t, err)
+	assert.False(t, r)
+}

@@ -43,6 +43,8 @@ const QueueBroadcasts = "broadcasts"
 type Client struct {
 	river *river.Client[pgx.Tx]
 	ent   *ent.Client
+	// appURL builds the links of account emails (rehearsed resets render one).
+	appURL string
 }
 
 // NewClient builds the river client with all workers registered. Workers carry
@@ -105,7 +107,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	if err != nil {
 		return nil, err
 	}
-	return &Client{river: rc, ent: entClient}, nil
+	return &Client{river: rc, ent: entClient, appURL: appURL}, nil
 }
 
 // Start begins processing jobs (run in a goroutine; returns once started).

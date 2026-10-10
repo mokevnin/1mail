@@ -49,6 +49,8 @@ const (
 	// client IP.
 	PolicyCollect   = "collect"
 	PolicyCollectIP = "collect-ip"
+	// PolicyForgotIP is the per-IP cap on forgot-password requests.
+	PolicyForgotIP = "forgot-password-ip"
 )
 
 const (
@@ -195,6 +197,7 @@ type Limiter struct {
 	loginIP    *Policy
 	collect    *Policy
 	collectIP  *Policy
+	forgotIP   *Policy
 }
 
 // New builds the policies from limits.
@@ -208,6 +211,7 @@ func New(limits config.RateLimits) *Limiter {
 		loginIP:    NewPolicy(PolicyLoginIP, limits.LoginIP, window),
 		collect:    NewPolicy(PolicyCollect, limits.Collect, window),
 		collectIP:  NewPolicy(PolicyCollectIP, limits.CollectIP, window),
+		forgotIP:   NewPolicy(PolicyForgotIP, limits.ForgotIP, time.Hour),
 	}
 }
 
@@ -298,6 +302,10 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), exchangeKey{}, &Exchange{w: w, r: r, limiter: l})
 		r = r.WithContext(ctx)
+		if r.Method == http.MethodPost && r.URL.Path == "/site/auth/forgot-password" &&
+			!l.forgotIP.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
+			return
+		}
 		if !exempt(r.URL.Path) {
 			// The per-IP /collect budget needs no credential, so it is applied up front
 			// (CORS has already answered preflights); the Workspace budget follows the

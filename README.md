@@ -199,6 +199,8 @@ Configuration is read from the environment (and, if present, `.env` files).
 | `RATE_LIMIT_LOGIN_IP_PER_MINUTE`                                    | `20`                     | Login requests per minute per client IP; over it `429` with `Retry-After`; `0` disables.                                                                                                  |
 | `RATE_LIMIT_COLLECT_PER_MINUTE`                                     | `6000`                   | Requests per minute per Workspace on `/collect` (its own budget, apart from `/api`); over it `429` with `Retry-After`; `0` disables                                                       |
 | `RATE_LIMIT_COLLECT_IP_PER_MINUTE`                                  | `300`                    | Requests per minute per client IP on `/collect`; over it `429` with `Retry-After`; `0` disables                                                                                           |
+| `RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR`                   | `3`                      | Password-reset mails sent per address per hour; over it forgot-password still answers `202` and sends nothing (the answer never reveals whether the account exists); `0` disables.        |
+| `RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR`                            | `10`                     | Forgot-password requests per client IP per hour; over it `429` with `Retry-After`; `0` disables.                                                                                          |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).
