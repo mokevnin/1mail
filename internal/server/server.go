@@ -68,7 +68,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
 	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
-	mux.Handle("/site/auth/direct/login", authHandler)
+	mux.Handle("/site/auth/direct/login", auditLogin(authHandler, site.Accounts))
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).

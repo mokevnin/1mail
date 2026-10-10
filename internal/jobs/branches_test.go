@@ -104,7 +104,7 @@ func TestRunStepOutcomes(t *testing.T) {
 	t.Run("a held workspace waits and asks again later", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		id := enroll(ctx, t, env, "["+emailStep+"]", true)
-		_, err := service.SuspendWorkspace(ctx, env.DB, fixtures.AcmeID, "system", "complaints")
+		_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 		require.NoError(t, err)
 		fs := &fakeSender{}
 		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: fs}), id)
@@ -199,7 +199,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 	t.Run("a held workspace leaves the recipient pending", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		ids := plan(t, env)
-		_, err := service.SuspendWorkspace(ctx, env.DB, fixtures.AcmeID, "system", "complaints")
+		_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 		require.NoError(t, err)
 		err = jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), ids[0])
 		require.Error(t, err)
@@ -219,7 +219,7 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 func TestOwnerNotificationsSurfaceSenderErrors(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	_, err := service.SuspendWorkspace(ctx, env.DB, fixtures.AcmeID, "system", "complaints")
+	_, err := service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "system", "complaints")
 	require.NoError(t, err)
 	env.SystemMail.SetErr(errors.New("smtp down"))
 

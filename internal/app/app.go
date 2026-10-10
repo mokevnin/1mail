@@ -262,7 +262,11 @@ func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bo
 	if err != nil {
 		return false, err
 	}
-	changed, err := service.SuspendWorkspace(ctx, client.Client, id, by, reason)
+	bus, err := do.Invoke[*eventsBus](a.injector)
+	if err != nil {
+		return false, err
+	}
+	changed, err := service.SuspendWorkspace(ctx, bus.Bus, id, by, reason)
 	if err != nil || !changed {
 		return changed, err
 	}
@@ -286,7 +290,11 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	return service.UnsuspendWorkspace(ctx, client.Client, id)
+	bus, err := do.Invoke[*eventsBus](a.injector)
+	if err != nil {
+		return false, err
+	}
+	return service.UnsuspendWorkspace(ctx, bus.Bus, id, "cli")
 }
 
 func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
