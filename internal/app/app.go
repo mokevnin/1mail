@@ -71,7 +71,7 @@ type App struct {
 	closeErr       error
 	cancel         context.CancelFunc
 	eventsDone     chan struct{}
-	jobsStarted    bool
+	jobsStarted    bool // river's Start was attempted: its Stopped channel closes on success and on failure
 	done           chan error
 	shutdownReport *do.ShutdownReport
 }
@@ -279,16 +279,23 @@ func New(env string, opts ...Option) (*App, error) {
 // ErrNotServable: Start was called on an app that has no servers (the operator app).
 var ErrNotServable = errors.New("app: this app has no servers to start")
 
+// ErrAlreadyStarted: Start was called a second time; an App starts once.
+var ErrAlreadyStarted = errors.New("app: already started")
+
 // Start brings the application up and returns without blocking: it binds the metrics
 // listener, starts the domain-event router and the job queue, then serves the public
 // HTTP server. It returns the first startup error after unwinding whatever it had
 // already started (the container included), so a failed Start leaves nothing running.
 //
 // Start owns its cancellation: it derives its own context from ctx, and Close cancels
-// it. Done reports how the public server ends; Close stops everything.
+// it. Done reports how the public server ends; Close stops everything. An App starts
+// once: a second Start returns ErrAlreadyStarted, whether or not the first succeeded.
 func (a *App) Start(ctx context.Context) error {
 	if a.Server == nil {
 		return ErrNotServable
+	}
+	if a.cancel != nil {
+		return ErrAlreadyStarted
 	}
 	runCtx, cancel := context.WithCancel(ctx)
 	a.cancel = cancel
@@ -331,17 +338,21 @@ func (a *App) start(ctx context.Context) error {
 		return ctx.Err()
 	}
 
+	// Marked before the attempt: a Start that fails partway still closes river's Stopped
+	// channel, and Close waits for it so no worker outlives the unwind.
+	a.jobsStarted = true
 	if err := a.runJobs(ctx); err != nil {
 		return fmt.Errorf("start job queue: %w", err)
 	}
-	a.jobsStarted = true
 
 	go func() { a.done <- a.serve() }()
 	return nil
 }
 
-// Done delivers the public server's terminating error (nil after a graceful Close),
-// once. A binary waits on it next to its signals.
+// Done delivers, once, how the public server ended. A failure to serve arrives as an
+// error; after a graceful Close the server ends cleanly and a nil error arrives, so a
+// receiver must read nil as "stopped", not "still running". Nothing arrives if Start
+// failed before serving. A binary waits on it next to its signals.
 func (a *App) Done() <-chan error { return a.done }
 
 // Close cancels the event router and the job workers, waits for them to stop, shuts

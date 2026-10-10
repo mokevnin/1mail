@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -64,8 +65,23 @@ func (in *Inbox) RequireNone(m Match, window ...time.Duration) {
 	if len(window) > 0 {
 		w = window[0]
 	}
-	require.Never(in.t, func() bool { return in.seen(m) }, w, in.mp.poll,
-		"unexpected email %q for %s", m.Subject, m.To)
+	deadline := time.NewTimer(w)
+	defer deadline.Stop()
+	tick := time.NewTicker(in.mp.poll)
+	defer tick.Stop()
+	for {
+		// A failing lookup fails the test: an unreachable Mailpit must not read as absence.
+		found, err := in.seen(m)
+		require.NoError(in.t, err, "could not check the inbox for absence of %q for %s", m.Subject, m.To)
+		require.False(in.t, found, "unexpected email %q for %s", m.Subject, m.To)
+		select {
+		case <-deadline.C:
+			return
+		case <-in.t.Context().Done():
+			return
+		case <-tick.C:
+		}
+	}
 }
 
 // wait is Wait with an explicit timeout, returning the diagnostic instead of failing.
@@ -79,9 +95,10 @@ func (in *Inbox) wait(ctx context.Context, m Match, timeout time.Duration) (Mess
 			in.remember(id)
 			return in.mp.get(context.WithoutCancel(ctx), id)
 		}
-		lastErr = err
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			lastErr = nil // our own timeout cutting a request short says nothing about the inbox
+		// The wait's own deadline cutting a request short says nothing about the inbox, so
+		// it keeps the earlier error; any other failure, an HTTP timeout included, is kept.
+		if ownCutoff := ctx.Err() != nil && errors.Is(err, ctx.Err()); !ownCutoff {
+			lastErr = err
 		}
 		select {
 		case <-ctx.Done():
@@ -96,13 +113,13 @@ func (in *Inbox) wait(ctx context.Context, m Match, timeout time.Duration) (Mess
 }
 
 // seen reports whether the inbox holds a message matching m, remembering it if so.
-func (in *Inbox) seen(m Match) bool {
+func (in *Inbox) seen(m Match) (bool, error) {
 	id, err := in.find(in.t.Context(), m)
 	if err != nil || id == "" {
-		return false
+		return false, err
 	}
 	in.remember(id)
-	return true
+	return true, nil
 }
 
 // find returns the id of a message matching m, or "" when there is none.
@@ -128,7 +145,9 @@ func (in *Inbox) find(ctx context.Context, m Match) (string, error) {
 func (in *Inbox) remember(id string) {
 	in.mu.Lock()
 	defer in.mu.Unlock()
-	in.ids = append(in.ids, id)
+	if !slices.Contains(in.ids, id) {
+		in.ids = append(in.ids, id)
+	}
 }
 
 // cleanup deletes every observed message; only those, never the whole inbox.

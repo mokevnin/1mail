@@ -16,16 +16,31 @@ sends through a real SMTP server and observes the result only in that server's i
 - **The application runs in the test process**, with the real event router, job queue and HTTP server, started on a
   caller-provided listener so the public URL (the base of unsubscribe, confirm and tracking links) is the test
   server's own address. In-process beats driving the compiled binary: it is faster, debuggable, and reuses
-  the application's own Start/Close lifecycle module, the same one the binary uses. Binary and reverse-proxy routing are
+  the application's own lifecycle, the same one the binary uses. Binary and reverse-proxy routing are
   left to a separate smoke test.
+- **Lifecycle: `App.Start` brings everything up, `App.Close` takes everything down.** `Start(ctx)` returns without
+  blocking once the metrics listener, the event router and the job workers run and the public server is serving; an
+  App starts once (a second `Start` returns `ErrAlreadyStarted`). A `Start` that fails partway unwinds what it had
+  started, so nothing is left running. `Close(ctx)` cancels the router and the workers, waits for both to stop (also
+  after a partial failure to start the workers), shuts the HTTP servers down and then the container; it is
+  idempotent and returns the first call's result. `Done()` delivers, once, how the public server ended: an error if
+  serving failed, nil after a graceful `Close`.
 - **A dedicated database, rebuilt on every run, and a fresh Workspace per test.** The per-test transaction rollback
   used elsewhere (go-txdb) cannot work here: the job queue and bus workers use their own connections and would never
   see uncommitted rows. Everything is Workspace-scoped (ADR 0017), so tests need no cleanup and may run in parallel.
 - **Mailpit is started by the suite on free ports**, not shared with the dev stack, so the suite never collides with a
-  running `mise run dev` and needs no Docker. Mail is matched by a recipient unique to the test. Mailpit's own API
-  is read through a thin typed helper: it publishes only Swagger 2.0, which the project's OpenAPI generator does not
-  accept. The helper sits behind each Workspace's Inbox (one wait, one absence check, cleanup of what it saw), so
-  scenarios never call it.
+  running `mise run dev` and needs no Docker. Mailpit's own API is read through a thin typed helper: it publishes
+  only Swagger 2.0, which the project's OpenAPI generator does not accept. The helper sits behind each Workspace's
+  Inbox, so scenarios never call it.
+- **Mail is observed only through the Workspace's Inbox.** A `Match` selects mail by exact recipient (compared
+  case-insensitively; Mailpit's own search is a substring match, so the Inbox insists on the whole address) and,
+  optionally, an exact subject. The Inbox offers one wait, `Wait(Match)`, polled up to a bounded timeout, which on a
+  miss fails with what the inbox held instead, and one absence check, `RequireNone(Match)`, which watches for a short
+  window. An absence check cannot be awaited, so a scenario first waits for a sibling delivery of the same send, which
+  proves the pipeline has caught up. A failing Mailpit request fails the test; it is never read as absence. Every
+  message the Inbox observed, by a wait or by an absence check that found a match, is deleted when the test ends, and
+  only those, so parallel tests sharing one Mailpit stay independent. A recipient unique to the test keeps matches
+  from colliding.
 - **Only the arrange step is outside the API:** creating the User, Workspace and first API token with the product's
   own domain functions. Everything else is an API call. The bootstrap token is not used; it addresses only the
   oldest Workspace.

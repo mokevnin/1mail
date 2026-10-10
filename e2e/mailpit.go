@@ -32,7 +32,7 @@ type summary struct {
 }
 
 // Mailpit is a thin client over Mailpit's HTTP API (it publishes only Swagger 2.0,
-// which the project's OpenAPI generator rejects, and three endpoints are enough).
+// which the project's OpenAPI generator rejects, and a handful of endpoints are enough).
 type Mailpit struct {
 	// SMTPHost and SMTPPort are where a Workspace's SMTP Integration should point.
 	SMTPHost string

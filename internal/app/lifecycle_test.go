@@ -72,6 +72,15 @@ func TestCloseIsIdempotent(t *testing.T) {
 	assert.NoError(t, a.Close(closeCtx(t)))
 }
 
+func TestStartTwiceIsRefused(t *testing.T) {
+	a, _ := lifecycleApp(t)
+	require.NoError(t, a.Start(context.Background()))
+
+	assert.ErrorIs(t, a.Start(context.Background()), ErrAlreadyStarted)
+
+	require.NoError(t, a.Close(closeCtx(t)))
+}
+
 func TestStartCancelsWhenTheCallerContextIsCancelled(t *testing.T) {
 	a, _ := lifecycleApp(t)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -115,6 +124,11 @@ func TestStartUnwindsWhenTheJobQueueCannotStart(t *testing.T) {
 	require.Error(t, a.Start(context.Background()))
 
 	assert.True(t, a.events.router.IsClosed(), "the router started before the failure is stopped again")
+	select {
+	case <-a.jobs.Stopped():
+	default:
+		t.Fatal("the job queue that failed to start is not reported stopped")
+	}
 	_, _, err = testhelper.TryHTTPGet(t.Context(), "http://"+ln.Addr().String()+"/healthz")
 	assert.Error(t, err, "the public server was never left running")
 }

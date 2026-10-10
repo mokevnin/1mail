@@ -4,10 +4,13 @@ package e2e
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -26,6 +29,10 @@ type fakeMailpit struct {
 	mu      sync.Mutex
 	mails   []fakeMail
 	deleted []string
+
+	// failSearch makes the search endpoint answer 500; hangSearch makes it hold the request.
+	failSearch atomic.Bool
+	hangSearch atomic.Bool
 }
 
 func (f *fakeMailpit) add(m fakeMail) {
@@ -61,6 +68,14 @@ func newFakeInbox(t *testing.T) (*Inbox, *fakeMailpit) {
 	f := &fakeMailpit{}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/search", func(w http.ResponseWriter, r *http.Request) {
+		if f.failSearch.Load() {
+			http.Error(w, "mailpit is down", http.StatusInternalServerError)
+			return
+		}
+		if f.hangSearch.Load() {
+			<-r.Context().Done()
+			return
+		}
 		q := strings.Trim(strings.TrimPrefix(r.URL.Query().Get("query"), "to:"), `"`)
 		_ = json.NewEncoder(w).Encode(map[string]any{"messages": f.rows(q)})
 	})
@@ -161,9 +176,111 @@ func TestInboxDeletesEveryObservedMessageOnCleanup(t *testing.T) {
 	_, err := in.wait(t.Context(), Match{To: "a@b.test"}, time.Second)
 	require.NoError(t, err)
 	// An absence check that finds a match records it too (the check itself then fails).
-	assert.True(t, in.seen(Match{To: "c@b.test"}))
+	seen, err := in.seen(Match{To: "c@b.test"})
+	require.NoError(t, err)
+	assert.True(t, seen)
 
 	in.cleanup()
 
 	assert.ElementsMatch(t, []string{"1", "2"}, f.deletedIDs())
+}
+
+// recordingTB lets a test observe a failing assertion: FailNow records and ends the
+// goroutine it runs in, the way a real failure ends the test.
+type recordingTB struct {
+	testing.TB
+
+	mu     sync.Mutex
+	failed bool
+	logs   []string
+}
+
+func (r *recordingTB) Errorf(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.failed = true
+	r.logs = append(r.logs, fmt.Sprintf(format, args...))
+}
+
+func (r *recordingTB) FailNow() {
+	r.mu.Lock()
+	r.failed = true
+	r.mu.Unlock()
+	runtime.Goexit()
+}
+
+func (r *recordingTB) report() (bool, string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.failed, strings.Join(r.logs, "\n")
+}
+
+// runFailing runs fn on its own goroutine and reports whether it failed the test.
+func runFailing(rec *recordingTB, fn func()) (bool, string) {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		fn()
+	}()
+	<-done
+	return rec.report()
+}
+
+func TestRequireNoneFailsWhenTheInboxCannotBeChecked(t *testing.T) {
+	t.Parallel()
+	in, f := newFakeInbox(t)
+	f.failSearch.Store(true)
+	rec := &recordingTB{TB: t}
+	in.t = rec
+
+	failed, logs := runFailing(rec, func() {
+		in.RequireNone(Match{To: "want@b.test"}, 100*time.Millisecond)
+	})
+
+	assert.True(t, failed, "an unreachable Mailpit is not absence")
+	assert.Contains(t, logs, "mailpit is down")
+}
+
+func TestRequireNoneFailsOnAMatchAndTheObservedMessageIsStillDeleted(t *testing.T) {
+	t.Parallel()
+	in, f := newFakeInbox(t)
+	f.add(fakeMail{id: "7", to: "want@b.test", subject: "Unexpected"})
+	f.add(fakeMail{id: "8", to: "other@b.test", subject: "Untouched"})
+	rec := &recordingTB{TB: t}
+	in.t = rec
+
+	failed, logs := runFailing(rec, func() {
+		in.RequireNone(Match{To: "want@b.test"}, 200*time.Millisecond)
+	})
+	in.cleanup()
+
+	assert.True(t, failed)
+	assert.Contains(t, logs, "unexpected email")
+	assert.Equal(t, []string{"7"}, f.deletedIDs())
+}
+
+func TestRememberRecordsAnIDOnce(t *testing.T) {
+	t.Parallel()
+	in, f := newFakeInbox(t)
+	f.add(fakeMail{id: "1", to: "a@b.test", subject: "again"})
+
+	for range 3 {
+		_, err := in.wait(t.Context(), Match{To: "a@b.test"}, time.Second)
+		require.NoError(t, err)
+	}
+	in.cleanup()
+
+	assert.Equal(t, []string{"1"}, f.deletedIDs())
+}
+
+func TestWaitKeepsAGenuineHTTPTimeoutInTheDiagnostic(t *testing.T) {
+	t.Parallel()
+	in, f := newFakeInbox(t)
+	f.hangSearch.Store(true)
+	in.mp.hc.Timeout = 30 * time.Millisecond
+
+	_, err := in.wait(t.Context(), Match{To: "want@b.test"}, 300*time.Millisecond)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "Client.Timeout", "the request timeout is not the wait's own deadline")
 }
