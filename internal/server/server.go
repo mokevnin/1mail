@@ -104,7 +104,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
-		apicollect.NewHandlers(bus, cfg.BodyLimits.CollectEvent),
+		apicollect.NewHandlers(bus),
 		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix(collectPrefix),
 		collectapi.WithErrorHandler(problemErrorHandler),
@@ -140,7 +140,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// Order (ADR 0018): recoverer, requestID, CORS, client address, rate limit,
 	// timeout. CORS precedes the limiter so a 429 still reaches the browser; guard
 	// sits inside CORS so preflights are answered before the check.
-	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, limiter.Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), guard), nil
+	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, limiter.Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), collectEventLimit(cfg.BodyLimits.CollectEvent), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token

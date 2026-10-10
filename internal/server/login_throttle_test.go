@@ -22,6 +22,8 @@ import (
 const (
 	loginPath     = "/site/auth/direct/login"
 	loginFailures = 5
+	// An address no account has.
+	unknownLoginEmail = "nobody@nowhere.test"
 )
 
 // frozenClock is the injected `now` of the account attempt module.
@@ -96,10 +98,10 @@ func TestASuccessBeforeTheThresholdResetsTheCounter(t *testing.T) {
 
 func TestUnknownEmailsThrottleLikeKnownOnesAndLeaveRows(t *testing.T) {
 	env, _ := loginEnv(t, 0)
-	failLogins(t, env, "nobody@nowhere.test", loginFailures)
-	assert.Equal(t, http.StatusTooManyRequests, login(t, env, "nobody@nowhere.test", "whatever").Code)
+	failLogins(t, env, unknownLoginEmail, loginFailures)
+	assert.Equal(t, http.StatusTooManyRequests, login(t, env, unknownLoginEmail, "whatever").Code)
 
-	row, err := env.DB.AuthAttempt.Query().Where(authattempt.Email("nobody@nowhere.test")).Only(t.Context())
+	row, err := env.DB.AuthAttempt.Query().Where(authattempt.Email(unknownLoginEmail)).Only(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, loginFailures, row.Failures)
 

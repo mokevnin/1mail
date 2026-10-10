@@ -25,15 +25,17 @@ const (
 // whether or not the address matches an account and whether or not the per-address
 // budget is spent, so the endpoint cannot be used to enumerate registered emails
 // (the per-IP cap answers 429 in the rate limit middleware, before this runs). Every
-// request does the same work: look the address up, mint a token, count the request,
-// and then either enqueue the mail or rehearse it. Only a known address under its
-// budget gets a mail, so response time does not leak existence either.
+// request does the same work: take a slot of the address's budget in one atomic
+// step, look the address up, mint a token and enqueue a mail job. Only a known
+// address that was granted a slot gets its mail delivered; for the others the job
+// is a no-send one, so response time does not leak existence either.
 func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.SiteForgotPasswordInput) (siteapi.SiteAuthForgotPasswordRes, error) {
 	email := strings.TrimSpace(string(req.Email))
 	if email == "" {
 		return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
 	}
-	spent, err := h.attempts.Reached(ctx, accounts.KindPasswordReset, email)
+	// Unknown addresses spend their budget exactly like known ones.
+	granted, err := h.attempts.Take(ctx, accounts.KindPasswordReset, email)
 	if err != nil {
 		return nil, err
 	}
@@ -46,26 +48,16 @@ func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.Site
 	// unknown address gets a throwaway token over the same code path.
 	var uid int64
 	var binding string
+	to := email
 	if u != nil {
-		uid, binding = u.ID, u.PasswordHash
+		uid, binding, to = u.ID, u.PasswordHash, u.Email
 	}
 	token, err := h.tokens.Mint(authtoken.PurposePasswordReset, uid, binding, resetTokenTTL, nil)
 	if err != nil {
 		return nil, err
 	}
-	// Count the request for known and unknown addresses alike. Over the budget
-	// nothing more is counted, so the window ends an hour after the last mail.
-	if !spent {
-		if err := h.attempts.RecordFailure(ctx, accounts.KindPasswordReset, email); err != nil {
-			return nil, err
-		}
-	}
-	// Best-effort send (mirrors the welcome email): never fail the request.
-	if u != nil && !spent {
-		_ = h.sysmail.EnqueuePasswordReset(ctx, u.Email, token)
-		return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
-	}
-	_ = h.sysmail.RehearsePasswordReset(ctx, email, token)
+	// Best-effort enqueue (mirrors the welcome email): never fail the request.
+	_ = h.sysmail.EnqueuePasswordReset(ctx, to, token, u != nil && granted)
 	return &siteapi.SiteAuthForgotPasswordAccepted{}, nil
 }
 

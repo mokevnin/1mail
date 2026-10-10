@@ -264,24 +264,24 @@ func (e *Exchange) ChargeCollect(workspaceID int64) error {
 // AuthBlocked refuses before a credential is even checked when the client address
 // has already spent its failed-authentication budget, so guessing cannot continue
 // past the limit.
-func (e *Exchange) AuthBlocked() error {
+func (e *Exchange) AuthBlocked(ctx context.Context) error {
 	if e == nil {
 		return nil
 	}
-	return e.limiter.failedAuth.Blocked(e.w, e.r, e.ip())
+	return e.limiter.failedAuth.Blocked(e.w, e.r, ipOf(ctx))
 }
 
 // AuthFailed counts one failed authentication against the client address. Only
 // failures are counted, so legitimate traffic never spends this budget.
-func (e *Exchange) AuthFailed() error {
+func (e *Exchange) AuthFailed(ctx context.Context) error {
 	if e == nil {
 		return nil
 	}
-	return e.limiter.failedAuth.Reject(e.w, e.r, e.ip())
+	return e.limiter.failedAuth.Reject(e.w, e.r, ipOf(ctx))
 }
 
-func (e *Exchange) ip() string {
-	return httprate.CanonicalizeIP(clientip.FromContext(e.r.Context()))
+func ipOf(ctx context.Context) string {
+	return httprate.CanonicalizeIP(clientip.FromContext(ctx))
 }
 
 // RecordsTracking reports whether the engagement of this request may be recorded:

@@ -135,6 +135,26 @@ func TestPayloadsOverTheEventAndBatchCapsGet413(t *testing.T) {
 			body: `{"visitorId":"v1","traits":{"p":"` + strings.Repeat("x", 300) + `"}}`}).Code)
 }
 
+// The per-event cap counts the event's serialized bytes as sent: one at the cap is
+// accepted, one over is refused, however the bytes split between keys, values and
+// whitespace.
+func TestPerEventCapInABatchIsExactInSerializedBytes(t *testing.T) {
+	const eventCap = 200
+	env := testhelper.Setup(t, testhelper.WithConfig(func(c *config.Config) {
+		c.BodyLimits.CollectEvent = eventCap
+		c.BodyLimits.Collect = 1000
+	}))
+	post := func(body string) int {
+		return postCollect(t, env, collectReq{key: fixtures.AcmeCollectKey, body: body}).Code
+	}
+	const head = `{"visitorId":"v1","action":"viewed","properties":{"p":"x"}}`
+	atCap := head[:len(head)-1] + strings.Repeat(" ", eventCap-len(head)) + "}"
+	require.Len(t, atCap, eventCap)
+
+	assert.Equal(t, http.StatusNoContent, post(`{"events":[`+atCap+`]}`))
+	assert.Equal(t, http.StatusRequestEntityTooLarge, post(`{"events":[`+atCap[:len(atCap)-1]+` }]}`))
+}
+
 func TestAZeroCollectLimitNeverThrottles(t *testing.T) {
 	env := testhelper.Setup(t)
 	for range 30 {

@@ -2,9 +2,14 @@ package accounts
 
 import (
 	"context"
+	stdsql "database/sql"
+	"errors"
 	"strings"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
+
+	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/authattempt"
 )
@@ -30,7 +35,7 @@ type Rule struct {
 }
 
 // ResetRule is the password-reset budget: at most threshold mails per address per
-// hour (checked with Reached; there is no delay).
+// hour (granted with Take; there is no delay).
 func ResetRule(threshold int) Rule { return Rule{Threshold: threshold, Window: time.Hour} }
 
 // LoginRule is the login throttle: threshold failures in 15 minutes, then 1 s, 2 s,
@@ -60,6 +65,15 @@ func WithClock(now func() time.Time) AttemptsOption { return func(a *Attempts) {
 // WithRule sets the throttle of a Kind. Until it is set a Kind is not throttled.
 func WithRule(kind Kind, rule Rule) AttemptsOption {
 	return func(a *Attempts) { a.rules[kind] = rule }
+}
+
+// WithRateLimits sets the throttle of every Kind from the configured limits, so the
+// app and the test harness build the module the same way.
+func WithRateLimits(limits config.RateLimits) AttemptsOption {
+	return func(a *Attempts) {
+		a.rules[KindLogin] = LoginRule(limits.LoginFailures)
+		a.rules[KindPasswordReset] = ResetRule(limits.ForgotAddress)
+	}
 }
 
 // NewAttempts builds the module over the ent client.
@@ -161,30 +175,51 @@ func (a *Attempts) Delay(ctx context.Context, kind Kind, email string) (time.Dur
 			break
 		}
 	}
-	wait = min(wait, rule.Cap)
 	return max(row.LastAttemptAt.Add(wait).Sub(now), 0), nil
 }
 
-// Reached reports whether the address has used up the Rule's threshold within the
-// window. It is the plain count-in-window check for a Kind that is a budget rather
-// than a delay (password reset: at most Threshold mails per Window); the Rule's
-// Base and Cap are not involved. A Kind that is not throttled is never reached.
-func (a *Attempts) Reached(ctx context.Context, kind Kind, email string) (bool, error) {
+// Take grants one slot of a budget Kind (password reset: at most Threshold slots per
+// Window) and reports whether it was granted. Check and count are one statement (an
+// upsert whose update is conditional), so concurrent requests for one address cannot
+// each see a free slot: exactly Threshold of them are granted. A refused request
+// changes nothing, so the window ends a Window after the last granted slot. A Kind
+// that is not throttled always grants; the Rule's Base and Cap are not involved.
+func (a *Attempts) Take(ctx context.Context, kind Kind, email string) (bool, error) {
 	rule, ok := a.rule(kind)
 	if !ok {
+		return true, nil
+	}
+	now := a.now()
+	cutoff := now.Add(-rule.Window)
+	row := sql.Table(authattempt.Table)
+	_, err := a.ent.AuthAttempt.Create().
+		SetEmail(NormalizeEmail(email)).
+		SetKind(kind).
+		SetFailures(1).
+		SetLastAttemptAt(now).
+		OnConflict(
+			sql.ConflictColumns(authattempt.FieldEmail, authattempt.FieldKind),
+			// A stale row restarts the count; a current one counts up while a slot is
+			// left. Otherwise nothing is updated and no row comes back.
+			sql.UpdateWhere(sql.Or(
+				sql.LT(row.C(authattempt.FieldLastAttemptAt), cutoff),
+				sql.LT(row.C(authattempt.FieldFailures), rule.Threshold),
+			)),
+			sql.ResolveWith(func(u *sql.UpdateSet) {
+				u.Set(authattempt.FieldFailures, sql.ExprFunc(func(b *sql.Builder) {
+					b.WriteString("CASE WHEN ").Ident(authattempt.Table).WriteByte('.').Ident(authattempt.FieldLastAttemptAt).
+						WriteString(" < ").Arg(cutoff).
+						WriteString(" THEN 1 ELSE ").Ident(authattempt.Table).WriteByte('.').Ident(authattempt.FieldFailures).
+						WriteString(" + 1 END")
+				}))
+				u.SetExcluded(authattempt.FieldLastAttemptAt)
+			}),
+		).
+		ID(ctx)
+	if errors.Is(err, stdsql.ErrNoRows) {
 		return false, nil
 	}
-	row, err := a.ent.AuthAttempt.Query().
-		Where(authattempt.Email(NormalizeEmail(email)), authattempt.KindEQ(kind),
-			authattempt.LastAttemptAtGTE(a.now().Add(-rule.Window))).
-		Only(ctx)
-	if ent.IsNotFound(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return row.Failures >= rule.Threshold, nil
+	return err == nil, err
 }
 
 // Purge deletes the rows whose last failure is past their Kind's window (a delay is

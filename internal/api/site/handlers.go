@@ -42,10 +42,10 @@ type WelcomeEnqueuer interface {
 // sender. Same jobs enqueue seam (river prod, inline tests). The token is minted
 // by the handler; the job builds the link.
 type SystemMailEnqueuer interface {
-	EnqueuePasswordReset(ctx context.Context, email, token string) error
-	// RehearsePasswordReset does the work of a reset mail except sending it, for
-	// the forgot-password requests that must cost the same but send nothing.
-	RehearsePasswordReset(ctx context.Context, email, token string) error
+	// EnqueuePasswordReset queues the reset mail. With send false the job is queued
+	// all the same but nothing is delivered, so forgot-password costs the same
+	// for every address.
+	EnqueuePasswordReset(ctx context.Context, email, token string, send bool) error
 	EnqueueEmailVerification(ctx context.Context, email, token string) error
 	EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error
 	// EnqueueMemberInvite sends the workspace invite email. It is best-effort:
