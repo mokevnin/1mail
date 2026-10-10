@@ -441,6 +441,28 @@ const (
 	MemberMaryName = "Mary"
 	// MemberMaryPassword is from fixtures/users.
 	MemberMaryPassword = "mary-test-password"
+	// OperatorAlsoCustomerEmail is from fixtures/operators.
+	OperatorAlsoCustomerEmail = "info@getsphericon.com"
+	// OperatorAlsoCustomerID is from fixtures/operators.
+	OperatorAlsoCustomerID = 3
+	// OperatorAlsoCustomerPassword is from fixtures/operators.
+	OperatorAlsoCustomerPassword = "operator-both-password"
+	// OperatorAlsoCustomerTotpSecret is from fixtures/operators.
+	OperatorAlsoCustomerTotpSecret = "MFRGGZDFMZTWQ2LK"
+	// OperatorEnrolledEmail is from fixtures/operators.
+	OperatorEnrolledEmail = "staff@sphericon.test"
+	// OperatorEnrolledID is from fixtures/operators.
+	OperatorEnrolledID = 1
+	// OperatorEnrolledPassword is from fixtures/operators.
+	OperatorEnrolledPassword = "operator-test-password"
+	// OperatorEnrolledTotpSecret is from fixtures/operators.
+	OperatorEnrolledTotpSecret = "KRSXG5CTMVRXEZLU"
+	// OperatorFreshEmail is from fixtures/operators.
+	OperatorFreshEmail = "fresh-staff@sphericon.test"
+	// OperatorFreshID is from fixtures/operators.
+	OperatorFreshID = 2
+	// OperatorFreshPassword is from fixtures/operators.
+	OperatorFreshPassword = "operator-fresh-password"
 	// OutboundMessageBystanderDestination is from fixtures/outbound_messages.
 	OutboundMessageBystanderDestination = "ben@initech.test"
 	// OutboundMessageBystanderID is from fixtures/outbound_messages.

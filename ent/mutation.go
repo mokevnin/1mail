@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/sphericon/ent/membership"
 	"github.com/mokevnin/sphericon/ent/oauthclient"
 	"github.com/mokevnin/sphericon/ent/oauthcode"
+	"github.com/mokevnin/sphericon/ent/operator"
 	"github.com/mokevnin/sphericon/ent/outboundmessage"
 	"github.com/mokevnin/sphericon/ent/predicate"
 	"github.com/mokevnin/sphericon/ent/recoverycode"
@@ -69,6 +70,7 @@ const (
 	TypeMembership         = "Membership"
 	TypeOAuthClient        = "OAuthClient"
 	TypeOAuthCode          = "OAuthCode"
+	TypeOperator           = "Operator"
 	TypeOutboundMessage    = "OutboundMessage"
 	TypeRecoveryCode       = "RecoveryCode"
 	TypeSegment            = "Segment"
@@ -17199,6 +17201,826 @@ func (m *OAuthCodeMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown OAuthCode edge %s", name)
+}
+
+// OperatorMutation represents an operation that mutates the Operator nodes in the graph.
+type OperatorMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *int64
+	created_at            *time.Time
+	updated_at            *time.Time
+	email                 *string
+	password_hash         *string
+	totp_secret_encrypted *string
+	totp_confirmed_at     *time.Time
+	totp_last_step        *int64
+	addtotp_last_step     *int64
+	session_epoch         *int64
+	addsession_epoch      *int64
+	clearedFields         map[string]struct{}
+	done                  bool
+	oldValue              func(context.Context) (*Operator, error)
+	predicates            []predicate.Operator
+}
+
+var _ ent.Mutation = (*OperatorMutation)(nil)
+
+// operatorOption allows management of the mutation configuration using functional options.
+type operatorOption func(*OperatorMutation)
+
+// newOperatorMutation creates new mutation for the Operator entity.
+func newOperatorMutation(c config, op Op, opts ...operatorOption) *OperatorMutation {
+	m := &OperatorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeOperator,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withOperatorID sets the ID field of the mutation.
+func withOperatorID(id int64) operatorOption {
+	return func(m *OperatorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Operator
+		)
+		m.oldValue = func(ctx context.Context) (*Operator, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Operator.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withOperator sets the old Operator of the mutation.
+func withOperator(node *Operator) operatorOption {
+	return func(m *OperatorMutation) {
+		m.oldValue = func(context.Context) (*Operator, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m OperatorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m OperatorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Operator entities.
+func (m *OperatorMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *OperatorMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *OperatorMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Operator.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *OperatorMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *OperatorMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *OperatorMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *OperatorMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *OperatorMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *OperatorMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetEmail sets the "email" field.
+func (m *OperatorMutation) SetEmail(s string) {
+	m.email = &s
+}
+
+// Email returns the value of the "email" field in the mutation.
+func (m *OperatorMutation) Email() (r string, exists bool) {
+	v := m.email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmail returns the old "email" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+	}
+	return oldValue.Email, nil
+}
+
+// ResetEmail resets all changes to the "email" field.
+func (m *OperatorMutation) ResetEmail() {
+	m.email = nil
+}
+
+// SetPasswordHash sets the "password_hash" field.
+func (m *OperatorMutation) SetPasswordHash(s string) {
+	m.password_hash = &s
+}
+
+// PasswordHash returns the value of the "password_hash" field in the mutation.
+func (m *OperatorMutation) PasswordHash() (r string, exists bool) {
+	v := m.password_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPasswordHash returns the old "password_hash" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldPasswordHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPasswordHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPasswordHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPasswordHash: %w", err)
+	}
+	return oldValue.PasswordHash, nil
+}
+
+// ResetPasswordHash resets all changes to the "password_hash" field.
+func (m *OperatorMutation) ResetPasswordHash() {
+	m.password_hash = nil
+}
+
+// SetTotpSecretEncrypted sets the "totp_secret_encrypted" field.
+func (m *OperatorMutation) SetTotpSecretEncrypted(s string) {
+	m.totp_secret_encrypted = &s
+}
+
+// TotpSecretEncrypted returns the value of the "totp_secret_encrypted" field in the mutation.
+func (m *OperatorMutation) TotpSecretEncrypted() (r string, exists bool) {
+	v := m.totp_secret_encrypted
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotpSecretEncrypted returns the old "totp_secret_encrypted" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldTotpSecretEncrypted(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotpSecretEncrypted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotpSecretEncrypted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotpSecretEncrypted: %w", err)
+	}
+	return oldValue.TotpSecretEncrypted, nil
+}
+
+// ClearTotpSecretEncrypted clears the value of the "totp_secret_encrypted" field.
+func (m *OperatorMutation) ClearTotpSecretEncrypted() {
+	m.totp_secret_encrypted = nil
+	m.clearedFields[operator.FieldTotpSecretEncrypted] = struct{}{}
+}
+
+// TotpSecretEncryptedCleared returns if the "totp_secret_encrypted" field was cleared in this mutation.
+func (m *OperatorMutation) TotpSecretEncryptedCleared() bool {
+	_, ok := m.clearedFields[operator.FieldTotpSecretEncrypted]
+	return ok
+}
+
+// ResetTotpSecretEncrypted resets all changes to the "totp_secret_encrypted" field.
+func (m *OperatorMutation) ResetTotpSecretEncrypted() {
+	m.totp_secret_encrypted = nil
+	delete(m.clearedFields, operator.FieldTotpSecretEncrypted)
+}
+
+// SetTotpConfirmedAt sets the "totp_confirmed_at" field.
+func (m *OperatorMutation) SetTotpConfirmedAt(t time.Time) {
+	m.totp_confirmed_at = &t
+}
+
+// TotpConfirmedAt returns the value of the "totp_confirmed_at" field in the mutation.
+func (m *OperatorMutation) TotpConfirmedAt() (r time.Time, exists bool) {
+	v := m.totp_confirmed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotpConfirmedAt returns the old "totp_confirmed_at" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldTotpConfirmedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotpConfirmedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotpConfirmedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotpConfirmedAt: %w", err)
+	}
+	return oldValue.TotpConfirmedAt, nil
+}
+
+// ClearTotpConfirmedAt clears the value of the "totp_confirmed_at" field.
+func (m *OperatorMutation) ClearTotpConfirmedAt() {
+	m.totp_confirmed_at = nil
+	m.clearedFields[operator.FieldTotpConfirmedAt] = struct{}{}
+}
+
+// TotpConfirmedAtCleared returns if the "totp_confirmed_at" field was cleared in this mutation.
+func (m *OperatorMutation) TotpConfirmedAtCleared() bool {
+	_, ok := m.clearedFields[operator.FieldTotpConfirmedAt]
+	return ok
+}
+
+// ResetTotpConfirmedAt resets all changes to the "totp_confirmed_at" field.
+func (m *OperatorMutation) ResetTotpConfirmedAt() {
+	m.totp_confirmed_at = nil
+	delete(m.clearedFields, operator.FieldTotpConfirmedAt)
+}
+
+// SetTotpLastStep sets the "totp_last_step" field.
+func (m *OperatorMutation) SetTotpLastStep(i int64) {
+	m.totp_last_step = &i
+	m.addtotp_last_step = nil
+}
+
+// TotpLastStep returns the value of the "totp_last_step" field in the mutation.
+func (m *OperatorMutation) TotpLastStep() (r int64, exists bool) {
+	v := m.totp_last_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotpLastStep returns the old "totp_last_step" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldTotpLastStep(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotpLastStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotpLastStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotpLastStep: %w", err)
+	}
+	return oldValue.TotpLastStep, nil
+}
+
+// AddTotpLastStep adds i to the "totp_last_step" field.
+func (m *OperatorMutation) AddTotpLastStep(i int64) {
+	if m.addtotp_last_step != nil {
+		*m.addtotp_last_step += i
+	} else {
+		m.addtotp_last_step = &i
+	}
+}
+
+// AddedTotpLastStep returns the value that was added to the "totp_last_step" field in this mutation.
+func (m *OperatorMutation) AddedTotpLastStep() (r int64, exists bool) {
+	v := m.addtotp_last_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTotpLastStep resets all changes to the "totp_last_step" field.
+func (m *OperatorMutation) ResetTotpLastStep() {
+	m.totp_last_step = nil
+	m.addtotp_last_step = nil
+}
+
+// SetSessionEpoch sets the "session_epoch" field.
+func (m *OperatorMutation) SetSessionEpoch(i int64) {
+	m.session_epoch = &i
+	m.addsession_epoch = nil
+}
+
+// SessionEpoch returns the value of the "session_epoch" field in the mutation.
+func (m *OperatorMutation) SessionEpoch() (r int64, exists bool) {
+	v := m.session_epoch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSessionEpoch returns the old "session_epoch" field's value of the Operator entity.
+// If the Operator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OperatorMutation) OldSessionEpoch(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSessionEpoch is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSessionEpoch requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSessionEpoch: %w", err)
+	}
+	return oldValue.SessionEpoch, nil
+}
+
+// AddSessionEpoch adds i to the "session_epoch" field.
+func (m *OperatorMutation) AddSessionEpoch(i int64) {
+	if m.addsession_epoch != nil {
+		*m.addsession_epoch += i
+	} else {
+		m.addsession_epoch = &i
+	}
+}
+
+// AddedSessionEpoch returns the value that was added to the "session_epoch" field in this mutation.
+func (m *OperatorMutation) AddedSessionEpoch() (r int64, exists bool) {
+	v := m.addsession_epoch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSessionEpoch resets all changes to the "session_epoch" field.
+func (m *OperatorMutation) ResetSessionEpoch() {
+	m.session_epoch = nil
+	m.addsession_epoch = nil
+}
+
+// Where appends a list predicates to the OperatorMutation builder.
+func (m *OperatorMutation) Where(ps ...predicate.Operator) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the OperatorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *OperatorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Operator, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *OperatorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *OperatorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Operator).
+func (m *OperatorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *OperatorMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.created_at != nil {
+		fields = append(fields, operator.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, operator.FieldUpdatedAt)
+	}
+	if m.email != nil {
+		fields = append(fields, operator.FieldEmail)
+	}
+	if m.password_hash != nil {
+		fields = append(fields, operator.FieldPasswordHash)
+	}
+	if m.totp_secret_encrypted != nil {
+		fields = append(fields, operator.FieldTotpSecretEncrypted)
+	}
+	if m.totp_confirmed_at != nil {
+		fields = append(fields, operator.FieldTotpConfirmedAt)
+	}
+	if m.totp_last_step != nil {
+		fields = append(fields, operator.FieldTotpLastStep)
+	}
+	if m.session_epoch != nil {
+		fields = append(fields, operator.FieldSessionEpoch)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *OperatorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case operator.FieldCreatedAt:
+		return m.CreatedAt()
+	case operator.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case operator.FieldEmail:
+		return m.Email()
+	case operator.FieldPasswordHash:
+		return m.PasswordHash()
+	case operator.FieldTotpSecretEncrypted:
+		return m.TotpSecretEncrypted()
+	case operator.FieldTotpConfirmedAt:
+		return m.TotpConfirmedAt()
+	case operator.FieldTotpLastStep:
+		return m.TotpLastStep()
+	case operator.FieldSessionEpoch:
+		return m.SessionEpoch()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *OperatorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case operator.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case operator.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case operator.FieldEmail:
+		return m.OldEmail(ctx)
+	case operator.FieldPasswordHash:
+		return m.OldPasswordHash(ctx)
+	case operator.FieldTotpSecretEncrypted:
+		return m.OldTotpSecretEncrypted(ctx)
+	case operator.FieldTotpConfirmedAt:
+		return m.OldTotpConfirmedAt(ctx)
+	case operator.FieldTotpLastStep:
+		return m.OldTotpLastStep(ctx)
+	case operator.FieldSessionEpoch:
+		return m.OldSessionEpoch(ctx)
+	}
+	return nil, fmt.Errorf("unknown Operator field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OperatorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case operator.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case operator.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case operator.FieldEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmail(v)
+		return nil
+	case operator.FieldPasswordHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPasswordHash(v)
+		return nil
+	case operator.FieldTotpSecretEncrypted:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotpSecretEncrypted(v)
+		return nil
+	case operator.FieldTotpConfirmedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotpConfirmedAt(v)
+		return nil
+	case operator.FieldTotpLastStep:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotpLastStep(v)
+		return nil
+	case operator.FieldSessionEpoch:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSessionEpoch(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Operator field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *OperatorMutation) AddedFields() []string {
+	var fields []string
+	if m.addtotp_last_step != nil {
+		fields = append(fields, operator.FieldTotpLastStep)
+	}
+	if m.addsession_epoch != nil {
+		fields = append(fields, operator.FieldSessionEpoch)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *OperatorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case operator.FieldTotpLastStep:
+		return m.AddedTotpLastStep()
+	case operator.FieldSessionEpoch:
+		return m.AddedSessionEpoch()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OperatorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case operator.FieldTotpLastStep:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTotpLastStep(v)
+		return nil
+	case operator.FieldSessionEpoch:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSessionEpoch(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Operator numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *OperatorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(operator.FieldTotpSecretEncrypted) {
+		fields = append(fields, operator.FieldTotpSecretEncrypted)
+	}
+	if m.FieldCleared(operator.FieldTotpConfirmedAt) {
+		fields = append(fields, operator.FieldTotpConfirmedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *OperatorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *OperatorMutation) ClearField(name string) error {
+	switch name {
+	case operator.FieldTotpSecretEncrypted:
+		m.ClearTotpSecretEncrypted()
+		return nil
+	case operator.FieldTotpConfirmedAt:
+		m.ClearTotpConfirmedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Operator nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *OperatorMutation) ResetField(name string) error {
+	switch name {
+	case operator.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case operator.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case operator.FieldEmail:
+		m.ResetEmail()
+		return nil
+	case operator.FieldPasswordHash:
+		m.ResetPasswordHash()
+		return nil
+	case operator.FieldTotpSecretEncrypted:
+		m.ResetTotpSecretEncrypted()
+		return nil
+	case operator.FieldTotpConfirmedAt:
+		m.ResetTotpConfirmedAt()
+		return nil
+	case operator.FieldTotpLastStep:
+		m.ResetTotpLastStep()
+		return nil
+	case operator.FieldSessionEpoch:
+		m.ResetSessionEpoch()
+		return nil
+	}
+	return fmt.Errorf("unknown Operator field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *OperatorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *OperatorMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *OperatorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *OperatorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *OperatorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *OperatorMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *OperatorMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Operator unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *OperatorMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Operator edge %s", name)
 }
 
 // OutboundMessageMutation represents an operation that mutates the OutboundMessage nodes in the graph.

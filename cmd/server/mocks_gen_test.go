@@ -141,3 +141,75 @@ func (mock *workspaceOpsMock) UnsuspendWorkspaceCalls() []struct {
 	mock.lockUnsuspendWorkspace.RUnlock()
 	return calls
 }
+
+// Ensure, that operatorOpsMock does implement operatorOps.
+// If this is not the case, regenerate this file with moq.
+var _ operatorOps = &operatorOpsMock{}
+
+// operatorOpsMock is a mock implementation of operatorOps.
+//
+//	func TestSomethingThatUsesoperatorOps(t *testing.T) {
+//
+//		// make and configure a mocked operatorOps
+//		mockedoperatorOps := &operatorOpsMock{
+//			CreateOperatorFunc: func(ctx context.Context, email string) (string, error) {
+//				panic("mock out the CreateOperator method")
+//			},
+//		}
+//
+//		// use mockedoperatorOps in code that requires operatorOps
+//		// and then make assertions.
+//
+//	}
+type operatorOpsMock struct {
+	// CreateOperatorFunc mocks the CreateOperator method.
+	CreateOperatorFunc func(ctx context.Context, email string) (string, error)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// CreateOperator holds details about calls to the CreateOperator method.
+		CreateOperator []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Email is the email argument value.
+			Email string
+		}
+	}
+	lockCreateOperator sync.RWMutex
+}
+
+// CreateOperator calls CreateOperatorFunc.
+func (mock *operatorOpsMock) CreateOperator(ctx context.Context, email string) (string, error) {
+	if mock.CreateOperatorFunc == nil {
+		panic("operatorOpsMock.CreateOperatorFunc: method is nil but operatorOps.CreateOperator was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Email string
+	}{
+		Ctx:   ctx,
+		Email: email,
+	}
+	mock.lockCreateOperator.Lock()
+	mock.calls.CreateOperator = append(mock.calls.CreateOperator, callInfo)
+	mock.lockCreateOperator.Unlock()
+	return mock.CreateOperatorFunc(ctx, email)
+}
+
+// CreateOperatorCalls gets all the calls that were made to CreateOperator.
+// Check the length with:
+//
+//	len(mockedoperatorOps.CreateOperatorCalls())
+func (mock *operatorOpsMock) CreateOperatorCalls() []struct {
+	Ctx   context.Context
+	Email string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Email string
+	}
+	mock.lockCreateOperator.RLock()
+	calls = mock.calls.CreateOperator
+	mock.lockCreateOperator.RUnlock()
+	return calls
+}

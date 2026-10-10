@@ -640,6 +640,24 @@ var (
 			},
 		},
 	}
+	// OperatorsColumns holds the columns for the "operators" table.
+	OperatorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "password_hash", Type: field.TypeString},
+		{Name: "totp_secret_encrypted", Type: field.TypeString, Nullable: true},
+		{Name: "totp_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "totp_last_step", Type: field.TypeInt64, Default: 0},
+		{Name: "session_epoch", Type: field.TypeInt64, Default: 0},
+	}
+	// OperatorsTable holds the schema information for the "operators" table.
+	OperatorsTable = &schema.Table{
+		Name:       "operators",
+		Columns:    OperatorsColumns,
+		PrimaryKey: []*schema.Column{OperatorsColumns[0]},
+	}
 	// OutboundMessagesColumns holds the columns for the "outbound_messages" table.
 	OutboundMessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -1085,6 +1103,7 @@ var (
 		MembershipsTable,
 		OauthClientsTable,
 		OauthCodesTable,
+		OperatorsTable,
 		OutboundMessagesTable,
 		RecoveryCodesTable,
 		SegmentsTable,
@@ -1171,6 +1190,9 @@ func init() {
 	OauthCodesTable.ForeignKeys[0].RefTable = OauthClientsTable
 	OauthCodesTable.Annotation = &entsql.Annotation{
 		Table: "oauth_codes",
+	}
+	OperatorsTable.Annotation = &entsql.Annotation{
+		Table: "operators",
 	}
 	OutboundMessagesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	OutboundMessagesTable.Annotation = &entsql.Annotation{

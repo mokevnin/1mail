@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/sphericon/config"
 	"github.com/mokevnin/sphericon/ee"
 	"github.com/mokevnin/sphericon/ee/licensekey"
+	"github.com/mokevnin/sphericon/ee/operator"
 	"github.com/mokevnin/sphericon/ent"
 	"github.com/mokevnin/sphericon/ent/user"
 	"github.com/mokevnin/sphericon/internal/accounts"
@@ -525,6 +526,17 @@ func (a *App) ResetSecondFactor(ctx context.Context, email string) (bool, error)
 	return err == nil, err
 }
 
+// CreateOperator makes a platform Operator (ADR 0026) and returns its one-time password:
+// the only way an Operator comes to exist (there is no signup). It refuses a duplicate
+// email and an instance without the `operator` license.
+func (a *App) CreateOperator(ctx context.Context, email string) (string, error) {
+	edition, err := do.Invoke[*ee.Edition](a.injector)
+	if err != nil {
+		return "", err
+	}
+	return edition.Operators.Create(ctx, email)
+}
+
 // Accounts is the product's Accounts module from the DI container, for harnesses that
 // arrange users and Workspaces through the same instance the HTTP surface runs on
 // (the end-to-end suite), so they open no second connection pool.
@@ -652,7 +664,13 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
-		return ee.New(client.Client, lic), nil
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		return ee.New(client.Client, lic, cipher, cfg.JWTSecret, operator.Config{
+			Secret: cfg.OperatorJWTSecret, SessionTTL: cfg.OperatorSessionTTL, SecureCookies: cfg.SecureCookies(),
+		})
 	})
 
 	do.Provide(injector, func(i do.Injector) (*eventsRuntime, error) {
@@ -1018,7 +1036,16 @@ func register(injector do.Injector, env string, o options) {
 			return nil, err
 		}
 
-		return server.New(cfg, database.DB, client.Client, site, external.Handler, mcp.Handler)
+		edition, err := do.Invoke[*ee.Edition](i)
+		if err != nil {
+			return nil, err
+		}
+		operatorAPI, err := server.NewOperatorAPI(edition.Operator())
+		if err != nil {
+			return nil, err
+		}
+
+		return server.New(cfg, database.DB, client.Client, site, external.Handler, mcp.Handler, operatorAPI)
 	})
 }
 
