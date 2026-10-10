@@ -11,7 +11,7 @@ import (
 )
 
 // TestRecovererLogsPanicWithRequestID verifies the middleware chain order:
-// recoverer wraps requestID (ADR 0018 order), yet a recovered panic is logged with the
+// recoverer wraps requestID (ADR 0024 order), yet a recovered panic is logged with the
 // correlation id, and the client still gets a 500 (not a hung/blank response).
 func TestRecovererLogsPanicWithRequestID(t *testing.T) {
 	var buf bytes.Buffer

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
@@ -21,7 +23,7 @@ type BodyLimits struct {
 	CollectEvent int64
 }
 
-// RateLimits are the per-policy request budgets per minute (ADR 0018). Every limit
+// RateLimits are the per-policy request budgets per minute (ADR 0024). Every limit
 // has a default and 0 disables it. They are core, never gated by the EE licence.
 type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
@@ -57,6 +59,18 @@ type RateLimits struct {
 // DefaultRateLimits are the production budgets.
 var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600, LoginFailures: 5, LoginIP: 20, Collect: 6000, CollectIP: 300, ForgotAddress: 3, ForgotIP: 10}
 
+// DBPool bounds the Postgres connections one replica may open: the
+// database/sql pool (ent, pubsub) and the pgx pool river runs on. Defaults
+// assume at most two replicas against max_connections=100:
+// (15+25) x 2 x 1.15 = 92 <= 97.
+type DBPool struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	// PGXMaxConns must cover river's MaxWorkers sum plus LISTEN and runtime services.
+	PGXMaxConns int32
+}
+
 type Config struct {
 	DatabaseURL    string
 	Port           string
@@ -74,6 +88,13 @@ type Config struct {
 	AutoMigrate    bool
 	BodyLimits     BodyLimits
 	RateLimits     RateLimits
+	// OutboxFloor is the minimum age of a domain-event outbox row before the
+	// prune job may delete it (OUTBOX_RETENTION_FLOOR_DAYS, default 7; ADR 0019).
+	OutboxFloor time.Duration
+	// EventsRetention is the age past which analytical Events are deleted
+	// (EVENTS_RETENTION_DAYS, default 400, 0 disables; ADR 0019).
+	EventsRetention time.Duration
+	DBPool          DBPool
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -97,7 +118,7 @@ type Config struct {
 
 	// MetricsAddr (host:port) is where the opt-in Prometheus listener binds. Empty
 	// (the default) means no listener; the public port never serves /metrics
-	// (ADR 0018).
+	// (ADR 0024).
 	MetricsAddr string
 
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
@@ -138,6 +159,11 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("RATE_LIMIT_COLLECT_IP_PER_MINUTE", DefaultRateLimits.CollectIP)
 	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", DefaultRateLimits.ForgotAddress)
 	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", DefaultRateLimits.ForgotIP)
+	v.SetDefault("OUTBOX_RETENTION_FLOOR_DAYS", 7)
+	v.SetDefault("EVENTS_RETENTION_DAYS", 400)
+	v.SetDefault("DB_MAX_OPEN_CONNS", 15)
+	v.SetDefault("DB_CONN_MAX_LIFETIME", 30*time.Minute)
+	v.SetDefault("PGX_MAX_CONNS", 25)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -160,6 +186,13 @@ func Load(envName string) (*Config, error) {
 
 	if !v.IsSet("DATABASE_URL") {
 		return nil, fmt.Errorf("DATABASE_URL is required")
+	}
+
+	// Idle defaults to the open cap so connections are reused, not churned.
+	maxOpen := v.GetInt("DB_MAX_OPEN_CONNS")
+	maxIdle := maxOpen
+	if v.IsSet("DB_MAX_IDLE_CONNS") {
+		maxIdle = v.GetInt("DB_MAX_IDLE_CONNS")
 	}
 
 	cfg := &Config{
@@ -196,10 +229,18 @@ func Load(envName string) (*Config, error) {
 			ForgotAddress: v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR"),
 			ForgotIP:      v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR"),
 		},
-		IsDev:     isDevEnv(envName),
-		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
-		LogLevel:  v.GetString("LOG_LEVEL"),
-		LogFormat: v.GetString("LOG_FORMAT"),
+		DBPool: DBPool{
+			MaxOpenConns:    maxOpen,
+			MaxIdleConns:    maxIdle,
+			ConnMaxLifetime: v.GetDuration("DB_CONN_MAX_LIFETIME"),
+			PGXMaxConns:     v.GetInt32("PGX_MAX_CONNS"),
+		},
+		OutboxFloor:     time.Duration(v.GetInt("OUTBOX_RETENTION_FLOOR_DAYS")) * 24 * time.Hour,
+		EventsRetention: time.Duration(v.GetInt("EVENTS_RETENTION_DAYS")) * 24 * time.Hour,
+		IsDev:           isDevEnv(envName),
+		Locale:          i18n.Normalize(v.GetString("APP_LOCALE")),
+		LogLevel:        v.GetString("LOG_LEVEL"),
+		LogFormat:       v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 		MetricsAddr:     v.GetString("METRICS_ADDR"),
@@ -221,8 +262,10 @@ func Load(envName string) (*Config, error) {
 func (c *Config) validate(envName string) error {
 	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
 	// with an empty key — refuse to boot rather than ship that footgun.
-	if !isDevEnv(envName) && c.JWTSecret == "" {
-		return fmt.Errorf("JWT_SECRET is required outside development")
+	if !isDevEnv(envName) {
+		if err := validateJWTSecret(c.JWTSecret); err != nil {
+			return err
+		}
 	}
 	if c.BodyLimits.Default <= 0 {
 		return fmt.Errorf("MAX_BODY_BYTES must be positive")
@@ -264,6 +307,24 @@ func (c *Config) validate(envName string) error {
 	if c.RateLimits.ForgotIP < 0 {
 		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR must not be negative (0 disables)")
 	}
+	if c.OutboxFloor < 0 {
+		return fmt.Errorf("OUTBOX_RETENTION_FLOOR_DAYS must not be negative")
+	}
+	if c.EventsRetention < 0 {
+		return fmt.Errorf("EVENTS_RETENTION_DAYS must not be negative")
+	}
+	if c.DBPool.MaxOpenConns <= 0 {
+		return fmt.Errorf("DB_MAX_OPEN_CONNS must be positive")
+	}
+	if c.DBPool.MaxIdleConns < 0 || c.DBPool.MaxIdleConns > c.DBPool.MaxOpenConns {
+		return fmt.Errorf("DB_MAX_IDLE_CONNS must be between 0 and DB_MAX_OPEN_CONNS")
+	}
+	if c.DBPool.ConnMaxLifetime <= 0 {
+		return fmt.Errorf("DB_CONN_MAX_LIFETIME must be positive")
+	}
+	if c.DBPool.PGXMaxConns <= 0 {
+		return fmt.Errorf("PGX_MAX_CONNS must be positive")
+	}
 	return c.validateMetricsAddr()
 }
 
@@ -283,6 +344,30 @@ func (c *Config) validateMetricsAddr() error {
 	}
 	if public, err := strconv.Atoi(c.Port); err == nil && public == port {
 		return fmt.Errorf("METRICS_ADDR must not use the public PORT (%d)", port)
+	}
+	return nil
+}
+
+// minJWTSecretLength is the shortest JWT_SECRET accepted outside development
+// (32 characters = 256 bits when the secret is hex/random, the HS256 key size).
+const minJWTSecretLength = 32
+
+// placeholderSecretMarkers are lowercase fragments of documented example and
+// development secrets; a secret containing one was copied, not generated.
+var placeholderSecretMarkers = []string{"change-me", "changeme", "change-in-production", "dev-secret", "a-strong-secret"}
+
+func validateJWTSecret(secret string) error {
+	if secret == "" {
+		return fmt.Errorf("JWT_SECRET is required outside development")
+	}
+	if len(secret) < minJWTSecretLength {
+		return fmt.Errorf("JWT_SECRET must be at least %d characters outside development (e.g. `openssl rand -hex 32`)", minJWTSecretLength)
+	}
+	lower := strings.ToLower(secret)
+	for _, m := range placeholderSecretMarkers {
+		if strings.Contains(lower, m) {
+			return fmt.Errorf("JWT_SECRET looks like a placeholder; generate one with `openssl rand -hex 32`")
+		}
 	}
 	return nil
 }

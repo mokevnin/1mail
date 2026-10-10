@@ -10,7 +10,7 @@ import (
 )
 
 // PurgeAuthAttemptsArgs is the periodic tick that removes stale failed-attempt rows
-// (ADR 0018): a row whose last failure is past its window no longer throttles
+// (ADR 0024): a row whose last failure is past its window no longer throttles
 // anything, and without the purge the table would grow with every address ever tried.
 type PurgeAuthAttemptsArgs struct{}
 

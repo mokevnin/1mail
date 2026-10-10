@@ -81,5 +81,5 @@ func (c *Catalog) BuildEmail(provider Provider, config []byte, signer Signer) (E
 	if !ok {
 		return nil, fmt.Errorf("provider %q did not build an EmailSender", provider)
 	}
-	return sender, nil
+	return instrumentedSender{EmailSender: sender, provider: provider}, nil
 }

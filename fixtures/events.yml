@@ -277,6 +277,60 @@
   occurred_at: '{{daysAgo 3}}'
   created_at: '{{daysAgo 3}}'
 
+# --- Event retention (ADR 0019): rows far past the 400-day default window. The
+# analytical ones expire; the evidentiary ones (consent, complaint, unsubscribe,
+# permanent bounce) are kept regardless of age. ---
+- id: 300 # fixture: EventOldAnalytical
+  email: old300@example.com
+  action: page_view
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 301 # fixture: EventOldAnalyticalSent
+  email: old301@example.com
+  action: email.sent
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 302 # fixture: EventOldAnalyticalTransientBounce
+  email: old302@example.com
+  action: email.bounced
+  properties: '{"bounceKind":"transient"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 303 # fixture: EventOldConfirmed
+  email: old303@example.com
+  action: marketing.confirmed
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 304 # fixture: EventOldComplained
+  email: old304@example.com
+  action: email.complained
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 305 # fixture: EventOldUnsubscribed
+  email: old305@example.com
+  action: email.unsubscribed
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 306 # fixture: EventOldPermanentBounce
+  email: old306@example.com
+  action: email.bounced
+  properties: '{"bounceKind":"permanent"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 500}}'
+  created_at: '{{daysAgo 500}}'
+- id: 310 # fixture: EventRecentAnalytical
+  email: old310@example.com
+  action: page_view
+  workspace_id: 1
+  occurred_at: '{{daysAgo 300}}'
+  created_at: '{{daysAgo 300}}'
+
 # --- Globex (workspace 2) foreign row — DO NOT change. Its action is unique to
 # the workspace so a leak into workspace 1's action list is detectable. ---
 - id: 900 # fixture: EventGlobex

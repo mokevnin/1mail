@@ -1,4 +1,4 @@
-# Failed-attempt counters (ADR 0018), keyed by normalized email and action kind. No
+# Failed-attempt counters (ADR 0024), keyed by normalized email and action kind. No
 # Workspace and no link to users: rows exist for unknown addresses too, so the table
 # cannot enumerate accounts. StaleLoginAttempt is past its window (the purge job
 # removes it); FreshLoginAttempt is current and must survive the purge.

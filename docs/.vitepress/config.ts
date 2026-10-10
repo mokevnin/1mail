@@ -43,6 +43,18 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Operations',
+          items: [
+            { text: 'Overview', link: '/operations/' },
+            { text: 'Backup and restore', link: '/operations/backup' },
+            { text: 'Upgrading', link: '/operations/upgrading' },
+            { text: 'Monitoring', link: '/operations/monitoring' },
+            { text: 'Runbook', link: '/operations/runbook' },
+            { text: 'Scaling and tuning', link: '/operations/scaling' },
+            { text: 'Security hardening', link: '/operations/security' },
+          ],
+        },
+        {
           text: 'Project',
           items: [
             { text: 'Roadmap', link: '/ROADMAP' },

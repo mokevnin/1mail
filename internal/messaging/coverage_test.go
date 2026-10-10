@@ -83,7 +83,7 @@ func TestCatalogBuildEmail(t *testing.T) {
 
 	sender, err := cat.BuildEmail(messaging.ProviderSMTP, nil, nil)
 	require.NoError(t, err)
-	assert.IsType(t, stubSender{}, sender)
+	assert.NotNil(t, sender, "built sender is wrapped by the outcome counter, so assert behaviour in metrics_test.go")
 
 	_, err = cat.BuildEmail(messaging.ProviderSES, nil, nil)
 	assert.ErrorIs(t, err, boom)

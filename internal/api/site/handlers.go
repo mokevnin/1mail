@@ -89,7 +89,7 @@ type Handlers struct {
 type Deps struct {
 	Accounts *accounts.Accounts
 	// Attempts counts failed logins and password-reset mails per account (ADR
-	// 0018); the login route's credential checker and throttle wrapper and
+	// 0024); the login route's credential checker and throttle wrapper and
 	// forgot-password share it.
 	Attempts     *accounts.Attempts
 	OAuth        *oauthserver.Service

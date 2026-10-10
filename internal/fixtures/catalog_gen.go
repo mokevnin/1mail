@@ -129,6 +129,54 @@ const (
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.
 	EventGlobexID = 900
+	// EventOldAnalyticalAction is from fixtures/events.
+	EventOldAnalyticalAction = "page_view"
+	// EventOldAnalyticalEmail is from fixtures/events.
+	EventOldAnalyticalEmail = "old300@example.com"
+	// EventOldAnalyticalID is from fixtures/events.
+	EventOldAnalyticalID = 300
+	// EventOldAnalyticalSentAction is from fixtures/events.
+	EventOldAnalyticalSentAction = "email.sent"
+	// EventOldAnalyticalSentEmail is from fixtures/events.
+	EventOldAnalyticalSentEmail = "old301@example.com"
+	// EventOldAnalyticalSentID is from fixtures/events.
+	EventOldAnalyticalSentID = 301
+	// EventOldAnalyticalTransientBounceAction is from fixtures/events.
+	EventOldAnalyticalTransientBounceAction = "email.bounced"
+	// EventOldAnalyticalTransientBounceEmail is from fixtures/events.
+	EventOldAnalyticalTransientBounceEmail = "old302@example.com"
+	// EventOldAnalyticalTransientBounceID is from fixtures/events.
+	EventOldAnalyticalTransientBounceID = 302
+	// EventOldComplainedAction is from fixtures/events.
+	EventOldComplainedAction = "email.complained"
+	// EventOldComplainedEmail is from fixtures/events.
+	EventOldComplainedEmail = "old304@example.com"
+	// EventOldComplainedID is from fixtures/events.
+	EventOldComplainedID = 304
+	// EventOldConfirmedAction is from fixtures/events.
+	EventOldConfirmedAction = "marketing.confirmed"
+	// EventOldConfirmedEmail is from fixtures/events.
+	EventOldConfirmedEmail = "old303@example.com"
+	// EventOldConfirmedID is from fixtures/events.
+	EventOldConfirmedID = 303
+	// EventOldPermanentBounceAction is from fixtures/events.
+	EventOldPermanentBounceAction = "email.bounced"
+	// EventOldPermanentBounceEmail is from fixtures/events.
+	EventOldPermanentBounceEmail = "old306@example.com"
+	// EventOldPermanentBounceID is from fixtures/events.
+	EventOldPermanentBounceID = 306
+	// EventOldUnsubscribedAction is from fixtures/events.
+	EventOldUnsubscribedAction = "email.unsubscribed"
+	// EventOldUnsubscribedEmail is from fixtures/events.
+	EventOldUnsubscribedEmail = "old305@example.com"
+	// EventOldUnsubscribedID is from fixtures/events.
+	EventOldUnsubscribedID = 305
+	// EventRecentAnalyticalAction is from fixtures/events.
+	EventRecentAnalyticalAction = "page_view"
+	// EventRecentAnalyticalEmail is from fixtures/events.
+	EventRecentAnalyticalEmail = "old310@example.com"
+	// EventRecentAnalyticalID is from fixtures/events.
+	EventRecentAnalyticalID = 310
 	// FreshLoginAttemptEmail is from fixtures/auth_attempts.
 	FreshLoginAttemptEmail = "fresh@attempts.test"
 	// FreshLoginAttemptID is from fixtures/auth_attempts.

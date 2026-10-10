@@ -1,0 +1,17 @@
+{{- if .Values.metrics.prometheusRule.enabled }}
+{{- if not .Values.metrics.enabled }}
+{{- fail "metrics.prometheusRule.enabled requires metrics.enabled" }}
+{{- end }}
+{{- /* files/alerts.yaml is read as plain text, so its Prometheus {{ $labels }} templates pass through untouched. */}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "1mail.fullname" . }}
+  labels:
+    {{- include "1mail.labels" . | nindent 4 }}
+    {{- with .Values.metrics.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- .Files.Get "files/alerts.yaml" | replace "https://mokevnin.github.io/1mail/operations/runbook" .Values.metrics.prometheusRule.runbookUrl | nindent 2 }}
+{{- end }}

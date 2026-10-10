@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -47,11 +48,20 @@ type Client struct {
 	appURL string
 }
 
+// Retention groups the data-retention settings of the prune jobs.
+type Retention struct {
+	// OutboxFloor is the minimum age of a pruned outbox row.
+	OutboxFloor time.Duration
+	// Events is the age past which analytical Events are deleted (0 disables).
+	Events time.Duration
+}
+
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
-// in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
+// in account emails (reset/verify/change). db is the raw handle the instance-wide
+// outbox prune runs on; retention carries the prune settings.
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, retention Retention) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -70,9 +80,30 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 	river.AddWorker(workers, &PurgeAuthAttemptsWorker{ent: entClient})
+	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
+	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
 
 	logger := slog.Default()
-	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
+	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{river: rc, ent: entClient, appURL: appURL}, nil
+}
+
+// River job retention, explicit rather than river's defaults: bounds the
+// river_job table (Event retention is separate, ADR 0019).
+const (
+	completedJobRetention = 24 * time.Hour
+	cancelledJobRetention = 24 * time.Hour
+	discardedJobRetention = 14 * 24 * time.Hour
+)
+
+func newRiverConfig(workers *river.Workers, logger *slog.Logger) *river.Config {
+	return &river.Config{
+		CompletedJobRetentionPeriod: completedJobRetention,
+		CancelledJobRetentionPeriod: cancelledJobRetention,
+		DiscardedJobRetentionPeriod: discardedJobRetention,
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 5},
 			QueueBroadcasts:    {MaxWorkers: 10},
@@ -94,7 +125,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
-			// Drop failed-attempt rows past their window (ADR 0018).
+			// Drop failed-attempt rows past their window (ADR 0024).
 			river.NewPeriodicJob(
 				river.PeriodicInterval(time.Hour),
 				func() (river.JobArgs, *river.InsertOpts) {
@@ -102,12 +133,24 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 				},
 				&river.PeriodicJobOpts{RunOnStart: true},
 			),
+			// Prune the domain-events outbox below the slowest consumer (ADR 0019).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(outboxPruneInterval),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneOutboxArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Delete expired analytical Events daily at 03:00 UTC (ADR 0019).
+			river.NewPeriodicJob(
+				dailyAtUTC{hour: eventsRetentionHourUTC},
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneEventsArgs{}, nil
+				},
+				nil,
+			),
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
-	return &Client{river: rc, ent: entClient, appURL: appURL}, nil
 }
 
 // Start begins processing jobs (run in a goroutine; returns once started).

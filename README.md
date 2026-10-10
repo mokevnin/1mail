@@ -134,9 +134,10 @@ tagged with the version and `latest`.
 
 ```sh
 docker run -p 3000:3000 \
-  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=disable" \
+  -e APP_ENV=production \
+  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require" \
   -e APP_URL="https://example.com" \
-  -e JWT_SECRET="<a-strong-secret>" \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e AUTO_MIGRATE=true \
   ghcr.io/mokevnin/1mail:latest
 ```
@@ -201,6 +202,8 @@ Configuration is read from the environment (and, if present, `.env` files).
 | `RATE_LIMIT_COLLECT_IP_PER_MINUTE`                                  | `300`                    | Requests per minute per client IP on `/collect`; over it `429` with `Retry-After`; `0` disables                                                                                           |
 | `RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR`                   | `3`                      | Password-reset mails sent per address per hour; over it forgot-password still answers `202` and sends nothing (the answer never reveals whether the account exists); `0` disables.        |
 | `RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR`                            | `10`                     | Forgot-password requests per client IP per hour; over it `429` with `Retry-After`; `0` disables.                                                                                          |
+| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | `7`                      | Minimum age in days before a consumed domain-event outbox row is pruned (ADR 0019)                                                                                                        |
+| `EVENTS_RETENTION_DAYS`                                             | `400`                    | Age in days after which analytical Events are deleted daily at 03:00 UTC; `0` disables. Evidentiary Events are kept (ADR 0019)                                                            |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).
@@ -214,3 +217,7 @@ health checks), see [`docs/self-hosting.md`](docs/self-hosting.md).
 ([`LICENSE`](LICENSE)); the Enterprise features under [`ee/`](ee/) are commercial and
 source-available ([`ee/LICENSE`](ee/LICENSE)). See [`LICENSING.md`](LICENSING.md) for the
 boundary.
+
+## Security
+
+To report a vulnerability, see [`SECURITY.md`](SECURITY.md).

@@ -1,4 +1,4 @@
-// Package ratelimit is the in-binary request limiter (ADR 0018). Flood limits are
+// Package ratelimit is the in-binary request limiter (ADR 0024). Flood limits are
 // in-memory sliding windows (go-chi/httprate); a limit of 0 disables its policy.
 //
 // Seams for the other slices:
@@ -127,7 +127,7 @@ func (p *Policy) Blocked(w http.ResponseWriter, r *http.Request, key string) err
 // Exceeded counts one request against key and reports whether the budget is spent.
 // Unlike Allow it never answers the request: it is for a recording guard, where the
 // caller keeps serving the response and only skips the side effect (tracking never
-// refuses a recipient, ADR 0018). An exceeded request is counted and logged.
+// refuses a recipient, ADR 0024). An exceeded request is counted and logged.
 func (p *Policy) Exceeded(r *http.Request, key string) bool {
 	if p == nil || !p.rl.OnLimit(discardWriter{}, r, key) {
 		return false

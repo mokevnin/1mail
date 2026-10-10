@@ -23,7 +23,7 @@ const (
 	KindPasswordReset = authattempt.KindPasswordReset
 )
 
-// Rule is the throttle of one Kind (ADR 0018): after Threshold failures within
+// Rule is the throttle of one Kind (ADR 0024): after Threshold failures within
 // Window the next attempt must wait Base, doubling with every further failure up to
 // Cap, measured from the last failure. A Threshold of 0 disables the Kind: nothing
 // is counted and nothing waits.

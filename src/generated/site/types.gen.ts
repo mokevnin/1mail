@@ -1988,7 +1988,7 @@ export type SiteAuthDirectLoginErrors = {
    */
   403: SiteDirectLoginError;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
    */
   429: ProblemDetails;
 };
@@ -2013,7 +2013,7 @@ export type SiteAuthForgotPasswordData = {
 
 export type SiteAuthForgotPasswordErrors = {
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
    */
   429: ProblemDetails;
 };
@@ -2044,7 +2044,7 @@ export type SiteAuthRegisterErrors = {
    */
   422: ProblemDetails;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
    */
   429: ProblemDetails;
 };
@@ -2125,7 +2125,7 @@ export type SitePublicConfirmationsPerformErrors = {
    */
   410: ProblemDetails;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
    */
   429: ProblemDetails;
 };
@@ -2187,7 +2187,7 @@ export type SitePublicInvitationsAcceptErrors = {
    */
   422: ProblemDetails;
   /**
-   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0024)
    */
   429: ProblemDetails;
 };

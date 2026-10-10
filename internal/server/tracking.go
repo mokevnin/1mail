@@ -41,7 +41,7 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 // /site/confirmations/{token}), so the SPA stays on the generated client. Confirmation
 // tokens additionally expire (~7 days).
 //
-// Tracking never refuses a recipient (ADR 0018): over the per-IP tracking guard an
+// Tracking never refuses a recipient (ADR 0024): over the per-IP tracking guard an
 // open still returns the pixel and a click still redirects, only the recording is
 // skipped. Unsubscribe is not rate limited at all; its signed token protects it.
 //
