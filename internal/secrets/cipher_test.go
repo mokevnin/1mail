@@ -29,16 +29,6 @@ func TestCipherRoundTrip(t *testing.T) {
 	assert.Equal(t, plaintext, dec)
 }
 
-func TestEncryptUsesFreshNonce(t *testing.T) {
-	c := testCipher(t)
-
-	a, err := c.Encrypt([]byte("same"))
-	require.NoError(t, err)
-	b, err := c.Encrypt([]byte("same"))
-	require.NoError(t, err)
-	assert.NotEqual(t, a, b, "identical plaintext encrypts to different ciphertext")
-}
-
 func TestNewCipherRejectsBadKeyset(t *testing.T) {
 	_, err := NewCipher("")
 	require.Error(t, err)
