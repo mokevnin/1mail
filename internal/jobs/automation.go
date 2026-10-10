@@ -9,12 +9,12 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/tags"
 )
