@@ -11,7 +11,7 @@ import (
 )
 
 // TestRecovererLogsPanicWithRequestID verifies the middleware chain order:
-// requestID must wrap recoverer so a recovered panic is logged with the
+// recoverer wraps requestID (ADR 0018 order), yet a recovered panic is logged with the
 // correlation id, and the client still gets a 500 (not a hung/blank response).
 func TestRecovererLogsPanicWithRequestID(t *testing.T) {
 	var buf bytes.Buffer
@@ -22,7 +22,7 @@ func TestRecovererLogsPanicWithRequestID(t *testing.T) {
 	boom := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		panic("boom")
 	})
-	handler := chain(boom, requestID, recoverer)
+	handler := chain(boom, recoverer, requestID)
 
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/explode", nil)
 	req.Header.Set("X-Request-Id", "req-abc")

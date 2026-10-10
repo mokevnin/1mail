@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/cors"
@@ -130,11 +131,10 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 		return nil, err
 	}
 
-	// requestID is outermost so the correlation id is in context before recoverer
-	// runs — the panic log then carries request_id. (requestID is trivial and
-	// cannot itself panic, so nothing downstream of recovery is lost.)
-	// guard sits inside corsMiddleware so preflights are answered before the check.
-	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), corsMiddleware(cfg.CORSOrigins), guard), nil
+	// Order (ADR 0018): recoverer, requestID, CORS, client address, rate limit,
+	// timeout. CORS precedes the limiter so a 429 still reaches the browser; guard
+	// sits inside CORS so preflights are answered before the check.
+	return chain(mux, recoverer, requestID, corsMiddleware(cfg.CORSOrigins), clientip.Middleware, ratelimit.New(cfg.RateLimits).Middleware, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
@@ -199,6 +199,11 @@ func recoverer(next http.Handler) http.Handler {
 		logger := logging.FromContext(r.Context())
 		defer func() {
 			if rec := recover(); rec != nil {
+				// recoverer is outermost, so requestID has only put the id on the
+				// shared response headers, not in this request's context.
+				if id := w.Header().Get("X-Request-Id"); id != "" {
+					logger = logger.With("request_id", id)
+				}
 				logger.Error("panic recovered",
 					"err", rec,
 					"method", r.Method,

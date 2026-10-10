@@ -290,6 +290,7 @@
     "contactDeleted": "Contacto eliminado",
     "contactUpdated": "Contacto actualizado",
     "errorMessage": "Algo salió mal. Inténtalo de nuevo.",
+    "rateLimited": "Demasiadas solicitudes. Espera un minuto e inténtalo de nuevo.",
     "segmentCreated": "Segmento creado",
     "segmentDeleted": "Segmento eliminado",
     "segmentUpdated": "Segmento actualizado",

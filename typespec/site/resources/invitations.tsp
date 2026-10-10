@@ -131,5 +131,6 @@ namespace SitePublicInvitations {
   op accept(@path token: string, @body body: SiteAcceptInvitationInput):
     | OkResponse
     | NotFoundProblem
-    | UnprocessableEntityProblem;
+    | UnprocessableEntityProblem
+    | TooManyRequestsProblem;
 }

@@ -74,6 +74,26 @@ model ForbiddenProblem is Response<403> {
   @body body: ProblemDetails;
 }
 
+/** RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018) */
+@error
+model TooManyRequestsProblem is Response<429> {
+  @header contentType: "application/problem+json";
+
+  /** Seconds to wait before retrying */
+  @header("Retry-After") retryAfter: int32;
+
+  /** The request budget of the window that was exceeded */
+  @header("X-RateLimit-Limit") rateLimitLimit: int32;
+
+  /** Requests left in the current window */
+  @header("X-RateLimit-Remaining") rateLimitRemaining: int32;
+
+  /** Unix time at which the window resets */
+  @header("X-RateLimit-Reset") rateLimitReset: int64;
+
+  @body body: ProblemDetails;
+}
+
 /** RFC 7807 validation response */
 @error
 model UnprocessableEntityProblem is Response<422> {

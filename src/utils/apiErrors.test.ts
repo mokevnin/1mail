@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { getApiErrorMessage, isForbiddenError } from './apiErrors.ts'
+import { getApiErrorMessage, isForbiddenError, isRateLimitedError } from './apiErrors.ts'
 
 describe('getApiErrorMessage', () => {
   test('prefers detail over every other field', () => {
@@ -20,6 +20,14 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(null, 'fallback')).toBe('fallback')
     expect(getApiErrorMessage(undefined, 'fallback')).toBe('fallback')
     expect(getApiErrorMessage({}, 'fallback')).toBe('fallback')
+  })
+})
+
+describe('isRateLimitedError', () => {
+  test('is true only for a 429 problem body', () => {
+    expect(isRateLimitedError({ status: 429, detail: 'rate limit exceeded' })).toBe(true)
+    expect(isRateLimitedError({ status: 403 })).toBe(false)
+    expect(isRateLimitedError(null)).toBe(false)
   })
 })
 

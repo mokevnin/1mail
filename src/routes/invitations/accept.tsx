@@ -9,11 +9,12 @@ import {
   sitePublicInvitationsAcceptMutation,
   sitePublicInvitationsLookupOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useApiErrorMessage } from '../../hooks/useApiErrorMessage.ts'
 import { acceptInvitationRoute, loginRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function AcceptInvitationPage() {
   const { t } = useTranslation()
+  const apiErrorMessage = useApiErrorMessage()
   const navigate = useNavigate()
   const { token } = acceptInvitationRoute.useParams()
 
@@ -38,7 +39,7 @@ export function AcceptInvitationPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.acceptInvitation.errorTitle),
-        message: getApiErrorMessage(
+        message: apiErrorMessage(
           error,
           t(($) => $.acceptInvitation.errorMessage),
         ),

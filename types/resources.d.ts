@@ -292,6 +292,7 @@ export default interface Resources {
       "contactDeleted": "Contact deleted",
       "contactUpdated": "Contact updated",
       "errorMessage": "Something went wrong. Please try again.",
+      "rateLimited": "Too many requests. Please wait a minute and try again.",
       "segmentCreated": "Segment created",
       "segmentDeleted": "Segment deleted",
       "segmentUpdated": "Segment updated",

@@ -19,7 +19,8 @@ namespace SitePublicConfirmations {
   op perform(@path token: string):
     | NoContentResponse
     | BadRequestProblem
-    | GoneProblem;
+    | GoneProblem
+    | TooManyRequestsProblem;
 }
 
 @route("/unsubscribes")
