@@ -23,7 +23,8 @@ func TestSendToAnErasedContactIsDroppedAtTheChokepoint(t *testing.T) {
 	s := env.DB.Scoped(fixtures.AcmeID)
 	req := marketing(t, env, "bc:erased", fixtures.ContactAliceID)
 
-	require.NoError(t, erasure.New(env.Bus).Erase(ctx, s, erasure.ByContactID(fixtures.ContactAliceID)))
+	require.NoError(t, erasure.New(env.Bus).Erase(ctx, s, erasure.ByContactID(fixtures.ContactAliceID),
+		erasure.Operator{Kind: erasure.OperatorAPIToken}))
 	before := len(env.CustomerMail.Messages())
 
 	res, err := newModule(env).Send(ctx, s, req)

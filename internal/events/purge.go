@@ -29,13 +29,19 @@ func (p *txPublisher) PurgeOutbox(ctx context.Context, workspaceID, contactID in
 	for i, d := range destinations {
 		lowered[i] = strings.ToLower(strings.TrimSpace(d))
 	}
+	// contactID 0 is "no Contact" (an address erased on its own); events with no
+	// Contact carry contactId 0 or none, so 0 must never match.
+	id := ""
+	if contactID != 0 {
+		id = fmt.Sprint(contactID)
+	}
 	// The payload is the JSON-encoded Envelope; events name the Contact as data.contactId
 	// and the address as data.email.
 	_, err := p.tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s
 WHERE (payload::jsonb->>'workspaceId')::bigint = $1
   AND ((payload::jsonb->'data'->>'contactId') = $2
        OR lower(payload::jsonb->'data'->>'email') = ANY($3))`, outboxTable),
-		workspaceID, fmt.Sprint(contactID), lowered)
+		workspaceID, id, lowered)
 	return err
 }
 
