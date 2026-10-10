@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // smtpSink is a minimal SMTP server that records the RCPT of every accepted message,
@@ -409,4 +410,52 @@ func TestSystemSenderRejectsAnUnknownProviderViaTheCatalogOnly(t *testing.T) {
 	sender, err := buildSystemSender(&config.Config{SystemEmailProvider: "anything", SMTPHost: "h", SMTPPort: 25, SMTPFrom: "a@b.test"}, registry.Default())
 	require.NoError(t, err)
 	assert.NotNil(t, sender)
+}
+
+func TestAppServesOnACallerProvidedListener(t *testing.T) {
+	baseline(t)
+	ln, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	a, err := New("e2e", WithListener(ln))
+	require.NoError(t, err)
+
+	base := "http://" + ln.Addr().String()
+	assert.Equal(t, base, a.Config.AppURL, "the public URL is derived from the listener")
+
+	// A link the tracker builds points at the listener...
+	tracker, err := do.Invoke[*tracking.Tracker](a.injector)
+	require.NoError(t, err)
+	link := tracker.ClickURL("tok", "https://example.com")
+	require.True(t, strings.HasPrefix(link, base+"/e/c/"), link)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	served := make(chan error, 1)
+	go func() { served <- a.RunEvents(ctx) }()
+	select {
+	case <-a.events.router.Running():
+	case err := <-served:
+		t.Fatalf("router stopped before running: %v", err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("router never started")
+	}
+	require.NoError(t, a.BindMetrics())
+	go func() { served <- a.Serve() }()
+	t.Cleanup(func() {
+		cancel()
+		sctx, scancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer scancel()
+		_ = a.Stop(sctx)
+		_ = a.Shutdown(sctx)
+	})
+
+	// ...and the running server answers there, on every API surface.
+	for _, path := range []string{"/healthz", "/api/auth/me", "/site/workspaces", "/collect/events"} {
+		require.Eventually(t, func() bool {
+			code, _, err := testhelper.TryHTTPGet(t.Context(), base+path)
+			return err == nil && code != http.StatusNotFound
+		}, 5*time.Second, 20*time.Millisecond, path)
+	}
+	code, _, err := testhelper.TryHTTPGet(t.Context(), link)
+	require.NoError(t, err)
+	assert.NotEqual(t, http.StatusNotFound, code, "a tracker link round-trips to the running server")
 }

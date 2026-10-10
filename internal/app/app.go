@@ -59,6 +59,7 @@ type App struct {
 	Metrics *telemetry.MetricsServer
 
 	injector       *do.RootScope
+	listener       net.Listener // caller-provided; nil means listen on Config.Port
 	events         *eventsRuntime
 	jobs           *jobsClient
 	shutdownOnce   sync.Once
@@ -145,9 +146,28 @@ func (j *jobsClient) Shutdown() error {
 	return j.Stop(ctx)
 }
 
-func New(env string) (*App, error) {
+// Option customises how New builds the App.
+type Option func(*options)
+
+type options struct {
+	listener net.Listener
+}
+
+// WithListener makes the App serve on a listener the caller already opened (a free
+// port, say). The configured public URL (APP_URL, the base of unsubscribe, confirm
+// and tracking links) and PORT are derived from the listener's address, so the order
+// is: open the listener, then New, then Serve. Stop closes the listener.
+func WithListener(ln net.Listener) Option {
+	return func(o *options) { o.listener = ln }
+}
+
+func New(env string, opts ...Option) (*App, error) {
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
 	injector := do.New()
-	register(injector, env)
+	register(injector, env, o.listener)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -203,11 +223,17 @@ func New(env string) (*App, error) {
 		metrics = telemetry.NewMetricsServer(cfg.MetricsAddr)
 	}
 
+	addr := ":" + cfg.Port
+	if o.listener != nil {
+		addr = o.listener.Addr().String()
+	}
+
 	return &App{
-		Config:  cfg,
-		Metrics: metrics,
+		Config:   cfg,
+		Metrics:  metrics,
+		listener: o.listener,
 		Server: &http.Server{
-			Addr:              ":" + cfg.Port,
+			Addr:              addr,
 			Handler:           handler,
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       30 * time.Second,
@@ -232,7 +258,13 @@ func (a *App) Serve() error {
 			slog.Error("metrics server stopped", "err", err)
 		}
 	}()
-	if err := a.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	var err error
+	if a.listener != nil {
+		err = a.Server.Serve(a.listener)
+	} else {
+		err = a.Server.ListenAndServe()
+	}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
@@ -249,7 +281,7 @@ func (a *App) Stop(ctx context.Context) error {
 // that keeps `1mail workspace …` quick to start and to shut down.
 func NewOperator(env string) (*App, error) {
 	injector := do.New()
-	register(injector, env)
+	register(injector, env, nil)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -319,9 +351,16 @@ func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	return a.shutdownReport
 }
 
-func register(injector do.Injector, env string) {
+func register(injector do.Injector, env string, ln net.Listener) {
 	do.Provide(injector, func(do.Injector) (*config.Config, error) {
-		return config.Load(env)
+		cfg, err := config.Load(env)
+		if err != nil {
+			return nil, err
+		}
+		if ln != nil {
+			cfg.UseListener(ln.Addr())
+		}
+		return cfg, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*sqlDB, error) {
