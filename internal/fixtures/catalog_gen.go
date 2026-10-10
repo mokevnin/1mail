@@ -309,6 +309,18 @@ const (
 	EventRecentAnalyticalEmail = "old310@example.com"
 	// EventRecentAnalyticalID is from fixtures/events.
 	EventRecentAnalyticalID = 310
+	// EventTieFirstAction is from fixtures/events.
+	EventTieFirstAction = "tie_probe"
+	// EventTieFirstEmail is from fixtures/events.
+	EventTieFirstEmail = "tie@example.com"
+	// EventTieFirstID is from fixtures/events.
+	EventTieFirstID = 990
+	// EventTieSecondAction is from fixtures/events.
+	EventTieSecondAction = "tie_probe"
+	// EventTieSecondEmail is from fixtures/events.
+	EventTieSecondEmail = "tie@example.com"
+	// EventTieSecondID is from fixtures/events.
+	EventTieSecondID = 991
 	// FreshLoginAttemptEmail is from fixtures/auth_attempts.
 	FreshLoginAttemptEmail = "fresh@attempts.test"
 	// FreshLoginAttemptID is from fixtures/auth_attempts.

@@ -50,6 +50,7 @@ import (
 	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tags"
+	"github.com/mokevnin/1mail/internal/templates"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/mokevnin/1mail/internal/webhooks"
 	ht "github.com/ogen-go/ogen/http"
@@ -264,6 +265,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
 	erasureModule := erasure.New(bus)
+	templatesModule := templates.New()
 	lic, err := licensekey.Parse("", licensekey.ProductionKey, time.Now())
 	require.NoError(t, err, "parse empty license")
 	if !st.unlicensed {
@@ -283,7 +285,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		accounts.WithRateLimits(cfg.RateLimits))
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Webhooks: webhooksModule, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule, Templates: templatesModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule, SendingDomains: sendingDomainsModule,
 		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
@@ -292,7 +294,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Webhooks: webhooksModule, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule, Templates: templatesModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
 		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit, Analytics: analytics.New(),

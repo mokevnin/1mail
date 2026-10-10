@@ -17,6 +17,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -99,4 +100,33 @@ func (m *Module) Actions(ctx context.Context, s *ent.Scoped) ([]string, error) {
 		Order(ent.Asc(event.FieldAction)).
 		GroupBy(event.FieldAction).
 		Strings(ctx)
+}
+
+// Filter narrows the Events List returns; a zero field does not filter.
+type Filter struct {
+	Action string
+	// ContactID selects a Contact's activity by the stable identity link, which includes
+	// anonymous Events stitched onto the Contact at Identify (ADR 0002).
+	ContactID *int64
+	// Email matches case-insensitively: Contact emails are stored as entered, but collect
+	// ingestion lowercases Event emails, so an exact match would miss tracked Events.
+	Email string
+}
+
+// List returns one page of the workspace's Events matching f, newest first (id breaks ties).
+func (m *Module) List(ctx context.Context, s *ent.Scoped, f Filter, p pagination.Params) (pagination.Page[*ent.Event], error) {
+	q := s.Event().Query()
+	if f.Action != "" {
+		q = q.Where(event.ActionEQ(f.Action))
+	}
+	if f.ContactID != nil {
+		q = q.Where(event.ContactID(*f.ContactID))
+	}
+	if f.Email != "" {
+		q = q.Where(event.EmailEqualFold(f.Email))
+	}
+	return pagination.List(ctx, p, q.Count, func(ctx context.Context, limit, offset int) ([]*ent.Event, error) {
+		return q.Clone().Order(ent.Desc(event.FieldCreatedAt), ent.Desc(event.FieldID)).
+			Limit(limit).Offset(offset).All(ctx)
+	})
 }

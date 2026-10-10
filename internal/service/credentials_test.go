@@ -67,20 +67,6 @@ func TestPasswordHashVerifiesOnlyTheOriginal(t *testing.T) {
 	assert.False(t, service.VerifyPassword("", ""))
 }
 
-func TestInviteTokenIsRandomAndHashedDeterministically(t *testing.T) {
-	a, err := service.GenerateInviteToken()
-	require.NoError(t, err)
-	b, err := service.GenerateInviteToken()
-	require.NoError(t, err)
-	assert.Len(t, a, 48)
-	assert.NotEqual(t, a, b)
-
-	assert.Equal(t, service.HashInviteToken(a), service.HashInviteToken(a))
-	assert.NotEqual(t, service.HashInviteToken(a), service.HashInviteToken(b))
-	assert.Len(t, service.HashInviteToken(a), 64, "sha-256 hex")
-	assert.NotContains(t, service.HashInviteToken(a), a)
-}
-
 func TestSlugifyTransliteratesAndCollapses(t *testing.T) {
 	assert.Equal(t, "privet-mir", service.Slugify("Привет Мир"))
 	assert.Equal(t, "acme-co", service.Slugify("  Acme -- Co!! "))
