@@ -42,7 +42,8 @@ function mswWorkerPlugin(): Plugin {
   }
 }
 
-// The app is reached via Caddy at https://1mail.localhost, which terminates TLS
+// The app is reached via Caddy at https://1mail.localhost (a linked worktree has its own
+// origin, see .mise.toml), which terminates TLS
 // and is the single place that routes API paths (/site, /collect, /auth, /mcp, /oauth, /.well-known,
 // /avatar, /api) to the Go backend. Vite serves only the SPA + HMR here.
 export default defineConfig({
@@ -55,11 +56,21 @@ export default defineConfig({
     ? { hmr: false }
     : {
         host: true,
+        // The mise `frontend` daemon exports FRONTEND_PORT: 5173 in the primary checkout, the
+        // worktree's own slot in a linked one.
+        port: Number(process.env.FRONTEND_PORT ?? 5173),
+        strictPort: true,
         // Agent worktrees are full repo copies; watching them triggers spurious reloads.
         watch: { ignored: ['**/.claude/worktrees/**'] },
-        allowedHosts: ['1mail.localhost'],
-        // HMR runs through Caddy's HTTPS origin, so the client connects over wss:443.
-        hmr: { protocol: 'wss', host: '1mail.localhost', clientPort: 443 },
+        // The primary checkout is 1mail.localhost, a linked worktree <dir>.1mail.localhost.
+        allowedHosts: ['.1mail.localhost'],
+        // HMR runs through Caddy's HTTPS origin, so the client connects over wss to the
+        // stack's host and Caddy port (APP_HOST / CADDY_PORT, set in .mise.toml).
+        hmr: {
+          protocol: 'wss',
+          host: process.env.APP_HOST ?? '1mail.localhost',
+          clientPort: Number(process.env.CADDY_PORT ?? 443),
+        },
       },
   test: {
     testTimeout: 10_000,

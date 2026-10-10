@@ -83,8 +83,8 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
    mise run setup
    ```
 
-   No `.env` is required: `.mise.toml` supplies the dev defaults and the `db` daemon
-   supplies `DATABASE_URL`. Do **not** set `DATABASE_URL` in `.env` (real env vars win
+   No `.env` is required: `.mise.toml` supplies the dev defaults, including `DATABASE_URL`
+   (`mise run db:up` starts the Postgres behind it). Do **not** set `DATABASE_URL` in `.env` (real env vars win
    over it). Personal overrides go in the gitignored `.env` (read by the app) or
    `.mise.local.toml` (read by mise).
 
@@ -105,14 +105,20 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
 The entry point is **https://1mail.localhost** (Caddy terminates TLS with its internal CA).
 Daemons:
 
-| Daemon   | URL / port                     | Notes                                                       |
-| -------- | ------------------------------ | ----------------------------------------------------------- |
-| caddy    | `:443`                         | TLS + routing, see `Caddyfile`                              |
-| frontend | `:5173` (Vite)                 | proxied by Caddy                                            |
-| backend  | `:3300`                        | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
-| db       | `127.0.0.1:15432` (`mise env`) | mise `postgres` preset, dev DB `1mail_development`          |
-| mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                |
+| Daemon   | URL / port            | Notes                                                                  |
+| -------- | --------------------- | ---------------------------------------------------------------------- |
+| caddy    | `:443`                | TLS + routing, see `Caddyfile`                                         |
+| frontend | `:5173` (Vite)        | proxied by Caddy                                                       |
+| backend  | `:3300`               | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth`            |
+| db       | `127.0.0.1:15432`     | one mise `postgres` preset server for all checkouts (`mise run db:up`) |
+| mailpit  | http://localhost:8025 | captured outbound email (SMTP UI on `:1025`)                           |
 
+> These are the primary checkout's ports. A linked git worktree gets offset ports and its own origin
+> (`https://<dir>.1mail.localhost:<port>`, printed by `mise env`), so stacks never collide; there
+> `caddy trust --address "$CADDY_ADMIN"` trusts Caddy's CA. Postgres is one server for every
+> checkout (the primary's `db` daemon, started by `mise run db:up`); each checkout gets its own
+> databases on it, named `1mail_<dir>`. See AGENTS.md, "Common commands" and "Dev environment".
+>
 > The backend runs the real Go server under [air](https://github.com/air-verse/air) for
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
 > self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.

@@ -56,29 +56,57 @@ Every task runs natively with the toolchain pinned in `.mise.toml` / `mise.lock`
 Node track `latest`); CI installs the same toolchain with `jdx/mise-action` and runs the same
 tasks. There are no dev containers and no Makefile: tasks live in `mise/tasks.toml` (included
 from `.mise.toml`); `mise tasks` lists them. The dev stack (Postgres, Mailpit, backend, Vite,
-Caddy) is a set of **mise daemons** (`[daemons]` in `.mise.toml`, experimental), and tasks that
-need Postgres declare `daemons = ["db"]`, so they start it themselves.
+Caddy) is a set of **mise daemons** (`[daemons]` in `.mise.toml`, experimental). Tasks that need
+Postgres depend on `db:up` (below) instead of a `db` daemon of their own.
 
 ```sh
-mise run setup          # deps, start Postgres, create dev/test/atlas DBs, migrate, seed
-mise run dev            # mise daemons start caddy — full dev stack (https://1mail.localhost)
-mise run dev:down       # mise daemons stop
+mise run setup          # deps, db:up, migrate, seed, worktrees:gc
+mise run db:up          # ensure the one shared Postgres runs and this checkout's databases exist
+mise run dev            # db:up, then mise daemons start caddy — full dev stack (https://1mail.localhost; a linked worktree has its own URL, see "Dev environment")
+mise run dev:down       # stop this checkout's dev stack (never the shared Postgres)
 mise run test           # creates the test DB, then `go test -p 1 ./...`
 mise run check          # tsc + oxlint + oxfmt --check + knip + golangci-lint + govulncheck + gitleaks + jactionlint + zizmor
 mise run fix            # i18n extract + oxlint --fix + tsp format + oxfmt + go fmt
 mise run generate       # typespec -> openapi -> backend -> frontend -> i18n types -> format
 ```
 
-`DATABASE_URL` and `PG*` come from the `db` daemon (mise `postgres` preset, auto port from
-15432). Never set `DATABASE_URL` in `.env`: explicit values override the daemon's.
-`TEST_DB_URL` and `ATLAS_DEV_URL` derive from `PGHOST`/`PGPORT`/`PGUSER` (set them in the
-environment to use an external Postgres). Several tasks in one command need `:::` between
+**One Postgres for every checkout.** The `db` daemon (mise `postgres` preset, fixed port 15432)
+is declared in `.mise.toml` but only ever runs in the **primary checkout** (the first
+`git worktree list` entry: a stable project root that `mise daemons prune` never sees as
+deleted); `mise run db:up` starts it from any checkout and nothing else starts a `db` daemon.
+A postmaster per worktree takes one of macOS's 32 SysV shared-memory segments
+(`kern.sysv.shmmni`), so ~30 worktrees exhaust them and Postgres fails with `shmget ... No space
+left on device`. `db:up` is idempotent: a server already answering at `PGHOST:PGPORT` is a no-op
+(so two checkouts calling it at once are safe: at most one start, the other waits for the port),
+otherwise it runs `mise -C <primary> daemons start db`, then creates this checkout's databases
+if missing under an advisory lock. Every task that needs Postgres (`test`, `test:e2e`, `db:*`)
+depends on `db:up`, and so does `dev`; `dev:down` leaves the server running
+(`mise -C <primary> daemons stop db` stops it for everyone). The primary checkout must be on a
+commit that has this setup.
+
+`PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` and `DATABASE_URL` are set in `[env]`, so they are
+identical in every checkout without a daemon (a `db` daemon exports its own offset port and
+database for a linked worktree, which `[env]` overrides). The database is `1mail_<dir>`: the
+checkout's directory name lowercased to `[a-z0-9_]`, cut to 31 characters plus a hash of the path
+when it exceeds 40, so with the `_test`, `_e2e` and `_atlas` twins (`TEST_DB_URL`, `E2E_DB_URL`,
+`ATLAS_DEV_URL`; `DB_NAMES` lists all four) every name stays under Postgres's 63-byte identifier
+limit and nothing is truncated or collides. Never set `DATABASE_URL` in `.env`: explicit values
+override it. `ONEMAIL_PG_HOST` / `ONEMAIL_PG_PORT` point every checkout at another server (an
+external Postgres): one that answers is used as is and never started. CI runs the same path: its
+single checkout is its own primary.
+
+Never hand-name a scratch database. `mise run worktrees:gc` (also run by `setup` and
+`worktrees:prune`; `--apply` to act, a dry run otherwise) drops the shared server's databases that
+no live worktree's `DB_NAMES` covers and runs `mise daemons prune --yes` for dead state; it
+refuses to drop anything when it cannot enumerate or read a live worktree, including one on a
+commit from before `DB_NAMES` (merge main into it), and never touches the primary's daemon.
+`mise run worktrees:prune -- --apply` first removes the worktrees whose branch is already in
+`origin/main`. A worktree from before this setup still runs its own `db` daemon: it retires with
+its next merge of main plus `mise daemons stop`. Several tasks in one command need `:::` between
 them (`mise run check:fe ::: check:deps`); otherwise the extra names become arguments.
 
 Run Go tests only through `mise run test`: it sets `APP_ENV=test` and the test DB, and a bare
-`go test` opens the dev database and fails. If its Postgres will not start (macOS shared memory
-is spent by one `db` daemon per worktree), run `mise run worktrees:prune -- --apply` to remove
-the worktrees whose branch is already in `origin/main`; drop `--apply` for a dry run.
+`go test` opens the dev database and fails.
 
 Run a single Go test (arguments after `--` go to `go test`; the default is `./...`):
 
@@ -90,7 +118,7 @@ Go tests always run with `-shuffle=on` (the seed is printed; reproduce an order 
 `-shuffle=<seed>`), so a test must not depend on another's side effects.
 
 End-to-end suite (ADR 0024, `e2e/` behind the `e2e` build tag, not part of `mise run test`):
-`mise run test:e2e` rebuilds the dedicated `1mail_e2e` database, starts its own Mailpit and boots the
+`mise run test:e2e` rebuilds the checkout's `<PGDATABASE>_e2e` database, starts its own Mailpit and boots the
 app in-process. `HOLD=true mise run test:e2e` keeps the app and Mailpit up after the run (their URLs are
 printed) until Ctrl-C, to inspect a failed scenario in the Mailpit UI. Scenarios are domain steps on
 `e2e.Workspace` (`env.NewWorkspace(t).Ready()`, `ImportContacts`, `SendBroadcast`), one flat struct whose steps live in non-test files by concept
@@ -106,7 +134,7 @@ Frontend tests: `mise run test:watch`.
 - ORM is **ent**; schemas live in `ent/schema/*.go`, generated code in `ent/`.
 - Migrations are managed by **Atlas** (`atlas.hcl`, dir `migrations/`), run natively, diffed from the ent schema: `mise run db:generate name=<desc>` then `mise run db:migrate`.
   Atlas reads its target/dev DB URLs from the environment (`DATABASE_URL` / `ATLAS_DEV_URL`),
-  using a scratch `atlas_dev` database on the `db` daemon instead of `docker://`.
+  using a scratch `<PGDATABASE>_atlas` database on the same server instead of `docker://`.
 - `mise run db:reset` / `db:reset-test` to rebuild local DBs.
 - Test DB is separate (`APP_ENV=test`); tests create schema via `ent` `Schema.Create`, not Atlas.
 
@@ -227,12 +255,35 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
 **https://api.1mail.localhost** — Caddy rewrites `/*` → `/api/*` to the same backend, so
 the subdomain root mirrors the binary's `/api` path (RudderStack-style edge; the binary
 stays path-based). In prod the ingress in front of the binary does the same rewrite for
-`api.onemail.dev`. Daemons: `db` (mise `postgres` preset), `mailpit` (SMTP UI at :8025),
+`api.onemail.dev`. Daemons: `db`, `mailpit` (SMTP UI at :8025, SMTP :1025),
 `backend` (real Go server under air on `:3300`, hot reload), `frontend` (Vite on `:5173`),
-`caddy`. Inspect with `mise daemons ls|logs|status`. Migrations run via atlas
+`caddy` (:443). Inspect with `mise daemons ls|logs|status`. Migrations run via atlas
 (`mise run db:migrate`); the backend does not self-migrate. Dev defaults (JWT secret, dev
 `ENCRYPTION_KEY`, SMTP) live in the `[env]` table of `.mise.toml`; personal overrides go in
 the gitignored `.env` (read by the app) or `.mise.local.toml`.
+
+**Ports and origins per checkout.** Every daemon declares `port = { auto = true, base = <port> }`:
+the primary checkout gets exactly the ports above (caddy 443, vite 5173, backend 3300, mailpit
+8025/1025, metrics 9090); a linked worktree gets one slot offset (`base + N`, the same `N` for all
+of its daemons), so many stacks run at once. The slot comes from a hash of the checkout's path,
+not a registry: two worktrees can land on the same one (two of 14 here did), and then the second
+stack fails to start with an error naming the daemon and the other project. Pin the later one
+in its `.mise.local.toml` (`[daemons.backend]` ... `port = 3601`, the same for `frontend`,
+`mailpit` and `caddy`; SMTP, metrics and Caddy's admin/HTTP ports follow from them). mise
+resolves the ports at config load, so
+`[env]` templates them (`PORT`, `SMTP_PORT`, `METRICS_ADDR`, `APP_URL`, `APP_HOST`, `API_HOST`), and
+the Caddyfile (`{$BACKEND_PORT}`, `{$APP_HOST}`, ...), `vite.config.ts` and the `ready_cmd`s read the
+exported `<NAME>_PORT` (`ready_port` cannot be templated). Ports with no daemon of their own (SMTP,
+metrics) are the base plus that same offset; Caddy's admin API (`CADDY_ADMIN`, 2019 + offset, what
+`caddy trust --address "$CADDY_ADMIN"` reads) and HTTP redirect listener (`CADDY_HTTP_PORT`: 80 in
+the primary checkout, 4000 + offset elsewhere) are per instance too. A linked worktree's origin is
+`https://<dir-name>.1mail.localhost:<caddy port>` (API: `https://api.<dir-name>.1mail.localhost:<caddy port>`):
+browser cookies are shared across the ports of one host, so a per-worktree host keeps the session
+cookies apart; `*.localhost` resolves to loopback and Caddy's internal CA signs each name.
+`mise env | grep APP_URL` prints it. Caddy stays the edge instead of pitchfork's own proxy
+(`proxy = "<label>"`, stable per-worktree hostnames) because that proxy needs per-machine setup
+(`pitchfork proxy setup`: DNS, trust store, ports), would still leave the primary on Caddy's :443,
+and Caddy already does the `/api` rewrite and the path routing in one file.
 
 ## Conventions
 
