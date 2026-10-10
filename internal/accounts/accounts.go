@@ -73,13 +73,45 @@ func (a *Accounts) WorkspacesOf(ctx context.Context, userID int64) ([]*ent.Works
 }
 
 // UpdateWorkspace renames the scoped Workspace and, when postalAddress is non-nil,
-// sets (or clears, with "") its postal address.
-func (a *Accounts) UpdateWorkspace(ctx context.Context, s *ent.Scoped, name string, postalAddress *string) (*ent.Workspace, error) {
-	upd := a.ent.Workspace.UpdateOneID(s.WorkspaceID()).SetName(name)
-	if postalAddress != nil {
-		upd = upd.SetPostalAddress(*postalAddress)
-	}
-	return upd.Save(ctx)
+// sets (or clears, with "") its postal address. A change is recorded as a
+// `workspace.update` Audit entry in the same transaction (ADR 0022): the Workspace is
+// the tenant root and has no scoped wrapper, so this is an explicit path.
+func (a *Accounts) UpdateWorkspace(ctx context.Context, s *ent.Scoped, actor events.Actor, name string, postalAddress *string) (*ent.Workspace, error) {
+	var updated *ent.Workspace
+	err := a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		before, err := tx.Workspace.Get(ctx, s.WorkspaceID())
+		if err != nil {
+			return err
+		}
+		upd := tx.Workspace.UpdateOneID(s.WorkspaceID()).SetName(name)
+		if postalAddress != nil {
+			upd = upd.SetPostalAddress(*postalAddress)
+		}
+		updated, err = upd.Save(ctx)
+		if err != nil {
+			return err
+		}
+		diff := map[string]any{}
+		if before.Name != updated.Name {
+			diff["name"] = map[string]any{"from": before.Name, "to": updated.Name}
+		}
+		if before.PostalAddress != updated.PostalAddress {
+			diff["postal_address"] = map[string]any{"from": before.PostalAddress, "to": updated.PostalAddress}
+		}
+		if len(diff) == 0 {
+			return nil
+		}
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: s.WorkspaceID(),
+			Actor:       actor,
+			Action:      events.ActionWorkspaceUpdate,
+			TargetType:  "workspace",
+			TargetID:    strconv.FormatInt(updated.ID, 10),
+			TargetName:  updated.Name,
+			Diff:        diff,
+		})
+	})
+	return updated, err
 }
 
 // ChangeMembershipRole sets a Membership's Role and records `membership.update` with

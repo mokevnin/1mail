@@ -73,7 +73,7 @@ func ScopedEntities() []ScopedEntity {
 	return []ScopedEntity{
 		{
 			Name:    "ApiToken",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.ApiToken.Query().Where(apitoken.WorkspaceID(ws)).Order(Asc(apitoken.FieldID)).IDs(ctx)
 			},
@@ -713,7 +713,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "Integration",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.Integration.Query().Where(integration.WorkspaceID(ws)).Order(Asc(integration.FieldID)).IDs(ctx)
 			},
@@ -999,7 +999,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "SendingDomain",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.SendingDomain.Query().Where(sendingdomain.WorkspaceID(ws)).Order(Asc(sendingdomain.FieldID)).IDs(ctx)
 			},
@@ -1234,7 +1234,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "WebhookEndpoint",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.WebhookEndpoint.Query().Where(webhookendpoint.WorkspaceID(ws)).Order(Asc(webhookendpoint.FieldID)).IDs(ctx)
 			},

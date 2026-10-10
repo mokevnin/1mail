@@ -18,6 +18,7 @@ type WebhookEndpoint struct {
 func (WebhookEndpoint) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "webhook_endpoints"},
+		Audited{Action: "webhook_endpoint", NameField: "url"},
 	}
 }
 
@@ -34,7 +35,8 @@ func (WebhookEndpoint) Fields() []ent.Field {
 			NotEmpty(),
 		// HMAC signing secret, encrypted at rest via internal/secrets.Cipher.
 		field.String("secret_encrypted").
-			Sensitive(),
+			Sensitive().
+			Annotations(Sensitive{}),
 		// Event names this endpoint subscribes to; empty/nil means all events.
 		field.Strings("event_types").
 			Optional(),

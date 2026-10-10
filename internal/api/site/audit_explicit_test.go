@@ -220,6 +220,9 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = owner.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{                                // user.password_change
 		CurrentPassword: siteapi.NewOptString(fixtures.OwnerJohnPassword), NewPassword: siteapi.NewOptString("another-pass-1")})
 	require.NoError(t, err)
+	_, err = owner.SiteWorkspacesUpdate(ctx, &siteapi.SiteUpdateWorkspaceInput{Name: "Acme Two"}, // workspace.update
+		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
 	_, err = service.SuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops", "abuse") // workspace.suspend
 	require.NoError(t, err)
 	_, err = service.UnsuspendWorkspace(ctx, env.Bus, fixtures.AcmeID, "ops") // workspace.unsuspend

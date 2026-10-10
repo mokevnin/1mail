@@ -43,6 +43,7 @@ const (
 	ActionInvitationRevoke   = "invitation.revoke"
 	ActionUserLogin          = "user.login"
 	ActionUserPasswordChange = "user.password_change"
+	ActionWorkspaceUpdate    = "workspace.update"
 	ActionWorkspaceSuspend   = "workspace.suspend"
 	ActionWorkspaceUnsuspend = "workspace.unsuspend"
 )
@@ -56,6 +57,7 @@ var ExplicitAuditActions = []string{
 	ActionInvitationRevoke,
 	ActionUserLogin,
 	ActionUserPasswordChange,
+	ActionWorkspaceUpdate,
 	ActionWorkspaceSuspend,
 	ActionWorkspaceUnsuspend,
 }

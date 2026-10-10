@@ -20,6 +20,7 @@ type Integration struct {
 func (Integration) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "integrations"},
+		Audited{Action: "integration", NameField: "name"},
 	}
 }
 
@@ -43,7 +44,8 @@ func (Integration) Fields() []ent.Field {
 			Values("smtp", "ses"),
 		// Encrypted JSON blob produced by internal/secrets.Cipher.
 		field.String("config_encrypted").
-			Sensitive(),
+			Sensitive().
+			Annotations(Sensitive{}),
 		field.Bool("enabled").
 			Default(true),
 		field.Bool("is_default").

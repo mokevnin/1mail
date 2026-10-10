@@ -134,6 +134,174 @@ var _ = fmt.Sprint
 
 func auditID(id int64) string { return strconv.FormatInt(id, 10) }
 
+// ApiTokenAuditSensitive lists the ApiToken fields whose values never reach the Audit log.
+var ApiTokenAuditSensitive = map[string]bool{
+	"secret_hash": true,
+}
+
+// auditFields maps every audited field of the ApiToken to its value.
+func (e *ApiToken) auditFields() map[string]any {
+	return map[string]any{
+		"name":         e.Name,
+		"prefix":       e.Prefix,
+		"secret_hash":  e.SecretHash,
+		"scopes":       e.Scopes,
+		"expires_at":   derefAudit(e.ExpiresAt),
+		"revoked_at":   derefAudit(e.RevokedAt),
+		"last_used_at": derefAudit(e.LastUsedAt),
+	}
+}
+
+// auditChangeApiToken describes a ApiToken create (before is nil), update or delete
+// (after is nil).
+func auditChangeApiToken(verb string, before, after *ApiToken) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "api_token." + verb,
+		TargetType: "api_token",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, ApiTokenAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *ApiTokenCreate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ApiTokenUpdateOne) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *ApiTokenUpdate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ApiTokenDelete) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
+func (b *ApiTokenCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// IntegrationAuditSensitive lists the Integration fields whose values never reach the Audit log.
+var IntegrationAuditSensitive = map[string]bool{
+	"config_encrypted": true,
+}
+
+// auditFields maps every audited field of the Integration to its value.
+func (e *Integration) auditFields() map[string]any {
+	return map[string]any{
+		"name":             e.Name,
+		"channel":          e.Channel,
+		"provider":         e.Provider,
+		"config_encrypted": e.ConfigEncrypted,
+		"enabled":          e.Enabled,
+		"is_default":       e.IsDefault,
+	}
+}
+
+// auditChangeIntegration describes a Integration create (before is nil), update or delete
+// (after is nil).
+func auditChangeIntegration(verb string, before, after *Integration) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "integration." + verb,
+		TargetType: "integration",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, IntegrationAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Name))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *IntegrationCreate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *IntegrationUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *IntegrationUpdate) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *IntegrationDelete) auditRebind(c *Client) { b.config, b.mutation.config = c.config, c.config }
+func (b *IntegrationCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// SendingDomainAuditSensitive lists the SendingDomain fields whose values never reach the Audit log.
+var SendingDomainAuditSensitive = map[string]bool{
+	"dkim_private_key_encrypted": true,
+}
+
+// auditFields maps every audited field of the SendingDomain to its value.
+func (e *SendingDomain) auditFields() map[string]any {
+	return map[string]any{
+		"domain":                     e.Domain,
+		"dkim_selector":              e.DkimSelector,
+		"dkim_private_key_encrypted": e.DkimPrivateKeyEncrypted,
+		"dkim_public_key":            e.DkimPublicKey,
+		"verified":                   e.Verified,
+		"last_checked_at":            derefAudit(e.LastCheckedAt),
+		"verified_at":                derefAudit(e.VerifiedAt),
+	}
+}
+
+// auditChangeSendingDomain describes a SendingDomain create (before is nil), update or delete
+// (after is nil).
+func auditChangeSendingDomain(verb string, before, after *SendingDomain) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "sending_domain." + verb,
+		TargetType: "sending_domain",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, SendingDomainAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.Domain))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *SendingDomainCreate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *SendingDomainUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *SendingDomainUpdate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *SendingDomainDelete) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *SendingDomainCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
 // TagAuditSensitive lists the Tag fields whose values never reach the Audit log.
 var TagAuditSensitive = map[string]bool{}
 
@@ -173,6 +341,64 @@ func (b *TagUpdateOne) auditRebind(c *Client) { b.config, b.mutation.config = c.
 func (b *TagUpdate) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
 func (b *TagDelete) auditRebind(c *Client)    { b.config, b.mutation.config = c.config, c.config }
 func (b *TagCreateBulk) auditRebind(c *Client) {
+	b.config = c.config
+	for _, x := range b.builders {
+		x.auditRebind(c)
+	}
+}
+
+// WebhookEndpointAuditSensitive lists the WebhookEndpoint fields whose values never reach the Audit log.
+var WebhookEndpointAuditSensitive = map[string]bool{
+	"secret_encrypted": true,
+}
+
+// auditFields maps every audited field of the WebhookEndpoint to its value.
+func (e *WebhookEndpoint) auditFields() map[string]any {
+	return map[string]any{
+		"url":              e.URL,
+		"secret_encrypted": e.SecretEncrypted,
+		"event_types":      e.EventTypes,
+		"enabled":          e.Enabled,
+	}
+}
+
+// auditChangeWebhookEndpoint describes a WebhookEndpoint create (before is nil), update or delete
+// (after is nil).
+func auditChangeWebhookEndpoint(verb string, before, after *WebhookEndpoint) AuditChange {
+	var b, a map[string]any
+	target := before
+	if before != nil {
+		b = before.auditFields()
+	}
+	if after != nil {
+		a = after.auditFields()
+		target = after
+	}
+	change := AuditChange{
+		Action:     "webhook_endpoint." + verb,
+		TargetType: "webhook_endpoint",
+		TargetID:   auditID(target.ID),
+		Diff:       AuditDiff(b, a, WebhookEndpointAuditSensitive),
+	}
+	change.TargetName = fmt.Sprint(derefAudit(target.URL))
+	return change
+}
+
+// auditRebind points the builders at the client of the transaction that carries the
+// entry, so the mutation and the entry commit together.
+func (b *WebhookEndpointCreate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *WebhookEndpointUpdateOne) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *WebhookEndpointUpdate) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *WebhookEndpointDelete) auditRebind(c *Client) {
+	b.config, b.mutation.config = c.config, c.config
+}
+func (b *WebhookEndpointCreateBulk) auditRebind(c *Client) {
 	b.config = c.config
 	for _, x := range b.builders {
 		x.auditRebind(c)

@@ -464,6 +464,19 @@ func (x *ApiTokenScopedDeleteOne) Where(ps ...predicate.ApiToken) *ApiTokenScope
 
 // Exec deletes the row; a missing row is a NotFoundError.
 func (x *ApiTokenScopedDeleteOne) Exec(ctx context.Context) error {
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.ApiToken.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeApiToken("delete", before, nil))
+		})
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -486,6 +499,26 @@ func (x *ApiTokenScopedDelete) Where(ps ...predicate.ApiToken) *ApiTokenScopedDe
 
 // Exec deletes the rows and returns how many were deleted.
 func (x *ApiTokenScopedDelete) Exec(ctx context.Context) (int, error) {
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.ApiToken.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChangeApiToken("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -597,6 +630,18 @@ func (x *ApiTokenScopedCreate) Save(ctx context.Context) (*ApiToken, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var created *ApiToken
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeApiToken("create", nil, created))
+		})
+		return created, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -638,6 +683,23 @@ func (b *ApiTokenScopedCreateBulk) Save(ctx context.Context) ([]*ApiToken, error
 	raw, err := b.raw(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if b.s.auditing() {
+		var created []*ApiToken
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChangeApiToken("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
 	}
 	return raw.Save(ctx)
 }
@@ -808,6 +870,10 @@ func (u *ApiTokenScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
 	return u.u.Exec(ctx)
 }
 
@@ -816,7 +882,32 @@ func (u *ApiTokenScopedUpsertOne) ID(ctx context.Context) (int64, error) {
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
 	return u.u.ID(ctx)
+}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *ApiTokenScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.ApiToken.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChangeApiToken("create", nil, row))
+	})
+	return id, err
 }
 
 // ApiTokenScopedUpsertBulk is the "upsert" of several ApiToken entities.
@@ -861,6 +952,9 @@ func (u *ApiTokenScopedUpsertBulk) Update(set func(*ApiTokenScopedUpsert)) *ApiT
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *ApiTokenScopedUpsertBulk) Exec(ctx context.Context) error {
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -998,6 +1092,22 @@ func (x *ApiTokenScopedUpdateOne) Save(ctx context.Context) (*ApiToken, error) {
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var updated *ApiToken
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.ApiToken.Query().Where(x.b.mutation.predicates...).Where(apitoken.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeApiToken("update", before, updated))
+		})
+		return updated, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -1131,6 +1241,40 @@ func (x *ApiTokenScopedUpdate) check(ctx context.Context) error {
 func (x *ApiTokenScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
+	}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.ApiToken.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.ApiToken.Query().Where(apitoken.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*ApiToken, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChangeApiToken("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
 	}
 	return x.b.Save(ctx)
 }
@@ -9177,6 +9321,19 @@ func (x *IntegrationScopedDeleteOne) Where(ps ...predicate.Integration) *Integra
 
 // Exec deletes the row; a missing row is a NotFoundError.
 func (x *IntegrationScopedDeleteOne) Exec(ctx context.Context) error {
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.Integration.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeIntegration("delete", before, nil))
+		})
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -9199,6 +9356,26 @@ func (x *IntegrationScopedDelete) Where(ps ...predicate.Integration) *Integratio
 
 // Exec deletes the rows and returns how many were deleted.
 func (x *IntegrationScopedDelete) Exec(ctx context.Context) (int, error) {
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.Integration.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChangeIntegration("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -9304,6 +9481,18 @@ func (x *IntegrationScopedCreate) Save(ctx context.Context) (*Integration, error
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var created *Integration
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeIntegration("create", nil, created))
+		})
+		return created, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -9345,6 +9534,23 @@ func (b *IntegrationScopedCreateBulk) Save(ctx context.Context) ([]*Integration,
 	raw, err := b.raw(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if b.s.auditing() {
+		var created []*Integration
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChangeIntegration("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
 	}
 	return raw.Save(ctx)
 }
@@ -9497,6 +9703,10 @@ func (u *IntegrationScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
 	return u.u.Exec(ctx)
 }
 
@@ -9505,7 +9715,32 @@ func (u *IntegrationScopedUpsertOne) ID(ctx context.Context) (int64, error) {
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
 	return u.u.ID(ctx)
+}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *IntegrationScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.Integration.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChangeIntegration("create", nil, row))
+	})
+	return id, err
 }
 
 // IntegrationScopedUpsertBulk is the "upsert" of several Integration entities.
@@ -9550,6 +9785,9 @@ func (u *IntegrationScopedUpsertBulk) Update(set func(*IntegrationScopedUpsert))
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *IntegrationScopedUpsertBulk) Exec(ctx context.Context) error {
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -9669,6 +9907,22 @@ func (x *IntegrationScopedUpdateOne) Save(ctx context.Context) (*Integration, er
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var updated *Integration
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.Integration.Query().Where(x.b.mutation.predicates...).Where(integration.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeIntegration("update", before, updated))
+		})
+		return updated, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -9784,6 +10038,40 @@ func (x *IntegrationScopedUpdate) check(ctx context.Context) error {
 func (x *IntegrationScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
+	}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.Integration.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.Integration.Query().Where(integration.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*Integration, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChangeIntegration("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
 	}
 	return x.b.Save(ctx)
 }
@@ -13079,6 +13367,19 @@ func (x *SendingDomainScopedDeleteOne) Where(ps ...predicate.SendingDomain) *Sen
 
 // Exec deletes the row; a missing row is a NotFoundError.
 func (x *SendingDomainScopedDeleteOne) Exec(ctx context.Context) error {
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.SendingDomain.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeSendingDomain("delete", before, nil))
+		})
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -13101,6 +13402,26 @@ func (x *SendingDomainScopedDelete) Where(ps ...predicate.SendingDomain) *Sendin
 
 // Exec deletes the rows and returns how many were deleted.
 func (x *SendingDomainScopedDelete) Exec(ctx context.Context) (int, error) {
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.SendingDomain.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChangeSendingDomain("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -13212,6 +13533,18 @@ func (x *SendingDomainScopedCreate) Save(ctx context.Context) (*SendingDomain, e
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var created *SendingDomain
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeSendingDomain("create", nil, created))
+		})
+		return created, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -13253,6 +13586,23 @@ func (b *SendingDomainScopedCreateBulk) Save(ctx context.Context) ([]*SendingDom
 	raw, err := b.raw(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if b.s.auditing() {
+		var created []*SendingDomain
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChangeSendingDomain("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
 	}
 	return raw.Save(ctx)
 }
@@ -13429,6 +13779,10 @@ func (u *SendingDomainScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
 	return u.u.Exec(ctx)
 }
 
@@ -13437,7 +13791,32 @@ func (u *SendingDomainScopedUpsertOne) ID(ctx context.Context) (int64, error) {
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
 	return u.u.ID(ctx)
+}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *SendingDomainScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.SendingDomain.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChangeSendingDomain("create", nil, row))
+	})
+	return id, err
 }
 
 // SendingDomainScopedUpsertBulk is the "upsert" of several SendingDomain entities.
@@ -13482,6 +13861,9 @@ func (u *SendingDomainScopedUpsertBulk) Update(set func(*SendingDomainScopedUpse
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *SendingDomainScopedUpsertBulk) Exec(ctx context.Context) error {
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -13625,6 +14007,22 @@ func (x *SendingDomainScopedUpdateOne) Save(ctx context.Context) (*SendingDomain
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var updated *SendingDomain
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.SendingDomain.Query().Where(x.b.mutation.predicates...).Where(sendingdomain.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeSendingDomain("update", before, updated))
+		})
+		return updated, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -13764,6 +14162,40 @@ func (x *SendingDomainScopedUpdate) check(ctx context.Context) error {
 func (x *SendingDomainScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
+	}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.SendingDomain.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.SendingDomain.Query().Where(sendingdomain.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*SendingDomain, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChangeSendingDomain("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
 	}
 	return x.b.Save(ctx)
 }
@@ -16234,6 +16666,19 @@ func (x *WebhookEndpointScopedDeleteOne) Where(ps ...predicate.WebhookEndpoint) 
 
 // Exec deletes the row; a missing row is a NotFoundError.
 func (x *WebhookEndpointScopedDeleteOne) Exec(ctx context.Context) error {
+	if x.s.auditing() {
+		return x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.WebhookEndpoint.Query().Where(x.b._d.mutation.predicates...).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b._d.auditRebind(ts.c)
+			if err := x.b.Exec(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeWebhookEndpoint("delete", before, nil))
+		})
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -16256,6 +16701,26 @@ func (x *WebhookEndpointScopedDelete) Where(ps ...predicate.WebhookEndpoint) *We
 
 // Exec deletes the rows and returns how many were deleted.
 func (x *WebhookEndpointScopedDelete) Exec(ctx context.Context) (int, error) {
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			rows, err := ts.c.WebhookEndpoint.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Exec(ctx); err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if err := ts.record(ctx, auditChangeWebhookEndpoint("delete", row, nil)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return n, err
+	}
 	return x.b.Exec(ctx)
 }
 
@@ -16337,6 +16802,18 @@ func (x *WebhookEndpointScopedCreate) Save(ctx context.Context) (*WebhookEndpoin
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var created *WebhookEndpoint
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			x.b.auditRebind(ts.c)
+			var err error
+			if created, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeWebhookEndpoint("create", nil, created))
+		})
+		return created, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -16378,6 +16855,23 @@ func (b *WebhookEndpointScopedCreateBulk) Save(ctx context.Context) ([]*WebhookE
 	raw, err := b.raw(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if b.s.auditing() {
+		var created []*WebhookEndpoint
+		err := b.s.audited(ctx, func(ts *Scoped) error {
+			raw.auditRebind(ts.c)
+			var err error
+			if created, err = raw.Save(ctx); err != nil {
+				return err
+			}
+			for _, row := range created {
+				if err := ts.record(ctx, auditChangeWebhookEndpoint("create", nil, row)); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return created, err
 	}
 	return raw.Save(ctx)
 }
@@ -16512,6 +17006,10 @@ func (u *WebhookEndpointScopedUpsertOne) Exec(ctx context.Context) error {
 	if err := u.x.check(ctx); err != nil {
 		return err
 	}
+	if u.x.s.auditing() {
+		_, err := u.audited(ctx)
+		return err
+	}
 	return u.u.Exec(ctx)
 }
 
@@ -16520,7 +17018,32 @@ func (u *WebhookEndpointScopedUpsertOne) ID(ctx context.Context) (int64, error) 
 	if err := u.x.check(ctx); err != nil {
 		return 0, err
 	}
+	if u.x.s.auditing() {
+		return u.audited(ctx)
+	}
 	return u.u.ID(ctx)
+}
+
+// audited runs a DO NOTHING upsert with its entry: an insert is a create, a conflict
+// (sql.ErrNoRows) writes nothing and records nothing.
+func (u *WebhookEndpointScopedUpsertOne) audited(ctx context.Context) (int64, error) {
+	if !u.doNothing {
+		return 0, ErrAuditUpsert
+	}
+	var id int64
+	err := u.x.s.audited(ctx, func(ts *Scoped) error {
+		u.x.b.auditRebind(ts.c)
+		var err error
+		if id, err = u.u.ID(ctx); err != nil {
+			return err
+		}
+		row, err := ts.c.WebhookEndpoint.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		return ts.record(ctx, auditChangeWebhookEndpoint("create", nil, row))
+	})
+	return id, err
 }
 
 // WebhookEndpointScopedUpsertBulk is the "upsert" of several WebhookEndpoint entities.
@@ -16565,6 +17088,9 @@ func (u *WebhookEndpointScopedUpsertBulk) Update(set func(*WebhookEndpointScoped
 
 // Exec verifies every builder's references, then executes the upsert.
 func (u *WebhookEndpointScopedUpsertBulk) Exec(ctx context.Context) error {
+	if u.b.s.auditing() {
+		return ErrAuditUpsert
+	}
 	raw, err := u.b.raw(ctx)
 	if err != nil {
 		return err
@@ -16666,6 +17192,22 @@ func (x *WebhookEndpointScopedUpdateOne) Save(ctx context.Context) (*WebhookEndp
 	if err := x.check(ctx); err != nil {
 		return nil, err
 	}
+	if x.s.auditing() {
+		var updated *WebhookEndpoint
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			id, _ := x.b.Mutation().ID()
+			before, err := ts.c.WebhookEndpoint.Query().Where(x.b.mutation.predicates...).Where(webhookendpoint.ID(id)).Only(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if updated, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			return ts.record(ctx, auditChangeWebhookEndpoint("update", before, updated))
+		})
+		return updated, err
+	}
 	return x.b.Save(ctx)
 }
 
@@ -16763,6 +17305,40 @@ func (x *WebhookEndpointScopedUpdate) check(ctx context.Context) error {
 func (x *WebhookEndpointScopedUpdate) Save(ctx context.Context) (int, error) {
 	if err := x.check(ctx); err != nil {
 		return 0, err
+	}
+	if x.s.auditing() {
+		var n int
+		err := x.s.audited(ctx, func(ts *Scoped) error {
+			before, err := ts.c.WebhookEndpoint.Query().Where(x.b.mutation.predicates...).All(ctx)
+			if err != nil {
+				return err
+			}
+			x.b.auditRebind(ts.c)
+			if n, err = x.b.Save(ctx); err != nil {
+				return err
+			}
+			ids := make([]int64, len(before))
+			for i, row := range before {
+				ids[i] = row.ID
+			}
+			after, err := ts.c.WebhookEndpoint.Query().Where(webhookendpoint.IDIn(ids...)).All(ctx)
+			if err != nil {
+				return err
+			}
+			byID := make(map[int64]*WebhookEndpoint, len(after))
+			for _, row := range after {
+				byID[row.ID] = row
+			}
+			for _, row := range before {
+				if now, ok := byID[row.ID]; ok {
+					if err := ts.record(ctx, auditChangeWebhookEndpoint("update", row, now)); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
+		return n, err
 	}
 	return x.b.Save(ctx)
 }
