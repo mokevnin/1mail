@@ -28,3 +28,5 @@ customer holds two separate identities, by design, for least-privilege and clean
 - Impersonation (a global Operator minting a temporary _scoped_ workspace session) is the one
   place these two worlds must touch; it is deferred until support load demands it, so that
   bridge is designed against a real need rather than speculatively.
+
+See [[0026-operator-console-and-abuse-detector]] for the Operator's credentials, surface and console.
