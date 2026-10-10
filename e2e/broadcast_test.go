@@ -17,7 +17,7 @@ func TestBroadcastToImportedContactsIsDelivered(t *testing.T) {
 	w.ImportContacts(to)
 	w.SendBroadcast(Broadcast{
 		Subject: "Hello from e2e",
-		Body:    mjml("Welcome aboard, friend"),
+		Body:    MJML("Welcome aboard, friend"),
 	})
 	msg := w.Inbox.Wait(Match{To: to})
 
