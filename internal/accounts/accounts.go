@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
@@ -320,7 +321,7 @@ func (a *Accounts) ChangeEmail(ctx context.Context, id int64, newEmail string) e
 func (a *Accounts) PendingInvitation(ctx context.Context, token string) (*ent.Invitation, error) {
 	return a.ent.Invitation.Query().
 		Where(
-			invitation.TokenHash(service.HashInviteToken(token)),
+			invitation.TokenHash(HashInviteToken(token)),
 			invitation.AcceptedAtIsNil(),
 			invitation.ExpiresAtGT(time.Now()),
 		).
@@ -375,33 +376,56 @@ func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, na
 	})
 }
 
-// InviteInput is a new (or reissued) Invitation.
+// InviteInput is a new (or reissued) Invitation request. The token, its hash and
+// the expiry are the Invite operation's to decide, not the caller's.
 type InviteInput struct {
 	Email     string
 	Role      invitation.Role
-	TokenHash string
-	ExpiresAt time.Time
 	InvitedBy int64
 }
 
 // Invite creates the Invitation for an email, or reissues the pending one (token,
 // expiry, role; a prior acceptance is cleared), and records `invitation.create` in
-// the same transaction. The token itself is never logged.
-func (a *Accounts) Invite(ctx context.Context, s *ent.Scoped, actor events.Actor, in InviteInput) (*ent.Invitation, error) {
+// the same transaction. It generates the one-time token, stores only its hash, sets
+// the expiry InviteTokenTTL ahead and returns the raw token for the caller's link;
+// the token itself is never logged. ErrEmailEmpty for a blank email, ErrAlreadyMember
+// when the address already has a Membership in the Workspace. Delivery is the
+// caller's concern.
+func (a *Accounts) Invite(ctx context.Context, s *ent.Scoped, actor events.Actor, in InviteInput) (*ent.Invitation, string, error) {
+	email := strings.TrimSpace(in.Email)
+	if email == "" {
+		return nil, "", ErrEmailEmpty
+	}
+	token, err := generateInviteToken()
+	if err != nil {
+		return nil, "", err
+	}
+	tokenHash := HashInviteToken(token)
+	expiresAt := time.Now().Add(InviteTokenTTL)
+
 	var inv *ent.Invitation
-	err := a.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
-		existing, err := ts.Invitation().Query().Where(invitation.Email(in.Email)).Only(ctx)
+	err = a.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		member, err := ts.Membership().Query().
+			Where(membership.HasUserWith(user.Email(email))).
+			Exist(ctx)
+		if err != nil {
+			return err
+		}
+		if member {
+			return ErrAlreadyMember
+		}
+		existing, err := ts.Invitation().Query().Where(invitation.Email(email)).Only(ctx)
 		switch {
 		case ent.IsNotFound(err):
 			inv, err = ts.Invitation().Create().
-				SetEmail(in.Email).SetRole(in.Role).SetTokenHash(in.TokenHash).
-				SetExpiresAt(in.ExpiresAt).SetInvitedBy(in.InvitedBy).
+				SetEmail(email).SetRole(in.Role).SetTokenHash(tokenHash).
+				SetExpiresAt(expiresAt).SetInvitedBy(in.InvitedBy).
 				Save(ctx)
 		case err != nil:
 		default:
 			inv, err = ts.Invitation().UpdateOneID(existing.ID).
-				SetRole(in.Role).SetTokenHash(in.TokenHash).
-				SetExpiresAt(in.ExpiresAt).SetInvitedBy(in.InvitedBy).
+				SetRole(in.Role).SetTokenHash(tokenHash).
+				SetExpiresAt(expiresAt).SetInvitedBy(in.InvitedBy).
 				ClearAcceptedAt().
 				Save(ctx)
 		}
@@ -418,7 +442,10 @@ func (a *Accounts) Invite(ctx context.Context, s *ent.Scoped, actor events.Actor
 			Diff:        map[string]any{"role": map[string]any{"to": string(inv.Role)}},
 		})
 	})
-	return inv, err
+	if err != nil {
+		return nil, "", err
+	}
+	return inv, token, nil
 }
 
 // RevokeInvitation deletes a pending Invitation and records `invitation.revoke`. It
