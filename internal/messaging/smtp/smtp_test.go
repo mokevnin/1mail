@@ -33,6 +33,8 @@ type fakeServer struct {
 	messages []capture
 	// rejectData makes the server refuse DATA with a 554.
 	rejectData bool
+	// dataReply, when set, is the full reply line the server gives to DATA.
+	dataReply string
 }
 
 func newFakeServer(ctx context.Context, t *testing.T, rejectData bool) *fakeServer {
@@ -86,6 +88,8 @@ func (s *fakeServer) serve(conn net.Conn) {
 		case strings.HasPrefix(cmd, "RCPT TO:"):
 			cur.rcpt = line[len("RCPT TO:"):]
 			say("250 ok")
+		case cmd == "DATA" && s.dataReply != "":
+			say("%s", s.dataReply)
 		case cmd == "DATA":
 			if s.rejectData {
 				say("554 rejected")
@@ -207,6 +211,32 @@ func TestSendErrors(t *testing.T) {
 		_, err := sender.Send(ctx, msg)
 		assert.Error(t, err)
 		assert.Empty(t, srv.captured())
+	})
+
+	t.Run("transient too-fast reply is throttling", func(t *testing.T) {
+		srv := newFakeServer(ctx, t, false)
+		srv.dataReply = "454 4.7.0 Throttling failure: Maximum sending rate exceeded."
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrThrottled)
+		assert.NotErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("transient daily quota reply is quota exceeded", func(t *testing.T) {
+		srv := newFakeServer(ctx, t, false)
+		srv.dataReply = "454 4.7.0 Throttling failure: Daily message quota exceeded."
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		assert.ErrorIs(t, err, messaging.ErrQuotaExceeded)
+	})
+
+	t.Run("permanent reply is never throttling", func(t *testing.T) {
+		srv := newFakeServer(ctx, t, false)
+		srv.dataReply = "554 5.7.1 rate limit policy violation, rejected"
+		sender := build(t, smtp.Config{Host: "127.0.0.1", Port: srv.port, From: "noreply@acme.com"})
+		_, err := sender.Send(ctx, msg)
+		require.Error(t, err)
+		assert.NotErrorIs(t, err, messaging.ErrThrottled)
 	})
 
 	t.Run("unreachable host", func(t *testing.T) {
