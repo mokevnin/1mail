@@ -432,6 +432,18 @@ A Membership's permission level in a Workspace (e.g. owner / admin / member). Th
 follow-up; the structural decision is that access is role-scoped per Membership.
 _Avoid_: Permission, scope (scope is the API-token term)
 
+**Audit entry** (the Audit log is the Workspace's append-only sequence of them):
+An immutable record that an **actor** changed a Workspace's configuration or access — who
+(a User, an API token, a platform Operator shown to the customer only as "1mail staff", or
+`system`), what (an action on a target), and when. It keeps a snapshot of the target's name (a Contact by id only), so
+it stays readable after the target is deleted; secrets are never recorded as values, and
+Contact changes name the fields changed, never their personal data. It covers the
+_control plane_ only (membership and roles, credentials, domains, integrations, webhooks,
+content and audience definitions, Contact edits and deletes, imports, exports, logins) — never
+the data plane, whose facts are already Events and Outbound messages. Readable by owner and
+admin. An Enterprise concept, absent from a plain self-hosted install.
+_Avoid_: Event (that is a Contact/data-plane fact), activity, history, changelog
+
 ### Metering & billing
 
 1mail's core _measures_ billable activity; it does not _price_ it. Metering (what happened,
