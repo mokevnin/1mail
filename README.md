@@ -117,7 +117,7 @@ Daemons:
 > hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
 > self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.
 > The old Grafana/OTLP dev container is gone: leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset
-> (metrics are always exposed at `/metrics`) or point it at your own collector.
+> (the dev stack serves Prometheus metrics on `127.0.0.1:9090/metrics` via `METRICS_ADDR`) or point it at your own collector.
 
 ## Deployment (production)
 
@@ -132,9 +132,10 @@ tagged with the version and `latest`.
 
 ```sh
 docker run -p 3000:3000 \
-  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=disable" \
+  -e APP_ENV=production \
+  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require" \
   -e APP_URL="https://example.com" \
-  -e JWT_SECRET="<a-strong-secret>" \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e AUTO_MIGRATE=true \
   ghcr.io/mokevnin/1mail:latest
 ```
@@ -201,3 +202,7 @@ health checks), see [`docs/self-hosting.md`](docs/self-hosting.md).
 ([`LICENSE`](LICENSE)); the Enterprise features under [`ee/`](ee/) are commercial and
 source-available ([`ee/LICENSE`](ee/LICENSE)). See [`LICENSING.md`](LICENSING.md) for the
 boundary.
+
+## Security
+
+To report a vulnerability, see [`SECURITY.md`](SECURITY.md).

@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"io/fs"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -97,6 +95,13 @@ func main() {
 		fatal("init app", err)
 	}
 
+	// Bind the opt-in metrics listener before anything starts serving: a bind
+	// failure (e.g. port in use) must crash the boot, not run unmonitored.
+	if err := application.BindMetrics(); err != nil {
+		_ = application.Shutdown(context.Background())
+		fatal("bind metrics", err)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -114,14 +119,14 @@ func main() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
-		_ = application.Server.Shutdown(shutdownCtx)
+		_ = application.Stop(shutdownCtx)
 		report := application.Shutdown(shutdownCtx)
 		if !report.Succeed {
 			slog.Error("shutdown incomplete", "report", report)
 		}
 	}()
 
-	if err := application.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := application.Serve(); err != nil {
 		slog.Error("server stopped", "err", err)
 	}
 
