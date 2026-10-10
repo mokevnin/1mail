@@ -4,7 +4,7 @@
 # The SMTP integration is the workspace default (points at the dev Mailpit); the SES
 # one is disabled. Exactly one is_default per (workspace, channel) — see the partial
 # unique index on integrations.
-- id: 1
+- id: 1 # fixture: IntegrationAcmeDefault
   name: Mailpit (dev SMTP)
   channel: email
   provider: smtp

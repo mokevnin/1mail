@@ -38,6 +38,51 @@ type EmailAddress string
 
 type EntityId string
 
+// NewNilInt32 returns new NilInt32 with value set to v.
+func NewNilInt32(v int32) NilInt32 {
+	return NilInt32{
+		Value: v,
+	}
+}
+
+// NilInt32 is nullable int32.
+type NilInt32 struct {
+	Value int32
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilInt32) SetTo(v int32) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilInt32) SetToNull() {
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -306,6 +351,74 @@ func (o OptNilEntityId) Get() (v EntityId, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilEntityId) Or(d EntityId) EntityId {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilInt32 returns new OptNilInt32 with value set to v.
+func NewOptNilInt32(v int32) OptNilInt32 {
+	return OptNilInt32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt32 is optional nullable int32.
+type OptNilInt32 struct {
+	Value int32
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt32 was set.
+func (o OptNilInt32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt32) Reset() {
+	var v int32
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt32) SetTo(v int32) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt32) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilInt32) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt32) Or(d int32) int32 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3309,9 +3422,13 @@ func (s *SiteCreateEmailTemplateInput) SetBody(val OptString) {
 // Create a workspace integration. The provider/channel are derived from `config.kind`.
 // Ref: #/components/schemas/SiteCreateIntegrationInput
 type SiteCreateIntegrationInput struct {
-	Name      string                     `json:"name"`
-	Enabled   OptBool                    `json:"enabled"`
-	IsDefault OptBool                    `json:"isDefault"`
+	Name      string  `json:"name"`
+	Enabled   OptBool `json:"enabled"`
+	IsDefault OptBool `json:"isDefault"`
+	// Most messages per second (positive); omit or null for no limit.
+	MaxPerSecond OptNilInt32 `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (positive); omit or null for no limit.
+	MaxPerDay OptNilInt32                `json:"maxPerDay"`
 	Config    SiteIntegrationConfigInput `json:"config"`
 }
 
@@ -3328,6 +3445,16 @@ func (s *SiteCreateIntegrationInput) GetEnabled() OptBool {
 // GetIsDefault returns the value of IsDefault.
 func (s *SiteCreateIntegrationInput) GetIsDefault() OptBool {
 	return s.IsDefault
+}
+
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *SiteCreateIntegrationInput) GetMaxPerSecond() OptNilInt32 {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *SiteCreateIntegrationInput) GetMaxPerDay() OptNilInt32 {
+	return s.MaxPerDay
 }
 
 // GetConfig returns the value of Config.
@@ -3348,6 +3475,16 @@ func (s *SiteCreateIntegrationInput) SetEnabled(val OptBool) {
 // SetIsDefault sets the value of IsDefault.
 func (s *SiteCreateIntegrationInput) SetIsDefault(val OptBool) {
 	s.IsDefault = val
+}
+
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *SiteCreateIntegrationInput) SetMaxPerSecond(val OptNilInt32) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *SiteCreateIntegrationInput) SetMaxPerDay(val OptNilInt32) {
+	s.MaxPerDay = val
 }
 
 // SetConfig sets the value of Config.
@@ -4621,6 +4758,10 @@ type SiteIntegrationResource struct {
 	Enabled bool `json:"enabled"`
 	// Whether this is the default provider for its channel.
 	IsDefault bool `json:"isDefault"`
+	// Send rate limit: most messages per second; null means no per-second limit.
+	MaxPerSecond NilInt32 `json:"maxPerSecond"`
+	// Send rate limit: most messages per rolling 24 hours; null means no daily limit.
+	MaxPerDay NilInt32 `json:"maxPerDay"`
 	// Provider config (secrets redacted).
 	Config SiteIntegrationConfig `json:"config"`
 	// Creation timestamp.
@@ -4657,6 +4798,16 @@ func (s *SiteIntegrationResource) GetEnabled() bool {
 // GetIsDefault returns the value of IsDefault.
 func (s *SiteIntegrationResource) GetIsDefault() bool {
 	return s.IsDefault
+}
+
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *SiteIntegrationResource) GetMaxPerSecond() NilInt32 {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *SiteIntegrationResource) GetMaxPerDay() NilInt32 {
+	return s.MaxPerDay
 }
 
 // GetConfig returns the value of Config.
@@ -4702,6 +4853,16 @@ func (s *SiteIntegrationResource) SetEnabled(val bool) {
 // SetIsDefault sets the value of IsDefault.
 func (s *SiteIntegrationResource) SetIsDefault(val bool) {
 	s.IsDefault = val
+}
+
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *SiteIntegrationResource) SetMaxPerSecond(val NilInt32) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *SiteIntegrationResource) SetMaxPerDay(val NilInt32) {
+	s.MaxPerDay = val
 }
 
 // SetConfig sets the value of Config.
@@ -7636,9 +7797,13 @@ func (s *SiteUpdateEmailTemplateInput) SetBody(val OptString) {
 // Update a workspace integration. Omit `config` to keep stored credentials.
 // Ref: #/components/schemas/SiteUpdateIntegrationInput
 type SiteUpdateIntegrationInput struct {
-	Name      OptString                        `json:"name"`
-	Enabled   OptBool                          `json:"enabled"`
-	IsDefault OptBool                          `json:"isDefault"`
+	Name      OptString `json:"name"`
+	Enabled   OptBool   `json:"enabled"`
+	IsDefault OptBool   `json:"isDefault"`
+	// Most messages per second (positive); null clears the limit, omit to keep.
+	MaxPerSecond OptNilInt32 `json:"maxPerSecond"`
+	// Most messages per rolling 24 hours (positive); null clears the limit, omit to keep.
+	MaxPerDay OptNilInt32                      `json:"maxPerDay"`
 	Config    OptNilSiteIntegrationConfigInput `json:"config"`
 }
 
@@ -7655,6 +7820,16 @@ func (s *SiteUpdateIntegrationInput) GetEnabled() OptBool {
 // GetIsDefault returns the value of IsDefault.
 func (s *SiteUpdateIntegrationInput) GetIsDefault() OptBool {
 	return s.IsDefault
+}
+
+// GetMaxPerSecond returns the value of MaxPerSecond.
+func (s *SiteUpdateIntegrationInput) GetMaxPerSecond() OptNilInt32 {
+	return s.MaxPerSecond
+}
+
+// GetMaxPerDay returns the value of MaxPerDay.
+func (s *SiteUpdateIntegrationInput) GetMaxPerDay() OptNilInt32 {
+	return s.MaxPerDay
 }
 
 // GetConfig returns the value of Config.
@@ -7675,6 +7850,16 @@ func (s *SiteUpdateIntegrationInput) SetEnabled(val OptBool) {
 // SetIsDefault sets the value of IsDefault.
 func (s *SiteUpdateIntegrationInput) SetIsDefault(val OptBool) {
 	s.IsDefault = val
+}
+
+// SetMaxPerSecond sets the value of MaxPerSecond.
+func (s *SiteUpdateIntegrationInput) SetMaxPerSecond(val OptNilInt32) {
+	s.MaxPerSecond = val
+}
+
+// SetMaxPerDay sets the value of MaxPerDay.
+func (s *SiteUpdateIntegrationInput) SetMaxPerDay(val OptNilInt32) {
+	s.MaxPerDay = val
 }
 
 // SetConfig sets the value of Config.

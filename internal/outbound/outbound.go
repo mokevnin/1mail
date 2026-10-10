@@ -36,8 +36,9 @@ import (
 )
 
 // Outcome is what an Outbound send did. Sent, Skipped and Failed are final for the
-// destination; Held is a reversible hold on the source — nothing was consumed, the
-// caller should try the same Request again later.
+// destination; Held and Deferral are reversible per-source Outcomes — nothing was
+// consumed, the caller should try the same Request again later (a Held after its own
+// delay, a Deferral after Result.Wait).
 type Outcome string
 
 const (
@@ -49,6 +50,10 @@ const (
 	Failed Outcome = "failed"
 	// Held: the source cannot send right now. Reason is a Hold* constant.
 	Held Outcome = "held"
+	// Deferral: the Integration's Send rate limit is spent (ADR 0023). Nothing is wrong
+	// with the source, it is busy: no hold reason, no claim, no attempt consumed.
+	// Result.Wait says when capacity returns.
+	Deferral Outcome = "deferral"
 )
 
 // Reasons an Outbound send is Held.
@@ -90,6 +95,8 @@ type Result struct {
 	Reason string
 	// MessageID is the Outbound message row; zero when Held (nothing was recorded).
 	MessageID int64
+	// Wait is, for a Deferral, how long until the Send rate limit has capacity again.
+	Wait time.Duration
 	// Replayed is true when the Outcome was read back from an earlier attempt.
 	Replayed bool
 }
@@ -118,6 +125,7 @@ type Module struct {
 	tracker  *tracking.Tracker
 	lease    time.Duration
 	freezers []Freezer
+	now      func() time.Time
 }
 
 // Option customizes a Module.
@@ -126,6 +134,10 @@ type Option func(*Module)
 // WithLease overrides DefaultLease (tests use a tiny lease to exercise takeover).
 func WithLease(d time.Duration) Option { return func(m *Module) { m.lease = d } }
 
+// WithClock overrides the time source the Send rate limit refills against (tests
+// drive it by hand).
+func WithClock(now func() time.Time) Option { return func(m *Module) { m.now = now } }
+
 // WithFreezers adds extra freeze reasons after the core suspension check.
 func WithFreezers(f ...Freezer) Option {
 	return func(m *Module) { m.freezers = append(m.freezers, f...) }
@@ -133,7 +145,7 @@ func WithFreezers(f ...Freezer) Option {
 
 // New builds the module. tracker may be nil only if no marketing Request is sent.
 func New(bus *events.Bus, senders Senders, tracker *tracking.Tracker, opts ...Option) *Module {
-	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease}
+	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease, now: time.Now}
 	for _, o := range opts {
 		o(m)
 	}
@@ -254,6 +266,18 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 	}
 	built.msg.From, built.msg.FromName = g.from, g.fromName
 	built.msg.To = dest
+
+	// Send rate limit: the last gate before the provider, so a message that was
+	// Skipped, Held or failed to render never spends capacity.
+	if wait, err := m.reserve(ctx, s, req); err != nil {
+		m.release(ctx, s, msg)
+		return Result{}, err
+	} else if wait > 0 {
+		// Busy, not blocked: drop the claim so the retry starts clean and no attempt
+		// is consumed.
+		_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
+		return Result{Outcome: Deferral, Wait: wait}, nil
+	}
 
 	receipt, err := g.sender.Send(ctx, built.msg)
 	if err != nil {

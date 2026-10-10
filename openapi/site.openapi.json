@@ -6032,6 +6032,18 @@
           "isDefault": {
             "type": "boolean"
           },
+          "maxPerSecond": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Most messages per second (positive); omit or null for no limit"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Most messages per rolling 24 hours (positive); omit or null for no limit"
+          },
           "config": {
             "$ref": "#/components/schemas/SiteIntegrationConfigInput"
           }
@@ -6488,6 +6500,8 @@
           "provider",
           "enabled",
           "isDefault",
+          "maxPerSecond",
+          "maxPerDay",
           "config",
           "createdAt",
           "updatedAt"
@@ -6528,6 +6542,18 @@
           "isDefault": {
             "type": "boolean",
             "description": "Whether this is the default provider for its channel"
+          },
+          "maxPerSecond": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Send rate limit: most messages per second; null means no per-second limit"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Send rate limit: most messages per rolling 24 hours; null means no daily limit"
           },
           "config": {
             "allOf": [
@@ -7441,6 +7467,18 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "maxPerSecond": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Most messages per second (positive); null clears the limit, omit to keep"
+          },
+          "maxPerDay": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Most messages per rolling 24 hours (positive); null clears the limit, omit to keep"
           },
           "config": {
             "allOf": [

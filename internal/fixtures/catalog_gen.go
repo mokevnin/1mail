@@ -137,6 +137,10 @@ const (
 	GlobexOwnerMembershipID = 2
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// IntegrationAcmeDefaultID is from fixtures/integrations.
+	IntegrationAcmeDefaultID = 1
+	// IntegrationAcmeDefaultName is from fixtures/integrations.
+	IntegrationAcmeDefaultName = "Mailpit (dev SMTP)"
 	// IntegrationGlobexID is from fixtures/integrations.
 	IntegrationGlobexID = 900
 	// IntegrationGlobexName is from fixtures/integrations.

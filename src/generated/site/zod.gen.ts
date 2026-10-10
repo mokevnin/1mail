@@ -456,6 +456,8 @@ export const zSiteCreateIntegrationInput = z.object({
   name: z.string(),
   enabled: z.exactOptional(z.boolean()),
   isDefault: z.exactOptional(z.boolean()),
+  maxPerSecond: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()),
+  maxPerDay: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()),
   config: zSiteIntegrationConfigInput
 });
 
@@ -542,6 +544,8 @@ export const zSiteUpdateIntegrationInput = z.object({
   name: z.exactOptional(z.string()),
   enabled: z.exactOptional(z.boolean()),
   isDefault: z.exactOptional(z.boolean()),
+  maxPerSecond: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()),
+  maxPerDay: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable()),
   config: z.exactOptional(zSiteIntegrationConfigInput.nullable())
 });
 
@@ -754,6 +758,8 @@ export const zSiteIntegrationResource = z.object({
   provider: zSiteIntegrationProvider,
   enabled: z.boolean(),
   isDefault: z.boolean(),
+  maxPerSecond: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
+  maxPerDay: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
   config: zSiteIntegrationConfig,
   createdAt: zTimestamp,
   updatedAt: zTimestamp

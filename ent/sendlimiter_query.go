@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -18,54 +17,54 @@ import (
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// IntegrationQuery is the builder for querying Integration entities.
-type IntegrationQuery struct {
+// SendLimiterQuery is the builder for querying SendLimiter entities.
+type SendLimiterQuery struct {
 	config
 	ctx             *QueryContext
-	order           []integration.OrderOption
+	order           []sendlimiter.OrderOption
 	inters          []Interceptor
-	predicates      []predicate.Integration
+	predicates      []predicate.SendLimiter
 	withWorkspace   *WorkspaceQuery
-	withSendLimiter *SendLimiterQuery
+	withIntegration *IntegrationQuery
 	modifiers       []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the IntegrationQuery builder.
-func (_q *IntegrationQuery) Where(ps ...predicate.Integration) *IntegrationQuery {
+// Where adds a new predicate for the SendLimiterQuery builder.
+func (_q *SendLimiterQuery) Where(ps ...predicate.SendLimiter) *SendLimiterQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *IntegrationQuery) Limit(limit int) *IntegrationQuery {
+func (_q *SendLimiterQuery) Limit(limit int) *SendLimiterQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *IntegrationQuery) Offset(offset int) *IntegrationQuery {
+func (_q *SendLimiterQuery) Offset(offset int) *SendLimiterQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *IntegrationQuery) Unique(unique bool) *IntegrationQuery {
+func (_q *SendLimiterQuery) Unique(unique bool) *SendLimiterQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *IntegrationQuery) Order(o ...integration.OrderOption) *IntegrationQuery {
+func (_q *SendLimiterQuery) Order(o ...sendlimiter.OrderOption) *SendLimiterQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryWorkspace chains the current query on the "workspace" edge.
-func (_q *IntegrationQuery) QueryWorkspace() *WorkspaceQuery {
+func (_q *SendLimiterQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -76,9 +75,9 @@ func (_q *IntegrationQuery) QueryWorkspace() *WorkspaceQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(integration.Table, integration.FieldID, selector),
+			sqlgraph.From(sendlimiter.Table, sendlimiter.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, integration.WorkspaceTable, integration.WorkspaceColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, sendlimiter.WorkspaceTable, sendlimiter.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -86,9 +85,9 @@ func (_q *IntegrationQuery) QueryWorkspace() *WorkspaceQuery {
 	return query
 }
 
-// QuerySendLimiter chains the current query on the "send_limiter" edge.
-func (_q *IntegrationQuery) QuerySendLimiter() *SendLimiterQuery {
-	query := (&SendLimiterClient{config: _q.config}).Query()
+// QueryIntegration chains the current query on the "integration" edge.
+func (_q *SendLimiterQuery) QueryIntegration() *IntegrationQuery {
+	query := (&IntegrationClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -98,9 +97,9 @@ func (_q *IntegrationQuery) QuerySendLimiter() *SendLimiterQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(integration.Table, integration.FieldID, selector),
-			sqlgraph.To(sendlimiter.Table, sendlimiter.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, integration.SendLimiterTable, integration.SendLimiterColumn),
+			sqlgraph.From(sendlimiter.Table, sendlimiter.FieldID, selector),
+			sqlgraph.To(integration.Table, integration.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, sendlimiter.IntegrationTable, sendlimiter.IntegrationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -108,21 +107,21 @@ func (_q *IntegrationQuery) QuerySendLimiter() *SendLimiterQuery {
 	return query
 }
 
-// First returns the first Integration entity from the query.
-// Returns a *NotFoundError when no Integration was found.
-func (_q *IntegrationQuery) First(ctx context.Context) (*Integration, error) {
+// First returns the first SendLimiter entity from the query.
+// Returns a *NotFoundError when no SendLimiter was found.
+func (_q *SendLimiterQuery) First(ctx context.Context) (*SendLimiter, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{integration.Label}
+		return nil, &NotFoundError{sendlimiter.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *IntegrationQuery) FirstX(ctx context.Context) *Integration {
+func (_q *SendLimiterQuery) FirstX(ctx context.Context) *SendLimiter {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -130,22 +129,22 @@ func (_q *IntegrationQuery) FirstX(ctx context.Context) *Integration {
 	return node
 }
 
-// FirstID returns the first Integration ID from the query.
-// Returns a *NotFoundError when no Integration ID was found.
-func (_q *IntegrationQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first SendLimiter ID from the query.
+// Returns a *NotFoundError when no SendLimiter ID was found.
+func (_q *SendLimiterQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{integration.Label}
+		err = &NotFoundError{sendlimiter.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *IntegrationQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *SendLimiterQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -153,10 +152,10 @@ func (_q *IntegrationQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single Integration entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Integration entity is found.
-// Returns a *NotFoundError when no Integration entities are found.
-func (_q *IntegrationQuery) Only(ctx context.Context) (*Integration, error) {
+// Only returns a single SendLimiter entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one SendLimiter entity is found.
+// Returns a *NotFoundError when no SendLimiter entities are found.
+func (_q *SendLimiterQuery) Only(ctx context.Context) (*SendLimiter, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -165,14 +164,14 @@ func (_q *IntegrationQuery) Only(ctx context.Context) (*Integration, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{integration.Label}
+		return nil, &NotFoundError{sendlimiter.Label}
 	default:
-		return nil, &NotSingularError{integration.Label}
+		return nil, &NotSingularError{sendlimiter.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *IntegrationQuery) OnlyX(ctx context.Context) *Integration {
+func (_q *SendLimiterQuery) OnlyX(ctx context.Context) *SendLimiter {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -180,10 +179,10 @@ func (_q *IntegrationQuery) OnlyX(ctx context.Context) *Integration {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Integration ID in the query.
-// Returns a *NotSingularError when more than one Integration ID is found.
+// OnlyID is like Only, but returns the only SendLimiter ID in the query.
+// Returns a *NotSingularError when more than one SendLimiter ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *IntegrationQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *SendLimiterQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -192,15 +191,15 @@ func (_q *IntegrationQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{integration.Label}
+		err = &NotFoundError{sendlimiter.Label}
 	default:
-		err = &NotSingularError{integration.Label}
+		err = &NotSingularError{sendlimiter.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *IntegrationQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *SendLimiterQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -208,18 +207,18 @@ func (_q *IntegrationQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of Integrations.
-func (_q *IntegrationQuery) All(ctx context.Context) ([]*Integration, error) {
+// All executes the query and returns a list of SendLimiters.
+func (_q *SendLimiterQuery) All(ctx context.Context) ([]*SendLimiter, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Integration, *IntegrationQuery]()
-	return withInterceptors[[]*Integration](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*SendLimiter, *SendLimiterQuery]()
+	return withInterceptors[[]*SendLimiter](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *IntegrationQuery) AllX(ctx context.Context) []*Integration {
+func (_q *SendLimiterQuery) AllX(ctx context.Context) []*SendLimiter {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -227,20 +226,20 @@ func (_q *IntegrationQuery) AllX(ctx context.Context) []*Integration {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Integration IDs.
-func (_q *IntegrationQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of SendLimiter IDs.
+func (_q *SendLimiterQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(integration.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(sendlimiter.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *IntegrationQuery) IDsX(ctx context.Context) []int64 {
+func (_q *SendLimiterQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -249,16 +248,16 @@ func (_q *IntegrationQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *IntegrationQuery) Count(ctx context.Context) (int, error) {
+func (_q *SendLimiterQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*IntegrationQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*SendLimiterQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *IntegrationQuery) CountX(ctx context.Context) int {
+func (_q *SendLimiterQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -267,7 +266,7 @@ func (_q *IntegrationQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *IntegrationQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *SendLimiterQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -280,7 +279,7 @@ func (_q *IntegrationQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *IntegrationQuery) ExistX(ctx context.Context) bool {
+func (_q *SendLimiterQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -288,20 +287,20 @@ func (_q *IntegrationQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the IntegrationQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the SendLimiterQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *IntegrationQuery) Clone() *IntegrationQuery {
+func (_q *SendLimiterQuery) Clone() *SendLimiterQuery {
 	if _q == nil {
 		return nil
 	}
-	return &IntegrationQuery{
+	return &SendLimiterQuery{
 		config:          _q.config,
 		ctx:             _q.ctx.Clone(),
-		order:           append([]integration.OrderOption{}, _q.order...),
+		order:           append([]sendlimiter.OrderOption{}, _q.order...),
 		inters:          append([]Interceptor{}, _q.inters...),
-		predicates:      append([]predicate.Integration{}, _q.predicates...),
+		predicates:      append([]predicate.SendLimiter{}, _q.predicates...),
 		withWorkspace:   _q.withWorkspace.Clone(),
-		withSendLimiter: _q.withSendLimiter.Clone(),
+		withIntegration: _q.withIntegration.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
@@ -311,7 +310,7 @@ func (_q *IntegrationQuery) Clone() *IntegrationQuery {
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
 // the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *IntegrationQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *IntegrationQuery {
+func (_q *SendLimiterQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *SendLimiterQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -320,14 +319,14 @@ func (_q *IntegrationQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Integr
 	return _q
 }
 
-// WithSendLimiter tells the query-builder to eager-load the nodes that are connected to
-// the "send_limiter" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *IntegrationQuery) WithSendLimiter(opts ...func(*SendLimiterQuery)) *IntegrationQuery {
-	query := (&SendLimiterClient{config: _q.config}).Query()
+// WithIntegration tells the query-builder to eager-load the nodes that are connected to
+// the "integration" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *SendLimiterQuery) WithIntegration(opts ...func(*IntegrationQuery)) *SendLimiterQuery {
+	query := (&IntegrationClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withSendLimiter = query
+	_q.withIntegration = query
 	return _q
 }
 
@@ -341,15 +340,15 @@ func (_q *IntegrationQuery) WithSendLimiter(opts ...func(*SendLimiterQuery)) *In
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Integration.Query().
-//		GroupBy(integration.FieldCreatedAt).
+//	client.SendLimiter.Query().
+//		GroupBy(sendlimiter.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *IntegrationQuery) GroupBy(field string, fields ...string) *IntegrationGroupBy {
+func (_q *SendLimiterQuery) GroupBy(field string, fields ...string) *SendLimiterGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &IntegrationGroupBy{build: _q}
+	grbuild := &SendLimiterGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = integration.Label
+	grbuild.label = sendlimiter.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -363,23 +362,23 @@ func (_q *IntegrationQuery) GroupBy(field string, fields ...string) *Integration
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.Integration.Query().
-//		Select(integration.FieldCreatedAt).
+//	client.SendLimiter.Query().
+//		Select(sendlimiter.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *IntegrationQuery) Select(fields ...string) *IntegrationSelect {
+func (_q *SendLimiterQuery) Select(fields ...string) *SendLimiterSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &IntegrationSelect{IntegrationQuery: _q}
-	sbuild.label = integration.Label
+	sbuild := &SendLimiterSelect{SendLimiterQuery: _q}
+	sbuild.label = sendlimiter.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a IntegrationSelect configured with the given aggregations.
-func (_q *IntegrationQuery) Aggregate(fns ...AggregateFunc) *IntegrationSelect {
+// Aggregate returns a SendLimiterSelect configured with the given aggregations.
+func (_q *SendLimiterQuery) Aggregate(fns ...AggregateFunc) *SendLimiterSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *IntegrationQuery) prepareQuery(ctx context.Context) error {
+func (_q *SendLimiterQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -391,7 +390,7 @@ func (_q *IntegrationQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !integration.ValidColumn(f) {
+		if !sendlimiter.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -405,20 +404,20 @@ func (_q *IntegrationQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *IntegrationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Integration, error) {
+func (_q *SendLimiterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SendLimiter, error) {
 	var (
-		nodes       = []*Integration{}
+		nodes       = []*SendLimiter{}
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
 			_q.withWorkspace != nil,
-			_q.withSendLimiter != nil,
+			_q.withIntegration != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Integration).scanValues(nil, columns)
+		return (*SendLimiter).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Integration{config: _q.config}
+		node := &SendLimiter{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -437,22 +436,22 @@ func (_q *IntegrationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
-			func(n *Integration, e *Workspace) { n.Edges.Workspace = e }); err != nil {
+			func(n *SendLimiter, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withSendLimiter; query != nil {
-		if err := _q.loadSendLimiter(ctx, query, nodes, nil,
-			func(n *Integration, e *SendLimiter) { n.Edges.SendLimiter = e }); err != nil {
+	if query := _q.withIntegration; query != nil {
+		if err := _q.loadIntegration(ctx, query, nodes, nil,
+			func(n *SendLimiter, e *Integration) { n.Edges.Integration = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *IntegrationQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Integration, init func(*Integration), assign func(*Integration, *Workspace)) error {
+func (_q *SendLimiterQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*SendLimiter, init func(*SendLimiter), assign func(*SendLimiter, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*Integration)
+	nodeids := make(map[int64][]*SendLimiter)
 	for i := range nodes {
 		fk := nodes[i].WorkspaceID
 		if _, ok := nodeids[fk]; !ok {
@@ -479,35 +478,37 @@ func (_q *IntegrationQuery) loadWorkspace(ctx context.Context, query *WorkspaceQ
 	}
 	return nil
 }
-func (_q *IntegrationQuery) loadSendLimiter(ctx context.Context, query *SendLimiterQuery, nodes []*Integration, init func(*Integration), assign func(*Integration, *SendLimiter)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*Integration)
+func (_q *SendLimiterQuery) loadIntegration(ctx context.Context, query *IntegrationQuery, nodes []*SendLimiter, init func(*SendLimiter), assign func(*SendLimiter, *Integration)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*SendLimiter)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+		fk := nodes[i].IntegrationID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(sendlimiter.FieldIntegrationID)
+	if len(ids) == 0 {
+		return nil
 	}
-	query.Where(predicate.SendLimiter(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(integration.SendLimiterColumn), fks...))
-	}))
+	query.Where(integration.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.IntegrationID
-		node, ok := nodeids[fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "integration_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "integration_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
 
-func (_q *IntegrationQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *SendLimiterQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -519,8 +520,8 @@ func (_q *IntegrationQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *IntegrationQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(integration.Table, integration.Columns, sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64))
+func (_q *SendLimiterQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(sendlimiter.Table, sendlimiter.Columns, sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -529,14 +530,17 @@ func (_q *IntegrationQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, integration.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, sendlimiter.FieldID)
 		for i := range fields {
-			if fields[i] != integration.FieldID {
+			if fields[i] != sendlimiter.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
 		if _q.withWorkspace != nil {
-			_spec.Node.AddColumnOnce(integration.FieldWorkspaceID)
+			_spec.Node.AddColumnOnce(sendlimiter.FieldWorkspaceID)
+		}
+		if _q.withIntegration != nil {
+			_spec.Node.AddColumnOnce(sendlimiter.FieldIntegrationID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -562,12 +566,12 @@ func (_q *IntegrationQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *IntegrationQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *SendLimiterQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(integration.Table)
+	t1 := builder.Table(sendlimiter.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = integration.Columns
+		columns = sendlimiter.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -598,33 +602,33 @@ func (_q *IntegrationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_q *IntegrationQuery) Modify(modifiers ...func(s *sql.Selector)) *IntegrationSelect {
+func (_q *SendLimiterQuery) Modify(modifiers ...func(s *sql.Selector)) *SendLimiterSelect {
 	_q.modifiers = append(_q.modifiers, modifiers...)
 	return _q.Select()
 }
 
-// IntegrationGroupBy is the group-by builder for Integration entities.
-type IntegrationGroupBy struct {
+// SendLimiterGroupBy is the group-by builder for SendLimiter entities.
+type SendLimiterGroupBy struct {
 	selector
-	build *IntegrationQuery
+	build *SendLimiterQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *IntegrationGroupBy) Aggregate(fns ...AggregateFunc) *IntegrationGroupBy {
+func (_g *SendLimiterGroupBy) Aggregate(fns ...AggregateFunc) *SendLimiterGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *IntegrationGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *SendLimiterGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*IntegrationQuery, *IntegrationGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*SendLimiterQuery, *SendLimiterGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *IntegrationGroupBy) sqlScan(ctx context.Context, root *IntegrationQuery, v any) error {
+func (_g *SendLimiterGroupBy) sqlScan(ctx context.Context, root *SendLimiterQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -651,28 +655,28 @@ func (_g *IntegrationGroupBy) sqlScan(ctx context.Context, root *IntegrationQuer
 	return sql.ScanSlice(rows, v)
 }
 
-// IntegrationSelect is the builder for selecting fields of Integration entities.
-type IntegrationSelect struct {
-	*IntegrationQuery
+// SendLimiterSelect is the builder for selecting fields of SendLimiter entities.
+type SendLimiterSelect struct {
+	*SendLimiterQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *IntegrationSelect) Aggregate(fns ...AggregateFunc) *IntegrationSelect {
+func (_s *SendLimiterSelect) Aggregate(fns ...AggregateFunc) *SendLimiterSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *IntegrationSelect) Scan(ctx context.Context, v any) error {
+func (_s *SendLimiterSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*IntegrationQuery, *IntegrationSelect](ctx, _s.IntegrationQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*SendLimiterQuery, *SendLimiterSelect](ctx, _s.SendLimiterQuery, _s, _s.inters, v)
 }
 
-func (_s *IntegrationSelect) sqlScan(ctx context.Context, root *IntegrationQuery, v any) error {
+func (_s *SendLimiterSelect) sqlScan(ctx context.Context, root *SendLimiterQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
@@ -694,7 +698,7 @@ func (_s *IntegrationSelect) sqlScan(ctx context.Context, root *IntegrationQuery
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_s *IntegrationSelect) Modify(modifiers ...func(s *sql.Selector)) *IntegrationSelect {
+func (_s *SendLimiterSelect) Modify(modifiers ...func(s *sql.Selector)) *SendLimiterSelect {
 	_s.modifiers = append(_s.modifiers, modifiers...)
 	return _s
 }

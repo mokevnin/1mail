@@ -46,6 +46,8 @@ type Tx struct {
 	OutboundMessage *OutboundMessageClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
+	// SendLimiter is the client for interacting with the SendLimiter builders.
+	SendLimiter *SendLimiterClient
 	// SendingDomain is the client for interacting with the SendingDomain builders.
 	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
@@ -210,6 +212,7 @@ func (tx *Tx) init() {
 	tx.OAuthCode = NewOAuthCodeClient(tx.config)
 	tx.OutboundMessage = NewOutboundMessageClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
+	tx.SendLimiter = NewSendLimiterClient(tx.config)
 	tx.SendingDomain = NewSendingDomainClient(tx.config)
 	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)

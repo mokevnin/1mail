@@ -942,6 +942,29 @@ func HasSendingDomainsWith(preds ...predicate.SendingDomain) predicate.Workspace
 	})
 }
 
+// HasSendLimiters applies the HasEdge predicate on the "send_limiters" edge.
+func HasSendLimiters() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SendLimitersTable, SendLimitersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSendLimitersWith applies the HasEdge predicate on the "send_limiters" edge with a given conditions (other predicates).
+func HasSendLimitersWith(preds ...predicate.SendLimiter) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newSendLimitersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasBroadcasts applies the HasEdge predicate on the "broadcasts" edge.
 func HasBroadcasts() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

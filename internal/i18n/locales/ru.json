@@ -41,5 +41,6 @@
   "errors.broadcast_already_sending": "рассылка уже отправляется или отправлена",
   "errors.already_member": "уже участник",
   "errors.keep_one_owner": "в рабочем пространстве должен остаться хотя бы один владелец",
-  "errors.integration_kind_mismatch": "тип должен соответствовать провайдеру интеграции"
+  "errors.integration_kind_mismatch": "тип должен соответствовать провайдеру интеграции",
+  "errors.integration_limit_positive": "лимит отправки должен быть положительным числом"
 }

@@ -404,6 +404,8 @@ var (
 		{Name: "config_encrypted", Type: field.TypeString},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "is_default", Type: field.TypeBool, Default: false},
+		{Name: "max_per_second", Type: field.TypeInt, Nullable: true},
+		{Name: "max_per_day", Type: field.TypeInt, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// IntegrationsTable holds the schema information for the "integrations" table.
@@ -414,7 +416,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "integrations_workspaces_integrations",
-				Columns:    []*schema.Column{IntegrationsColumns[9]},
+				Columns:    []*schema.Column{IntegrationsColumns[11]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -423,7 +425,7 @@ var (
 			{
 				Name:    "integration_workspace_id_channel",
 				Unique:  true,
-				Columns: []*schema.Column{IntegrationsColumns[9], IntegrationsColumns[4]},
+				Columns: []*schema.Column{IntegrationsColumns[11], IntegrationsColumns[4]},
 				Annotation: &entsql.IndexAnnotation{
 					Where: "is_default",
 				},
@@ -623,6 +625,37 @@ var (
 			{
 				Symbol:     "segments_workspaces_segments",
 				Columns:    []*schema.Column{SegmentsColumns[5]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// SendLimitersColumns holds the columns for the "send_limiters" table.
+	SendLimitersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "second_fill", Type: field.TypeFloat64},
+		{Name: "day_fill", Type: field.TypeFloat64},
+		{Name: "refilled_at", Type: field.TypeTime},
+		{Name: "integration_id", Type: field.TypeInt64, Unique: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// SendLimitersTable holds the schema information for the "send_limiters" table.
+	SendLimitersTable = &schema.Table{
+		Name:       "send_limiters",
+		Columns:    SendLimitersColumns,
+		PrimaryKey: []*schema.Column{SendLimitersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "send_limiters_integrations_send_limiter",
+				Columns:    []*schema.Column{SendLimitersColumns[6]},
+				RefColumns: []*schema.Column{IntegrationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "send_limiters_workspaces_send_limiters",
+				Columns:    []*schema.Column{SendLimitersColumns[7]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -921,6 +954,7 @@ var (
 		OauthCodesTable,
 		OutboundMessagesTable,
 		SegmentsTable,
+		SendLimitersTable,
 		SendingDomainsTable,
 		SuppressionsTable,
 		TagsTable,
@@ -1004,6 +1038,11 @@ func init() {
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
+	}
+	SendLimitersTable.ForeignKeys[0].RefTable = IntegrationsTable
+	SendLimitersTable.ForeignKeys[1].RefTable = WorkspacesTable
+	SendLimitersTable.Annotation = &entsql.Annotation{
+		Table: "send_limiters",
 	}
 	SendingDomainsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SendingDomainsTable.Annotation = &entsql.Annotation{
