@@ -8932,7 +8932,7 @@
       },
       "SiteMembershipResource": {
         "type": "object",
-        "required": ["id", "userId", "email", "name", "role", "secondFactorEnabled", "createdAt"],
+        "required": ["id", "userId", "email", "name", "role", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -8969,10 +8969,6 @@
               }
             ],
             "description": "The member's role in this workspace"
-          },
-          "secondFactorEnabled": {
-            "type": "boolean",
-            "description": "Whether the member has an active Second factor (ADR 0020)"
           },
           "createdAt": {
             "allOf": [

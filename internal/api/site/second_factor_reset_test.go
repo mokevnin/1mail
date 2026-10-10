@@ -92,17 +92,3 @@ func TestSecondFactorResetRefusesOneselfAndAMemberWithoutAFactor(t *testing.T) {
 	require.IsType(t, &siteapi.SiteMembershipsResetSecondFactorUnprocessableEntity{}, self)
 	require.IsType(t, &siteapi.SiteMembershipsResetSecondFactorUnprocessableEntity{}, none)
 }
-
-func TestTheMemberListShowsWhoHasASecondFactor(t *testing.T) {
-	env := testhelper.Setup(t)
-
-	res, err := env.SiteActor(t, fixtures.OwnerJaneEmail).SiteMembershipsList(t.Context(),
-		siteapi.SiteMembershipsListParams{Slug: fixtures.GlobexSlug})
-	require.NoError(t, err)
-
-	enabled := map[string]bool{}
-	for _, m := range *res.(*siteapi.SiteMembershipsListOKApplicationJSON) {
-		enabled[m.Name] = m.SecondFactorEnabled
-	}
-	assert.Equal(t, map[string]bool{"Jane": false, "Mary": false, "Sam": true}, enabled)
-}

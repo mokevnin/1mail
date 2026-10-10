@@ -161,7 +161,7 @@ export function MembersSection({ slug }: { slug: string }) {
             title: '',
             render: (record) => (
               <Group gap="xs" wrap="nowrap" justify="flex-end">
-                {canManage && record.secondFactorEnabled && record.userId !== me.data?.id ? (
+                {canManage && record.userId !== me.data?.id ? (
                   <Button
                     size="compact-sm"
                     color="orange"

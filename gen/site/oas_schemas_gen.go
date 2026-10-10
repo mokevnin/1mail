@@ -7371,8 +7371,6 @@ type SiteMembershipResource struct {
 	Name string `json:"name"`
 	// The member's role in this workspace.
 	Role SiteMembershipRole `json:"role"`
-	// Whether the member has an active Second factor (ADR 0020).
-	SecondFactorEnabled bool `json:"secondFactorEnabled"`
 	// When the member joined.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -7400,11 +7398,6 @@ func (s *SiteMembershipResource) GetName() string {
 // GetRole returns the value of Role.
 func (s *SiteMembershipResource) GetRole() SiteMembershipRole {
 	return s.Role
-}
-
-// GetSecondFactorEnabled returns the value of SecondFactorEnabled.
-func (s *SiteMembershipResource) GetSecondFactorEnabled() bool {
-	return s.SecondFactorEnabled
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -7435,11 +7428,6 @@ func (s *SiteMembershipResource) SetName(val string) {
 // SetRole sets the value of Role.
 func (s *SiteMembershipResource) SetRole(val SiteMembershipRole) {
 	s.Role = val
-}
-
-// SetSecondFactorEnabled sets the value of SecondFactorEnabled.
-func (s *SiteMembershipResource) SetSecondFactorEnabled(val bool) {
-	s.SecondFactorEnabled = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.

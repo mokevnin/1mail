@@ -1619,10 +1619,6 @@ export type SiteMembershipResource = {
    */
   role: SiteMembershipRole;
   /**
-   * Whether the member has an active Second factor (ADR 0020)
-   */
-  secondFactorEnabled: boolean;
-  /**
    * When the member joined
    */
   createdAt: Timestamp;

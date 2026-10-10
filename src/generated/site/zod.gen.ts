@@ -1125,7 +1125,6 @@ export const zSiteMembershipResource = z.object({
   email: zEmailAddress,
   name: z.string(),
   role: zSiteMembershipRole,
-  secondFactorEnabled: z.boolean(),
   createdAt: zTimestamp
 });
 

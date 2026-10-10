@@ -29,7 +29,6 @@ const member: SiteMembershipResource = {
   email: 'ann@example.com',
   name: 'Ann',
   role: 'member',
-  secondFactorEnabled: false,
   createdAt: '2026-01-01T00:00:00Z',
 }
 
@@ -164,7 +163,6 @@ function teamWithSam(role: SiteMembershipRole) {
     userId: '11',
     email: 'sam@example.com',
     name: 'Sam',
-    secondFactorEnabled: true,
   }
   return [me(), handleSiteMembershipsList({ body: [{ ...member, role }, sam] }), invites([])]
 }

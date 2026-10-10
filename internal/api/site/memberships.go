@@ -26,8 +26,6 @@ func membershipResource(m *ent.Membership) siteapi.SiteMembershipResource {
 		Name:      u.Name,
 		Role:      siteapi.SiteMembershipRole(m.Role),
 		CreatedAt: siteapi.Timestamp(m.CreatedAt),
-
-		SecondFactorEnabled: secondfactor.Active(u),
 	}
 }
 

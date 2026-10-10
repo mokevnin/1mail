@@ -16458,23 +16458,18 @@ func (s *SiteMembershipResource) encodeFields(e *jx.Encoder) {
 		s.Role.Encode(e)
 	}
 	{
-		e.FieldStart("secondFactorEnabled")
-		e.Bool(s.SecondFactorEnabled)
-	}
-	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteMembershipResource = [7]string{
+var jsonFieldsNameOfSiteMembershipResource = [6]string{
 	0: "id",
 	1: "userId",
 	2: "email",
 	3: "name",
 	4: "role",
-	5: "secondFactorEnabled",
-	6: "createdAt",
+	5: "createdAt",
 }
 
 // Decode decodes SiteMembershipResource from json.
@@ -16538,20 +16533,8 @@ func (s *SiteMembershipResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"role\"")
 			}
-		case "secondFactorEnabled":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := d.Bool()
-				s.SecondFactorEnabled = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"secondFactorEnabled\"")
-			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -16570,7 +16553,7 @@ func (s *SiteMembershipResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b01111111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
