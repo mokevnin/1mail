@@ -53,11 +53,13 @@ JWT_SECRET = "dev-secret-change-in-production"
 ENCRYPTION_KEY = "CIamsc4JEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIIOWohIqGhyD2NeiOazlLrnrHqCirukTjCjD1iMFPqiEGAEQARiGprHOCSAB"
 SMTP_HOST = "127.0.0.1"
 SMTP_PORT = "1025"
-# Test, e2e and atlas scratch databases live on the same server as the dev DB. Set
-# TEST_DB_URL / ATLAS_DEV_URL in the environment to use an external Postgres.
-TEST_DB_URL = "{{ get_env(name='TEST_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/1mail_test?sslmode=disable') }}"
-E2E_DB_URL = "{{ get_env(name='E2E_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/1mail_e2e?sslmode=disable') }}"
-ATLAS_DEV_URL = "{{ get_env(name='ATLAS_DEV_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/atlas_dev?sslmode=disable') }}"
+# Test, e2e and atlas scratch databases sit next to the checkout's dev database, named after it
+# (<PGDATABASE>_test, _e2e, _atlas), so every checkout has its own set on a shared server and
+# `mise run worktrees:gc` can tell which ones are live. Set TEST_DB_URL / E2E_DB_URL /
+# ATLAS_DEV_URL in the environment to use an external Postgres.
+TEST_DB_URL = "{{ get_env(name='TEST_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_test?sslmode=disable') }}"
+E2E_DB_URL = "{{ get_env(name='E2E_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_e2e?sslmode=disable') }}"
+ATLAS_DEV_URL = "{{ get_env(name='ATLAS_DEV_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_atlas?sslmode=disable') }}"
 
 # --- dev stack (replaces docker compose) -----------------------------------------
 # `mise daemons start caddy` brings up everything below in dependency order.
