@@ -12666,6 +12666,18 @@ func (x *MembershipScopedCreate) SetRole(v membership.Role) *MembershipScopedCre
 	return x
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (x *MembershipScopedCreate) SetSecondFactorRemindedAt(v time.Time) *MembershipScopedCreate {
+	x.b.SetSecondFactorRemindedAt(v)
+	return x
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (x *MembershipScopedCreate) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipScopedCreate {
+	x.b.SetNillableSecondFactorRemindedAt(v)
+	return x
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (x *MembershipScopedCreate) SetUser(v *User) *MembershipScopedCreate {
 	x.b.SetUser(v)
@@ -12773,6 +12785,24 @@ func (u *MembershipScopedUpsert) SetRole(v membership.Role) *MembershipScopedUps
 // UpdateRole sets the "role" field to the value that was provided on create.
 func (u *MembershipScopedUpsert) UpdateRole() *MembershipScopedUpsert {
 	u.u.SetExcluded(membership.FieldRole)
+	return u
+}
+
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (u *MembershipScopedUpsert) SetSecondFactorRemindedAt(v time.Time) *MembershipScopedUpsert {
+	u.u.Set(membership.FieldSecondFactorRemindedAt, v)
+	return u
+}
+
+// UpdateSecondFactorRemindedAt sets the "second_factor_reminded_at" field to the value that was provided on create.
+func (u *MembershipScopedUpsert) UpdateSecondFactorRemindedAt() *MembershipScopedUpsert {
+	u.u.SetExcluded(membership.FieldSecondFactorRemindedAt)
+	return u
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (u *MembershipScopedUpsert) ClearSecondFactorRemindedAt() *MembershipScopedUpsert {
+	u.u.SetNull(membership.FieldSecondFactorRemindedAt)
 	return u
 }
 
@@ -12941,6 +12971,24 @@ func (x *MembershipScopedUpdateOne) SetNillableRole(v *membership.Role) *Members
 	return x
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (x *MembershipScopedUpdateOne) SetSecondFactorRemindedAt(v time.Time) *MembershipScopedUpdateOne {
+	x.b.SetSecondFactorRemindedAt(v)
+	return x
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (x *MembershipScopedUpdateOne) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipScopedUpdateOne {
+	x.b.SetNillableSecondFactorRemindedAt(v)
+	return x
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (x *MembershipScopedUpdateOne) ClearSecondFactorRemindedAt() *MembershipScopedUpdateOne {
+	x.b.ClearSecondFactorRemindedAt()
+	return x
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (x *MembershipScopedUpdateOne) SetUser(v *User) *MembershipScopedUpdateOne {
 	x.b.SetUser(v)
@@ -13036,6 +13084,24 @@ func (x *MembershipScopedUpdate) SetRole(v membership.Role) *MembershipScopedUpd
 // SetNillableRole sets the "role" field if the given value is not nil.
 func (x *MembershipScopedUpdate) SetNillableRole(v *membership.Role) *MembershipScopedUpdate {
 	x.b.SetNillableRole(v)
+	return x
+}
+
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (x *MembershipScopedUpdate) SetSecondFactorRemindedAt(v time.Time) *MembershipScopedUpdate {
+	x.b.SetSecondFactorRemindedAt(v)
+	return x
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (x *MembershipScopedUpdate) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipScopedUpdate {
+	x.b.SetNillableSecondFactorRemindedAt(v)
+	return x
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (x *MembershipScopedUpdate) ClearSecondFactorRemindedAt() *MembershipScopedUpdate {
+	x.b.ClearSecondFactorRemindedAt()
 	return x
 }
 

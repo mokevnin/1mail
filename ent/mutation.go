@@ -14874,20 +14874,21 @@ func (m *InvitationMutation) ResetEdge(name string) error {
 // MembershipMutation represents an operation that mutates the Membership nodes in the graph.
 type MembershipMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int64
-	created_at       *time.Time
-	updated_at       *time.Time
-	role             *membership.Role
-	clearedFields    map[string]struct{}
-	workspace        *int64
-	clearedworkspace bool
-	user             *int64
-	cleareduser      bool
-	done             bool
-	oldValue         func(context.Context) (*Membership, error)
-	predicates       []predicate.Membership
+	op                        Op
+	typ                       string
+	id                        *int64
+	created_at                *time.Time
+	updated_at                *time.Time
+	role                      *membership.Role
+	second_factor_reminded_at *time.Time
+	clearedFields             map[string]struct{}
+	workspace                 *int64
+	clearedworkspace          bool
+	user                      *int64
+	cleareduser               bool
+	done                      bool
+	oldValue                  func(context.Context) (*Membership, error)
+	predicates                []predicate.Membership
 }
 
 var _ ent.Mutation = (*MembershipMutation)(nil)
@@ -15174,6 +15175,55 @@ func (m *MembershipMutation) ResetRole() {
 	m.role = nil
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (m *MembershipMutation) SetSecondFactorRemindedAt(t time.Time) {
+	m.second_factor_reminded_at = &t
+}
+
+// SecondFactorRemindedAt returns the value of the "second_factor_reminded_at" field in the mutation.
+func (m *MembershipMutation) SecondFactorRemindedAt() (r time.Time, exists bool) {
+	v := m.second_factor_reminded_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecondFactorRemindedAt returns the old "second_factor_reminded_at" field's value of the Membership entity.
+// If the Membership object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MembershipMutation) OldSecondFactorRemindedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecondFactorRemindedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecondFactorRemindedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecondFactorRemindedAt: %w", err)
+	}
+	return oldValue.SecondFactorRemindedAt, nil
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (m *MembershipMutation) ClearSecondFactorRemindedAt() {
+	m.second_factor_reminded_at = nil
+	m.clearedFields[membership.FieldSecondFactorRemindedAt] = struct{}{}
+}
+
+// SecondFactorRemindedAtCleared returns if the "second_factor_reminded_at" field was cleared in this mutation.
+func (m *MembershipMutation) SecondFactorRemindedAtCleared() bool {
+	_, ok := m.clearedFields[membership.FieldSecondFactorRemindedAt]
+	return ok
+}
+
+// ResetSecondFactorRemindedAt resets all changes to the "second_factor_reminded_at" field.
+func (m *MembershipMutation) ResetSecondFactorRemindedAt() {
+	m.second_factor_reminded_at = nil
+	delete(m.clearedFields, membership.FieldSecondFactorRemindedAt)
+}
+
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (m *MembershipMutation) ClearWorkspace() {
 	m.clearedworkspace = true
@@ -15262,7 +15312,7 @@ func (m *MembershipMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MembershipMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, membership.FieldCreatedAt)
 	}
@@ -15277,6 +15327,9 @@ func (m *MembershipMutation) Fields() []string {
 	}
 	if m.role != nil {
 		fields = append(fields, membership.FieldRole)
+	}
+	if m.second_factor_reminded_at != nil {
+		fields = append(fields, membership.FieldSecondFactorRemindedAt)
 	}
 	return fields
 }
@@ -15296,6 +15349,8 @@ func (m *MembershipMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case membership.FieldRole:
 		return m.Role()
+	case membership.FieldSecondFactorRemindedAt:
+		return m.SecondFactorRemindedAt()
 	}
 	return nil, false
 }
@@ -15315,6 +15370,8 @@ func (m *MembershipMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldUserID(ctx)
 	case membership.FieldRole:
 		return m.OldRole(ctx)
+	case membership.FieldSecondFactorRemindedAt:
+		return m.OldSecondFactorRemindedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Membership field %s", name)
 }
@@ -15359,6 +15416,13 @@ func (m *MembershipMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRole(v)
 		return nil
+	case membership.FieldSecondFactorRemindedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecondFactorRemindedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Membership field %s", name)
 }
@@ -15391,7 +15455,11 @@ func (m *MembershipMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *MembershipMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(membership.FieldSecondFactorRemindedAt) {
+		fields = append(fields, membership.FieldSecondFactorRemindedAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -15404,6 +15472,11 @@ func (m *MembershipMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *MembershipMutation) ClearField(name string) error {
+	switch name {
+	case membership.FieldSecondFactorRemindedAt:
+		m.ClearSecondFactorRemindedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Membership nullable field %s", name)
 }
 
@@ -15425,6 +15498,9 @@ func (m *MembershipMutation) ResetField(name string) error {
 		return nil
 	case membership.FieldRole:
 		m.ResetRole()
+		return nil
+	case membership.FieldSecondFactorRemindedAt:
+		m.ResetSecondFactorRemindedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Membership field %s", name)

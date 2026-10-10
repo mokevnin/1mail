@@ -79,6 +79,26 @@ func (_u *MembershipUpdate) SetNillableRole(v *membership.Role) *MembershipUpdat
 	return _u
 }
 
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (_u *MembershipUpdate) SetSecondFactorRemindedAt(v time.Time) *MembershipUpdate {
+	_u.mutation.SetSecondFactorRemindedAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (_u *MembershipUpdate) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipUpdate {
+	if v != nil {
+		_u.SetSecondFactorRemindedAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (_u *MembershipUpdate) ClearSecondFactorRemindedAt() *MembershipUpdate {
+	_u.mutation.ClearSecondFactorRemindedAt()
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *MembershipUpdate) SetWorkspace(v *Workspace) *MembershipUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -181,6 +201,12 @@ func (_u *MembershipUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SecondFactorRemindedAt(); ok {
+		_spec.SetField(membership.FieldSecondFactorRemindedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorRemindedAtCleared() {
+		_spec.ClearField(membership.FieldSecondFactorRemindedAt, field.TypeTime)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -307,6 +333,26 @@ func (_u *MembershipUpdateOne) SetNillableRole(v *membership.Role) *MembershipUp
 	if v != nil {
 		_u.SetRole(*v)
 	}
+	return _u
+}
+
+// SetSecondFactorRemindedAt sets the "second_factor_reminded_at" field.
+func (_u *MembershipUpdateOne) SetSecondFactorRemindedAt(v time.Time) *MembershipUpdateOne {
+	_u.mutation.SetSecondFactorRemindedAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorRemindedAt sets the "second_factor_reminded_at" field if the given value is not nil.
+func (_u *MembershipUpdateOne) SetNillableSecondFactorRemindedAt(v *time.Time) *MembershipUpdateOne {
+	if v != nil {
+		_u.SetSecondFactorRemindedAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorRemindedAt clears the value of the "second_factor_reminded_at" field.
+func (_u *MembershipUpdateOne) ClearSecondFactorRemindedAt() *MembershipUpdateOne {
+	_u.mutation.ClearSecondFactorRemindedAt()
 	return _u
 }
 
@@ -442,6 +488,12 @@ func (_u *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership, 
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SecondFactorRemindedAt(); ok {
+		_spec.SetField(membership.FieldSecondFactorRemindedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorRemindedAtCleared() {
+		_spec.ClearField(membership.FieldSecondFactorRemindedAt, field.TypeTime)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -566,6 +566,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}},
+		{Name: "second_factor_reminded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "user_id", Type: field.TypeInt64},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -577,13 +578,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "memberships_users_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[4]},
+				Columns:    []*schema.Column{MembershipsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "memberships_workspaces_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[5]},
+				Columns:    []*schema.Column{MembershipsColumns[6]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -592,7 +593,7 @@ var (
 			{
 				Name:    "membership_user_id_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{MembershipsColumns[4], MembershipsColumns[5]},
+				Columns: []*schema.Column{MembershipsColumns[5], MembershipsColumns[6]},
 			},
 		},
 	}

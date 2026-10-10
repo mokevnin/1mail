@@ -58,6 +58,9 @@ type SystemMailEnqueuer interface {
 	// the invite also returns a copy-link, so a missing/failed mailer (common on
 	// self-hosted with no SMTP) must not fail the invite.
 	EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error
+	// EnqueueSecondFactorRequired emails the Workspace's Users without a Second
+	// factor that its Two-factor requirement is now on, with their deadline (ADR 0020).
+	EnqueueSecondFactorRequired(ctx context.Context, workspaceID int64) error
 }
 
 type Handlers struct {

@@ -75,6 +75,11 @@ func UserID(v int64) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldUserID, v))
 }
 
+// SecondFactorRemindedAt applies equality check predicate on the "second_factor_reminded_at" field. It's identical to SecondFactorRemindedAtEQ.
+func SecondFactorRemindedAt(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldSecondFactorRemindedAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldCreatedAt, v))
@@ -213,6 +218,56 @@ func RoleIn(vs ...Role) predicate.Membership {
 // RoleNotIn applies the NotIn predicate on the "role" field.
 func RoleNotIn(vs ...Role) predicate.Membership {
 	return predicate.Membership(sql.FieldNotIn(FieldRole, vs...))
+}
+
+// SecondFactorRemindedAtEQ applies the EQ predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtEQ(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtNEQ applies the NEQ predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtNEQ(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldNEQ(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtIn applies the In predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtIn(vs ...time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldIn(FieldSecondFactorRemindedAt, vs...))
+}
+
+// SecondFactorRemindedAtNotIn applies the NotIn predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtNotIn(vs ...time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldNotIn(FieldSecondFactorRemindedAt, vs...))
+}
+
+// SecondFactorRemindedAtGT applies the GT predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtGT(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldGT(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtGTE applies the GTE predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtGTE(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldGTE(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtLT applies the LT predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtLT(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldLT(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtLTE applies the LTE predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtLTE(v time.Time) predicate.Membership {
+	return predicate.Membership(sql.FieldLTE(FieldSecondFactorRemindedAt, v))
+}
+
+// SecondFactorRemindedAtIsNil applies the IsNil predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtIsNil() predicate.Membership {
+	return predicate.Membership(sql.FieldIsNull(FieldSecondFactorRemindedAt))
+}
+
+// SecondFactorRemindedAtNotNil applies the NotNil predicate on the "second_factor_reminded_at" field.
+func SecondFactorRemindedAtNotNil() predicate.Membership {
+	return predicate.Membership(sql.FieldNotNull(FieldSecondFactorRemindedAt))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

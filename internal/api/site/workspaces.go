@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -64,9 +65,15 @@ func (h *Handlers) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context,
 		v := siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden(problem(http.StatusForbidden, "only owners and admins can change the two-factor requirement"))
 		return &v, nil
 	}
-	w, _, err := h.accounts.SetSecondFactorRequirement(ctx, s, h.actor(ctx), req.Required, h.now())
+	w, switchedOn, err := h.accounts.SetSecondFactorRequirement(ctx, s, h.actor(ctx), req.Required, h.now())
 	if err != nil {
 		return nil, err
+	}
+	// The requirement is committed; the email is best-effort, like the invite.
+	if switchedOn {
+		if merr := h.sysmail.EnqueueSecondFactorRequired(ctx, s.WorkspaceID()); merr != nil {
+			slog.WarnContext(ctx, "second factor required email not enqueued", "error", merr, "workspace_id", s.WorkspaceID())
+		}
 	}
 	r := workspaceResource(withWorkspace(m, w))
 	return &r, nil

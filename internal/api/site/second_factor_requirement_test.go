@@ -155,3 +155,26 @@ func TestANewMembershipIsWithheldOnceItsOwnGraceEnds(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, code)
 	assert.Equal(t, "second_factor_required", body["code"])
 }
+
+func TestTurningTheRequirementOnEmailsEveryUserWithoutASecondFactor(t *testing.T) {
+	env := requirementEnv(t, time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC))
+	sam := env.SiteActor(t, fixtures.SecondFactorSamEmail)
+
+	setRequirement(t, sam, fixtures.UmbrellaSlug, false)
+	assert.Empty(t, env.SystemMail.Messages(), "switching it off mails no one")
+
+	setRequirement(t, sam, fixtures.UmbrellaSlug, true)
+	msgs := env.SystemMail.Messages()
+	to := make([]string, 0, len(msgs))
+	for _, m := range msgs {
+		to = append(to, m.To)
+		assert.Contains(t, m.Subject, "Umbrella")
+		assert.Contains(t, m.Text, "2026-04-08 12:00 UTC", "the deadline is 7 days after the requirement's start")
+		assert.Contains(t, m.Text, "/account/security")
+	}
+	assert.ElementsMatch(t, []string{fixtures.UmbrellaOwnerRitaEmail, fixtures.UmbrellaMemberNinaEmail}, to,
+		"Users without a Second factor; Sam has one")
+
+	setRequirement(t, sam, fixtures.UmbrellaSlug, true)
+	assert.Len(t, env.SystemMail.Messages(), 2, "switching it on while it is on mails no one")
+}
