@@ -15,26 +15,45 @@ package erasure
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/internal/events"
 )
 
 // ErrNotFound means the identifier resolves to nothing in the Workspace.
 var ErrNotFound = errors.New("erasure: not found")
 
-// Identifier names the data subject to erase. Build one with ByContactID.
+// Identifier names the data subject to erase. Build one with ByContactID, ByEmail or
+// ByVisitorID.
 type Identifier struct {
 	contactID int64
+	email     string
+	visitorID string
 }
 
 // ByContactID identifies a Contact by its id.
 func ByContactID(id int64) Identifier { return Identifier{contactID: id} }
 
+// ByEmail identifies a Contact by its email address; with no such Contact it
+// identifies the address itself, so delivery records to it are anonymized.
+func ByEmail(email string) Identifier {
+	return Identifier{email: strings.ToLower(strings.TrimSpace(email))}
+}
+
+// ByVisitorID identifies the Contact the visitor is bound to, or, for an anonymous
+// Visitor with no Contact, the Visitor and its Events.
+func ByVisitorID(visitorID string) Identifier { return Identifier{visitorID: visitorID} }
+
 // Target is a resolved data subject: what every step erases. Resolving an Identifier
 // into a Target is the only place the identifier kind matters.
 type Target struct {
-	// ContactID is the Contact being erased.
+	// ContactID is the Contact being erased; zero for an address or an anonymous
+	// Visitor that has no Contact.
 	ContactID int64
 	// VisitorIDs are the anonymous devices bound to the Contact; their Events are
 	// erased with it.
@@ -89,12 +108,12 @@ func (m *Module) steps() []step {
 }
 
 func resolve(ctx context.Context, s *ent.Scoped, id Identifier) (*Target, error) {
-	c, err := s.Contact().Get(ctx, id.contactID)
-	if ent.IsNotFound(err) {
-		return nil, ErrNotFound
-	}
+	c, err := findContact(ctx, s, id)
 	if err != nil {
 		return nil, err
+	}
+	if c == nil {
+		return resolveContactless(ctx, s, id)
 	}
 	visitors, err := s.Visitor().Query().Where(visitorOf(c.ID)).All(ctx)
 	if err != nil {
@@ -105,7 +124,64 @@ func resolve(ctx context.Context, s *ent.Scoped, id Identifier) (*Target, error)
 		t.VisitorIDs = append(t.VisitorIDs, v.VisitorID)
 	}
 	if c.Email != nil {
-		t.Destinations = append(t.Destinations, *c.Email)
+		t.Destinations = append(t.Destinations, strings.ToLower(*c.Email))
+	}
+	return t, nil
+}
+
+// findContact returns the Contact the identifier names, or nil when it names none
+// (an address or Visitor without a Contact). A contact id that resolves to nothing is
+// ErrNotFound.
+func findContact(ctx context.Context, s *ent.Scoped, id Identifier) (*ent.Contact, error) {
+	var (
+		c   *ent.Contact
+		err error
+	)
+	switch {
+	case id.email != "":
+		c, err = s.Contact().Query().Where(contact.Email(id.email)).Only(ctx)
+	case id.visitorID != "":
+		var v *ent.Visitor
+		v, err = s.Visitor().Query().Where(visitor.VisitorID(id.visitorID)).Only(ctx)
+		if err == nil && v.ContactID != nil {
+			c, err = s.Contact().Get(ctx, *v.ContactID)
+		}
+	default:
+		c, err = s.Contact().Get(ctx, id.contactID)
+		if ent.IsNotFound(err) {
+			return nil, ErrNotFound
+		}
+	}
+	if ent.IsNotFound(err) {
+		return nil, nil
+	}
+	return c, err
+}
+
+// resolveContactless resolves an email or visitor id that has no Contact: it is a
+// subject only if something in the Workspace refers to it.
+func resolveContactless(ctx context.Context, s *ent.Scoped, id Identifier) (*Target, error) {
+	var (
+		t     *Target
+		known bool
+		err   error
+	)
+	switch {
+	case id.email != "":
+		t = &Target{Destinations: []string{id.email}}
+		known, err = s.OutboundMessage().Query().Where(outboundmessage.Destination(id.email)).Exist(ctx)
+	case id.visitorID != "":
+		t = &Target{VisitorIDs: []string{id.visitorID}}
+		known, err = s.Visitor().Query().Where(visitor.VisitorID(id.visitorID)).Exist(ctx)
+		if err == nil && !known {
+			known, err = s.Event().Query().Where(event.VisitorID(id.visitorID)).Exist(ctx)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !known {
+		return nil, ErrNotFound
 	}
 	return t, nil
 }

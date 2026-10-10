@@ -58,6 +58,7 @@ var operationRolesBearerAuth = map[string][]string{
 	ContactsBatchUpsertOperation:    []string{},
 	ContactsCreateOperation:         []string{},
 	ContactsDeleteOperation:         []string{},
+	ContactsEraseByOperation:        []string{},
 	ContactsExportOperation:         []string{},
 	ContactsGetOperation:            []string{},
 	ContactsListOperation:           []string{},

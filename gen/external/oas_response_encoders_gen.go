@@ -1425,6 +1425,54 @@ func encodeContactsDeleteResponse(response ContactsDeleteRes, w http.ResponseWri
 	}
 }
 
+func encodeContactsEraseByResponse(response ContactsEraseByRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *ContactsEraseByNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *ContactsEraseByBadRequest:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ContactsEraseByUnauthorized:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(401)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ContactsEraseByNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeContactsExportResponse(response ContactsExportRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *ContactsExportOKHeaders:

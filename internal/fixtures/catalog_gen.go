@@ -151,6 +151,10 @@ const (
 	CustomFieldGlobexKey = "globex_only"
 	// CustomFieldGlobexName is from fixtures/custom_fields.
 	CustomFieldGlobexName = "Globex only"
+	// EventAnonymousVisitorAction is from fixtures/events.
+	EventAnonymousVisitorAction = "pricing_viewed"
+	// EventAnonymousVisitorID is from fixtures/events.
+	EventAnonymousVisitorID = 330
 	// EventBystanderCustomAction is from fixtures/events.
 	EventBystanderCustomAction = "plan_upgraded"
 	// EventBystanderCustomEmail is from fixtures/events.
@@ -285,6 +289,10 @@ const (
 	OutboundMessageGlobexDestination = "pat@globex.test"
 	// OutboundMessageGlobexID is from fixtures/outbound_messages.
 	OutboundMessageGlobexID = 900
+	// OutboundMessageStrangerDestination is from fixtures/outbound_messages.
+	OutboundMessageStrangerDestination = "stranger@initech.test"
+	// OutboundMessageStrangerID is from fixtures/outbound_messages.
+	OutboundMessageStrangerID = 303
 	// OutsiderOscarEmail is from fixtures/users.
 	OutsiderOscarEmail = "oscar@nowhere.test"
 	// OutsiderOscarID is from fixtures/users.
@@ -387,6 +395,8 @@ const (
 	UnsubscribeGlobexDestination = "pat@globex.test"
 	// UnsubscribeGlobexID is from fixtures/unsubscribes.
 	UnsubscribeGlobexID = 900
+	// VisitorAnonymousID is from fixtures/visitors.
+	VisitorAnonymousID = 301
 	// VisitorErasableID is from fixtures/visitors.
 	VisitorErasableID = 300
 	// VisitorGlobexID is from fixtures/visitors.

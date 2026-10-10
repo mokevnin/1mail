@@ -49,10 +49,17 @@ func visitorOf(contactID int64) predicate.Visitor { return visitor.ContactID(con
 // system Events in place. Events are found by contact_id (Identify stitched earlier
 // anonymous Events onto it) and by the subject's visitor ids (Events not yet stitched).
 func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
-	match := event.ContactID(t.ContactID)
-	if len(t.VisitorIDs) > 0 {
-		match = event.Or(match, event.VisitorIDIn(t.VisitorIDs...))
+	var matches []predicate.Event
+	if t.ContactID != 0 {
+		matches = append(matches, event.ContactID(t.ContactID))
 	}
+	if len(t.VisitorIDs) > 0 {
+		matches = append(matches, event.VisitorIDIn(t.VisitorIDs...))
+	}
+	if len(matches) == 0 {
+		return nil
+	}
+	match := event.Or(matches...)
 	rows, err := s.Event().Query().Where(match).Select(event.FieldID, event.FieldAction, event.FieldProperties).All(ctx)
 	if err != nil {
 		return err
@@ -101,7 +108,11 @@ func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publish
 }
 
 func eraseVisitors(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
-	_, err := s.Visitor().Delete().Where(visitorOf(t.ContactID)).Exec(ctx)
+	match := visitor.VisitorIDIn(t.VisitorIDs...)
+	if t.ContactID != 0 {
+		match = visitor.Or(visitorOf(t.ContactID), match)
+	}
+	_, err := s.Visitor().Delete().Where(match).Exec(ctx)
 	return err
 }
 
@@ -133,13 +144,25 @@ func anonymizeDelivery(ctx context.Context, s *ent.Scoped, t *Target, _ events.P
 		ClearContactID().ClearDestination().Save(ctx); err != nil {
 		return err
 	}
-	_, err := s.BroadcastRecipient().Update().Where(broadcastrecipient.ContactID(t.ContactID)).
-		ClearContactID().Save(ctx)
+	if _, err := s.BroadcastRecipient().Update().Where(broadcastrecipient.ContactID(t.ContactID)).
+		ClearContactID().Save(ctx); err != nil {
+		return err
+	}
+	// A transactional send to the address may never have had a Contact: it is found by
+	// destination.
+	if len(t.Destinations) == 0 {
+		return nil
+	}
+	_, err := s.OutboundMessage().Update().Where(outboundmessage.DestinationIn(t.Destinations...)).
+		ClearContactID().ClearDestination().Save(ctx)
 	return err
 }
 
 // eraseContact removes the Contact itself; its Tag links and Custom field values go
 // with the row.
 func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	if t.ContactID == 0 {
+		return nil
+	}
 	return s.Contact().DeleteOneID(t.ContactID).Exec(ctx)
 }

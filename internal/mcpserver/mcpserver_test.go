@@ -63,7 +63,7 @@ var (
 	authoringTools = []string{
 		"segments_list", "segments_create", "segments_get", "segments_update", "segments_delete", "segments_preview",
 		"contacts_upsert_batch", "events_record_batch",
-		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete", "contacts_export",
+		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete", "contacts_erase_by", "contacts_export",
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"events_record", "events_actions_list", "whoami",
