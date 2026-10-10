@@ -358,6 +358,8 @@ func (s *ApiTokenScope) Decode(d *jx.Decoder) error {
 		*s = ApiTokenScopeContactsRead
 	case ApiTokenScopeContactsWrite:
 		*s = ApiTokenScopeContactsWrite
+	case ApiTokenScopeContactsErase:
+		*s = ApiTokenScopeContactsErase
 	case ApiTokenScopeSegmentsRead:
 		*s = ApiTokenScopeSegmentsRead
 	case ApiTokenScopeSegmentsWrite:

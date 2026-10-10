@@ -51,3 +51,13 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+
+# Initech (workspace 3): ContactErasable's suppression, which must outlive its Erasure.
+- id: 300 # fixture: SuppressionErasable
+  channel: email
+  destination: erin@initech.test
+  reason: bounce
+  contact_id: 300
+  workspace_id: 3
+  created_at: '2026-01-02 00:00:00'
+  updated_at: '2026-01-02 00:00:00'

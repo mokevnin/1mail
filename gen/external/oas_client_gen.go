@@ -168,7 +168,8 @@ type Invoker interface {
 	ContactsCreate(ctx context.Context, request *CreateContactInput) (ContactsCreateRes, error)
 	// ContactsDelete invokes Contacts_delete operation.
 	//
-	// Delete a resource.
+	// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+	// its opt-outs survive. Requires the contacts:erase scope.
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
@@ -3513,7 +3514,8 @@ func (c *Client) sendContactsCreate(ctx context.Context, request *CreateContactI
 
 // ContactsDelete invokes Contacts_delete operation.
 //
-// Delete a resource.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Requires the contacts:erase scope.
 //
 // DELETE /contacts/{id}
 func (c *Client) ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error) {

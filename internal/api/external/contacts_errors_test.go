@@ -70,7 +70,7 @@ func TestExternalContactsAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	foreign := entityIDString(globexContact(t, env, "gil@globex.test"))
-	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write", "contacts:erase")
 
 	get, err := c.ContactsGet(ctx, externalapi.ContactsGetParams{ID: foreign})
 	require.NoError(t, err)

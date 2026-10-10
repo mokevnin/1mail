@@ -865,7 +865,7 @@ export const siteTagsRemoveMutation = (options?: Partial<Options<SiteTagsRemoveD
 };
 
 /**
- * Delete a resource from the site UI
+ * Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Owner or admin only.
  */
 export const siteContactsDeleteMutation = (options?: Partial<Options<SiteContactsDeleteData>>): UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> => {
   const mutationOptions: UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> = {

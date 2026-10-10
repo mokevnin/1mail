@@ -2256,7 +2256,7 @@
       },
       "delete": {
         "operationId": "SiteContacts_delete",
-        "description": "Delete a resource from the site UI",
+        "description": "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Owner or admin only.",
         "parameters": [
           {
             "$ref": "#/components/parameters/SiteContactResourceKey.slug"
@@ -2271,6 +2271,16 @@
           },
           "400": {
             "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
             "content": {
               "application/problem+json": {
                 "schema": {

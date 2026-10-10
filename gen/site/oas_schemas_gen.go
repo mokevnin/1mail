@@ -2929,6 +2929,10 @@ type SiteContactsDeleteBadRequest ProblemDetails
 
 func (*SiteContactsDeleteBadRequest) siteContactsDeleteRes() {}
 
+type SiteContactsDeleteForbidden ProblemDetails
+
+func (*SiteContactsDeleteForbidden) siteContactsDeleteRes() {}
+
 // SiteContactsDeleteNoContent is response for SiteContactsDelete operation.
 type SiteContactsDeleteNoContent struct{}
 

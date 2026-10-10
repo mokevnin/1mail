@@ -93,5 +93,11 @@ interface SiteContacts
   extends WorkspaceCrudUnique<
       SiteContactResource,
       SiteCreateContactInput,
-      SiteUpdateContactInput
+      SiteUpdateContactInput,
+      ForbiddenProblem
     > {}
+
+@@doc(
+  SiteContacts.delete,
+  "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Owner or admin only."
+);

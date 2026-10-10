@@ -176,7 +176,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 
 func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write", "contacts:erase"))
 
 	res := call(t, s, "contacts_get", map[string]any{"id": strconv.Itoa(fixtures.ContactAliceID)})
 	require.False(t, res.IsError, text(t, res))

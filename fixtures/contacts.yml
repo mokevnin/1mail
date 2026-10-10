@@ -281,3 +281,23 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+
+# Initech (workspace 3). ContactErasable carries a row in every table that can depend
+# on a Contact (the Erasure matrix); ContactBystander shares a Tag and a Sending domain
+# with it and must be untouched by its Erasure.
+- id: 300 # fixture: ContactErasable
+  subject_id: user-erin-300
+  email: erin@initech.test
+  phone: '+15550100300'
+  first_name: Erin
+  last_name: Ersatz
+  custom_fields: '{"plan":"gold","country":"DE"}'
+  workspace_id: 3
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 301 # fixture: ContactBystander
+  email: ben@initech.test
+  first_name: Ben
+  workspace_id: 3
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

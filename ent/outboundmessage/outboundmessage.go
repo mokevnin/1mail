@@ -115,8 +115,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
 	IdempotencyKeyValidator func(string) error
-	// DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	DestinationValidator func(string) error
 	// DefaultClaimedAt holds the default value on creation for the "claimed_at" field.
 	DefaultClaimedAt func() time.Time
 )

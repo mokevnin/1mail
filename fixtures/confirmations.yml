@@ -17,3 +17,12 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Initech (workspace 3): ContactErasable's confirmation.
+- id: 300 # fixture: ConfirmationErasable
+  channel: email
+  destination: erin@initech.test
+  provenance: double_opt_in
+  contact_id: 300
+  workspace_id: 3
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

@@ -1999,7 +1999,7 @@
       },
       "delete": {
         "operationId": "Contacts_delete",
-        "description": "Delete a resource",
+        "description": "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Requires the contacts:erase scope.",
         "parameters": [
           {
             "$ref": "#/components/parameters/ContactResourceKey"
@@ -3913,6 +3913,7 @@
         "enum": [
           "contacts:read",
           "contacts:write",
+          "contacts:erase",
           "segments:read",
           "segments:write",
           "events:read",

@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
@@ -182,13 +183,14 @@ func Setup(t *testing.T) *TestEnv {
 	eventLog := eventlog.New(bus)
 	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
+	erasureModule := erasure.New(bus)
 	tagsModule := tags.New()
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
 		BootstrapToken: baseCfg.BootstrapToken,
 	})
@@ -197,7 +199,7 @@ func Setup(t *testing.T) *TestEnv {
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(baseCfg, txDB, client, apisite.Deps{
 		Accounts: acc, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
-		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
 		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL,

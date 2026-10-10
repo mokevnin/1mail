@@ -169,3 +169,8 @@ namespace ContactsBatch {
     | UnauthorizedProblem
     | UnprocessableEntityProblem;
 }
+
+@@doc(
+  Contacts.delete,
+  "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Requires the contacts:erase scope."
+);

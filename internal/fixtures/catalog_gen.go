@@ -31,6 +31,12 @@ const (
 	AutomationGlobexID = 900
 	// AutomationGlobexName is from fixtures/automations.
 	AutomationGlobexName = "Globex automation"
+	// AutomationInitechID is from fixtures/automations.
+	AutomationInitechID = 300
+	// AutomationInitechName is from fixtures/automations.
+	AutomationInitechName = "Initech onboarding"
+	// AutomationRunErasableID is from fixtures/automation_runs.
+	AutomationRunErasableID = 3000
 	// AutomationRunWelcomeCompletedID is from fixtures/automation_runs.
 	AutomationRunWelcomeCompletedID = 1000
 	// AutomationTagOnEngagementID is from fixtures/automations.
@@ -61,10 +67,18 @@ const (
 	BroadcastGlobexID = 900
 	// BroadcastGlobexName is from fixtures/broadcasts.
 	BroadcastGlobexName = "Globex only"
+	// BroadcastInitechID is from fixtures/broadcasts.
+	BroadcastInitechID = 300
+	// BroadcastInitechName is from fixtures/broadcasts.
+	BroadcastInitechName = "Initech newsletter"
 	// BroadcastProSegmentID is from fixtures/broadcasts.
 	BroadcastProSegmentID = 105
 	// BroadcastProSegmentName is from fixtures/broadcasts.
 	BroadcastProSegmentName = "Pro plan perks"
+	// BroadcastRecipientBystanderID is from fixtures/broadcast_recipients.
+	BroadcastRecipientBystanderID = 3001
+	// BroadcastRecipientErasableID is from fixtures/broadcast_recipients.
+	BroadcastRecipientErasableID = 3000
 	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
 	BroadcastRecipientSentID = 1000
 	// BroadcastScheduledID is from fixtures/broadcasts.
@@ -79,6 +93,10 @@ const (
 	BroadcastSentID = 200
 	// BroadcastSentName is from fixtures/broadcasts.
 	BroadcastSentName = "Python crash course is here"
+	// ConfirmationErasableDestination is from fixtures/confirmations.
+	ConfirmationErasableDestination = "erin@initech.test"
+	// ConfirmationErasableID is from fixtures/confirmations.
+	ConfirmationErasableID = 300
 	// ConfirmationGlobexDestination is from fixtures/confirmations.
 	ConfirmationGlobexDestination = "pat@globex.test"
 	// ConfirmationGlobexID is from fixtures/confirmations.
@@ -95,10 +113,18 @@ const (
 	ContactBobEmail = "bob@example.com"
 	// ContactBobID is from fixtures/contacts.
 	ContactBobID = 2
+	// ContactBystanderEmail is from fixtures/contacts.
+	ContactBystanderEmail = "ben@initech.test"
+	// ContactBystanderID is from fixtures/contacts.
+	ContactBystanderID = 301
 	// ContactCarolEmail is from fixtures/contacts.
 	ContactCarolEmail = "carol@example.com"
 	// ContactCarolID is from fixtures/contacts.
 	ContactCarolID = 3
+	// ContactErasableEmail is from fixtures/contacts.
+	ContactErasableEmail = "erin@initech.test"
+	// ContactErasableID is from fixtures/contacts.
+	ContactErasableID = 300
 	// ContactGlobexEmail is from fixtures/contacts.
 	ContactGlobexEmail = "pat@globex.test"
 	// ContactGlobexID is from fixtures/contacts.
@@ -121,6 +147,76 @@ const (
 	CustomFieldGlobexKey = "globex_only"
 	// CustomFieldGlobexName is from fixtures/custom_fields.
 	CustomFieldGlobexName = "Globex only"
+	// EventBystanderCustomAction is from fixtures/events.
+	EventBystanderCustomAction = "plan_upgraded"
+	// EventBystanderCustomEmail is from fixtures/events.
+	EventBystanderCustomEmail = "ben@initech.test"
+	// EventBystanderCustomID is from fixtures/events.
+	EventBystanderCustomID = 320
+	// EventBystanderSentAction is from fixtures/events.
+	EventBystanderSentAction = "email.sent"
+	// EventBystanderSentEmail is from fixtures/events.
+	EventBystanderSentEmail = "ben@initech.test"
+	// EventBystanderSentID is from fixtures/events.
+	EventBystanderSentID = 321
+	// EventErasableAnonymousAction is from fixtures/events.
+	EventErasableAnonymousAction = "pricing_viewed"
+	// EventErasableAnonymousID is from fixtures/events.
+	EventErasableAnonymousID = 301
+	// EventErasableBouncedAction is from fixtures/events.
+	EventErasableBouncedAction = "email.bounced"
+	// EventErasableBouncedEmail is from fixtures/events.
+	EventErasableBouncedEmail = "erin@initech.test"
+	// EventErasableBouncedID is from fixtures/events.
+	EventErasableBouncedID = 305
+	// EventErasableClickedAction is from fixtures/events.
+	EventErasableClickedAction = "email.clicked"
+	// EventErasableClickedEmail is from fixtures/events.
+	EventErasableClickedEmail = "erin@initech.test"
+	// EventErasableClickedID is from fixtures/events.
+	EventErasableClickedID = 304
+	// EventErasableComplainedAction is from fixtures/events.
+	EventErasableComplainedAction = "email.complained"
+	// EventErasableComplainedEmail is from fixtures/events.
+	EventErasableComplainedEmail = "erin@initech.test"
+	// EventErasableComplainedID is from fixtures/events.
+	EventErasableComplainedID = 306
+	// EventErasableConfirmedAction is from fixtures/events.
+	EventErasableConfirmedAction = "marketing.confirmed"
+	// EventErasableConfirmedEmail is from fixtures/events.
+	EventErasableConfirmedEmail = "erin@initech.test"
+	// EventErasableConfirmedID is from fixtures/events.
+	EventErasableConfirmedID = 309
+	// EventErasableCreatedAction is from fixtures/events.
+	EventErasableCreatedAction = "contact.created"
+	// EventErasableCreatedEmail is from fixtures/events.
+	EventErasableCreatedEmail = "erin@initech.test"
+	// EventErasableCreatedID is from fixtures/events.
+	EventErasableCreatedID = 308
+	// EventErasableCustomAction is from fixtures/events.
+	EventErasableCustomAction = "plan_upgraded"
+	// EventErasableCustomEmail is from fixtures/events.
+	EventErasableCustomEmail = "erin@initech.test"
+	// EventErasableCustomID is from fixtures/events.
+	EventErasableCustomID = 300
+	// EventErasableOpenedAction is from fixtures/events.
+	EventErasableOpenedAction = "email.opened"
+	// EventErasableOpenedEmail is from fixtures/events.
+	EventErasableOpenedEmail = "erin@initech.test"
+	// EventErasableOpenedID is from fixtures/events.
+	EventErasableOpenedID = 303
+	// EventErasableSentAction is from fixtures/events.
+	EventErasableSentAction = "email.sent"
+	// EventErasableSentEmail is from fixtures/events.
+	EventErasableSentEmail = "erin@initech.test"
+	// EventErasableSentID is from fixtures/events.
+	EventErasableSentID = 302
+	// EventErasableUnsubscribedAction is from fixtures/events.
+	EventErasableUnsubscribedAction = "email.unsubscribed"
+	// EventErasableUnsubscribedEmail is from fixtures/events.
+	EventErasableUnsubscribedEmail = "erin@initech.test"
+	// EventErasableUnsubscribedID is from fixtures/events.
+	EventErasableUnsubscribedID = 307
 	// EventGlobexAction is from fixtures/events.
 	EventGlobexAction = "globex_only"
 	// EventGlobexID is from fixtures/events.
@@ -137,6 +233,16 @@ const (
 	GlobexOwnerMembershipID = 2
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// InitechCollectKey is from fixtures/workspaces.
+	InitechCollectKey = "omck_test_initech_collect_key"
+	// InitechID is from fixtures/workspaces.
+	InitechID = 3
+	// InitechIngestKey is from fixtures/workspaces.
+	InitechIngestKey = "omik_test_initech_ingest_key"
+	// InitechName is from fixtures/workspaces.
+	InitechName = "Initech"
+	// InitechSlug is from fixtures/workspaces.
+	InitechSlug = "initech"
 	// IntegrationGlobexID is from fixtures/integrations.
 	IntegrationGlobexID = 900
 	// IntegrationGlobexName is from fixtures/integrations.
@@ -153,6 +259,18 @@ const (
 	MemberMaryName = "Mary"
 	// MemberMaryPassword is from fixtures/users.
 	MemberMaryPassword = "mary-test-password"
+	// OutboundMessageBystanderDestination is from fixtures/outbound_messages.
+	OutboundMessageBystanderDestination = "ben@initech.test"
+	// OutboundMessageBystanderID is from fixtures/outbound_messages.
+	OutboundMessageBystanderID = 302
+	// OutboundMessageErasableBroadcastDestination is from fixtures/outbound_messages.
+	OutboundMessageErasableBroadcastDestination = "erin@initech.test"
+	// OutboundMessageErasableBroadcastID is from fixtures/outbound_messages.
+	OutboundMessageErasableBroadcastID = 300
+	// OutboundMessageErasableTransactionalDestination is from fixtures/outbound_messages.
+	OutboundMessageErasableTransactionalDestination = "erin@initech.test"
+	// OutboundMessageErasableTransactionalID is from fixtures/outbound_messages.
+	OutboundMessageErasableTransactionalID = 301
 	// OutboundMessageGlobexDestination is from fixtures/outbound_messages.
 	OutboundMessageGlobexDestination = "pat@globex.test"
 	// OutboundMessageGlobexID is from fixtures/outbound_messages.
@@ -201,6 +319,10 @@ const (
 	SendingDomainGlobexDomain = "mail.globex.test"
 	// SendingDomainGlobexID is from fixtures/sending_domains.
 	SendingDomainGlobexID = 900
+	// SendingDomainInitechDomain is from fixtures/sending_domains.
+	SendingDomainInitechDomain = "mail.initech.test"
+	// SendingDomainInitechID is from fixtures/sending_domains.
+	SendingDomainInitechID = 300
 	// SendingDomainUnverifiedDomain is from fixtures/sending_domains.
 	SendingDomainUnverifiedDomain = "news.acme.com"
 	// SendingDomainUnverifiedID is from fixtures/sending_domains.
@@ -209,6 +331,10 @@ const (
 	SendingDomainVerifiedDomain = "mail.acme.com"
 	// SendingDomainVerifiedID is from fixtures/sending_domains.
 	SendingDomainVerifiedID = 1
+	// SuppressionErasableDestination is from fixtures/suppressions.
+	SuppressionErasableDestination = "erin@initech.test"
+	// SuppressionErasableID is from fixtures/suppressions.
+	SuppressionErasableID = 300
 	// SuppressionGhostBounceDestination is from fixtures/suppressions.
 	SuppressionGhostBounceDestination = "ghost@codebasics.dev"
 	// SuppressionGhostBounceID is from fixtures/suppressions.
@@ -221,6 +347,10 @@ const (
 	TagGlobexID = 900
 	// TagGlobexName is from fixtures/tags.
 	TagGlobexName = "globex-only"
+	// TagInitechID is from fixtures/tags.
+	TagInitechID = 300
+	// TagInitechName is from fixtures/tags.
+	TagInitechName = "initech-shared"
 	// TagVipID is from fixtures/tags.
 	TagVipID = 1
 	// TagVipName is from fixtures/tags.
@@ -239,10 +369,16 @@ const (
 	TokenGlobexName = "Globex token"
 	// TokenGlobexPrefix is from fixtures/api_tokens.
 	TokenGlobexPrefix = "globextok001"
+	// UnsubscribeErasableDestination is from fixtures/unsubscribes.
+	UnsubscribeErasableDestination = "erin@initech.test"
+	// UnsubscribeErasableID is from fixtures/unsubscribes.
+	UnsubscribeErasableID = 300
 	// UnsubscribeGlobexDestination is from fixtures/unsubscribes.
 	UnsubscribeGlobexDestination = "pat@globex.test"
 	// UnsubscribeGlobexID is from fixtures/unsubscribes.
 	UnsubscribeGlobexID = 900
+	// VisitorErasableID is from fixtures/visitors.
+	VisitorErasableID = 300
 	// VisitorGlobexID is from fixtures/visitors.
 	VisitorGlobexID = 900
 	// WebhookCodebasicsID is from fixtures/webhook_endpoints.

@@ -1011,6 +1011,18 @@ func encodeSiteContactsDeleteResponse(response SiteContactsDeleteRes, w http.Res
 
 		return nil
 
+	case *SiteContactsDeleteForbidden:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(403)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
 	case *SiteContactsDeleteNotFound:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(404)

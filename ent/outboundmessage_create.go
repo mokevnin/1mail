@@ -89,6 +89,14 @@ func (_c *OutboundMessageCreate) SetDestination(v string) *OutboundMessageCreate
 	return _c
 }
 
+// SetNillableDestination sets the "destination" field if the given value is not nil.
+func (_c *OutboundMessageCreate) SetNillableDestination(v *string) *OutboundMessageCreate {
+	if v != nil {
+		_c.SetDestination(*v)
+	}
+	return _c
+}
+
 // SetContactID sets the "contact_id" field.
 func (_c *OutboundMessageCreate) SetContactID(v int64) *OutboundMessageCreate {
 	_c.mutation.SetContactID(v)
@@ -388,14 +396,6 @@ func (_c *OutboundMessageCreate) check() error {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.channel": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.Destination(); !ok {
-		return &ValidationError{Name: "destination", err: errors.New(`ent: missing required field "OutboundMessage.destination"`)}
-	}
-	if v, ok := _c.mutation.Destination(); ok {
-		if err := outboundmessage.DestinationValidator(v); err != nil {
-			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.destination": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "OutboundMessage.status"`)}
 	}
@@ -637,6 +637,12 @@ func (u *OutboundMessageUpsert) SetDestination(v string) *OutboundMessageUpsert 
 // UpdateDestination sets the "destination" field to the value that was provided on create.
 func (u *OutboundMessageUpsert) UpdateDestination() *OutboundMessageUpsert {
 	u.SetExcluded(outboundmessage.FieldDestination)
+	return u
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (u *OutboundMessageUpsert) ClearDestination() *OutboundMessageUpsert {
+	u.SetNull(outboundmessage.FieldDestination)
 	return u
 }
 
@@ -1032,6 +1038,13 @@ func (u *OutboundMessageUpsertOne) SetDestination(v string) *OutboundMessageUpse
 func (u *OutboundMessageUpsertOne) UpdateDestination() *OutboundMessageUpsertOne {
 	return u.Update(func(s *OutboundMessageUpsert) {
 		s.UpdateDestination()
+	})
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (u *OutboundMessageUpsertOne) ClearDestination() *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.ClearDestination()
 	})
 }
 
@@ -1640,6 +1653,13 @@ func (u *OutboundMessageUpsertBulk) SetDestination(v string) *OutboundMessageUps
 func (u *OutboundMessageUpsertBulk) UpdateDestination() *OutboundMessageUpsertBulk {
 	return u.Update(func(s *OutboundMessageUpsert) {
 		s.UpdateDestination()
+	})
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (u *OutboundMessageUpsertBulk) ClearDestination() *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.ClearDestination()
 	})
 }
 

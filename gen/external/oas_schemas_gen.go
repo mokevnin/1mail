@@ -126,6 +126,7 @@ type ApiTokenScope string
 const (
 	ApiTokenScopeContactsRead        ApiTokenScope = "contacts:read"
 	ApiTokenScopeContactsWrite       ApiTokenScope = "contacts:write"
+	ApiTokenScopeContactsErase       ApiTokenScope = "contacts:erase"
 	ApiTokenScopeSegmentsRead        ApiTokenScope = "segments:read"
 	ApiTokenScopeSegmentsWrite       ApiTokenScope = "segments:write"
 	ApiTokenScopeEventsRead          ApiTokenScope = "events:read"
@@ -153,6 +154,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 	return []ApiTokenScope{
 		ApiTokenScopeContactsRead,
 		ApiTokenScopeContactsWrite,
+		ApiTokenScopeContactsErase,
 		ApiTokenScopeSegmentsRead,
 		ApiTokenScopeSegmentsWrite,
 		ApiTokenScopeEventsRead,
@@ -182,6 +184,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeContactsRead:
 		return []byte(s), nil
 	case ApiTokenScopeContactsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeContactsErase:
 		return []byte(s), nil
 	case ApiTokenScopeSegmentsRead:
 		return []byte(s), nil
@@ -236,6 +240,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeContactsWrite:
 		*s = ApiTokenScopeContactsWrite
+		return nil
+	case ApiTokenScopeContactsErase:
+		*s = ApiTokenScopeContactsErase
 		return nil
 	case ApiTokenScopeSegmentsRead:
 		*s = ApiTokenScopeSegmentsRead

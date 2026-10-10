@@ -4239,7 +4239,8 @@ func (s *Server) handleSiteContactsCreateRequest(args [1]string, argsEscaped boo
 
 // handleSiteContactsDeleteRequest handles SiteContacts_delete operation.
 //
-// Delete a resource from the site UI.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Owner or admin only.
 //
 // DELETE /workspaces/{slug}/contacts/{id}
 func (s *Server) handleSiteContactsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

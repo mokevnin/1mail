@@ -54,3 +54,13 @@
   workspace_id: 2
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+
+# Initech (workspace 3).
+- id: 300 # fixture: AutomationInitech
+  name: Initech onboarding
+  status: active
+  trigger_event: initech_signup
+  definition: '[{"type":"wait","seconds":86400}]'
+  workspace_id: 3
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

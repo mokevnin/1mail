@@ -752,7 +752,7 @@ export const siteTagsRemove = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
- * Delete a resource from the site UI
+ * Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Owner or admin only.
  */
 export const siteContactsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteContactsDeleteData, ThrowOnError>): RequestResult<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({

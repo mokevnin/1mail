@@ -1,0 +1,145 @@
+package erasure
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/samber/lo"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/automationrun"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
+	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/ent/visitor"
+	"github.com/mokevnin/1mail/internal/events"
+)
+
+// idChunk bounds how many ids go into one IN (...) list, well below the driver's
+// bind-parameter limit.
+const idChunk = 10_000
+
+// anonymousKeep lists the Event properties an anonymized system Event keeps: the
+// non-personal delivery facts the complaint and bounce rates are computed from
+// (ADR 0011). Everything else a system Event carries (urls, provider and message ids,
+// provenance) is dropped.
+var anonymousKeep = []string{"sendingDomain", "bounceKind"}
+
+// anonymized reports whether an Event action is a reserved system action that
+// Erasure keeps as an anonymous row. Every other action is customer-tracked and is
+// deleted; marketing.confirmed is deleted too, as consent proof for a person who is
+// gone (ADR 0021).
+func anonymized(action string) bool {
+	switch action {
+	case events.NameEmailSent, events.NameEmailOpened, events.NameEmailClicked,
+		events.NameEmailBounced, events.NameEmailComplained, events.NameEmailUnsubscribed,
+		events.NameContactCreated:
+		return true
+	}
+	return false
+}
+
+func visitorOf(contactID int64) predicate.Visitor { return visitor.ContactID(contactID) }
+
+// eraseEvents deletes the subject's customer-tracked Events and anonymizes its
+// system Events in place. Events are found by contact_id (Identify stitched earlier
+// anonymous Events onto it) and by the subject's visitor ids (Events not yet stitched).
+func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	match := event.ContactID(t.ContactID)
+	if len(t.VisitorIDs) > 0 {
+		match = event.Or(match, event.VisitorIDIn(t.VisitorIDs...))
+	}
+	rows, err := s.Event().Query().Where(match).Select(event.FieldID, event.FieldAction, event.FieldProperties).All(ctx)
+	if err != nil {
+		return err
+	}
+
+	var doomed []int64
+	// Anonymized Events grouped by the properties they keep, so each distinct property
+	// set is one bulk update.
+	keptBy := map[string][]int64{}
+	kept := map[string]map[string]any{}
+	for _, e := range rows {
+		if !anonymized(e.Action) {
+			doomed = append(doomed, e.ID)
+			continue
+		}
+		props := map[string]any{}
+		for _, k := range anonymousKeep {
+			if v, ok := e.Properties[k]; ok {
+				props[k] = v
+			}
+		}
+		key, err := json.Marshal(props) // map keys marshal sorted: a stable group key
+		if err != nil {
+			return err
+		}
+		keptBy[string(key)] = append(keptBy[string(key)], e.ID)
+		kept[string(key)] = props
+	}
+
+	for _, ids := range lo.Chunk(doomed, idChunk) {
+		if _, err := s.Event().Delete().Where(event.IDIn(ids...)).Exec(ctx); err != nil {
+			return err
+		}
+	}
+	for key, ids := range keptBy {
+		for _, chunk := range lo.Chunk(ids, idChunk) {
+			if _, err := s.Event().Update().Where(event.IDIn(chunk...)).
+				ClearContactID().ClearVisitorID().ClearEmail().ClearPhone().ClearSubjectID().
+				SetProperties(kept[key]).
+				Save(ctx); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func eraseVisitors(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	_, err := s.Visitor().Delete().Where(visitorOf(t.ContactID)).Exec(ctx)
+	return err
+}
+
+// eraseConfirmations deletes the Confirmation; losing it fails safe (re-confirmation).
+func eraseConfirmations(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	_, err := s.Confirmation().Delete().Where(confirmation.ContactID(t.ContactID)).Exec(ctx)
+	return err
+}
+
+func eraseRuns(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	_, err := s.AutomationRun().Delete().Where(automationrun.ContactID(t.ContactID)).Exec(ctx)
+	return err
+}
+
+// detachOptOuts keeps the Unsubscribe and Suppression rows, which are keyed by
+// Destination and keep honoring the refusal, and only clears their Contact reference.
+func detachOptOuts(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	if _, err := s.Unsubscribe().Update().Where(unsubscribe.ContactID(t.ContactID)).ClearContactID().Save(ctx); err != nil {
+		return err
+	}
+	_, err := s.Suppression().Update().Where(suppression.ContactID(t.ContactID)).ClearContactID().Save(ctx)
+	return err
+}
+
+// anonymizeDelivery turns the subject's delivery records into anonymous rows: they keep
+// their status and timing, so reports keep their totals, but no longer name anyone.
+func anonymizeDelivery(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	if _, err := s.OutboundMessage().Update().Where(outboundmessage.ContactID(t.ContactID)).
+		ClearContactID().ClearDestination().Save(ctx); err != nil {
+		return err
+	}
+	_, err := s.BroadcastRecipient().Update().Where(broadcastrecipient.ContactID(t.ContactID)).
+		ClearContactID().Save(ctx)
+	return err
+}
+
+// eraseContact removes the Contact itself; its Tag links and Custom field values go
+// with the row.
+func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+	return s.Contact().DeleteOneID(t.ContactID).Exec(ctx)
+}

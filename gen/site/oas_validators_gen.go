@@ -1021,6 +1021,14 @@ func (s *SiteContactsDeleteBadRequest) Validate() error {
 	return nil
 }
 
+func (s *SiteContactsDeleteForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SiteContactsDeleteNotFound) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {

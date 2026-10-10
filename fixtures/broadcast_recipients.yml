@@ -663,3 +663,27 @@
     created_at: '2026-01-01 00:00:00',
     updated_at: '2026-01-01 00:00:00',
   }
+
+# Initech (workspace 3): broadcast 300 reached ContactErasable and ContactBystander.
+- {
+    id: 3000, # fixture: BroadcastRecipientErasable
+    broadcast_id: 300,
+    contact_id: 300,
+    outbound_message_id: 300,
+    workspace_id: 3,
+    status: sent,
+    sent_at: '2026-01-02 00:00:00',
+    created_at: '2026-01-02 00:00:00',
+    updated_at: '2026-01-02 00:00:00',
+  }
+- {
+    id: 3001, # fixture: BroadcastRecipientBystander
+    broadcast_id: 300,
+    contact_id: 301,
+    outbound_message_id: 302,
+    workspace_id: 3,
+    status: sent,
+    sent_at: '2026-01-02 00:00:00',
+    created_at: '2026-01-02 00:00:00',
+    updated_at: '2026-01-02 00:00:00',
+  }

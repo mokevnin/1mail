@@ -106,6 +106,8 @@ func (s ApiTokenScope) Validate() error {
 		return nil
 	case "contacts:write":
 		return nil
+	case "contacts:erase":
+		return nil
 	case "segments:read":
 		return nil
 	case "segments:write":

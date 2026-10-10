@@ -41,7 +41,7 @@ func outboxCollected(t *testing.T, env *testhelper.TestEnv) []collectedRow {
 
 func TestExternalContactsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write", "contacts:erase")
 	ctx := context.Background()
 
 	list, err := c.ContactsList(ctx, externalapi.ContactsListParams{})

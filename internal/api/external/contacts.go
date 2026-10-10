@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -128,8 +129,10 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	return &resource, nil
 }
 
+// ContactsDelete is Erasure (ADR 0021): deleting a Contact removes its personal data.
+// It has its own scope, separate from contacts:write, because it is irreversible.
 func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.ContactsDeleteParams) (externalapi.ContactsDeleteRes, error) {
-	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:write") {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:erase") {
 		res := externalapi.ContactsDeleteUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
@@ -140,8 +143,8 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	err = auth.TokenScoped(ctx).Contact().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id))
+	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
 	}

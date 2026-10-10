@@ -4540,7 +4540,8 @@ func (s *Server) handleContactsCreateRequest(args [0]string, argsEscaped bool, w
 
 // handleContactsDeleteRequest handles Contacts_delete operation.
 //
-// Delete a resource.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Requires the contacts:erase scope.
 //
 // DELETE /contacts/{id}
 func (s *Server) handleContactsDeleteRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

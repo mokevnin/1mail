@@ -40,11 +40,20 @@ type Publisher interface {
 type Bus struct {
 	db     *sql.DB
 	logger watermill.LoggerAdapter
+	hooks  []ent.Hook
 }
 
 // New builds a Bus over the application's database pool.
 func New(db *sql.DB) *Bus {
 	return &Bus{db: db, logger: watermill.NewSlogLogger(slog.Default())}
+}
+
+// Use registers ent hooks on the transaction client of every later WithinTx, the way
+// Client.Use does for a long-lived client. Register at composition time, before the
+// bus is shared with concurrent callers; tests use it to inject faults into a
+// transaction the bus opens itself.
+func (b *Bus) Use(hooks ...ent.Hook) {
+	b.hooks = append(b.hooks, hooks...)
 }
 
 // WithinTx runs fn inside a single SQL transaction. The *ent.Client handed to fn
@@ -68,6 +77,7 @@ func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publishe
 
 	// ent client bound to the same *sql.Tx the outbox publisher uses.
 	txClient := ent.NewClient(ent.Driver(newTxDriver(sqlTx)))
+	txClient.Use(b.hooks...)
 
 	// watermill-sql forbids AutoInitializeSchema on a tx handle (a CREATE TABLE
 	// would implicitly commit). The outbox table is created up front by InitSchema.

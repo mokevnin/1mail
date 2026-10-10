@@ -18,7 +18,7 @@ collect APIs.
 Create an API token under **Settings → API keys**. Each token carries scopes, so you can hand an
 integration only what it needs, for example:
 
-- `contacts:read`, `contacts:write`
+- `contacts:read`, `contacts:write`, and the separate `contacts:erase` to delete (erase) a contact
 - `events:write`
 - `segments:read`, `segments:write`
 - `broadcasts:write`, and the separate `broadcasts:send` to actually send
@@ -26,7 +26,7 @@ integration only what it needs, for example:
 - `emails:send` for transactional mail
 - `webhooks:read`, `webhooks:write`
 
-Sending and activating have their own scopes, so a token that can edit drafts cannot send mail.
+Sending, activating and erasing have their own scopes, so a token that can edit drafts cannot send mail and a token that can write contacts cannot erase them.
 
 ## What the external API covers
 
