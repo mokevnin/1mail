@@ -24,7 +24,9 @@ const unknownAddress = "nobody@attempts.test" // no account has it
 // clock is the injected `now` of the attempts module.
 type clock struct{ t time.Time }
 
-func (c *clock) now() time.Time          { return c.t }
+// now truncates to microseconds: Postgres stores no finer, so a nanosecond
+// clock makes a stored blocked_until read a few hundred nanoseconds short.
+func (c *clock) now() time.Time          { return c.t.Truncate(time.Microsecond) }
 func (c *clock) advance(d time.Duration) { c.t = c.t.Add(d) }
 
 func newAttempts(t *testing.T) (*accounts.Attempts, *clock, *testhelper.TestEnv) {
