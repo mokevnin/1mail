@@ -47,7 +47,10 @@ State lives in a private DigitalOcean Spaces bucket, which Terraform cannot crea
    doctl spaces keys delete sphericon-bootstrap
    ```
 
-   Export the new key as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
+   Keep this Spaces key apart from the AWS credentials of the SES provider: the `aws` provider
+   reads `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, so the state backend gets the Spaces key
+   through `-backend-config` (see "Working with the module"). Export it as `SPACES_ACCESS_KEY_ID` /
+   `SPACES_SECRET_ACCESS_KEY`.
 
 ## Working with the module
 
@@ -55,10 +58,17 @@ The provider token comes from the environment, never from a file:
 
 ```sh
 export DIGITALOCEAN_TOKEN=<API token>
+export AWS_ACCESS_KEY_ID=<AWS key with SES and identity permissions>   # the aws provider (SES)
+export AWS_SECRET_ACCESS_KEY=<its secret>
 terraform -chdir=infra init \
   -backend-config="bucket=sphericon-tfstate" \
-  -backend-config="key=production/terraform.tfstate"
+  -backend-config="key=production/terraform.tfstate" \
+  -backend-config="access_key=$SPACES_ACCESS_KEY_ID" \
+  -backend-config="secret_key=$SPACES_SECRET_ACCESS_KEY"
 ```
+
+`SPACES_*` hold the state-bucket key from the bootstrap; `AWS_*` are the AWS credentials for SES
+only. Both stay in the environment.
 
 Or copy `backend.hcl.example` to `backend.hcl` (gitignored) and pass `-backend-config=backend.hcl`.
 State holds sensitive variables, so the bucket stays private; `*.tfstate*`, `*.tfvars` and
@@ -78,7 +88,9 @@ is attached through the app spec, so `DATABASE_URL` is injected as `${db.DATABAS
 Plain values go in `production.tfvars` (copy `production.tfvars.example`; gitignored):
 `image_registry` (GHCR owner), `image_repository`, `image_tag`, and optionally `otel_service_name`,
 `domain` (defaults to `getsphericon.com`; `APP_URL` is `https://<domain>`), `api_host_label`
-(`api`), `tracker_host` (empty means `t.<domain>`), `region` and `name`.
+(`api`), `tracker_host` (empty means `t.<domain>`), `region` and `name`, and for email `ses_region` (default `eu-central-1`), `mail_from_label`
+(`mail`), `system_email_from` (default `noreply@getsphericon.com`, on the apex) and `dmarc_rua`
+(report mailbox, empty omits `rua`).
 
 Secrets are sensitive variables, passed through the environment so they never touch a file:
 
@@ -87,6 +99,8 @@ export TF_VAR_registry_credentials='<github user>:<token with read:packages>'
 export TF_VAR_jwt_secret="$(openssl rand -hex 32)"
 export TF_VAR_bootstrap_token="$(openssl rand -hex 32)"
 export TF_VAR_license_key='<license key, or empty for the open-source core>'
+export TF_VAR_ses_access_key_id='<access key of the SES send-only IAM user>'
+export TF_VAR_ses_secret_access_key='<its secret>'
 export TF_VAR_encryption_key='<see below>'
 ```
 
@@ -195,3 +209,44 @@ Run after the nameservers have propagated and the deployment is active. Replace 
 Not covered by `mise run check:infra` and needs the operator's account and registrar: apex over
 HTTPS, the api host rewrite verified live, the tracker host serving `/t.js` and accepting collect,
 platform-issued certificates, the platform-created records, and the Google records resolving.
+
+## System email (SES)
+
+DigitalOcean blocks outbound SMTP, so the app sends platform mail (password reset, invitations)
+through the SES HTTPS API: `SYSTEM_EMAIL_PROVIDER=ses`, `SYSTEM_EMAIL_FROM`, `SES_REGION` (plain)
+and `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` (sensitive variables, `SECRET` env values) in
+`app.tf`. All five are in the env table of `docs/self-hosting.md`.
+
+`ses.tf` creates the SES domain identity for the apex, Easy DKIM and the custom MAIL FROM domain
+`mail.<domain>` (AWS provider, credentials only from `AWS_*` in the environment), and in the
+DigitalOcean zone: the `_amazonses` verification TXT, the three DKIM CNAMEs, the MAIL FROM MX
+(`feedback-smtp.<ses_region>.amazonses.com`, priority 10), its SPF TXT (`include:amazonses.com`) and
+the `_dmarc` TXT (`p=none`: DMARC only reports until the setup is proven). The apex SPF stays the
+single Google Workspace record; SES SPF is on the MAIL FROM subdomain only. The DKIM records are
+three short CNAMEs, so the 255-character TXT string limit does not apply to them (it only matters
+for the Google DKIM TXT above).
+
+One-time operator steps (outside Terraform):
+
+1. Create an IAM user limited to SES sending (`ses:SendRawEmail`), make an access key, and pass it as
+   `TF_VAR_ses_access_key_id` / `TF_VAR_ses_secret_access_key`. Do not reuse Terraform's own key.
+2. SES starts in the sandbox: it delivers only to verified addresses and caps volume. Request
+   production access in the SES console (Account dashboard) for `ses_region` before sending to
+   real users.
+
+### Verify
+
+- [ ] SES console (region `ses_region`) shows the identity `getsphericon.com` as Verified, DKIM
+      Successful and MAIL FROM Success (needs the zone delegated; propagation can take hours).
+- [ ] `dig +short MX mail.getsphericon.com`, `dig +short TXT mail.getsphericon.com` and
+      `dig +short TXT _dmarc.getsphericon.com` return the records; the apex still has exactly one
+      SPF TXT.
+- [ ] A password reset in the deployed app arrives (in the sandbox, to a verified address) and its
+      original headers show `dkim=pass`, `spf=pass` and `dmarc=pass`.
+- [ ] The SES keys do not appear in plain text in `terraform plan` output.
+
+### Pending live verification (SES)
+
+Needs the operator's AWS and DigitalOcean accounts: SES reports the domain verified with DKIM
+passing, a deployed password-reset email arrives and passes DKIM and SPF, and the production-access
+request is granted. `mise run check:infra` only validates the configuration.

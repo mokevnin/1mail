@@ -19,6 +19,9 @@ locals {
     ENCRYPTION_KEY  = var.encryption_key
     LICENSE_KEY     = var.license_key
     BOOTSTRAP_TOKEN = var.bootstrap_token
+
+    SES_ACCESS_KEY_ID     = var.ses_access_key_id
+    SES_SECRET_ACCESS_KEY = var.ses_secret_access_key
   }
 
   plain_env = {
@@ -27,6 +30,10 @@ locals {
     OTEL_SERVICE_NAME = var.otel_service_name
     DB_MAX_OPEN_CONNS = tostring(var.db_max_open_conns)
     PGX_MAX_CONNS     = tostring(var.pgx_max_conns)
+
+    SYSTEM_EMAIL_PROVIDER = "ses"
+    SYSTEM_EMAIL_FROM     = var.system_email_from
+    SES_REGION            = var.ses_region
   }
 
   registry_credentials = var.registry_credentials != "" ? var.registry_credentials : null

@@ -105,3 +105,42 @@ variable "bootstrap_token" {
   type        = string
   sensitive   = true
 }
+
+# System email through SES (ADR 0028): DigitalOcean blocks outbound SMTP, so the app sends over
+# the SES HTTPS API.
+
+variable "ses_region" {
+  description = "AWS region of the SES identity and of the app's SES_REGION (e.g. eu-central-1). Terraform's own AWS credentials come from the AWS_* environment variables."
+  type        = string
+  default     = "eu-central-1"
+}
+
+variable "mail_from_label" {
+  description = "Label of the SES MAIL FROM subdomain: <label>.<domain>. SPF for SES lives here, never on the apex (the apex SPF belongs to Google Workspace)."
+  type        = string
+  default     = "mail"
+}
+
+variable "system_email_from" {
+  description = "SYSTEM_EMAIL_FROM: sender address of platform mail (password reset, invitations). Must be on the apex domain, which is the verified SES identity."
+  type        = string
+  default     = "noreply@getsphericon.com"
+}
+
+variable "dmarc_rua" {
+  description = "Mailbox that receives DMARC aggregate reports (rua). Empty omits the tag."
+  type        = string
+  default     = ""
+}
+
+variable "ses_access_key_id" {
+  description = "SES_ACCESS_KEY_ID: access key of an IAM user limited to SES sending. Not the key Terraform itself uses."
+  type        = string
+  sensitive   = true
+}
+
+variable "ses_secret_access_key" {
+  description = "SES_SECRET_ACCESS_KEY: secret of the IAM user above."
+  type        = string
+  sensitive   = true
+}
