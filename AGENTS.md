@@ -56,38 +56,57 @@ Every task runs natively with the toolchain pinned in `.mise.toml` / `mise.lock`
 Node track `latest`); CI installs the same toolchain with `jdx/mise-action` and runs the same
 tasks. There are no dev containers and no Makefile: tasks live in `mise/tasks.toml` (included
 from `.mise.toml`); `mise tasks` lists them. The dev stack (Postgres, Mailpit, backend, Vite,
-Caddy) is a set of **mise daemons** (`[daemons]` in `.mise.toml`, experimental), and tasks that
-need Postgres declare `daemons = ["db"]`, so they start it themselves.
+Caddy) is a set of **mise daemons** (`[daemons]` in `.mise.toml`, experimental). Tasks that need
+Postgres depend on `db:up` (below) instead of a `db` daemon of their own.
 
 ```sh
-mise run setup          # deps, start Postgres, create dev/test/atlas DBs, migrate, seed, worktrees:gc
-mise run dev            # mise daemons start caddy — full dev stack (https://1mail.localhost; a linked worktree has its own URL, see "Dev environment")
-mise run dev:down       # mise daemons stop
+mise run setup          # deps, db:up, migrate, seed, worktrees:gc
+mise run db:up          # ensure the one shared Postgres runs and this checkout's databases exist
+mise run dev            # db:up, then mise daemons start caddy — full dev stack (https://1mail.localhost; a linked worktree has its own URL, see "Dev environment")
+mise run dev:down       # stop this checkout's dev stack (never the shared Postgres)
 mise run test           # creates the test DB, then `go test -p 1 ./...`
 mise run check          # tsc + oxlint + oxfmt --check + knip + golangci-lint + govulncheck + gitleaks + jactionlint + zizmor
 mise run fix            # i18n extract + oxlint --fix + tsp format + oxfmt + go fmt
 mise run generate       # typespec -> openapi -> backend -> frontend -> i18n types -> format
 ```
 
-`DATABASE_URL` and `PG*` come from the `db` daemon: with `MISE_ENV=shared` (the developer
-setup, see "Dev environment") it is this checkout's own database on the one Postgres shared by
-every checkout, otherwise (CI, contributors) a per-checkout mise `postgres` preset daemon (auto
-port from 15432). Never set `DATABASE_URL` in `.env`: explicit values override the daemon's.
-`TEST_DB_URL`, `E2E_DB_URL` and `ATLAS_DEV_URL` derive from `PGHOST`/`PGPORT`/`PGUSER`/`PGDATABASE`
-(`<PGDATABASE>_test`, `_e2e`, `_atlas`; set them in the environment to use an external Postgres).
-Never hand-name a scratch database: `mise run worktrees:gc` drops every database on the shared
-server that no live worktree's four names cover. Several tasks in one command need `:::` between
+**One Postgres for every checkout.** The `db` daemon (mise `postgres` preset, fixed port 15432)
+is declared in `.mise.toml` but only ever runs in the **primary checkout** (the first
+`git worktree list` entry: a stable project root that `mise daemons prune` never sees as
+deleted); `mise run db:up` starts it from any checkout and nothing else starts a `db` daemon.
+A postmaster per worktree takes one of macOS's 32 SysV shared-memory segments
+(`kern.sysv.shmmni`), so ~30 worktrees exhaust them and Postgres fails with `shmget ... No space
+left on device`. `db:up` is idempotent: a server already answering at `PGHOST:PGPORT` is a no-op
+(so two checkouts calling it at once are safe: at most one start, the other waits for the port),
+otherwise it runs `mise -C <primary> daemons start db`, then creates this checkout's databases
+if missing under an advisory lock. Every task that needs Postgres (`test`, `test:e2e`, `db:*`)
+depends on `db:up`, and so does `dev`; `dev:down` leaves the server running
+(`mise -C <primary> daemons stop db` stops it for everyone). The primary checkout must be on a
+commit that has this setup.
+
+`PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` and `DATABASE_URL` are set in `[env]`, so they are
+identical in every checkout without a daemon (a `db` daemon exports its own offset port and
+database for a linked worktree, which `[env]` overrides). The database is `1mail_<dir>`: the
+checkout's directory name lowercased to `[a-z0-9_]`, cut to 31 characters plus a hash of the path
+when it exceeds 40, so with the `_test`, `_e2e` and `_atlas` twins (`TEST_DB_URL`, `E2E_DB_URL`,
+`ATLAS_DEV_URL`; `DB_NAMES` lists all four) every name stays under Postgres's 63-byte identifier
+limit and nothing is truncated or collides. Never set `DATABASE_URL` in `.env`: explicit values
+override it. `ONEMAIL_PG_HOST` / `ONEMAIL_PG_PORT` point every checkout at another server (an
+external Postgres): one that answers is used as is and never started. CI runs the same path: its
+single checkout is its own primary.
+
+Never hand-name a scratch database. `mise run worktrees:gc` (also run by `setup` and
+`worktrees:prune`; `--apply` to act, a dry run otherwise) drops the shared server's databases that
+no live worktree's `DB_NAMES` covers and runs `mise daemons prune --yes` for dead state; it
+refuses to drop anything when it cannot enumerate or read a live worktree, including one on a
+commit from before `DB_NAMES` (merge main into it), and never touches the primary's daemon.
+`mise run worktrees:prune -- --apply` first removes the worktrees whose branch is already in
+`origin/main`. A worktree from before this setup still runs its own `db` daemon: it retires with
+its next merge of main plus `mise daemons stop`. Several tasks in one command need `:::` between
 them (`mise run check:fe ::: check:deps`); otherwise the extra names become arguments.
 
 Run Go tests only through `mise run test`: it sets `APP_ENV=test` and the test DB, and a bare
-`go test` opens the dev database and fails. If its Postgres will not start with `shmget ... No
-space left on device` (macOS has 32 SysV shared-memory segments and each per-checkout `db`
-daemon takes one), switch to the shared Postgres (`MISE_ENV=shared`, below), or run `mise run
-worktrees:prune -- --apply` to remove the worktrees whose branch is already in `origin/main` and
-sweep what they left; drop `--apply` for a dry run. `mise run worktrees:gc` (also run by `setup`
-and `worktrees:prune`; `--apply` to act, a dry run otherwise) drops the shared server's databases
-that no live worktree owns and runs `mise daemons prune --yes`; it refuses to drop anything when
-it cannot enumerate or read a live worktree, and is safe to run at any time.
+`go test` opens the dev database and fails.
 
 Run a single Go test (arguments after `--` go to `go test`; the default is `./...`):
 
@@ -248,7 +267,8 @@ of its daemons), so many stacks run at once. The slot comes from a hash of the c
 not a registry: two worktrees can land on the same one (two of 14 here did), and then the second
 stack fails to start with an error naming the daemon and the other project. Pin the later one
 in its `.mise.local.toml` (`[daemons.backend]` ... `port = 3601`, the same for `frontend`,
-`mailpit`, `caddy` and, without the shared Postgres, `db`; SMTP, metrics and Caddy's admin/HTTP ports follow from them). mise resolves the ports at config load, so
+`mailpit` and `caddy`; SMTP, metrics and Caddy's admin/HTTP ports follow from them). mise
+resolves the ports at config load, so
 `[env]` templates them (`PORT`, `SMTP_PORT`, `METRICS_ADDR`, `APP_URL`, `APP_HOST`, `API_HOST`), and
 the Caddyfile (`{$BACKEND_PORT}`, `{$APP_HOST}`, ...), `vite.config.ts` and the `ready_cmd`s read the
 exported `<NAME>_PORT` (`ready_port` cannot be templated). Ports with no daemon of their own (SMTP,
@@ -262,24 +282,6 @@ cookies apart; `*.localhost` resolves to loopback and Caddy's internal CA signs 
 (`proxy = "<label>"`, stable per-worktree hostnames) because that proxy needs per-machine setup
 (`pitchfork proxy setup`: DNS, trust store, ports), would still leave the primary on Caddy's :443,
 and Caddy already does the `/api` rewrite and the path routing in one file.
-
-**Postgres: one server for all checkouts (`MISE_ENV=shared`).** A developer adds to the global
-mise config (`~/.config/mise/config.toml`)
-
-```toml
-[daemon_providers.onemail-pg]
-preset = "postgres"
-version = "18"
-```
-
-and `export MISE_ENV=shared` in the shell profile. The committed `mise.shared.toml` then replaces
-the per-checkout `db` daemon with a database on that one postmaster (named from the checkout's
-path), so a worktree costs no shared-memory segment and no daemon; the provider starts on demand
-when a task needs `db`. Agent-spawned worktrees inherit `MISE_ENV` from the shell, so they need no
-per-worktree step. Without it (CI, contributors) `.mise.toml`'s per-checkout daemon applies:
-nothing to install, one Postgres per checkout. mise never drops the shared server's databases:
-`mise run worktrees:gc` does. Changing `MISE_ENV` needs the checkout's daemons stopped first
-(`mise daemons stop`).
 
 ## Conventions
 
