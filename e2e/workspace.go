@@ -25,6 +25,8 @@ var tokenScopes = []string{
 	"sending_domains:read", "sending_domains:write",
 	"contacts:read", "contacts:write",
 	"broadcasts:read", "broadcasts:write", "broadcasts:send",
+	"automations:read", "automations:write", "automations:activate",
+	"events:write",
 }
 
 // Workspace is one test's own tenant: a fresh User, Workspace and API token made with
