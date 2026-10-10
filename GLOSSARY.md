@@ -391,7 +391,8 @@ workspace-scoped code has no path that can return an Operator. A person who is b
 a customer holds two separate identities (an Operator _and_ a User), by design, for
 least-privilege and clean audit. Created only by the `sphericon operator create` command (no
 signup), it logs in with a password and a mandatory TOTP enrolled at first login, on a short
-session of its own. Customers see its actions only as "sphericon staff". A SaaS/platform
+session of its own. Failed logins are rate limited, and a lost TOTP is reset only by
+`sphericon operator reset-totp` (re-enrolment at next login), never through the web. Customers see its actions only as "sphericon staff". A SaaS/platform
 concept, absent from a plain self-hosted install.
 _Avoid_: Admin (that is a workspace Role), superuser, staff user, root
 

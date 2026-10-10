@@ -155,6 +155,9 @@ var _ operatorOps = &operatorOpsMock{}
 //			CreateOperatorFunc: func(ctx context.Context, email string) (string, error) {
 //				panic("mock out the CreateOperator method")
 //			},
+//			ResetOperatorTOTPFunc: func(ctx context.Context, email string) error {
+//				panic("mock out the ResetOperatorTOTP method")
+//			},
 //		}
 //
 //		// use mockedoperatorOps in code that requires operatorOps
@@ -165,6 +168,9 @@ type operatorOpsMock struct {
 	// CreateOperatorFunc mocks the CreateOperator method.
 	CreateOperatorFunc func(ctx context.Context, email string) (string, error)
 
+	// ResetOperatorTOTPFunc mocks the ResetOperatorTOTP method.
+	ResetOperatorTOTPFunc func(ctx context.Context, email string) error
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// CreateOperator holds details about calls to the CreateOperator method.
@@ -174,8 +180,16 @@ type operatorOpsMock struct {
 			// Email is the email argument value.
 			Email string
 		}
+		// ResetOperatorTOTP holds details about calls to the ResetOperatorTOTP method.
+		ResetOperatorTOTP []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Email is the email argument value.
+			Email string
+		}
 	}
-	lockCreateOperator sync.RWMutex
+	lockCreateOperator    sync.RWMutex
+	lockResetOperatorTOTP sync.RWMutex
 }
 
 // CreateOperator calls CreateOperatorFunc.
@@ -211,5 +225,41 @@ func (mock *operatorOpsMock) CreateOperatorCalls() []struct {
 	mock.lockCreateOperator.RLock()
 	calls = mock.calls.CreateOperator
 	mock.lockCreateOperator.RUnlock()
+	return calls
+}
+
+// ResetOperatorTOTP calls ResetOperatorTOTPFunc.
+func (mock *operatorOpsMock) ResetOperatorTOTP(ctx context.Context, email string) error {
+	if mock.ResetOperatorTOTPFunc == nil {
+		panic("operatorOpsMock.ResetOperatorTOTPFunc: method is nil but operatorOps.ResetOperatorTOTP was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Email string
+	}{
+		Ctx:   ctx,
+		Email: email,
+	}
+	mock.lockResetOperatorTOTP.Lock()
+	mock.calls.ResetOperatorTOTP = append(mock.calls.ResetOperatorTOTP, callInfo)
+	mock.lockResetOperatorTOTP.Unlock()
+	return mock.ResetOperatorTOTPFunc(ctx, email)
+}
+
+// ResetOperatorTOTPCalls gets all the calls that were made to ResetOperatorTOTP.
+// Check the length with:
+//
+//	len(mockedoperatorOps.ResetOperatorTOTPCalls())
+func (mock *operatorOpsMock) ResetOperatorTOTPCalls() []struct {
+	Ctx   context.Context
+	Email string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Email string
+	}
+	mock.lockResetOperatorTOTP.RLock()
+	calls = mock.calls.ResetOperatorTOTP
+	mock.lockResetOperatorTOTP.RUnlock()
 	return calls
 }

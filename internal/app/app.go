@@ -537,6 +537,17 @@ func (a *App) CreateOperator(ctx context.Context, email string) (string, error) 
 	return edition.Operators.Create(ctx, email)
 }
 
+// ResetOperatorTOTP clears the TOTP of the Operator with this email and ends its
+// sessions (ADR 0026): the only way a lost TOTP is reset. The Operator re-enrols at next
+// login. operator.ErrNotFound for an unknown email, ErrNotLicensed without the license.
+func (a *App) ResetOperatorTOTP(ctx context.Context, email string) error {
+	edition, err := do.Invoke[*ee.Edition](a.injector)
+	if err != nil {
+		return err
+	}
+	return edition.Operators.ResetTOTP(ctx, email)
+}
+
 // Accounts is the product's Accounts module from the DI container, for harnesses that
 // arrange users and Workspaces through the same instance the HTTP surface runs on
 // (the end-to-end suite), so they open no second connection pool.
@@ -668,8 +679,12 @@ func register(injector do.Injector, env string, o options) {
 		if err != nil {
 			return nil, err
 		}
+		attempts, err := do.Invoke[*accounts.Attempts](i)
+		if err != nil {
+			return nil, err
+		}
 		return ee.New(client.Client, lic, cipher, cfg.JWTSecret, operator.Config{
-			Secret: cfg.OperatorJWTSecret, SessionTTL: cfg.OperatorSessionTTL, SecureCookies: cfg.SecureCookies(),
+			Secret: cfg.OperatorJWTSecret, SessionTTL: cfg.OperatorSessionTTL, SecureCookies: cfg.SecureCookies(), Attempts: attempts,
 		})
 	})
 
