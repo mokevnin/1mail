@@ -108,7 +108,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	row = h.discoverQuota(ctx, s, row)
+	h.discoverQuota(ctx, row)
 	res, err := h.integrationResource(ctx, s, row)
 	if err != nil {
 		return nil, err
@@ -293,7 +293,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	}
 	if setEncrypted != nil {
 		// New credentials or endpoint: what the provider allows may have changed.
-		updated = h.discoverQuota(ctx, s, updated)
+		h.discoverQuota(ctx, updated)
 	}
 	res, err := h.integrationResource(ctx, s, updated)
 	if err != nil {
@@ -345,23 +345,19 @@ type integrationDraft struct {
 	maxPerDay    *int
 }
 
-// discoverQuota reads a saved SES Integration's send quota (ADR 0023) and returns the
-// row as it now stands. The lookup is best-effort: a failure is recorded on the
-// Integration and shown as a warning, never returned, so it cannot fail the save.
-// Providers without a quota (SMTP) are returned untouched.
-func (h *Handlers) discoverQuota(ctx context.Context, s *ent.Scoped, row *ent.Integration) *ent.Integration {
+// discoverQuota schedules a saved SES Integration's send quota lookup (ADR 0023). The
+// lookup runs as a job, so the save's response does not carry its result: the provider
+// ceiling and any "quota unavailable" warning show on the next read, a moment later.
+// Scheduling is best-effort: a failure is logged, never returned, so it cannot fail the
+// save (the hourly job picks the Integration up anyway). Providers without a quota
+// (SMTP) are skipped.
+func (h *Handlers) discoverQuota(ctx context.Context, row *ent.Integration) {
 	if row.Provider != integration.ProviderSes {
-		return row
+		return
 	}
 	if err := h.quotaRefresh.EnqueueIntegrationQuotaRefresh(ctx, row.ID); err != nil {
 		slog.WarnContext(ctx, "enqueue integration quota refresh failed", "integration_id", row.ID, "err", err)
-		return row
 	}
-	fresh, err := s.Integration().Get(ctx, row.ID)
-	if err != nil {
-		return row
-	}
-	return fresh
 }
 
 // limitValue reads one Send rate limit from its request field: null (and, on create,
