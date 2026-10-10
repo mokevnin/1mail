@@ -171,7 +171,7 @@ func TestNoLimitMeansNoLimiterStateAndNoDeferral(t *testing.T) {
 	for _, key := range []string{"bc:1", "bc:2", "bc:3", "bc:4", "bc:5"} {
 		assert.Equal(t, outbound.Sent, send(t, m, env, key).Outcome)
 	}
-	n, err := env.DB.SendLimiter.Query().Where(sendlimiter.WorkspaceID(fixtures.AcmeID)).Count(context.Background())
+	n, err := env.DB.SendLimiter.Query().Where(sendlimiter.IntegrationID(fixtures.IntegrationAcmeDefaultID)).Count(context.Background())
 	require.NoError(t, err)
 	assert.Zero(t, n)
 }

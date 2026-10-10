@@ -201,6 +201,10 @@ const (
 	SegmentProPlanID = 100
 	// SegmentProPlanName is from fixtures/segments.
 	SegmentProPlanName = "Pro & team members"
+	// SendLimiterAcmeID is from fixtures/send_limiters.
+	SendLimiterAcmeID = 1
+	// SendLimiterGlobexID is from fixtures/send_limiters.
+	SendLimiterGlobexID = 900
 	// SendingDomainGlobexDomain is from fixtures/sending_domains.
 	SendingDomainGlobexDomain = "mail.globex.test"
 	// SendingDomainGlobexID is from fixtures/sending_domains.
