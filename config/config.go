@@ -149,7 +149,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 500<<10)
 	v.SetDefault("COLLECT_MAX_EVENT_BYTES", 32<<10)
 	limits := DefaultRateLimits
-	if envName == EnvE2E {
+	if isE2E(envName) {
 		limits = RateLimits{} // the end-to-end profile polls freely: every budget is disabled
 	}
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", limits.Human)
@@ -256,6 +256,12 @@ func Load(envName string) (*Config, error) {
 		SESSecretAccessKey:  v.GetString("SES_SECRET_ACCESS_KEY"),
 	}
 
+	if isE2E(envName) {
+		// The suite never scrapes metrics; a global METRICS_ADDR (the dev stack's) would
+		// make concurrent runs, or a running dev stack, collide on the port.
+		cfg.MetricsAddr = ""
+	}
+
 	if err := cfg.validate(envName); err != nil {
 		return nil, err
 	}
@@ -266,7 +272,7 @@ func Load(envName string) (*Config, error) {
 func (c *Config) validate(envName string) error {
 	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
 	// with an empty key — refuse to boot rather than ship that footgun.
-	if !isDevEnv(envName) && envName != EnvE2E {
+	if !isDevEnv(envName) && !isE2E(envName) {
 		if err := validateJWTSecret(c.JWTSecret); err != nil {
 			return err
 		}
@@ -391,6 +397,9 @@ func (c *Config) UseListener(addr net.Addr) {
 // JWT_SECRET like development does, but is not IsDev: the dev DKIM lookup stays off
 // and the harness injects its own.
 const EnvE2E = "e2e"
+
+// isE2E reports whether the env is the end-to-end profile.
+func isE2E(envName string) bool { return envName == EnvE2E }
 
 // isDevEnv reports whether the env is a non-production one where missing
 // security secrets are tolerated (so local dev and tests boot without ceremony).

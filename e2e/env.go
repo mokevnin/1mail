@@ -13,18 +13,12 @@ package e2e
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net"
 	"time"
 
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/app"
-	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/events"
-
-	// Registers the pgx database/sql driver.
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // Env is the running application under test plus its Mailpit. One Env serves every
@@ -65,12 +59,13 @@ func Boot() (*Env, func(), error) {
 		return nil, nil, err
 	}
 
-	// The arrange step goes through the product's own Accounts module, on its own pool.
-	sqlDB, err := sql.Open("pgx", a.Config.DatabaseURL)
+	// The arrange step goes through the product's own Accounts module, taken from the
+	// application's container (no second pool).
+	acc, err := a.Accounts()
 	if err != nil {
 		_ = a.Shutdown(ctx)
 		stopMailpit()
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("resolve accounts: %w", err)
 	}
 
 	runCtx, cancel := context.WithCancel(ctx)
@@ -78,7 +73,6 @@ func Boot() (*Env, func(), error) {
 	go func() { _ = a.RunEvents(runCtx) }()
 	if err := a.RunJobs(runCtx); err != nil {
 		cancel()
-		_ = sqlDB.Close()
 		_ = a.Shutdown(ctx)
 		stopMailpit()
 		return nil, nil, fmt.Errorf("start job queue: %w", err)
@@ -91,7 +85,6 @@ func Boot() (*Env, func(), error) {
 		defer scancel()
 		_ = a.Stop(sctx)
 		_ = a.Shutdown(sctx)
-		_ = sqlDB.Close()
 		stopMailpit()
 		select {
 		case err := <-serveErr:
@@ -102,6 +95,6 @@ func Boot() (*Env, func(), error) {
 	return &Env{
 		BaseURL:  a.Config.AppURL,
 		Mailpit:  mp,
-		accounts: accounts.New(db.NewEntClient(sqlDB), events.New(sqlDB)),
+		accounts: acc,
 	}, stop, nil
 }

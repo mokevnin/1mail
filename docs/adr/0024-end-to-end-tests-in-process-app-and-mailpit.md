@@ -28,8 +28,8 @@ sends through a real SMTP server and observes the result only in that server's i
   own domain functions. Everything else is an API call. The bootstrap token is not used; it addresses only the
   oldest Workspace.
 - **Sending domain verification uses a harness-only DNS lookup.** The send path requires a live DKIM check
-  (ADR 0010); the suite injects the existing development lookup, which echoes a domain's own stored key, through a
-  dependency-injection override rather than the development flag. Because that lookup resolves by domain name alone
+  (ADR 0010); the suite injects the existing development lookup, which echoes a domain's own stored key, through an
+  e2e-only app option (`app.WithE2EDKIMLookup`, refused outside the e2e profile) rather than the development flag. Because that lookup resolves by domain name alone
   while uniqueness is per (Workspace, domain), every test uses a unique Sending domain.
 - **Asynchronous steps are polled with a bounded timeout.** The job queue clock is not controlled, Automation wait
   steps are not used and Deferral (ADR 0023) is out of scope.

@@ -182,15 +182,21 @@ func (m *Mailpit) Delete(ctx context.Context, ids ...string) error {
 // so a failing scenario shows whether mail went to the wrong address or nowhere.
 type NoMailError struct {
 	Recipient string
-	Waited    time.Duration
-	Inbox     []Summary
+	// Subject is the awaited subject; empty when any subject would do.
+	Subject string
+	Waited  time.Duration
+	Inbox   []Summary
 	// ListErr is set when the diagnostic listing itself failed.
 	ListErr error
 }
 
 func (e *NoMailError) Error() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "no email for %s within %s; ", e.Recipient, e.Waited)
+	if e.Subject != "" {
+		fmt.Fprintf(&b, "no email %q for %s within %s; ", e.Subject, e.Recipient, e.Waited)
+	} else {
+		fmt.Fprintf(&b, "no email for %s within %s; ", e.Recipient, e.Waited)
+	}
 	switch {
 	case e.ListErr != nil:
 		fmt.Fprintf(&b, "could not list the inbox: %v", e.ListErr)
@@ -212,20 +218,18 @@ func (e *NoMailError) Error() string {
 // WaitForRecipient polls until a message addressed to recipient is in the inbox and
 // returns it. It gives up after timeout with a *NoMailError that lists the inbox.
 func (m *Mailpit) WaitForRecipient(ctx context.Context, recipient string, timeout time.Duration) (Message, error) {
+	return m.WaitForMessage(ctx, recipient, "", timeout)
+}
+
+// WaitForMessage is WaitForRecipient narrowed to a subject (exact match; "" matches any).
+func (m *Mailpit) WaitForMessage(ctx context.Context, recipient, subject string, timeout time.Duration) (Message, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	var lastErr error
 	for {
-		found, err := m.Search(ctx, `to:"`+recipient+`"`)
-		if err == nil && len(found) > 0 {
-			// Search is a substring match; insist on the exact recipient.
-			for _, s := range found {
-				for _, a := range s.To {
-					if strings.EqualFold(a.Address, recipient) {
-						return m.Get(context.WithoutCancel(ctx), s.ID)
-					}
-				}
-			}
+		id, err := m.FindID(ctx, recipient, subject)
+		if err == nil && id != "" {
+			return m.Get(context.WithoutCancel(ctx), id)
 		}
 		lastErr = err
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
@@ -237,10 +241,31 @@ func (m *Mailpit) WaitForRecipient(ctx context.Context, recipient string, timeou
 			if lerr == nil && lastErr != nil {
 				lerr = lastErr
 			}
-			return Message{}, &NoMailError{Recipient: recipient, Waited: timeout, Inbox: diag, ListErr: lerr}
+			return Message{}, &NoMailError{Recipient: recipient, Subject: subject, Waited: timeout, Inbox: diag, ListErr: lerr}
 		case <-time.After(m.poll):
 		}
 	}
+}
+
+// FindID returns the id of an inbox message addressed to recipient (and, when subject
+// is not empty, carrying exactly that subject), or "" when there is none.
+func (m *Mailpit) FindID(ctx context.Context, recipient, subject string) (string, error) {
+	found, err := m.Search(ctx, `to:"`+recipient+`"`)
+	if err != nil {
+		return "", err
+	}
+	// Search is a substring match; insist on the exact recipient.
+	for _, s := range found {
+		if subject != "" && s.Subject != subject {
+			continue
+		}
+		for _, a := range s.To {
+			if strings.EqualFold(a.Address, recipient) {
+				return s.ID, nil
+			}
+		}
+	}
+	return "", nil
 }
 
 // IsNoMail reports whether err is a WaitForRecipient timeout.

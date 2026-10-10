@@ -108,7 +108,7 @@ run = 'go test -p 1 ${usage_go_test_args}'
 ["test:e2e"]
 description = "End-to-end suite (ADR 0024): rebuilds the dedicated e2e DB, starts its own Mailpit, boots the app in-process; pass `go test` flags after `--`"
 daemons = ["db"]
-env = { APP_ENV = "e2e", DATABASE_URL = "{{env.E2E_DB_URL}}" }
+env = { APP_ENV = "e2e", DATABASE_URL = "{{env.E2E_DB_URL}}", METRICS_ADDR = "" }
 usage = 'arg "[go_test_args]" var=#true default="./e2e/..." help="packages and flags for go test"'
 run = [
   "go run ./cmd/db drop",

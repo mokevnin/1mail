@@ -263,7 +263,9 @@ func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, in UpdateI
 
 // Delete removes an Integration. An unknown id is ent's not-found error.
 func (m *Module) Delete(ctx context.Context, s *ent.Scoped, id int64) error {
-	return s.Integration().DeleteOneID(id).Exec(ctx)
+	return m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
+		return ts.Integration().DeleteOneID(id).Exec(ctx)
+	})
 }
 
 func applyLimit[T any](l Limit, set func(int) T, clear func() T) {

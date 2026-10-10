@@ -234,3 +234,22 @@ func TestConfigLoadE2EProfileHonoursExplicitRateLimit(t *testing.T) {
 		t.Fatalf("APIPerMinute = %d, want explicit 5", cfg.RateLimits.APIPerMinute)
 	}
 }
+
+func TestConfigLoadE2EProfileIgnoresMetricsAddr(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("METRICS_ADDR", "127.0.0.1:9090")
+	cfg, err := Load("e2e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MetricsAddr != "" {
+		t.Fatalf("e2e MetricsAddr = %q, want empty so runs never collide on a port", cfg.MetricsAddr)
+	}
+	dev, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dev.MetricsAddr != "127.0.0.1:9090" {
+		t.Fatalf("test profile MetricsAddr = %q, want the configured one", dev.MetricsAddr)
+	}
+}
